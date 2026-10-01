@@ -212,9 +212,12 @@ Este é o **único passo que roda no seu computador** (precisa do Docker, com o 
 ```bash
 cd NinWiki.Api
 python scripts/migrar_banco.py exportar        # gera backups/ninwiki-AAAAMMDD-HHMM.dump (do banco do seu Docker)
-mkdir certs                                     # coloque aqui ca.crt, client.pem e client.key (3.3)
-python scripts/migrar_banco.py importar backups/NOME-DO-SEU-ARQUIVO.dump --url "postgresql://USUARIO:SENHA@HOST:PORTA/BANCO" --ssl-ca certs/ca.crt --ssl-cert certs/client.pem --ssl-key certs/client.key --confirmo
+mkdir certs                                     # coloque aqui os 3 arquivos baixados (3.3), com o nome que vieram
+python scripts/migrar_banco.py importar backups/NOME-DO-SEU-ARQUIVO.dump --url "postgresql://USUARIO:SENHA@HOST:PORTA/BANCO" --ssl-ca certs/ca-certificate.crt --ssl-cert certs/certificate.pem --ssl-key certs/private-key.key --confirmo
 ```
+> 📁 Os nomes dos 3 arquivos (`--ssl-ca`, `--ssl-cert`, `--ssl-key`) têm que ser **exatamente** os que estão na sua pasta `certs/`.
+> A SquareCloud costuma baixar como `ca-certificate.crt`, `certificate.pem` e `private-key.key` (use `dir certs` para conferir).
+> O erro `Certificado nao encontrado: certs/...` quer dizer que o nome (ou a pasta `certs/` dentro de `NinWiki.Api`) está diferente.
 > ⚠️ Escreva o comando **numa linha só** (como acima). No PowerShell a barra invertida `\` **não** continua a linha — ela vira um
 > argumento solto e dá o erro `unrecognized arguments: \`. Se quiser quebrar a linha: no PowerShell use o acento grave `` ` `` no fim
 > de cada linha; no Linux/Mac use `\`.
