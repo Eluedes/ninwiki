@@ -10,14 +10,28 @@ logo no topo, antes de qualquer outra coisa.
 """
 import os
 from logging.config import fileConfig
+from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
-load_dotenv()
+# Caminho EXPLICITO do .env (a pasta NinWiki.Api), em vez de deixar o dotenv "procurar": na hospedagem o Alembic roda via
+# `python -m alembic` e a busca automatica pode nao achar o arquivo.
+ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(ENV_FILE)
+
+if not os.getenv("DATABASE_URL"):
+    # Sem isto o Alembic cairia na URL de exemplo do alembic.ini ("driver://...") e o erro seria um confuso
+    # "Can't load plugin: sqlalchemy.dialects:driver". Aqui dizemos o que realmente falta (so' NOMES, nunca valores).
+    if ENV_FILE.is_file():
+        found = ", ".join(sorted(k for k in dotenv_values(ENV_FILE) if k)) or "(nenhuma variavel)"
+        raise RuntimeError(f"DATABASE_URL nao esta definida. O .env existe em {ENV_FILE}, mas so' tem: {found}. "
+                           "Confira o Secret API_ENV (precisa ter a linha DATABASE_URL=postgresql+asyncpg://...).")
+    raise RuntimeError(f"Arquivo .env nao encontrado em {ENV_FILE}. No deploy ele vem do Secret API_ENV do GitHub "
+                       "(o secret esta vazio, ou o app nao foi atualizado pelo workflow).")
 
 # Importa a Base com TODOS os modelos ja registrados (ver
 # app/models/__init__.py) - e' isso que da' ao autogenerate a lista
