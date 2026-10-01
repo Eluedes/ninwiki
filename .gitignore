@@ -1,0 +1,80 @@
+# ==========================================
+# NinWiki.Web (Next.js / Node)
+# ==========================================
+NinWiki.Web/node_modules/
+NinWiki.Web/.next/
+NinWiki.Web/out/
+NinWiki.Web/build/
+NinWiki.Web/.pnp/
+NinWiki.Web/.pnp.js
+NinWiki.Web/*.tsbuildinfo
+NinWiki.Web/coverage/
+NinWiki.Web/.vercel/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# NinWiki.Api (Python / FastAPI)
+# ==========================================
+NinWiki.Api/venv/
+NinWiki.Api/.venv/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+NinWiki.Api/alembic/versions/__pycache__/
+
+# ==========================================
+# Variáveis de ambiente — NUNCA sobem, em nenhuma pasta
+# ==========================================
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# ==========================================
+# Docker
+# ==========================================
+docker-compose.override.yml
+
+# ==========================================
+# Segredos e chaves (defesa extra, não confia só no bom senso)
+# ==========================================
+*.pem
+*.key
+*.p12
+*credentials*.json
+
+# ==========================================
+# Editor / IDE
+# ==========================================
+.vscode/
+.idea/
+*.swp
+
+# ==========================================
+# Sistema operacional
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+# Gerado por NinWiki.Web/scripts/export-seed-data.ts - nao versionar,
+# regenerar sob demanda antes de rodar o seed (garante que reflete
+# sempre o lib/*.ts mais recente, nunca uma copia desatualizada)
+NinWiki.Api/seed_data.json
+
+# Imagens enviadas via upload pelo painel admin (app/api/uploads.py) -
+# sao dado de usuario, nao codigo, nao devem ir pro repositorio
+NinWiki.Api/uploads/
+
+# ==========================================
+# NinWiki.Bot (Python / discord.py)
+# ==========================================
+NinWiki.Bot/venv/
+NinWiki.Bot/.venv/

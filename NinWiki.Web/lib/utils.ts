@@ -1,0 +1,43 @@
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+// Combina classes Tailwind com seguranca. Usada em praticamente todo
+// componente do projeto (inclusive os do shadcn/ui) para juntar classes
+// condicionais sem gerar conflito.
+//
+// clsx(inputs): junta varias entradas (strings, condicionais, arrays)
+// em uma unica string de classes, ignorando valores falsy (false/undefined).
+// Exemplo: cn('p-2', isActive && 'bg-primary') -> so' inclui 'bg-primary'
+// se isActive for true.
+//
+// twMerge(...): resolve CONFLITOS entre classes Tailwind. Sem isso,
+// cn('p-2', 'p-4') deixaria as duas classes no HTML e o navegador
+// aplicaria uma por ordem de especificidade do CSS (imprevisivel).
+// Com twMerge, so' a ultima (p-4) sobrevive, do jeito que a pessoa
+// que chamou a funcao esperava.
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// Decide se a ficha/card de uma entry mostra "Nível X" - decisao com o
+// Rafael (26/09): nem todo Item TEM nível de verdade no jogo (uma
+// Material ou Consumable, por exemplo), so' Ring e Cast entre os tipos
+// de Item. Mob/Missao/Guia sempre mostram (nunca chamam esta funcao -
+// so' Weapons e Items passam por ela).
+export function shouldShowLevel(category: string, itemType: string | null): boolean {
+  if (category === 'weapons') return true;
+  if (category === 'items') return itemType === 'ring' || itemType === 'cast';
+  return true;
+}
+
+// Gera um id/slug a partir de um texto: "Leaf Village!" -> "leaf-village". Sem acentos,
+// so' minusculas, numeros e hifen (o formato que a API exige nos ids).
+export function slugify(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 50);
+}

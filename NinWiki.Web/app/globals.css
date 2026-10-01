@@ -1,0 +1,293 @@
+/* ============================================================================
+   ESTILOS GLOBAIS + TOKENS DE TEMA (padrao shadcn/ui)
+   ============================================================================
+   As diretivas @tailwind carregam as camadas base/components/utilities
+   do Tailwind. Logo abaixo, :root define variaveis CSS (--background,
+   --primary, etc.) no formato "H S% L%" (matiz, saturacao, luminosidade
+   SEM a funcao hsl() em volta) - assim o Tailwind consegue montar
+   `hsl(var(--primary) / <alpha>)` e permitir opacidade nas cores do tema.
+   O bloco `.dark { ... }` (mais abaixo) redefine as MESMAS variaveis
+   com valores diferentes, e e' isso que faz o tema escuro funcionar:
+   nenhum componente precisa saber se esta' no modo claro ou escuro,
+   ele so' usa "bg-background", "text-foreground" etc., e o CSS
+   resolve a cor certa sozinho.
+   ============================================================================ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 215 25% 27%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 27%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 27%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 25% 27%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 94%;
+    --accent-foreground: 215 25% 27%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 0 72% 51%;
+    --radius: 0.625rem;
+    --chart-1: 0 72% 51%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 240 10% 4%;
+    --foreground: 240 5% 65%;
+    --card: 240 6% 10%;
+    --card-foreground: 240 5% 65%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 240 5% 65%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 14%;
+    --secondary-foreground: 240 5% 65%;
+    --muted: 240 5% 14%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 16%;
+    --accent-foreground: 240 5% 90%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 18%;
+    --input: 240 5% 18%;
+    --ring: 0 72% 51%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  /* ==========================================================================
+     TEMAS DE COR - alternativas ao vermelho padrao ("blood"), aplicadas
+     via o atributo data-color-theme no <html> (ver
+     components/providers/color-theme-provider.tsx). Juntas, blood +
+     canarinho + ouro + anil cobrem as 4 cores da bandeira do Brasil.
+     So' redefinem --primary/--primary-foreground/--ring - o resto do
+     tema (fundo, texto, bordas) continua igual, claro ou escuro.
+     "blood" (o vermelho) NAO tem bloco proprio aqui de proposito: ele
+     E' o valor padrao ja' definido em :root/.dark acima - so' precisa
+     de uma regra quando o usuario escolhe outro tema.
+     ========================================================================== */
+  :root[data-color-theme='canarinho'],
+  .dark[data-color-theme='canarinho'] {
+    --primary: 143 100% 30%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 143 100% 30%;
+  }
+  :root[data-color-theme='ouro'],
+  .dark[data-color-theme='ouro'] {
+    --primary: 48 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 48 100% 45%;
+  }
+  :root[data-color-theme='anil'],
+  .dark[data-color-theme='anil'] {
+    --primary: 216 86% 35%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 216 86% 35%;
+  }
+}
+
+@layer base {
+  /* Aplica a cor de borda padrao do tema em TODO elemento, evitando
+     ter que escrever "border-border" manualmente em cada componente. */
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Classe utilitaria customizada (nao vem do Tailwind por padrao):
+   deixa a barra de rolagem fina e discreta, usada em listas/paineis
+   longos. So' funciona em navegadores baseados em WebKit (Chrome,
+   Edge, Safari) - Firefox ignora esses seletores ::-webkit-*. */
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+/* ============================================================================
+   CLASSES DO "DOSSIE SHINOBI" - portadas do projeto de referencia
+   ============================================================================
+   Usadas SO' dentro de app/(wiki)/(lore)/* (Masteries, Jutsus, Vilas, Mapa).
+   Isoladas do resto do tema (nao mexem em --background/--card etc.) - o
+   fundo escuro "de dossie" e' aplicado via a classe .shinobi-theme no
+   wrapper do layout dessas paginas, nao no <body> inteiro do site.
+   ============================================================================ */
+@layer components {
+  /* Wrapper que aplica o fundo escuro com gradientes radiais + textura,
+     igual ao "body" do projeto de referencia, mas escopado so' a este
+     grupo de rotas via uma classe em vez de no <body> global. */
+  .shinobi-theme {
+    @apply bg-ink-950 text-ink-100 antialiased;
+    background-image:
+      radial-gradient(ellipse at top, rgba(14, 165, 233, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom, rgba(220, 38, 38, 0.04) 0%, transparent 50%),
+      linear-gradient(180deg, #0a0a0f 0%, #12121a 100%);
+    min-height: 100vh;
+  }
+  .shinobi-theme h1,
+  .shinobi-theme h2,
+  .shinobi-theme h3,
+  .shinobi-theme h4 {
+    @apply font-display tracking-wide;
+  }
+
+  /* Painel padrao de conteudo (cards, sidebars) - fundo semi-transparente
+     com leve gradiente e borda sutil. */
+  .dossier-panel {
+    @apply bg-ink-900/80 backdrop-blur-sm border border-ink-700/60 rounded-lg;
+    background-image:
+      linear-gradient(135deg, rgba(14, 165, 233, 0.02) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(28, 28, 40, 0.9) 0%, rgba(18, 18, 26, 0.95) 100%);
+  }
+
+  /* Efeito de destaque ao passar o mouse sobre um dossier-panel clicavel. */
+  .dossier-panel-hover {
+    @apply transition-all duration-300 hover:border-chakra-600/50 hover:shadow-[0_0_20px_rgba(14,165,233,0.1)];
+  }
+
+  /* Titulo estilo "carimbo" (fonte decorativa + sombra com brilho azulado). */
+  .stamp-title {
+    @apply font-stamp font-bold uppercase tracking-wider;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 12px rgba(14, 165, 233, 0.2);
+  }
+
+  /* Botao "fantasma" (so' borda, sem preenchimento) usado nos estados de
+     erro/nao-encontrado das paginas de mastery/jutsu/vila. */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-ink-600 text-ink-200 font-medium transition-all hover:border-chakra-600 hover:text-chakra-400 active:scale-95;
+  }
+
+  /* Selo pequeno arredondado (ex: "T3", "Elemental"). */
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border;
+  }
+
+  /* Estilo de texto longo (lore/descricoes), com hierarquia propria de
+     titulos/paragrafos dentro do dossie. */
+  .prose-shinobi {
+    @apply text-ink-200 leading-relaxed;
+  }
+  .prose-shinobi strong {
+    @apply text-chakra-300 font-semibold;
+  }
+}
+
+/* ============================================================================
+   BLOCOS NATIVOS DO EDITOR RICO: FICHA E TABELA (Fase 4 do roadmap)
+   ============================================================================
+   Estilo compartilhado entre o editor admin (dentro do .ProseMirror,
+   contentEditable de verdade) e o site publico (dentro de .prose-shinobi,
+   gerado por generateHTML - ver components/lore/rich-text.tsx) - por
+   isso os seletores aqui NAO ficam presos a nenhum dos dois containers,
+   pra a aparencia bater nos dois lugares.
+   ============================================================================ */
+.tiptap-ficha {
+  @apply my-3 overflow-hidden rounded-lg border border-border bg-card;
+}
+.tiptap-ficha-title {
+  @apply border-b border-border bg-secondary/50 px-3 py-2 text-sm font-bold uppercase tracking-wide text-card-foreground;
+}
+.tiptap-ficha-rows {
+  @apply divide-y divide-border;
+}
+.tiptap-ficha-row {
+  @apply flex items-center justify-between px-3 py-1.5 text-sm;
+}
+.tiptap-ficha-row:nth-child(even) {
+  @apply bg-muted/30;
+}
+.tiptap-ficha-label {
+  @apply text-muted-foreground;
+}
+.tiptap-ficha-value {
+  @apply font-semibold text-card-foreground;
+}
+
+/* Tabela - a extensao oficial @tiptap/extension-table gera <table>/<tr>/
+   <td>/<th> normais, sem classe nenhuma propria - o estilo abaixo e' 100%
+   nosso, escrito do zero (a extensao nao vem com CSS nenhum, so' a
+   estrutura HTML/comandos de edicao). */
+.ProseMirror table,
+.prose-shinobi table {
+  @apply my-3 w-full border-collapse overflow-hidden rounded-lg border border-border text-sm;
+}
+.ProseMirror th,
+.prose-shinobi th {
+  @apply border border-border bg-secondary/50 px-3 py-1.5 text-left font-semibold text-card-foreground;
+}
+.ProseMirror td,
+.prose-shinobi td {
+  @apply border border-border px-3 py-1.5 text-card-foreground;
+}
+/* selectedCell: classe que a propria extensao de Tabela aplica quando o
+   editor arrasta o mouse selecionando varias celulas de uma vez - so'
+   faz sentido dentro do editor (contentEditable), nunca no site publico
+   (que nao tem selecao de celula nenhuma, e' so' leitura). */
+.ProseMirror .selectedCell {
+  @apply bg-primary/10;
+}
+
+/* ============================================================================
+   LOGO TEMATICO (components/icons/nin-logo.tsx)
+   ============================================================================
+   4 imagens (uma por tema de cor) empilhadas no mesmo lugar via
+   position:absolute, com so' a do tema ATIVO visivel - a troca usa o
+   mesmo atributo data-color-theme que controla o resto do site (ver
+   components/providers/color-theme-provider.tsx). Padrao (sem atributo,
+   ou "blood") mostra a imagem vermelha.
+   ============================================================================ */
+.nin-logo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.nin-logo-img-canarinho,
+.nin-logo-img-ouro,
+.nin-logo-img-anil {
+  display: none;
+}
+[data-color-theme='canarinho'] .nin-logo-img-blood,
+[data-color-theme='ouro'] .nin-logo-img-blood,
+[data-color-theme='anil'] .nin-logo-img-blood {
+  display: none;
+}
+[data-color-theme='canarinho'] .nin-logo-img-canarinho {
+  display: block;
+}
+[data-color-theme='ouro'] .nin-logo-img-ouro {
+  display: block;
+}
+[data-color-theme='anil'] .nin-logo-img-anil {
+  display: block;
+}

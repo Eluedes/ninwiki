@@ -1,0 +1,97 @@
+"""
+Leitura do LOG GERAL do sistema (quem fez o que, quando, de onde).
+
+So' GET - o log e' escrito automaticamente pelo servidor (ver
+app/core/audit.py), nunca por um cliente. Um log que qualquer um pode
+editar deixa de servir pra' auditoria.
+
+QUEM VE O QUE (camadas):
+  - Historico de UMA entry (entityType + entityId de conteudo): qualquer
+    staff logada (usado na aba "Historico" dentro dos editores).
+  - Feed geral de CONTEUDO (criar/editar/apagar/publicar/upload): Adm e S.Adm
+    (permissao audit.view).
+  - Log COMPLETO - logins, mudancas de equipe, tentativas negadas e IPs:
+    SO' o S.Adm (permissao audit.view_all). Pra' os demais cargos esses
+    registros simplesmente nao aparecem, e o IP vem sempre vazio.
+"""
+from datetime import datetime
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.auth import get_current_user
+from app.core.database import get_db
+from app.core.permissions import Permission, has_permission
+from app.models.users import AuditLogEntry, User
+
+router = APIRouter(prefix="/audit-log", tags=["audit-log"])
+
+# Tipos de registro que sao "trabalho de conteudo" - o que o Adm pode ver.
+# Todo o resto (auth, staff, security...) e' log completo, so' do S.Adm.
+CONTENT_ENTITY_TYPES = {"content_item", "jutsu", "mastery", "upload", "village", "organization", "post"}
+
+
+class AuditLogEntryRead(BaseModel):
+    id: UUID
+    user_id: UUID | None
+    action: str
+    entity_type: str
+    entity_id: str
+    diff: dict | None
+    created_at: datetime  # o Pydantic serializa isso como ISO 8601 automaticamente no JSON
+    actor_name: str | None
+    actor_role: str | None
+    source: str
+    ip_address: str | None
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
+
+
+@router.get("", response_model=list[AuditLogEntryRead])
+async def list_audit_log(
+    limit: int = Query(50, ge=1, le=200, description="Quantas linhas devolver, mais recentes primeiro"),
+    # alias="entityType"/"entityId": Query() NAO aplica o alias_generator
+    # camelCase que os corpos JSON recebem - sem o alias explicito, a URL
+    # ?entityType=... seria silenciosamente ignorada.
+    entity_type: str | None = Query(None, alias="entityType", description="Filtra so' por um tipo (ex: content_item, jutsu, staff)"),
+    entity_id: str | None = Query(None, alias="entityId", description="Filtra so' pelas linhas de UMA entry especifica - historico de versao dela"),
+    source: str | None = Query(None, description="Filtra por origem: panel, bot, auth"),
+    action: str | None = Query(None, description="Filtra por acao (ex: login, delete, permission_denied)"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    LIMITACAO CONHECIDA: acoes em massa (bulk-status/bulk-delete/bulk-import)
+    gravam o log com entity_id = "N itens" (um resumo, nao o id de cada
+    entry) - entao uma entry alterada via bulk nao mostra isso no historico
+    PROPRIO dela, so' no feed geral. Gravar uma linha por item pesaria o
+    log rapido demais pra' um beneficio que hoje nao parece necessario.
+    """
+    sees_everything = has_permission(user.role, Permission.AUDIT_VIEW_ALL)
+    is_entry_history = entity_type is not None and entity_id is not None
+
+    if not is_entry_history and not has_permission(user.role, Permission.AUDIT_VIEW):
+        raise HTTPException(status_code=403, detail="Você não tem permissão para fazer isso")
+
+    stmt = select(AuditLogEntry).order_by(AuditLogEntry.created_at.desc()).limit(limit)
+    if not sees_everything:
+        stmt = stmt.where(AuditLogEntry.entity_type.in_(CONTENT_ENTITY_TYPES))
+    if entity_type is not None:
+        stmt = stmt.where(AuditLogEntry.entity_type == entity_type)
+    if entity_id is not None:
+        stmt = stmt.where(AuditLogEntry.entity_id == entity_id)
+    if source is not None:
+        stmt = stmt.where(AuditLogEntry.source == source)
+    if action is not None:
+        stmt = stmt.where(AuditLogEntry.action == action)
+
+    rows = (await db.execute(stmt)).scalars().all()
+    out = [AuditLogEntryRead.model_validate(r) for r in rows]
+    if not sees_everything:
+        for entry in out:
+            entry.ip_address = None  # IP e' dado sensivel: so' o S.Adm enxerga
+    return out

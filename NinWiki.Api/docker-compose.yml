@@ -1,0 +1,43 @@
+# Ambiente local de banco de dados do NinWiki.
+# Rodar com: docker compose up -d   (precisa do Docker Desktop aberto)
+# Zerar tudo do zero: docker compose down -v
+
+services:
+  # Banco de dados Postgres em si.
+  postgres:
+    image: postgres:16-alpine   # imagem oficial, "alpine" = versao leve
+    container_name: ninwiki-postgres
+    restart: unless-stopped      # reinicia sozinho se o Docker Desktop travar/reiniciar
+    environment:
+      # Os valores entre ${} vem do arquivo .env na mesma pasta.
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # host:container - expoe o container tambem no seu Windows, para
+      # o FastAPI (rodando fora do Docker) conseguir conectar.
+      # ATENCAO: porta do HOST e' 5433, nao 5432 - a 5432 e' usada por
+      # um Postgres NATIVO ja instalado nesta maquina (fora do Docker).
+      # Usar 5433 aqui evita qualquer conflito entre os dois, sem
+      # precisar desinstalar ou parar o Postgres nativo. A porta DENTRO
+      # do container continua 5432 (isso e' interno, ninguem de fora
+      # acessa direto) - so' o lado esquerdo do mapeamento mudou.
+      - "5433:5432"
+    volumes:
+      # Sem isso, os dados do banco seriam apagados toda vez que o
+      # container reiniciasse. O volume guarda os dados fora do container.
+      - ninwiki_pgdata:/var/lib/postgresql/data
+
+  # Interface web leve para inspecionar as tabelas sem instalar nada.
+  # Acesse em http://localhost:8080 depois do "docker compose up -d".
+  adminer:
+    image: adminer:latest
+    container_name: ninwiki-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres   # so' sobe o Adminer depois que o Postgres estiver de pe'
+
+volumes:
+  ninwiki_pgdata:   # volume nomeado, gerenciado pelo proprio Docker

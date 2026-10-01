@@ -1,0 +1,7 @@
+# Dependencias do NinWiki.Bot. Instale com: pip install -r requirements.txt
+# (dentro do venv do bot - e' um ambiente SEPARADO do venv da API).
+
+discord.py==2.7.1            # biblioteca do bot (comandos de barra /equipe ...)
+httpx==0.28.1                # cliente HTTP assincrono - fala com o NinWiki.Api
+pydantic-settings==2.15.0    # le e valida o .env do bot
+python-dotenv==1.2.3         # usado pelo pydantic-settings pra ler o arquivo .env
