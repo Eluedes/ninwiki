@@ -213,10 +213,14 @@ Este é o **único passo que roda no seu computador** (precisa do Docker, com o 
 cd NinWiki.Api
 python scripts/migrar_banco.py exportar        # gera backups/ninwiki-AAAAMMDD-HHMM.dump (do banco do seu Docker)
 mkdir certs                                     # coloque aqui ca.crt, client.pem e client.key (3.3)
-python scripts/migrar_banco.py importar backups/ninwiki-....dump \
-  --url "postgresql://USUARIO:SENHA@HOST:PORTA/BANCO" \
-  --ssl-ca certs/ca.crt --ssl-cert certs/client.pem --ssl-key certs/client.key --confirmo
+python scripts/migrar_banco.py importar backups/NOME-DO-SEU-ARQUIVO.dump --url "postgresql://USUARIO:SENHA@HOST:PORTA/BANCO" --ssl-ca certs/ca.crt --ssl-cert certs/client.pem --ssl-key certs/client.key --confirmo
 ```
+> ⚠️ Escreva o comando **numa linha só** (como acima). No PowerShell a barra invertida `\` **não** continua a linha — ela vira um
+> argumento solto e dá o erro `unrecognized arguments: \`. Se quiser quebrar a linha: no PowerShell use o acento grave `` ` `` no fim
+> de cada linha; no Linux/Mac use `\`.
+> Troque `NOME-DO-SEU-ARQUIVO.dump` pelo nome real que o `exportar` gerou (veja a pasta `backups/`; ex.: `backups/ninwiki-20261001-1530.dump`).
+> A URL do `--url` é a do banco da **SquareCloud** (destino), com `postgresql://` no começo (sem `+asyncpg`); se a senha tiver `@ : / #`,
+> troque por `%40 %3A %2F %23`.
 - O `importar` **substitui** as tabelas do destino (por isso o `--confirmo`). Se o banco da SquareCloud já tem dados, faça antes um backup:
   `python scripts/migrar_banco.py exportar --url "postgresql://..." --ssl-ca ... --ssl-cert ... --ssl-key ...`.
 - O script usa o próprio Docker para rodar `pg_dump`/`pg_restore` e já ajusta a permissão da chave; nada a instalar.
