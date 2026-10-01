@@ -4,7 +4,7 @@ Documento de controle do projeto, no mesmo espírito do roadmap do Guima:
 uma lista viva do que já foi feito e do que falta, organizada em fases.
 Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 
-**Última atualização:** 01/10/2026
+**Última atualização:** 01/10/2026 (página pública do Blog)
 
 **Legenda:** ✅ feito e testado · 🔄 em andamento / parcial · ⬜ não iniciado
 
@@ -144,8 +144,13 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   vê publicados (rascunho responde 404). Painel: lista com busca/status/autor e editor com o Tiptap completo, slug
   gerado a partir do título, resumo, capa (nosso `POST /uploads/image`, não Supabase — segundo storage conflitante)
   e histórico da entry. A Visão Geral passou a contar posts e equipe de verdade. Coberto por
-  `scripts/testar_permissoes.py`. **Ainda não existe página pública do blog** (só painel + API). Tags/categorias
+  `scripts/testar_permissoes.py`. A página pública do blog foi feita em 01/10 (ver abaixo). Tags/categorias
   ficam pra depois: `posts` não tem noção de tag, precisa de tabela `tags` + N:N + migração antes da UI
+- ✅ **Página pública do Blog (01/10)**: `/blog` (lista dos posts **publicados**, mais recentes primeiro) e `/blog/[slug]`
+  (conteúdo rico via `RichText`, capa, autor, data e "atualizado em"; rascunho/slug inexistente → 404). A Home agora mostra os
+  3 últimos posts reais (link "Ver todas") no lugar das notícias de mentira (`newsItems` e `NewsCard` removidos); se a API
+  cair, Home e Blog abrem mesmo assim. Item "Blog" no menu, textos PT/EN. Testado de ponta a ponta contra uma API simulada
+  (lista, post com negrito, 404); `tsc`, `eslint` e `next build` limpos. Ainda sem tags/categorias nem paginação
 - ✅ **Usuários → Equipe**: resolvido na Fase 2 (`/admin/staff` + API `/staff`)
 - ✅ **Vilas, Clãs e Organizações: edição no painel (28/09)**: `/admin/villages` (lista + editor com os **clãs dentro**
   — a lista salva substitui a atual — e o nome em português na seção de tradução) e `/admin/organizations` (liga cada
@@ -347,8 +352,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 ### Próximos passos — sugestão (a combinar)
 1. **Testar a Fase 2 com o Discord de verdade** (login + bot num servidor de teste seu — passo a passo em
    `FASE2_LOCAL.md`): único ponto da Fase 2 ainda não visto funcionando de ponta a ponta
-2. **Página pública do Blog** (a API `/posts` e o painel já existem) e trocar as notícias de mentira da Home por
-   posts reais publicados
+2. ✅ ~~Página pública do Blog~~ — feita em 01/10
 3. **Descrição de vilas/clãs bilíngue** (inglês principal + tradução automática, como Masteries) — hoje é um idioma só
 4. **Mapa** ainda usa dados de mentira de vila (`lib/village-data.ts`): ligar na API
 5. **Testes de tela dentro do projeto** (vitest + jsdom — 19 já escritos, faltam entrar no `package.json` e num

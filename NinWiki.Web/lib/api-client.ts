@@ -739,6 +739,10 @@ export function listPosts(status?: 'draft' | 'published'): Promise<ApiPostSummar
   return apiFetch(`/posts${status ? `?status=${status}` : ''}`);
 }
 
+export function getPostBySlug(slug: string): Promise<ApiPost> {
+  return apiFetch(`/posts/slug/${encodeURIComponent(slug)}`);
+}
+
 export function getPost(id: string): Promise<ApiPost> {
   return apiFetch(`/posts/${id}`);
 }

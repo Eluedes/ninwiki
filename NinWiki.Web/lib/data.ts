@@ -465,60 +465,6 @@ export function getLevelGroups(category: string): { range: string; entries: Wiki
   return Object.entries(groups).map(([range, ents]) => ({ range, entries: ents }));
 }
 
-// ---- Noticias exibidas na home ----
-export interface NewsItem {
-  id: string;
-  date: string;
-  icon: string;
-  title: { pt: string; en: string };
-  summary: { pt: string; en: string };
-  tag: { pt: string; en: string };
-}
-
-export const newsItems: NewsItem[] = [
-  {
-    id: 'patch-2-4',
-    date: '2026-09-12',
-    icon: 'ScrollText',
-    tag: { pt: 'Patch Notes', en: 'Patch Notes' },
-    title: {
-      pt: 'Atualização 2.4 — Sistema de Clãs Renovado',
-      en: 'Update 2.4 — Clan System Overhaul',
-    },
-    summary: {
-      pt: 'O sistema de clãs foi totalmente reformulado com novos ranks, banco compartilhado e guerras de clãs em tempo real.',
-      en: 'The clan system has been completely reworked with new ranks, shared vaults, and real-time clan wars.',
-    },
-  },
-  {
-    id: 'event-moon',
-    date: '2026-09-08',
-    icon: 'Moon',
-    tag: { pt: 'Evento', en: 'Event' },
-    title: {
-      pt: 'Festival da Lua Sangrenta Começa em Breve',
-      en: 'Blood Moon Festival Arriving Soon',
-    },
-    summary: {
-      pt: 'Prepare-se para o evento sazonal com chefes exclusivos, cosméticos raros e missões de tempo limitado.',
-      en: 'Get ready for the seasonal event featuring exclusive bosses, rare cosmetics, and time-limited quests.',
-    },
-  },
-  {
-    id: 'balance-weapons',
-    date: '2026-09-03',
-    icon: 'Sword',
-    tag: { pt: 'Balanceamento', en: 'Balance' },
-    title: {
-      pt: 'Ajustes de Balanceamento de Armas — Setembro',
-      en: 'Weapon Balance Adjustments — September',
-    },
-    summary: {
-      pt: 'Katanas receberam buff de crítico, enquanto bo staves tiveram a velocidade de ataque ajustada para melhor fluidez.',
-      en: 'Katanas received a critical buff, while bo staves had attack speed adjusted for better fluidity.',
-    },
-  },
-];
 
 // ---- Dados do painel /admin ----
 // IMPORTANTE: isto e' so' visual. adminUser e' o usuario "logado" fixo

@@ -17,9 +17,10 @@ import type { Locale } from './types';
 export interface Dictionary {
   siteName: string;
   siteTagline: string;
-  nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; map: string };
+  nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; map: string; blog: string };
   home: { welcome: string; subtitle: string; browseAll: string };
-  news: { title: string; subtitle: string; readMore: string; viewAll: string };
+  news: { title: string; subtitle: string; readMore: string; viewAll: string; empty: string };
+  blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterSpecial: string };
   detail: { attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string };
   masteryDetail: {
@@ -196,6 +197,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     siteTagline: 'A enciclopédia definitiva do mundo Nin',
     nav: {
       home: 'Início',
+      blog: 'Blog',
       mobs: 'Monstros',
       items: 'Itens',
       guides: 'Guias',
@@ -215,6 +217,17 @@ export const dictionaries: Record<Locale, Dictionary> = {
       subtitle: 'Mantenha-se atualizado com as novidades do mundo Nin.',
       readMore: 'Leia mais',
       viewAll: 'Ver todas',
+      empty: 'Nenhuma notícia publicada ainda.',
+    },
+    blog: {
+      title: 'Blog',
+      subtitle: 'Notícias, patch notes e novidades do mundo Nin.',
+      empty: 'Nenhum post publicado ainda.',
+      loadError: 'Não foi possível carregar os posts agora.',
+      notFound: 'Post não encontrado.',
+      back: 'Voltar para o Blog',
+      by: 'por',
+      updated: 'Atualizado em',
     },
     catalog: {
       level: 'Nível',
@@ -705,6 +718,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     siteTagline: 'The definitive encyclopedia of the Nin world',
     nav: {
       home: 'Home',
+      blog: 'Blog',
       mobs: 'Bestiary',
       items: 'Items',
       guides: 'Guides',
@@ -724,6 +738,17 @@ export const dictionaries: Record<Locale, Dictionary> = {
       subtitle: 'Stay up to date with the latest from the Nin world.',
       readMore: 'Read more',
       viewAll: 'View all',
+      empty: 'No news published yet.',
+    },
+    blog: {
+      title: 'Blog',
+      subtitle: 'News, patch notes and updates from the Nin world.',
+      empty: 'No posts published yet.',
+      loadError: 'Could not load posts right now.',
+      notFound: 'Post not found.',
+      back: 'Back to the Blog',
+      by: 'by',
+      updated: 'Updated on',
     },
     catalog: {
       level: 'Level',
