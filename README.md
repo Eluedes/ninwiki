@@ -149,8 +149,8 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"   # rode 2x: JWT_SE
 
 ### 3.4b Deploy automático pelo GitHub Actions (alternativa ao zip manual)
 
-O workflow `.github/workflows/deploy-squarecloud.yml` envia o app para a SquareCloud **só quando você clicar em
-Actions → "Deploy na SquareCloud (manual)" → Run workflow**, escolhendo `api`, `web`, `bot` ou `todos`.
+Cada app tem seu workflow (`deploy-api.yml`, `deploy-web.yml`, `deploy-bot.yml` em `.github/workflows`) que envia o app para a SquareCloud **só quando você clicar em
+Actions → "Deploy API/Web/Bot na SquareCloud (manual)" → Run workflow**.
 O `.env` fica guardado nos **Secrets** do GitHub (criptografados) — nunca no código.
 
 1. Faça o primeiro envio de cada app pelo painel da SquareCloud (passos 3.2–3.4) para o app existir e ter um ID.

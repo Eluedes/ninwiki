@@ -8,7 +8,7 @@ ZIP="$(pwd)/$2"
 
 for v in SQUARE_API_KEY APP_ID APP_ENV; do
   if [ -z "${!v:-}" ]; then
-    echo "::error::Secret/variável '$v' vazia. Veja o cabeçalho de deploy-squarecloud.yml."
+    echo "::error::Secret/variável '$v' vazia. Veja o cabeçalho do workflow deploy-*.yml."
     exit 1
   fi
 done
