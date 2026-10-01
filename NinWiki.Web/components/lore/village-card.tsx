@@ -8,11 +8,11 @@ import type { ApiVillage } from '@/lib/api-client';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import { MapPin } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
-import { localizedName } from '@/lib/localized';
+import { elementLabel, localizedName, localizedText } from '@/lib/localized';
 
 /** Card de uma vila na listagem. */
 export function VillageCard({ village }: { village: ApiVillage }) {
-  const { locale } = useLanguage();
+  const { locale, dict } = useLanguage();
   const name = localizedName(locale, village.name, village.namePt);
   return (
     <Link
@@ -21,7 +21,7 @@ export function VillageCard({ village }: { village: ApiVillage }) {
     >
       <WikiImage
         src={village.image}
-        alt={`Emblema da ${name}`}
+        alt={dict.lore.emblemAlt.replace('{name}', name)}
         fallback={village.emblem}
         className="h-14 w-14 shrink-0 rounded-lg"
         imageClassName="object-contain p-1"
@@ -29,12 +29,12 @@ export function VillageCard({ village }: { village: ApiVillage }) {
 
       <div className="min-w-0 flex-1">
         <h3 className="font-display text-lg font-bold text-ink-100">{name}</h3>
-        <p className="mt-1 line-clamp-2 text-sm text-ink-300">{village.description}</p>
+        <p className="mt-1 line-clamp-2 text-sm text-ink-300">{localizedText(locale, village.description, village.descriptionPt)}</p>
         <div className="mt-2 flex items-center gap-2 text-xs text-ink-400">
           <MapPin className="h-3.5 w-3.5" />
-          <span>{village.element}</span>
+          <span>{elementLabel(locale, village.element)}</span>
           <span className="text-ink-600">·</span>
-          <span className="italic">&quot;{village.motto}&quot;</span>
+          <span className="italic">&quot;{localizedText(locale, village.motto, village.mottoPt)}&quot;</span>
         </div>
       </div>
 

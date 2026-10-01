@@ -61,7 +61,8 @@ export interface Attribute {
   id: AttributeId;
   name: string;
   englishName: string;
-  description: string;
+  description: string; // ingles (principal)
+  descriptionPt?: string; // portugues
   icon: string;
 }
 
@@ -91,35 +92,40 @@ export const attributes: Attribute[] = [
     id: 'strength',
     name: 'Força',
     englishName: 'Strength',
-    description: 'Escala armas corpo a corpo e Taijutsu com Punho Gentil GF ativado.',
+    description: 'Scales melee weapons and Taijutsu with Gentle Fist GF enabled.',
+    descriptionPt: 'Escala armas corpo a corpo e Taijutsu com Punho Gentil GF ativado.',
     icon: 'fist',
   },
   {
     id: 'agility',
     name: 'Agilidade',
     englishName: 'Agility',
-    description: 'Escala o caminho padrão de Taijutsu.',
+    description: 'Scales the standard Taijutsu path.',
+    descriptionPt: 'Escala o caminho padrão de Taijutsu.',
     icon: 'wind',
   },
   {
     id: 'intellect',
     name: 'Intelecto',
     englishName: 'Intellect',
-    description: 'Aumenta o dano de jutsus elementais, o dano mágico Médico e os arremessos de Arma à distância.',
+    description: 'Increases elemental jutsu damage, Medical magic damage and ranged Weapon throws.',
+    descriptionPt: 'Aumenta o dano de jutsus elementais, o dano mágico Médico e os arremessos de Arma à distância.',
     icon: 'brain',
   },
   {
     id: 'chakra',
     name: 'Chakra',
     englishName: 'Chakra',
-    description: 'No caminho de suporte Médico, mais Chakra aumenta o dano e a cura.',
+    description: 'On the Medical support path, more Chakra increases damage and healing.',
+    descriptionPt: 'No caminho de suporte Médico, mais Chakra aumenta o dano e a cura.',
     icon: 'sparkles',
   },
   {
     id: 'fortitude',
     name: 'Fortitude',
     englishName: 'Fortitude',
-    description: 'Aumenta a vida máxima e a resistência a dano.',
+    description: 'Increases maximum health and damage resistance.',
+    descriptionPt: 'Aumenta a vida máxima e a resistência a dano.',
     icon: 'shield',
   },
 ];

@@ -1,29 +1,13 @@
 // Listagem de Vilas Ocultas (rota /village). Server Component
-// assincrono, busca da API real.
+// assincrono, busca da API real; o visual (idioma) fica em components/lore/villages-page-client.tsx.
 
 import { listVillages } from '@/lib/api-client';
-import { VillageCard } from '@/components/lore/village-card';
-import { PageHeader } from '@/components/lore/page-header';
+import { VillagesPageClient } from '@/components/lore/villages-page-client';
 
 /** Listagem publica de vilas (Server Component: busca na API). */
 export default async function VillagesPage() {
   const villages = await listVillages();
-
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8 animate-fade-in">
-      <PageHeader
-        title="Vilas Ocultas"
-        subtitle="As grandes potências shinobi — cada uma com sua cultura e elemento."
-        breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Vilas' }]}
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {villages.map((v) => (
-          <VillageCard key={v.id} village={v} />
-        ))}
-      </div>
-    </div>
-  );
+  return <VillagesPageClient villages={villages} />;
 }
 
 // Busca da API a cada acesso: sem isso o Next pre-renderiza a pagina no build

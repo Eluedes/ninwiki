@@ -19,7 +19,7 @@ printf '%s\n' "$APP_ENV" > "$DIR/.env"
 rm -f "$ZIP"
 ( cd "$DIR" && zip -qr "$ZIP" . \
     -x "node_modules/*" ".next/*" "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" \
-       "uploads/*" "staff_files/*" "backups/*" "*.dump" ".git/*" )
+       "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" ".git/*" )
 
 [ -f "$DIR/squarecloud.app" ] || { echo "::error::squarecloud.app não encontrado em $DIR"; exit 1; }
 

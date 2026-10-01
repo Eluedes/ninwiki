@@ -7,8 +7,8 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
-import { listContentItems, listJutsus, listAuditLog, listPosts, listStaff, type ApiAuditLogEntry, type ApiContentItemSummary } from '@/lib/api-client';
-import { FileText, Boxes, Users, Zap, Loader2, Plus, Pencil, Trash2, History, Send, FileEdit, Clock } from 'lucide-react';
+import { listContentItems, listJutsus, listAuditLog, listPosts, listStaff, listErrors, type ApiAuditLogEntry, type ApiContentItemSummary } from '@/lib/api-client';
+import { Bug, FileText, Boxes, Users, Zap, Loader2, Plus, Pencil, Trash2, History, Send, FileEdit, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { NoticeBoard } from '@/components/admin/notice-board';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,7 @@ export default function AdminOverviewPage() {
   // "Agora" fixado uma vez (e nao chamado a cada render): Date.now() no render e' impuro e faria o numero de dias oscilar.
   const [now] = useState(() => Date.now());
   const [staffCount, setStaffCount] = useState<number | null>(null);
+  const [openErrors, setOpenErrors] = useState<number | null>(null);
   const [recentActivity, setRecentActivity] = useState<ApiAuditLogEntry[]>([]);
 
   useEffect(() => {
@@ -77,6 +78,10 @@ export default function AdminOverviewPage() {
     if (can('staff.view')) {
       listStaff().then((m) => setStaffCount(m.length)).catch(() => setStaffCount(null));
     }
+    // Problemas abertos do wiki (so' o S.Adm tem errors.view)
+    if (can('errors.view')) {
+      listErrors('open').then((e) => setOpenErrors(e.length)).catch(() => setOpenErrors(null));
+    }
     if (can('audit.view')) {
       listAuditLog(8).then(setRecentActivity).catch(() => setRecentActivity([]));
     }
@@ -87,6 +92,7 @@ export default function AdminOverviewPage() {
     { label: dict.admin.sidebar.jutsus, value: jutsuCount, icon: Zap, href: '/admin/jutsus' },
     { label: dict.admin.overview.totalPosts, value: postCount, icon: FileText, href: '/admin/blog-posts' },
     ...(can('staff.view') ? [{ label: dict.admin.sidebar.staff, value: staffCount, icon: Users, href: '/admin/staff' }] : []),
+    ...(can('errors.view') ? [{ label: dict.admin.errorsPage.open, value: openErrors, icon: Bug, href: '/admin/errors' }] : []),
   ];
 
   return (

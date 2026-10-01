@@ -22,6 +22,7 @@ from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.payloads import apply_scalar_fields
+from app.core.translation import fill_missing_translations, retranslate_fields
 from app.core.permissions import Permission
 from app.models.users import User
 from app.models.villages import Clan, Organization, OrganizationVillage, Village
@@ -31,6 +32,21 @@ from app.schemas.villages import (
 
 router = APIRouter(prefix="/villages", tags=["villages"])
 organizations_router = APIRouter(prefix="/organizations", tags=["organizations"])
+
+# Pares (campo EN, campo PT) que a DeepL traduz sozinha. Os campos sem sufixo sao o INGLES (principal).
+VILLAGE_TRANSLATABLE = [("motto", "motto_pt"), ("description", "description_pt"),
+                        ("long_description", "long_description_pt"), ("climate", "climate_pt")]
+CLAN_TRANSLATABLE = [("name", "name_pt"), ("description", "description_pt")]
+ORG_TRANSLATABLE = [("name", "name_pt"), ("description", "description_pt")]
+
+
+async def _translate_village(village: Village, force: bool = False) -> None:
+    """Traduz EN -> PT os textos da vila e de cada cla' (so' o que esta' vazio; force=True refaz tudo)."""
+    fn = retranslate_fields if force else fill_missing_translations
+    await fn(village, VILLAGE_TRANSLATABLE)
+    for clan in village.clans:
+        await fn(clan, CLAN_TRANSLATABLE)
+
 
 _WITH_RELATIONS = (selectinload(Village.clans), selectinload(Village.organizations))
 
@@ -57,7 +73,7 @@ async def get_village(village_id: str, db: AsyncSession = Depends(get_db)):
     """Ficha de UMA vila (publico)."""
     village = await _load_village(db, village_id)
     if village is None:
-        raise HTTPException(status_code=404, detail="Vila não encontrada")
+        raise HTTPException(status_code=404, detail="Village not found")
     return village
 
 
@@ -70,7 +86,7 @@ async def _sync_clans(db: AsyncSession, village: Village, clans: list[ClanWrite]
         rows = (await db.execute(select(Clan.id, Clan.village_id).where(Clan.id.in_(ids)))).all()
         for clan_id, owner in rows:
             if owner != village.id:
-                raise HTTPException(status_code=409, detail=f"O clã '{clan_id}' já pertence a outra vila")
+                raise HTTPException(status_code=409, detail=f"The clan '{clan_id}' already belongs to another village")
     existing = {c.id: c for c in village.clans}
     for c in clans:
         if c.id in existing:
@@ -91,12 +107,13 @@ async def create_village(
 ):
     """Cria uma vila com seus cla's (exige lore.edit)."""
     if await db.get(Village, payload.id) is not None:
-        raise HTTPException(status_code=409, detail=f"Já existe uma vila com o id '{payload.id}'")
+        raise HTTPException(status_code=409, detail=f"A village with the id '{payload.id}' already exists")
     village = Village(**payload.model_dump(exclude={"clans"}))
     db.add(village)
     await db.flush()
     await db.refresh(village, attribute_names=["clans"])
     await _sync_clans(db, village, payload.clans)
+    await _translate_village(village)
     await log_action(db, action="create", entity_type="village", entity_id=village.id,
                      diff={"name": village.name, "clans": len(payload.clans)}, actor=staff)
     await db.commit()
@@ -113,14 +130,31 @@ async def update_village(
     """Edita a vila; a lista de cla's enviada substitui a atual."""
     village = await _load_village(db, village_id)
     if village is None:
-        raise HTTPException(status_code=404, detail="Vila não encontrada")
+        raise HTTPException(status_code=404, detail="Village not found")
     if payload.id != village_id:
-        raise HTTPException(status_code=400, detail="O id da vila não pode ser alterado")
+        raise HTTPException(status_code=400, detail="The village id cannot be changed")
     before = {"name": village.name}
     apply_scalar_fields(village, payload, exclude={"id", "clans"})
     await _sync_clans(db, village, payload.clans)
+    await _translate_village(village)
     await log_action(db, action="update", entity_type="village", entity_id=village.id,
                      diff={"before": before, "after": {"name": village.name}, "clans": len(payload.clans)}, actor=staff)
+    await db.commit()
+    db.expire_all()
+    return await _load_village(db, village_id)
+
+
+@router.post("/{village_id}/retranslate", response_model=VillageRead)
+async def retranslate_village(
+    village_id: str,
+    staff: User = Depends(require_permission(Permission.LORE_EDIT, Permission.TRANSLATION_RETRANSLATE)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Forca a traducao nova (EN -> PT) dos textos da vila e dos cla's - para quando o ingles mudou."""
+    village = await _load_village(db, village_id)
+    if village is None:
+        raise HTTPException(status_code=404, detail="Village not found")
+    await _translate_village(village, force=True)
     await db.commit()
     db.expire_all()
     return await _load_village(db, village_id)
@@ -135,7 +169,7 @@ async def delete_village(
     """Apaga a vila (e seus cla's) - exige lore.delete."""
     village = await _load_village(db, village_id)
     if village is None:
-        raise HTTPException(status_code=404, detail="Vila não encontrada")
+        raise HTTPException(status_code=404, detail="Village not found")
     name = village.name
     await db.delete(village)  # clas vao junto (cascade); entries que usavam a vila ficam sem vila (SET NULL)
     await log_action(db, action="delete", entity_type="village", entity_id=village_id, diff={"name": name}, actor=staff)
@@ -149,7 +183,8 @@ async def _org_read(db: AsyncSession, org: Organization) -> OrganizationAdminRea
     rows = (await db.execute(
         select(OrganizationVillage.village_id).where(OrganizationVillage.organization_id == org.id)
     )).scalars().all()
-    return OrganizationAdminRead(id=org.id, name=org.name, description=org.description, village_ids=sorted(rows))
+    return OrganizationAdminRead(id=org.id, name=org.name, description=org.description, name_pt=org.name_pt,
+                                 description_pt=org.description_pt, village_ids=sorted(rows))
 
 
 async def _set_org_villages(db: AsyncSession, org_id: str, village_ids: list[str]) -> None:
@@ -158,7 +193,7 @@ async def _set_org_villages(db: AsyncSession, org_id: str, village_ids: list[str
         found = set((await db.execute(select(Village.id).where(Village.id.in_(village_ids)))).scalars())
         missing = [v for v in village_ids if v not in found]
         if missing:
-            raise HTTPException(status_code=400, detail=f"Vila(s) não existe(m): {', '.join(missing)}")
+            raise HTTPException(status_code=400, detail=f"Village(s) do not exist: {', '.join(missing)}")
     await db.execute(delete(OrganizationVillage).where(OrganizationVillage.organization_id == org_id))
     for vid in village_ids:
         db.add(OrganizationVillage(organization_id=org_id, village_id=vid))
@@ -173,7 +208,8 @@ async def list_organizations(db: AsyncSession = Depends(get_db)):
     for link in links:
         by_org.setdefault(link.organization_id, []).append(link.village_id)
     return [
-        OrganizationAdminRead(id=o.id, name=o.name, description=o.description, village_ids=sorted(by_org.get(o.id, [])))
+        OrganizationAdminRead(id=o.id, name=o.name, description=o.description, name_pt=o.name_pt,
+                              description_pt=o.description_pt, village_ids=sorted(by_org.get(o.id, [])))
         for o in orgs
     ]
 
@@ -186,9 +222,11 @@ async def create_organization(
 ):
     """Cria uma organizacao e liga as vilas (exige lore.edit)."""
     if await db.get(Organization, payload.id) is not None:
-        raise HTTPException(status_code=409, detail=f"Já existe uma organização com o id '{payload.id}'")
-    org = Organization(id=payload.id, name=payload.name, description=payload.description)
+        raise HTTPException(status_code=409, detail=f"An organization with the id '{payload.id}' already exists")
+    org = Organization(id=payload.id, name=payload.name, description=payload.description,
+                       name_pt=payload.name_pt, description_pt=payload.description_pt)
     db.add(org)
+    await fill_missing_translations(org, ORG_TRANSLATABLE)  # DeepL EN -> PT (so' o que veio vazio)
     await db.flush()
     await _set_org_villages(db, org.id, payload.village_ids)
     await log_action(db, action="create", entity_type="organization", entity_id=org.id,
@@ -207,15 +245,33 @@ async def update_organization(
     """Edita uma organizacao e suas vilas."""
     org = await db.get(Organization, org_id)
     if org is None:
-        raise HTTPException(status_code=404, detail="Organização não encontrada")
+        raise HTTPException(status_code=404, detail="Organization not found")
     if payload.id != org_id:
-        raise HTTPException(status_code=400, detail="O id da organização não pode ser alterado")
+        raise HTTPException(status_code=400, detail="The organization id cannot be changed")
     before = {"name": org.name}
     org.name = payload.name
     org.description = payload.description
+    org.name_pt = payload.name_pt
+    org.description_pt = payload.description_pt
+    await fill_missing_translations(org, ORG_TRANSLATABLE)  # DeepL EN -> PT (so' o que ficou vazio)
     await _set_org_villages(db, org.id, payload.village_ids)
     await log_action(db, action="update", entity_type="organization", entity_id=org.id,
                      diff={"before": before, "after": {"name": org.name}, "villages": payload.village_ids}, actor=staff)
+    await db.commit()
+    return await _org_read(db, org)
+
+
+@organizations_router.post("/{org_id}/retranslate", response_model=OrganizationAdminRead)
+async def retranslate_organization(
+    org_id: str,
+    staff: User = Depends(require_permission(Permission.LORE_EDIT, Permission.TRANSLATION_RETRANSLATE)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Forca a traducao nova (EN -> PT) de nome e descricao da organizacao."""
+    org = await db.get(Organization, org_id)
+    if org is None:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    await retranslate_fields(org, ORG_TRANSLATABLE)
     await db.commit()
     return await _org_read(db, org)
 
@@ -229,7 +285,7 @@ async def delete_organization(
     """Apaga uma organizacao (exige lore.delete)."""
     org = await db.get(Organization, org_id)
     if org is None:
-        raise HTTPException(status_code=404, detail="Organização não encontrada")
+        raise HTTPException(status_code=404, detail="Organization not found")
     name = org.name
     await db.delete(org)  # as ligacoes com vilas somem pelo ON DELETE CASCADE do banco
     await log_action(db, action="delete", entity_type="organization", entity_id=org_id, diff={"name": name}, actor=staff)

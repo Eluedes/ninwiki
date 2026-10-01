@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, AlertTriangle, Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertTriangle, Plus, Pencil, Trash2, ArrowLeft, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,14 +13,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import {
-  ApiError, createOrganization, deleteOrganization, listOrganizations, listVillages, updateOrganization,
+  ApiError, createOrganization, deleteOrganization, listOrganizations, listVillages, retranslateOrganization, updateOrganization,
   type ApiOrganizationAdmin, type ApiVillage, type OrganizationInput,
 } from '@/lib/api-client';
-import { localizedName } from '@/lib/localized';
+import { localizedName, localizedText } from '@/lib/localized';
 import { slugify } from '@/lib/utils';
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const EMPTY: OrganizationInput = { id: '', name: '', description: '', villageIds: [] };
+const EMPTY: OrganizationInput = { id: '', name: '', description: '', namePt: '', descriptionPt: '', villageIds: [] };
+
+/** Texto vazio vira null (a API entende "vazio" como "a DeepL traduz"). */
+const emptyToNull = (v: string | null | undefined) => (v && v.trim() ? v : null);
 
 /** Organizacoes no painel: lista e formulario (liga cada organizacao a vilas). */
 export default function OrganizationsAdminPage() {
@@ -64,7 +67,7 @@ export default function OrganizationsAdminPage() {
   function openEdit(o: ApiOrganizationAdmin) {
     setFormError(null);
     setForm({
-      data: { id: o.id, name: o.name, description: o.description, villageIds: [...o.villageIds] },
+      data: { id: o.id, name: o.name, description: o.description, namePt: o.namePt ?? '', descriptionPt: o.descriptionPt ?? '', villageIds: [...o.villageIds] },
       isNew: false,
       idTouched: true,
     });
@@ -74,12 +77,13 @@ export default function OrganizationsAdminPage() {
     e.preventDefault();
     if (!form) return;
     const { data, isNew } = form;
-    if (!data.name.trim()) return setFormError('O nome é obrigatório.');
-    if (!SLUG.test(data.id)) return setFormError('O id deve ter só letras minúsculas, números e hífen (ex: anbu).');
+    if (!data.name.trim()) return setFormError(t.orgNameRequired);
+    if (!SLUG.test(data.id)) return setFormError(t.orgIdInvalid);
     setBusy(true);
     setFormError(null);
     try {
-      const saved = isNew ? await createOrganization(data) : await updateOrganization(data.id, data);
+      const payload = { ...data, namePt: emptyToNull(data.namePt), descriptionPt: emptyToNull(data.descriptionPt) };
+      const saved = isNew ? await createOrganization(payload) : await updateOrganization(payload.id, payload);
       setOrgs((prev) =>
         isNew ? [...prev, saved].sort((a, b) => a.name.localeCompare(b.name)) : prev.map((o) => (o.id === saved.id ? saved : o))
       );
@@ -99,6 +103,22 @@ export default function OrganizationsAdminPage() {
       setOrgs((prev) => prev.filter((x) => x.id !== o.id));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.deleteError);
+    }
+  }
+
+  /** Refaz a traducao EN -> PT (DeepL) da organizacao aberta no formulario. */
+  async function handleRetranslate() {
+    if (!form || form.isNew || !window.confirm(dict.admin.translation.retranslateConfirm)) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      const saved = await retranslateOrganization(form.data.id);
+      setOrgs((prev) => prev.map((o) => (o.id === saved.id ? saved : o)));
+      setForm((f) => f && { ...f, data: { ...f.data, namePt: saved.namePt ?? '', descriptionPt: saved.descriptionPt ?? '' } });
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : dict.admin.translation.retranslateError);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -179,6 +199,25 @@ export default function OrganizationsAdminPage() {
               onChange={(e) => setForm((f) => f && { ...f, data: { ...f.data, description: e.target.value } })}
             />
           </div>
+          <div className="space-y-3 rounded-lg border border-dashed border-border p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="flex items-center gap-2 text-sm font-semibold"><Languages className="h-4 w-4" /> {dict.admin.translation.sectionTitle}</p>
+              {!form.isNew && (
+                <Button type="button" variant="outline" size="sm" disabled={busy} onClick={handleRetranslate}>
+                  <Languages className="mr-1.5 h-4 w-4" /> {dict.admin.translation.retranslate}
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">{t.orgTranslationNote}</p>
+            <div className="space-y-2">
+              <label className={label}>{dict.admin.translation.nameLabel}</label>
+              <Input value={form.data.namePt ?? ''} onChange={(e) => setForm((f) => f && { ...f, data: { ...f.data, namePt: e.target.value } })} />
+            </div>
+            <div className="space-y-2">
+              <label className={label}>{dict.admin.translation.descriptionLabel}</label>
+              <Textarea rows={2} value={form.data.descriptionPt ?? ''} onChange={(e) => setForm((f) => f && { ...f, data: { ...f.data, descriptionPt: e.target.value } })} />
+            </div>
+          </div>
           <div className="space-y-2">
             <label className={label}>{t.orgVillages}</label>
             {villages.length === 0 && <p className="text-sm text-muted-foreground">{t.noVillagesYet}</p>}
@@ -220,9 +259,9 @@ export default function OrganizationsAdminPage() {
             <div key={o.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
               <div className="min-w-0 flex-1">
                 <p className="font-semibold leading-tight">
-                  {o.name} <span className="font-mono text-xs font-normal text-muted-foreground">{o.id}</span>
+                  {localizedName(locale, o.name, o.namePt)} <span className="font-mono text-xs font-normal text-muted-foreground">{o.id}</span>
                 </p>
-                <p className="truncate text-xs text-muted-foreground">{o.description}</p>
+                <p className="truncate text-xs text-muted-foreground">{localizedText(locale, o.description, o.descriptionPt)}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t.orgVillages}: {o.villageIds.length ? o.villageIds.map(villageName).join(', ') : '—'}
                 </p>

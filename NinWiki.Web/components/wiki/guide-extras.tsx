@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sparkles, Pickaxe, Hammer, ArrowUp, ScrollText, Sparkle } from 'lucide-react';
 import type { ApiAttribute, ApiProfession, ApiNinjaRank, ApiStoryArc, ApiSummon } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
-import { alternateName, localizedName } from '@/lib/localized';
+import { alternateName, localizedName, localizedText } from '@/lib/localized';
 
 interface GuideExtrasProps {
   attributes: ApiAttribute[];
@@ -25,7 +25,8 @@ interface GuideExtrasProps {
 
 /** Abas extras do Guia: atributos, profissoes, ranks, arcos e summons. */
 export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, summons }: GuideExtrasProps) {
-  const { locale } = useLanguage();
+  const { locale, dict } = useLanguage();
+  const t = dict.lore;
   const gathering = professions.filter((p) => p.group === 'gathering');
   const crafting = professions.filter((p) => p.group === 'crafting');
   // ninjaRanks ja' vem ordenado por hierarquia direto da API
@@ -34,14 +35,14 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
 
   return (
     <div className="mt-10 rounded-xl border border-border bg-card p-5 shadow-sm">
-      <h2 className="mb-4 text-lg font-bold tracking-tight">Mais em Guias</h2>
+      <h2 className="mb-4 text-lg font-bold tracking-tight">{t.guideMore}</h2>
       <Tabs defaultValue="attributes">
         <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="attributes">Atributos</TabsTrigger>
-          <TabsTrigger value="professions">Profissões</TabsTrigger>
-          <TabsTrigger value="ranks">Ranks Ninja</TabsTrigger>
-          <TabsTrigger value="arcs">Story Arcs</TabsTrigger>
-          <TabsTrigger value="summons">Summons</TabsTrigger>
+          <TabsTrigger value="attributes">{t.guideAttributes}</TabsTrigger>
+          <TabsTrigger value="professions">{t.guideProfessions}</TabsTrigger>
+          <TabsTrigger value="ranks">{t.guideRanks}</TabsTrigger>
+          <TabsTrigger value="arcs">{t.guideArcs}</TabsTrigger>
+          <TabsTrigger value="summons">{t.guideSummons}</TabsTrigger>
         </TabsList>
 
         {/* Atributos: reaproveita o mesmo array usado nas paginas de
@@ -56,7 +57,7 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
                   <p className="text-sm font-semibold text-card-foreground">
                     {attr.name} {attr.namePt && <span className="font-normal text-muted-foreground">({attr.namePt})</span>}
                   </p>
-                  <p className="text-xs text-muted-foreground">{attr.description}</p>
+                  <p className="text-xs text-muted-foreground">{localizedText(locale, attr.description, attr.descriptionPt)}</p>
                 </div>
               </div>
             ))}
@@ -66,7 +67,7 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
         <TabsContent value="professions" className="mt-4 space-y-4">
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Pickaxe className="h-3.5 w-3.5" /> Coleta
+              <Pickaxe className="h-3.5 w-3.5" /> {t.guideGathering}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {gathering.map((p) => (
@@ -74,7 +75,7 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
                   <span className="text-xl leading-none">{p.icon}</span>
                   <div>
                     <p className="text-sm font-semibold text-card-foreground">{localizedName(locale, p.name, p.namePt)}</p>
-                    <p className="text-xs text-muted-foreground">{p.description}</p>
+                    <p className="text-xs text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
                   </div>
                 </div>
               ))}
@@ -82,7 +83,7 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
           </div>
           <div>
             <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Hammer className="h-3.5 w-3.5" /> Criação
+              <Hammer className="h-3.5 w-3.5" /> {t.guideCrafting}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {crafting.map((p) => (
@@ -90,7 +91,7 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
                   <span className="text-xl leading-none">{p.icon}</span>
                   <div>
                     <p className="text-sm font-semibold text-card-foreground">{localizedName(locale, p.name, p.namePt)}</p>
-                    <p className="text-xs text-muted-foreground">{p.description}</p>
+                    <p className="text-xs text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
                   </div>
                 </div>
               ))}
@@ -109,7 +110,7 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
                   <p className="text-sm font-semibold text-card-foreground">
                     {localizedName(locale, rank.name, rank.namePt)}{alternateName(locale, rank.name, rank.namePt) && <span className="font-normal text-muted-foreground"> ({alternateName(locale, rank.name, rank.namePt)})</span>}
                   </p>
-                  <p className="text-xs text-muted-foreground">{rank.description}</p>
+                  <p className="text-xs text-muted-foreground">{localizedText(locale, rank.description, rank.descriptionPt)}</p>
                 </div>
               </div>
             ))}
@@ -127,9 +128,9 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
                 <ScrollText className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <div>
                   <p className="text-sm font-semibold text-card-foreground">
-                    {arc.name} <span className="font-normal text-muted-foreground">· Nv. {arc.levelRange}</span>
+                    {localizedName(locale, arc.name, arc.namePt)} <span className="font-normal text-muted-foreground">· {locale === 'pt' ? 'Nv.' : 'Lv.'} {arc.levelRange}</span>
                   </p>
-                  <p className="text-xs text-muted-foreground">{arc.description}</p>
+                  <p className="text-xs text-muted-foreground">{localizedText(locale, arc.description, arc.descriptionPt)}</p>
                 </div>
               </div>
             ))}
@@ -149,11 +150,11 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
                     {localizedName(locale, summon.name, summon.namePt)}{alternateName(locale, summon.name, summon.namePt) && <span className="font-normal text-muted-foreground"> ({alternateName(locale, summon.name, summon.namePt)})</span>}
                   </p>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{summon.village}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{localizedText(locale, summon.village, summon.villagePt)}</p>
                 <ol className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-                  <li>1. {summon.stageYoung}</li>
-                  <li>2. {summon.stageTeen}</li>
-                  <li>3. {summon.stageAdult}</li>
+                  <li>1. {localizedText(locale, summon.stageYoung, summon.stageYoungPt)}</li>
+                  <li>2. {localizedText(locale, summon.stageTeen, summon.stageTeenPt)}</li>
+                  <li>3. {localizedText(locale, summon.stageAdult, summon.stageAdultPt)}</li>
                 </ol>
               </div>
             ))}

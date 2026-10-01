@@ -12,16 +12,16 @@ import { z } from 'zod';
 export const contentItemSchema = z.object({
   slug: z
     .string()
-    .min(1, 'O slug é obrigatório.')
-    .max(150, 'O slug pode ter no máximo 150 caracteres.')
-    .regex(/^[a-z0-9-]+$/, 'Use só letras minúsculas, números e hífen (ex: fire-larva).'),
+    .min(1, 'The slug is required.')
+    .max(150, 'The slug can have at most 150 characters.')
+    .regex(/^[a-z0-9-]+$/, 'Use only lowercase letters, numbers and hyphens (e.g. fire-larva).'),
   category: z.enum(['mobs', 'items', 'guides', 'weapons', 'missions']),
-  name: z.string().min(1, 'O nome é obrigatório.').max(200, 'O nome pode ter no máximo 200 caracteres.'),
-  level: z.coerce.number().int('Nível precisa ser um número inteiro.').min(0, 'Nível não pode ser negativo.'),
-  icon: z.string().min(1, 'Escolha um ícone (emoji).').max(20),
+  name: z.string().min(1, 'The name is required.').max(200, 'The name can have at most 200 characters.'),
+  level: z.coerce.number().int('Level must be a whole number.').min(0, 'Level cannot be negative.'),
+  icon: z.string().min(1, 'Pick an icon (emoji).').max(20),
   image: z.string().nullable().optional(),
   rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']),
-  description: z.string().min(1, 'A descrição é obrigatória.'),
+  description: z.string().min(1, 'The description is required.'),
   lore: z.string().nullable().optional(),
   synergy: z.string().nullable().optional(),
   // So' relevante quando category === 'mobs' - mesmo padrao de
@@ -56,37 +56,37 @@ export type ContentItemFormValues = z.infer<typeof contentItemSchema>;
 export const jutsuSchema = z.object({
   id: z
     .string()
-    .min(1, 'O id/slug é obrigatório.')
-    .max(80, 'O id pode ter no máximo 80 caracteres.')
-    .regex(/^[a-z0-9-]+$/, 'Use só letras minúsculas, números e hífen (ex: katon-goukakyuu).'),
-  name: z.string().min(1, 'O nome é obrigatório.'),
+    .min(1, 'The id/slug is required.')
+    .max(80, 'The id can have at most 80 characters.')
+    .regex(/^[a-z0-9-]+$/, 'Use only lowercase letters, numbers and hyphens (e.g. katon-goukakyuu).'),
+  name: z.string().min(1, 'The name is required.'),
   namePt: z.string().nullable().optional(),
   masteryId: z.string().min(1, 'Escolha uma mastery.'),
   pathId: z.string().nullable().optional(),
-  tier: z.coerce.number().int().min(1, 'Tier mínimo é 1.').max(5, 'Tier máximo é 5.'),
-  chakraCost: z.coerce.number().int().min(0, 'Custo de chakra não pode ser negativo.'),
-  description: z.string().min(1, 'A descrição curta é obrigatória.'),
-  longDescription: z.string().min(1, 'A descrição completa é obrigatória.'),
+  tier: z.coerce.number().int().min(1, 'Minimum tier is 1.').max(5, 'Maximum tier is 5.'),
+  chakraCost: z.coerce.number().int().min(0, 'Chakra cost cannot be negative.'),
+  description: z.string().min(1, 'The short description is required.'),
+  longDescription: z.string().min(1, 'The full description is required.'),
   descriptionPt: z.string().nullable().optional(),
   longDescriptionPt: z.string().nullable().optional(),
   effect: z.string().min(1, 'Descreva o efeito.'),
   range: z.string().min(1, 'Informe o alcance.'),
-  castTime: z.string().min(1, 'Informe o tempo de conjuração.'),
+  castTime: z.string().min(1, 'Enter the cast time.'),
   cooldown: z.string().min(1, 'Informe o cooldown.'),
-  icon: z.string().min(1, 'Escolha um ícone.'),
+  icon: z.string().min(1, 'Pick an icon.'),
   gif: z.string().nullable().optional(),
 });
 
 export type JutsuFormValues = z.infer<typeof jutsuSchema>;
 
 export const masterySchema = z.object({
-  name: z.string().min(1, 'O nome é obrigatório.').max(100),
+  name: z.string().min(1, 'The name is required.').max(100),
   namePt: z.string().nullable().optional(),
-  description: z.string().min(1, 'A descrição é obrigatória.'),
-  longDescription: z.string().min(1, 'A descrição completa é obrigatória.'),
+  description: z.string().min(1, 'The description is required.'),
+  longDescription: z.string().min(1, 'The full description is required.'),
   descriptionPt: z.string().nullable().optional(),
   longDescriptionPt: z.string().nullable().optional(),
-  icon: z.string().min(1, 'Escolha um ícone.').max(50),
+  icon: z.string().min(1, 'Pick an icon.').max(50),
   color: z.string().min(1, 'Escolha uma cor.').max(20),
   image: z.string().nullable().optional(),
   gif: z.string().nullable().optional(),
@@ -100,27 +100,35 @@ export type MasteryFormValues = z.infer<typeof masterySchema>;
 // ---- Vilas e Clas (mesmas regras do backend: app/schemas/villages.py) ----
 
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const slugMessage = 'Use só letras minúsculas, números e hífen (ex: leaf-village).';
+const slugMessage = 'Use only lowercase letters, numbers and hyphens (e.g. leaf-village).';
 
 export const clanSchema = z.object({
-  id: z.string().min(1, 'O id do clã é obrigatório.').max(50).regex(slugRegex, slugMessage),
-  name: z.string().min(1, 'O nome do clã é obrigatório.').max(100),
+  id: z.string().min(1, 'The clan id is required.').max(50).regex(slugRegex, slugMessage),
+  name: z.string().min(1, 'The clan name is required.').max(100),
+  // Traducao EN -> PT (vazio = a DeepL traduz ao salvar)
+  namePt: z.string().max(100).nullable().optional(),
+  descriptionPt: z.string().nullable().optional(),
   description: z.string(),
   image: z.string().max(500).nullable().optional(),
 });
 
 export const villageSchema = z
   .object({
-    id: z.string().min(1, 'O id/slug é obrigatório.').max(50).regex(slugRegex, slugMessage),
-    name: z.string().min(1, 'O nome é obrigatório.').max(100),
+    id: z.string().min(1, 'The id/slug is required.').max(50).regex(slugRegex, slugMessage),
+    name: z.string().min(1, 'The name is required.').max(100),
     namePt: z.string().max(100).nullable().optional(),
-    element: z.string().min(1, 'O elemento é obrigatório.').max(50),
+    element: z.string().min(1, 'The element is required.').max(50),
     motto: z.string().max(200),
     description: z.string(),
     longDescription: z.string(),
-    emblem: z.string().min(1, 'O emblema é obrigatório.').max(20),
+    // Traducoes EN -> PT (vazio = a DeepL traduz ao salvar)
+    mottoPt: z.string().max(200).nullable().optional(),
+    descriptionPt: z.string().nullable().optional(),
+    longDescriptionPt: z.string().nullable().optional(),
+    climatePt: z.string().max(200).nullable().optional(),
+    emblem: z.string().min(1, 'The emblem is required.').max(20),
     image: z.string().nullable().optional(),
-    accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Use uma cor no formato #RRGGBB.'),
+    accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Use a color in the #RRGGBB format.'),
     climate: z.string().max(200),
     leader: z.string().max(100),
     mapX: z.coerce.number().min(0, 'Entre 0 e 100.').max(100, 'Entre 0 e 100.'),
@@ -128,7 +136,7 @@ export const villageSchema = z
     clans: z.array(clanSchema),
   })
   .refine((v) => new Set(v.clans.map((c) => c.id)).size === v.clans.length, {
-    message: 'Dois clãs com o mesmo id.',
+    message: 'Two clans with the same id.',
     path: ['clans'],
   });
 
@@ -137,14 +145,18 @@ export type VillageFormValues = z.infer<typeof villageSchema>;
 // ---- Blog (posts) - mesmas regras do backend (app/schemas/posts.py) ----
 
 export const postSchema = z.object({
-  title: z.string().min(1, 'O título é obrigatório.').max(200, 'Máximo de 200 caracteres.'),
+  title: z.string().min(1, 'The title is required.').max(200, 'Maximum of 200 characters.'),
   slug: z
     .string()
-    .min(1, 'O slug é obrigatório.')
+    .min(1, 'The slug is required.')
     .max(150)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use só letras minúsculas, números e hífen (ex: patch-notes-1-2).'),
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use only lowercase letters, numbers and hyphens (e.g. patch-notes-1-2).'),
   excerpt: z.string(),
   content: z.string(),
+  // Traducoes EN -> PT (vazio = a DeepL traduz ao salvar)
+  titlePt: z.string().max(200).nullable().optional(),
+  excerptPt: z.string().nullable().optional(),
+  contentPt: z.string().nullable().optional(),
   coverImage: z.string().nullable().optional(),
 });
 

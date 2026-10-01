@@ -24,6 +24,7 @@ class AttributeRead(CamelModel):
     name: str
     name_pt: str | None
     description: str
+    description_pt: str | None = None  # traducao EN -> PT (DeepL)
     icon: str
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)

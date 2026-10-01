@@ -92,4 +92,4 @@ def client_key() -> str:
 
 def retry_message(seconds: int) -> str:
     """Mensagem em portugues para o 429 ('tente de novo em N segundos')."""
-    return f"Muitas tentativas. Tente de novo em {seconds} segundos."
+    return f"Too many attempts. Try again in {seconds} seconds."

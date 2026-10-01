@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { getContentItemBySlug, listContentItems, ApiError } from '@/lib/api-client';
+import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { DetailPageClient } from '@/components/wiki/detail-page-client';
 
 /** Pagina publica de uma entry (Server Component: busca na API). */
@@ -22,18 +23,7 @@ export default async function DetailPage({
     entry = await getContentItemBySlug(slug);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return (
-        <div className="mx-auto max-w-6xl px-4 py-20 text-center">
-          <h1 className="text-2xl font-bold">404</h1>
-          <p className="mt-2 text-muted-foreground">Entry not found.</p>
-          <Link href="/">
-            <Button className="mt-4" variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-          </Link>
-        </div>
-      );
+      return <LoreNotFound kind="entry" />;
     }
     throw err;
   }

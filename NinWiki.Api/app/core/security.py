@@ -96,7 +96,7 @@ def ensure_same_origin(request: Request) -> None:
     """
     origin = request.headers.get("origin")
     if origin is not None and origin != settings.frontend_origin:
-        raise HTTPException(status_code=403, detail="Origem não permitida")
+        raise HTTPException(status_code=403, detail="Origin not allowed")
 
 
 def _resolve_client_ip(scope: dict) -> str | None:

@@ -136,7 +136,7 @@ export default function BulkImportPage() {
 }`}</pre>
           <p className="mt-1.5 text-xs text-muted-foreground">
             {t.acceptedCategories}: {VALID_CATEGORIES.join(', ')}. <code className="text-[11px]">mobType</code>/
-            <code className="text-[11px]">itemType</code> são opcionais.
+            <code className="text-[11px]">itemType</code> are optional.
           </p>
         </div>
 

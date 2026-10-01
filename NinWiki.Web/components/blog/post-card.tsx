@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { ArrowRight, Newspaper } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { localizedText } from '@/lib/localized';
 import { useLanguage } from '@/components/providers/language-provider';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import type { ApiPostSummary } from '@/lib/api-client';
@@ -33,7 +34,7 @@ export function PostCard({ post }: { post: ApiPostSummary }) {
     >
       <WikiImage
         src={post.coverImage}
-        alt={post.title}
+        alt={localizedText(locale, post.title, post.titlePt)}
         fallback={<Newspaper className="h-8 w-8 text-primary" />}
         className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary"
         imageClassName="h-full w-full object-cover"
@@ -44,10 +45,10 @@ export function PostCard({ post }: { post: ApiPostSummary }) {
           {post.authorName ? ` · ${dict.blog.by} ${post.authorName}` : ''}
         </div>
         <h3 className="text-base font-bold tracking-tight text-card-foreground transition-colors group-hover:text-primary">
-          {post.title}
+          {localizedText(locale, post.title, post.titlePt)}
         </h3>
         {post.excerpt && (
-          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{post.excerpt}</p>
+          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{localizedText(locale, post.excerpt, post.excerptPt)}</p>
         )}
         <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary">
           {dict.news.readMore}

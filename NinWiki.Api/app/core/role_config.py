@@ -51,7 +51,7 @@ async def save_role_permissions(db: AsyncSession, role: StaffRole, granted: set[
     padrao (assim, se o padrao mudar no codigo, o que nao foi tocado acompanha). Nao faz commit.
     """
     if role not in EDITABLE_ROLES:
-        raise ValueError("Esse cargo não pode ser editado")
+        raise ValueError("This role cannot be edited")
     allowed = set(grantable_permissions())
     granted = granted & allowed
     default = set(DEFAULT_ROLE_PERMISSIONS[role]) & allowed
@@ -64,5 +64,5 @@ async def save_role_permissions(db: AsyncSession, role: StaffRole, granted: set[
 async def reset_role(db: AsyncSession, role: StaffRole) -> None:
     """Apaga os ajustes de um cargo (volta ao padrao). Nao faz commit."""
     if role not in EDITABLE_ROLES:
-        raise ValueError("Esse cargo não pode ser editado")
+        raise ValueError("This role cannot be edited")
     await db.execute(delete(RolePermission).where(RolePermission.role == role))

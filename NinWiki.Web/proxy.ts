@@ -63,7 +63,7 @@ export function proxy(req: NextRequest) {
     ? checkRate(`${ip}|prefetch`, Date.now(), LIMIT * PREFETCH_MULTIPLIER)
     : checkRate(ip, Date.now(), LIMIT);
   if (wait > 0) {
-    return new NextResponse('Muitas requisições. Tente de novo em instantes.', {
+    return new NextResponse('Too many requests. Please try again shortly.', {
       status: 429,
       headers: { 'Retry-After': String(wait) },
     });

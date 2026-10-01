@@ -34,6 +34,7 @@ class Attribute(Base):
     name: Mapped[str] = mapped_column(String(100))
     name_pt: Mapped[str | None] = mapped_column(String(100), nullable=True)
     description: Mapped[str] = mapped_column(Text)
+    description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)  # traducao (DeepL)
     icon: Mapped[str] = mapped_column(String(50))
 
 

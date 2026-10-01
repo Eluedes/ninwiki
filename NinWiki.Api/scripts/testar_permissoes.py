@@ -95,7 +95,7 @@ def novo_conteudo(sufixo: str, status: str = "draft") -> dict:
 # Qualquer OUTRA rota que nao esteja aqui tem que exigir login. Ao criar uma
 # rota publica nova, adicione o caminho aqui (e' uma decisao consciente).
 ROTAS_PUBLICAS = {
-    ("GET", "/health"), ("GET", "/auth/config"), ("GET", "/auth/discord/login"), ("GET", "/auth/discord/callback"),
+    ("GET", "/health"), ("GET", "/health/ready"), ("GET", "/auth/config"), ("GET", "/auth/discord/login"), ("GET", "/auth/discord/callback"),
     ("GET", "/content-items"), ("GET", "/content-items/{item_id}"), ("GET", "/content-items/slug/{slug}"),
     ("GET", "/attributes"), ("GET", "/masteries"), ("GET", "/masteries/{mastery_id}"),
     ("GET", "/jutsus"), ("GET", "/jutsus/{jutsu_id}"),
@@ -105,6 +105,7 @@ ROTAS_PUBLICAS = {
     # escrita "publica" de proposito: cada uma tem a sua propria protecao
     ("POST", "/auth/dev-login"),   # so' funciona em development + confere a origem
     ("POST", "/auth/logout"),      # sem sessao so' limpa o cookie
+    ("POST", "/client-errors"),    # o navegador do visitante avisa que o site quebrou (origem + limite por IP + teto por hora)
 }
 
 
@@ -162,6 +163,8 @@ async def limpar(inicio: datetime) -> None:
         await db.execute(text("DELETE FROM organizations WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM villages WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM notices WHERE title LIKE :p"), {"p": f"{SLUG}%"})
+        # problemas registrados DURANTE este teste (rotas __teste, falhas simuladas da DeepL, flood, site)
+        await db.execute(text("DELETE FROM error_events WHERE first_seen >= :t"), {"t": inicio})
         await db.execute(text("DELETE FROM role_permissions"))
         # Apaga o log ANTES dos usuarios de teste. Por user_id (e nao so' pelo nome): o teste do login
         # do Discord RENOMEIA usuarios, e linhas de log de quem foi renomeado nao casam mais com "TESTE_%".
@@ -700,7 +703,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
             codigos = [(await x.post("/auth/dev-login", json={"discordId": str(BASE + 25 + i)})).status_code for i in range(6)]
             check("dev-login: 5 IDs desconhecidos dao 403 e o 6o ja' e' 429", codigos[:5] == [403] * 5 and codigos[5] == 429, str(codigos))
             r = await x.post("/auth/dev-login", json={"discordId": str(IDS["adm"])})
-            check("...e enquanto bloqueado nem um ID VALIDO entra (429 com Retry-After)", r.status_code == 429 and r.headers.get("retry-after", "").isdigit() and "Muitas tentativas" in r.json()["detail"], f"{r.status_code} {r.headers.get('retry-after')}")
+            check("...e enquanto bloqueado nem um ID VALIDO entra (429 com Retry-After)", r.status_code == 429 and r.headers.get("retry-after", "").isdigit() and "Too many attempts" in r.json()["detail"], f"{r.status_code} {r.headers.get('retry-after')}")
         async with cliente("198.51.100.14") as y:
             r = await y.post("/auth/dev-login", json={"discordId": str(IDS["adm"])})
             check("outro IP entra normalmente", r.status_code == 200)
@@ -715,7 +718,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
             codigos = [(await x.get(consulta, headers={"X-Bot-Token": f"chute-{i}"})).status_code for i in range(10)]
             check("bot: 10 tokens errados dao 401", codigos == [401] * 10, str(codigos))
             r = await x.get(consulta, headers={"X-Bot-Token": "mais-um-chute"})
-            check("o 11o ja' e' 429 (bloqueado)", r.status_code == 429 and "Muitas tentativas" in r.json()["detail"], f"{r.status_code}")
+            check("o 11o ja' e' 429 (bloqueado)", r.status_code == 429 and "Too many attempts" in r.json()["detail"], f"{r.status_code}")
             r = await x.get(consulta, headers=certo)
             check("...e enquanto bloqueado nem o token CERTO passa (429)", r.status_code == 429)
             relogio.t += 11 * 60
@@ -897,7 +900,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
             codigos = [(await x.get("/villages")).status_code for _ in range(7)]
             check("flood de leitura: depois do limite vem 429", codigos[:5] == [200] * 5 and codigos[5:] == [429, 429], str(codigos))
             r = await x.get("/villages")
-            check("429 traz Retry-After e mensagem em portugues", r.status_code == 429 and int(r.headers.get("retry-after", 0)) >= 1 and "Muitas tentativas" in r.json()["detail"])
+            check("429 traz Retry-After e mensagem em portugues", r.status_code == 429 and int(r.headers.get("retry-after", 0)) >= 1 and "Too many attempts" in r.json()["detail"])
             check("/health nunca e' limitado (monitoramento)", (await x.get("/health")).status_code == 200)
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, client=("198.51.100.78", 1)), base_url="http://test") as y:
             check("outro IP nao e' afetado", (await y.get("/villages")).status_code == 200)
@@ -934,6 +937,241 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("CF-Connecting-IP tem prioridade", _resolve_client_ip({"headers": [(b"cf-connecting-ip", b"198.51.100.9")], "client": ("10.0.0.1", 1)}) == "198.51.100.9")
     settings.trust_proxy_headers = antigo_trust
     check("FRONTEND_ORIGIN com '/' no fim e' normalizado", Settings(database_url="x", jwt_secret_key="x", frontend_origin="https://a.com/").frontend_origin == "https://a.com")
+
+    secao("18) DeepL (simulada): ingles padrao + traducao PT em vilas, cla's, organizacoes e posts")
+    async def deepl_falso(textos: list[str], reverse: bool = False) -> list[str]:
+        """Simula a DeepL: EN->PT poe 'PT:' na frente; PT->EN poe 'EN:' na frente (sem chamar a internet)."""
+        return [("EN:" if reverse else "PT:") + t for t in textos]
+
+    vid18 = f"{SLUG}-v18"
+    base18 = {"id": vid18, "name": "TESTE Village", "element": "Fire", "motto": "Motto here", "description": "A short text",
+              "longDescription": "A long text", "emblem": "🔥", "accentColor": "#112233", "climate": "Hot",
+              "clans": [{"id": f"{SLUG}-c18a", "name": "Clan Alpha", "description": "Alpha desc"},
+                        {"id": f"{SLUG}-c18b", "name": "Clan Beta", "description": "Beta desc", "namePt": "Clã Beta Manual"}]}
+    with patch("app.core.translation._deepl_translate_batch", new=deepl_falso):
+        r = await c.post("/villages", json=base18, headers=A)
+        check("vila criada em ingles (201)", r.status_code == 201, r.text[:150])
+        v = r.json()
+        check("DeepL preencheu motto/descricao/clima em PT", v.get("mottoPt") == "PT:Motto here" and v.get("descriptionPt") == "PT:A short text" and v.get("climatePt") == "PT:Hot", str({k: v.get(k) for k in ("mottoPt", "descriptionPt", "climatePt")}))
+        check("DeepL preencheu a descricao longa em PT", v.get("longDescriptionPt") == "PT:A long text")
+        cl = {x["id"]: x for x in v.get("clans", [])}
+        check("DeepL traduziu nome e descricao do cla'", cl[f"{SLUG}-c18a"]["namePt"] == "PT:Clan Alpha" and cl[f"{SLUG}-c18a"]["descriptionPt"] == "PT:Alpha desc")
+        check("traducao escrita a mao NAO e' sobrescrita", cl[f"{SLUG}-c18b"]["namePt"] == "Clã Beta Manual" and cl[f"{SLUG}-c18b"]["descriptionPt"] == "PT:Beta desc")
+        corpo = {**base18, "description": "Changed text", "descriptionPt": "Texto corrigido a mao"}
+        r = await c.put(f"/villages/{vid18}", json=corpo, headers=A)
+        check("editar o ingles NAO apaga a correcao manual em PT", r.status_code == 200 and r.json()["descriptionPt"] == "Texto corrigido a mao", r.text[:120])
+        r = await c.post(f"/villages/{vid18}/retranslate", headers=C)
+        check("Creator NAO retraduz vila (403)", r.status_code == 403)
+        r = await c.post(f"/villages/{vid18}/retranslate", headers=A)
+        check("Retraduzir refaz o PT a partir do ingles atual", r.status_code == 200 and r.json()["descriptionPt"] == "PT:Changed text", r.text[:150])
+        r = await c.get(f"/villages/{vid18}")
+        check("o publico recebe os campos em PT (site escolhe pelo idioma)", r.json()["longDescriptionPt"] == "PT:A long text")
+        rich = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"x","marks":[{"type":"link","attrs":{"href":"javascript:1"}}]}]}]}'
+        r = await c.put(f"/villages/{vid18}", json={**base18, "longDescriptionPt": rich}, headers=A)
+        check("texto rico em PT tambem e' validado (link javascript: recusado)", r.status_code == 422)
+        await c.delete(f"/villages/{vid18}", headers=A)
+
+        oid = f"{SLUG}-o18"
+        r = await c.post("/organizations", json={"id": oid, "name": "Hunters", "description": "They hunt", "villageIds": []}, headers=A)
+        check("organizacao em ingles e' traduzida (nome e descricao)", r.status_code == 201 and r.json()["namePt"] == "PT:Hunters" and r.json()["descriptionPt"] == "PT:They hunt", r.text[:150])
+        r = await c.post(f"/organizations/{oid}/retranslate", headers=C)
+        check("Creator NAO retraduz organizacao (403)", r.status_code == 403)
+        await c.delete(f"/organizations/{oid}", headers=A)
+
+        doc = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello","marks":[{"type":"bold"}]}]}]}'
+        r = await c.post("/posts", json={"slug": f"{SLUG}-p18", "title": "Big news", "excerpt": "Summary", "content": doc, "status": "draft"}, headers=A)
+        pj = r.json() if r.status_code == 201 else {}
+        check("post em ingles e' traduzido (titulo, resumo e texto)", r.status_code == 201 and pj.get("titlePt") == "PT:Big news" and pj.get("excerptPt") == "PT:Summary", r.text[:160])
+        check("texto rico traduzido mantem a formatacao (negrito) e traduz so' o texto", '"bold"' in (pj.get("contentPt") or "") and "PT:Hello" in (pj.get("contentPt") or ""))
+        r = await c.post(f"/posts/{pj.get('id')}/retranslate", headers=A)
+        check("Adm retraduz o post (200)", r.status_code == 200)
+
+    # script de conversao PT -> EN (conteudo antigo em portugues nos campos principais)
+    from scripts import traduzir_para_ingles as conv
+    check("detector: texto em portugues e' reconhecido", conv.parece_portugues("A vila é a maior de todas e tem uma história com os clãs"))
+    check("detector: texto em ingles NAO e' convertido", not conv.parece_portugues("The village is the largest of all and has a history with the clans"))
+    check("detector le' o texto dentro do JSON do editor", conv.parece_portugues('{"type":"doc","content":[{"type":"text","text":"Uma vila que protege a folha"}]}'))
+    async with AsyncSessionLocal() as db:
+        await db.execute(text("INSERT INTO organizations (id, name, description) VALUES (:i, 'Corpo de elite', 'Uma organização com missões de alto risco para a vila')"), {"i": f"{SLUG}-o18b"})
+        await db.commit()
+    with patch("app.core.translation._deepl_translate_batch", new=deepl_falso), patch.object(conv.settings, "deepl_api_key", "x"):
+        n, falhas = await conv.processar("organizations", aplicar=False)
+        check("simulacao NAO grava nada", n >= 1 and falhas == 0)
+        async with AsyncSessionLocal() as db:
+            antes = (await db.execute(text("SELECT name, name_pt FROM organizations WHERE id=:i"), {"i": f"{SLUG}-o18b"})).one()
+        check("...o registro continua intacto apos a simulacao", antes == ("Corpo de elite", None))
+        n, falhas = await conv.processar("organizations", aplicar=True)
+        async with AsyncSessionLocal() as db:
+            depois = (await db.execute(text("SELECT name, name_pt, description, description_pt FROM organizations WHERE id=:i"), {"i": f"{SLUG}-o18b"})).one()
+        check("aplicar: ingles vai pro campo principal e o portugues antigo vai pro _pt",
+              depois[0] == "EN:Corpo de elite" and depois[1] == "Corpo de elite" and depois[2].startswith("EN:Uma organização") and depois[3].startswith("Uma organização"), str(depois))
+        n2, _ = await conv.processar("organizations", aplicar=True)
+        async with AsyncSessionLocal() as db:
+            de_novo = (await db.execute(text("SELECT name FROM organizations WHERE id=:i"), {"i": f"{SLUG}-o18b"})).scalar_one()
+        check("rodar de novo nao converte duas vezes (idempotente)", de_novo == "EN:Corpo de elite")
+
+    secao("19) Registro de erros: captura, mascara, reabre, painel so' S.Adm, DeepL, flood, site, bot, health")
+    from app.core import error_log, hardening
+    from app.main import app as fastapi_app
+
+    # -- mascara de segredos --
+    m = error_log.mask("conn postgresql+asyncpg://admin:Sup3rSenha@db.host:5432/x token=abc123XYZ Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJl [parameters: ('a@b.com', 'senha')]")
+    check("mascara senha de URL do banco", "Sup3rSenha" not in m and "postgresql+asyncpg://***@db.host" in m, m)
+    check("mascara tokens, JWT e parametros de SQL", "abc123XYZ" not in m and "eyJhbGci" not in m and "a@b.com" not in m, m)
+    segredo_antigo = settings.jwt_secret_key
+    settings.jwt_secret_key = "valor-secreto-do-env-123456"
+    check("mascara o VALOR real dos segredos do .env", "valor-secreto-do-env-123456" not in error_log.mask("falhou com valor-secreto-do-env-123456 no meio"))
+    settings.jwt_secret_key = segredo_antigo
+    check("mensagem gigante e' cortada", len(error_log.mask("x" * 5000)) <= error_log.MAX_MESSAGE)
+    check("fingerprint nao muda com ids diferentes na rota",
+          error_log.fingerprint_of("api", "E", "a.py:1", "/posts/3f2a1b4c-1111-2222-3333-444455556666") == error_log.fingerprint_of("api", "E", "a.py:1", "/posts/aaaaaaaa-1111-2222-3333-444455556666"))
+    check("fingerprint muda quando o tipo do erro muda", error_log.fingerprint_of("api", "E1", None, "/x") != error_log.fingerprint_of("api", "E2", None, "/x"))
+
+    # -- excecao nao tratada vira 500 generico + registro --
+    async def boom():
+        """Rota de teste que sempre quebra (para provar que o erro e' capturado e mascarado)."""
+        raise RuntimeError(f"{SLUG} falhou ao falar com postgresql://usuario:senhaSecreta@host/db")
+    fastapi_app.add_api_route("/__teste_boom/{item_id}", boom, methods=["GET"])
+    error_log.reset_throttle()
+    r = await c.get("/__teste_boom/123")
+    check("rota que quebra responde 500 GENERICO (sem vazar nada)", r.status_code == 500 and r.json() == {"detail": "Internal server error"} and "senhaSecreta" not in r.text and SLUG not in r.text, r.text[:120])
+    check("o 500 tambem leva cabecalhos de seguranca", r.headers.get("x-content-type-options") == "nosniff")
+    r = await c.get("/errors?status=all", headers=S)
+    eventos = [e for e in r.json() if e["path"] == "/__teste_boom/{item_id}" or (e["path"] or "").startswith("/__teste_boom")]
+    check("S.Adm ve' o problema registrado", r.status_code == 200 and len(eventos) == 1, str(r.status_code))
+    ev = eventos[0] if eventos else {}
+    check("tipo e local do erro foram registrados", ev.get("title") == "RuntimeError" and "testar_permissoes.py" in (ev.get("location") or "") and ev.get("status") == 500, str(ev.get("location")))
+    check("mensagem e traceback saem MASCARADOS", "senhaSecreta" not in (ev.get("message") or "") + (ev.get("trace") or "") and "***" in (ev.get("message") or ""), ev.get("message", ""))
+    check("traceback fica guardado para o painel", "RuntimeError" in (ev.get("trace") or "") and "boom" in (ev.get("trace") or ""))
+    # contador: freio de escrita junta as repeticoes
+    error_log._PER_FINGERPRINT_SECONDS = 0
+    for _ in range(3):
+        await c.get("/__teste_boom/456")
+    error_log._PER_FINGERPRINT_SECONDS = 20
+    r = await c.get("/errors?status=all", headers=S)
+    ev = [e for e in r.json() if (e["path"] or "").startswith("/__teste_boom")][0]
+    check("mesmo problema em ids diferentes vira UMA linha com contador (1+3)", ev["count"] == 4, str(ev["count"]))
+    # painel: so' S.Adm
+    for quem, h in (("Adm", A), ("Creator", C)):
+        r = await c.get("/errors", headers=h)
+        check(f"{quem} NAO ve' o registro de erros (404)", r.status_code == 404)
+    r = await c.get("/errors")
+    check("anonimo NAO ve' o registro de erros (401)", r.status_code == 401)
+    eid = ev["id"]
+    r = await c.post(f"/errors/{eid}/resolve", headers=S)
+    check("S.Adm marca como resolvido", r.status_code == 200 and r.json()["resolved"] is True and r.json()["resolvedBy"] == "TESTE_sadm")
+    r = await c.get("/errors?status=open", headers=S)
+    check("resolvido some da lista de abertos", all(e["id"] != eid for e in r.json()))
+    error_log._PER_FINGERPRINT_SECONDS = 0
+    await c.get("/__teste_boom/789")
+    error_log._PER_FINGERPRINT_SECONDS = 20
+    r = await c.get("/errors?status=open", headers=S)
+    check("se o problema VOLTA a acontecer ele REABRE sozinho", any(e["id"] == eid and not e["resolved"] and e["resolvedBy"] is None for e in r.json()))
+    r = await c.post(f"/errors/{eid}/resolve", headers=A)
+    check("Adm NAO resolve erro (404)", r.status_code == 404)
+
+    # -- resposta 5xx "normal" (HTTPException) tambem e' registrada --
+    from fastapi import HTTPException as _HTTPException
+    async def indisponivel():
+        """Rota de teste que responde 503 de proposito."""
+        raise _HTTPException(status_code=503, detail="manutencao")
+    fastapi_app.add_api_route("/__teste_503", indisponivel, methods=["GET"])
+    r = await c.get("/__teste_503")
+    r2 = await c.get("/errors?status=all", headers=S)
+    check("HTTPException 503 e' registrada como HTTP 503", r.status_code == 503 and any(e["title"] == "HTTP 503" and e["path"] == "/__teste_503" for e in r2.json()))
+
+    # -- falha da DeepL --
+    from app.core import translation as tr
+    segredo_deepl = settings.deepl_api_key
+    settings.deepl_api_key = "chave-de-teste-123456789:fx"
+    async def post_cota(self, *a, **k):
+        """Simula a DeepL respondendo 456 (cota do plano acabou)."""
+        return httpx.Response(456, request=httpx.Request("POST", "http://deepl.test"))
+    async def post_fora(self, *a, **k):
+        """Simula a DeepL fora do ar (falha de rede)."""
+        raise httpx.ConnectError("sem rede")
+    try:
+        with patch.object(httpx.AsyncClient, "post", post_cota):
+            check("DeepL sem cota: a traducao devolve None (nao quebra)", await tr.translate_field("hello") is None)
+        with patch.object(httpx.AsyncClient, "post", post_fora):
+            check("DeepL fora do ar: devolve None (nao quebra)", await tr.translate_field("hello") is None)
+    finally:
+        settings.deepl_api_key = segredo_deepl
+    r = await c.get("/errors?status=all&source=deepl", headers=S)
+    titulos = {e["title"] for e in r.json()}
+    check("falhas da DeepL aparecem no registro (cota e fora do ar)", {"DeepL quota exceeded", "DeepL request failed"} <= titulos, str(titulos))
+    check("registro da DeepL nao contem a chave", all("chave-de-teste" not in (e["message"] + (e["trace"] or "")) for e in r.json()))
+
+    # -- flood (rate limit) vira alerta de seguranca --
+    settings.public_requests_per_minute = 3
+    limiter.reset()
+    hardening._flood_seen.clear()
+    error_log.reset_throttle()
+    try:
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, client=("198.51.100.99", 1)), base_url="http://test") as x:
+            codigos = [(await x.get("/villages")).status_code for _ in range(6)]
+    finally:
+        settings.public_requests_per_minute = antigo_limite
+        limiter.reset()
+    r = await c.get("/errors?status=all&source=security", headers=S)
+    flood = [e for e in r.json() if e["title"].startswith("Rate limit exceeded")]
+    check("flood: 429 e UM alerta (nao um por requisicao)", codigos.count(429) >= 2 and len(flood) == 1, f"{codigos} {len(flood)}")
+    check("alerta de flood guarda o IP so' para o S.Adm", flood and flood[0]["ipAddress"] == "198.51.100.99")
+
+    # -- erros que o visitante viu no site (publico, com defesas) --
+    limiter.reset()
+    error_log.reset_throttle()
+    corpo = {"message": f"{SLUG} Cannot read properties of undefined\nsecond line", "path": "/village/leaf", "kind": "render", "digest": "abc123"}
+    r = await c.post("/client-errors", json=corpo, headers={"Origin": settings.frontend_origin})
+    check("site reporta erro de tela (204, sem login)", r.status_code == 204)
+    r = await c.get("/errors?status=all&source=web", headers=S)
+    web = [e for e in r.json() if SLUG in e["title"]]
+    check("erro do site registrado como origem 'web' com a pagina", len(web) == 1 and web[0]["path"] == "/village/leaf" and web[0]["location"].startswith("page (render)"), str(web)[:200])
+    check("quebra de linha do relatorio nao entra no titulo", web and "\n" not in web[0]["title"])
+    r = await c.post("/client-errors", json=corpo, headers={"Origin": "https://site-malicioso.example"})
+    check("relatorio vindo de OUTRA origem e' recusado (403)", r.status_code == 403)
+    r = await c.post("/client-errors", json={"message": "x" * 600})
+    check("mensagem gigante e' recusada (422)", r.status_code == 422)
+    r = await c.post("/client-errors", json={"message": "ok", "kind": "hack"})
+    check("tipo invalido e' recusado (422)", r.status_code == 422)
+    limiter.reset()
+    codigos = [(await c.post("/client-errors", json={**corpo, "message": f"{SLUG} flood {i}"})).status_code for i in range(12)]
+    check("limite por IP no relatorio do site (429 depois de 10/min)", codigos[:10] == [204] * 10 and 429 in codigos[10:], str(codigos))
+    limiter.reset()
+    antigo_teto = __import__("app.api.errors", fromlist=["x"]).MAX_NEW_WEB_ERRORS_PER_HOUR
+    import app.api.errors as errors_api
+    errors_api.MAX_NEW_WEB_ERRORS_PER_HOUR = 0
+    try:
+        r = await c.post("/client-errors", json={**corpo, "message": f"{SLUG} teto"})
+        r2 = await c.get("/errors?status=all&source=web", headers=S)
+    finally:
+        errors_api.MAX_NEW_WEB_ERRORS_PER_HOUR = antigo_teto
+    check("teto por hora: acima dele o relatorio e' ignorado em silencio", r.status_code == 204 and not any(e["title"].endswith("teto") for e in r2.json()))
+
+    # -- bot: feed de erros e health --
+    settings.bot_api_token = "token-de-teste-do-bot-1234567890"
+    B = {"X-Bot-Token": settings.bot_api_token}
+    desde = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+    r = await c.get("/bot/errors", params={"since": desde}, headers=B)
+    check("bot le' os problemas recentes (200)", r.status_code == 200 and len(r.json()) >= 3)
+    check("feed do bot SEM traceback e SEM IP", all("trace" not in e and "ipAddress" not in e for e in r.json()))
+    check("feed do bot em ordem cronologica", [e["lastSeen"] for e in r.json()] == sorted(e["lastSeen"] for e in r.json()))
+    r = await c.get("/bot/errors", params={"since": desde})
+    check("feed do bot sem token e' barrado (401)", r.status_code == 401)
+    settings.bot_api_token = ""
+    r = await c.get("/health/ready")
+    check("/health/ready com banco ok (200)", r.status_code == 200 and r.json()["database"] == "ok")
+    class BancoMorto:
+        """Sessao de banco falsa que falha ao abrir (simula o Postgres fora do ar)."""
+        async def __aenter__(self):
+            raise ConnectionError("banco fora do ar")
+        async def __aexit__(self, *a):
+            return False
+    import app.main as main_mod
+    with patch.object(main_mod, "AsyncSessionLocal", lambda: BancoMorto()):
+        r = await c.get("/health/ready")
+    check("/health/ready com banco fora do ar responde 503", r.status_code == 503 and r.json()["status"] == "down")
+    error_log.reset_throttle()
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []

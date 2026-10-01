@@ -95,3 +95,5 @@ NinWiki.Bot/log_state.tmp
 # Backups do banco (scripts/migrar_banco.py) - contem TODOS os dados, nunca vao pro Git.
 NinWiki.Api/backups/
 *.dump
+NinWiki.Bot/error_state.json
+NinWiki.Bot/error_state.tmp

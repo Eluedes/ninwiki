@@ -36,11 +36,11 @@ class NinWikiApi:
             await self._client.aclose()
 
     async def _request(self, method: str, path: str, *, json: dict | None = None, params: dict | None = None) -> Any:
-        """Faz a chamada com o X-Bot-Token e traduz erros da API em ApiError com mensagem em portugues."""
+        """Faz a chamada com o X-Bot-Token e traduz erros da API em ApiError com a mensagem (em ingles) para mostrar a quem digitou."""
         try:
             res = await self._client.request(method, path, json=json, params=params, headers=self._headers)
         except httpx.HTTPError as e:
-            raise ApiError(503, "Não consegui falar com a API da NinWiki. Tente de novo em instantes.") from e
+            raise ApiError(503, "Could not reach the NinWiki API. Try again in a moment.") from e
 
         if res.status_code >= 400:
             detail = None
@@ -51,10 +51,10 @@ class NinWikiApi:
             except ValueError:
                 pass
             if res.status_code == 401:
-                detail = "O bot não está autorizado na API (BOT_API_TOKEN diferente nos dois .env)."
+                detail = "The bot is not authorized on the API (BOT_API_TOKEN differs between the two .env files)."
             elif res.status_code == 404 and detail in (None, "Not Found"):
-                detail = "A API não respondeu como esperado (a rota do bot está desligada? BOT_API_TOKEN vazio na API?)."
-            raise ApiError(res.status_code, detail or f"Erro inesperado da API ({res.status_code}).")
+                detail = "The API did not answer as expected (is the bot route turned off? empty BOT_API_TOKEN on the API?)."
+            raise ApiError(res.status_code, detail or f"Unexpected API error ({res.status_code}).")
         return res.json()
 
     async def list_staff(self, invoker_id: int) -> list[dict]:
@@ -81,3 +81,23 @@ class NinWikiApi:
     async def audit_log_since(self, since_iso: str, limit: int = 50) -> list[dict]:
         """Linhas do log geral criadas depois de `since_iso` (mais antigas primeiro) - alimenta o canal de log. Sem IPs."""
         return await self._request("GET", "/bot/audit-log", params={"since": since_iso, "limit": limit})
+
+    async def errors_since(self, since_iso: str, limit: int = 50) -> list[dict]:
+        """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""
+        return await self._request("GET", "/bot/errors", params={"since": since_iso, "limit": limit})
+
+    async def api_status(self) -> tuple[bool, bool]:
+        """(API respondeu?, banco respondeu?) via GET /health/ready. Nunca levanta excecao: falha de rede = (False, False)."""
+        try:
+            res = await self._client.get("/health/ready", timeout=8.0)
+        except httpx.HTTPError:
+            return False, False
+        return True, res.status_code == 200
+
+    async def site_ok(self, url: str) -> bool:
+        """True se o site publico responde 200 (usa uma conexao propria, nao a da API)."""
+        try:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers={"User-Agent": "NinWikiBot-HealthCheck/1.0"}) as client:
+                return (await client.get(url)).status_code < 400
+        except httpx.HTTPError:
+            return False

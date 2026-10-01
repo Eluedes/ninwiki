@@ -20,6 +20,17 @@ export interface Dictionary {
   nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; map: string; blog: string };
   home: { welcome: string; subtitle: string; browseAll: string };
   news: { title: string; subtitle: string; readMore: string; viewAll: string; empty: string };
+  lore: {
+    home: string; villagesTitle: string; villagesSubtitle: string; villagesCrumb: string; villageNotFound: string; backToVillages: string;
+    masteryNotFound: string; backToMasteries: string; jutsuNotFound: string; entryNotFound: string; back: string;
+    aboutVillage: string; clans: string; organizations: string; villageSheet: string; otherVillages: string;
+    fName: string; fEnglish: string; fPortuguese: string; fElement: string; fMotto: string; fClimate: string; fLeader: string;
+    emblemAlt: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapMarkerAria: string; mapHint: string;
+    demo: string; jutsuDemoAlt: string;
+    guideMore: string; guideAttributes: string; guideProfessions: string; guideRanks: string; guideArcs: string; guideSummons: string;
+    guideGathering: string; guideCrafting: string;
+  };
+  siteError: { title: string; text: string; retry: string; home: string };
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterSpecial: string };
   detail: { attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string };
@@ -79,8 +90,15 @@ export interface Dictionary {
       removeClan: string; noClans: string;
       orgsTitle: string; orgsSubtitle: string; newOrg: string; orgName: string; orgDescription: string; orgVillages: string;
       orgConfirmDelete: string; orgEmpty: string; orgSave: string; orgCancel: string; orgEditTitle: string; backToVillages: string; noVillagesYet: string;
+      orgNameRequired: string; orgIdInvalid: string; orgTranslationNote: string; clanTranslationNote: string;
     };
-    sidebar: { overview: string; blogPosts: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; villages: string; organizations: string; backToSite: string };
+    sidebar: { overview: string; blogPosts: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
+    errorsPage: {
+      title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
+      occurrences: string; firstSeen: string; lastSeen: string; where: string; route: string; status: string; resolve: string; reopen: string; delete: string;
+      confirmDelete: string; trace: string; noTrace: string; resolvedBy: string; ip: string; refresh: string; sources: Record<string, string>;
+      howTo: string;
+    };
     noticeBoard: { title: string; subtitle: string; empty: string; newNotice: string; titleLabel: string; bodyLabel: string; pin: string; pinned: string; save: string; saving: string; cancel: string; edit: string; delete: string; confirmDelete: string; attachFiles: string; files: string; download: string; removeFile: string; uploading: string; by: string; loadError: string; saveError: string; uploadError: string; maxInfo: string };
     rolesPage: { title: string; subtitle: string; permission: string; locked: string; lockedHint: string; save: string; saving: string; saved: string; reset: string; confirmReset: string; loadError: string; saveError: string; unsavedChanges: string; alwaysAll: string; groups: Record<string, string>; names: Record<string, string> };
     header: { role: { admin: string; mod: string } };
@@ -120,6 +138,7 @@ export interface Dictionary {
       sectionTitle: string; retranslate: string; retranslating: string; retranslateConfirm: string;
       nameLabel: string; descriptionLabel: string; loreLabel: string; synergyLabel: string; spawnLocationLabel: string;
       emptyHint: string; retranslateError: string;
+      mottoLabel: string; climateLabel: string; longDescriptionLabel: string; titleLabel: string; excerptLabel: string; contentLabel: string;
     };
     masteryEditor: {
       title: string; loading: string; loadError: string; saveError: string; save: string;
@@ -221,6 +240,20 @@ export const dictionaries: Record<Locale, Dictionary> = {
       viewAll: 'Ver todas',
       empty: 'Nenhuma notícia publicada ainda.',
     },
+    lore: {
+      home: 'Início', villagesTitle: 'Vilas Ocultas', villagesSubtitle: 'As grandes potências shinobi — cada uma com sua cultura e elemento.',
+      villagesCrumb: 'Vilas', villageNotFound: 'Vila não encontrada.', backToVillages: 'Voltar para Vilas',
+      masteryNotFound: 'Mastery não encontrada.', backToMasteries: 'Voltar para Masteries', jutsuNotFound: 'Jutsu não encontrado.',
+      entryNotFound: 'Entry não encontrada.', back: 'Voltar',
+      aboutVillage: 'Sobre a Vila', clans: 'Clãs', organizations: 'Organizações', villageSheet: 'Ficha da Vila', otherVillages: 'Outras Vilas',
+      fName: 'Nome', fEnglish: 'Inglês', fPortuguese: 'Português', fElement: 'Elemento', fMotto: 'Lema', fClimate: 'Clima', fLeader: 'Líder',
+      emblemAlt: 'Emblema da {name}', mapTitle: 'Mapa do Mundo', mapSubtitle: 'As três grandes nações shinobi e seus territórios.', mapCrumb: 'Mapa',
+      mapMarkerAria: 'Ver informação sobre {title}', mapHint: 'Passe o mouse sobre um ponto — ou use Tab — para ver informações sobre o local.',
+      demo: 'Demonstração', jutsuDemoAlt: 'Demonstração do jutsu {name}',
+      guideMore: 'Mais em Guias', guideAttributes: 'Atributos', guideProfessions: 'Profissões', guideRanks: 'Ranks Ninja', guideArcs: 'Story Arcs', guideSummons: 'Summons',
+      guideGathering: 'Coleta', guideCrafting: 'Criação',
+    },
+    siteError: { title: 'Algo deu errado', text: 'A equipe já foi avisada. Tente de novo em instantes.', retry: 'Tentar de novo', home: 'Voltar ao início' },
     blog: {
       title: 'Blog',
       subtitle: 'Notícias, patch notes e novidades do mundo Nin.',
@@ -377,11 +410,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'bulk-status': 'mudou o status de', 'bulk-delete': 'apagou em massa', 'bulk-import': 'importou',
           login: 'entrou', logout: 'saiu', login_denied: 'teve o login negado', role_change: 'mudou o cargo de',
           activate: 'reativou', deactivate: 'desativou', bootstrap: 'foi criado como dono', bootstrap_restore: 'teve o cargo de dono restaurado',
-          permission_denied: 'tentou algo sem permissão em', reset: 'restaurou o padrão de', delete_file: 'removeu um arquivo de',
+          permission_denied: 'tentou algo sem permissão em', resolve: 'resolveu', reopen: 'reabriu', reset: 'restaurou o padrão de', delete_file: 'removeu um arquivo de',
         },
         logEntities: {
           content_item: 'entry', jutsu: 'jutsu', mastery: 'mastery', upload: 'arquivo',
-          auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post', roles: 'permissões do cargo', notice: 'aviso',
+          auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post', roles: 'permissões do cargo', notice: 'aviso', error: 'erro',
         },
         logSources: { panel: 'Painel', bot: 'Bot', auth: 'Login', system: 'Sistema' },
       },
@@ -415,6 +448,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         newOrg: 'Nova organização', orgName: 'Nome', orgDescription: 'Descrição', orgVillages: 'Atua nas vilas',
         orgConfirmDelete: 'Apagar a organização "{name}"?', orgEmpty: 'Nenhuma organização cadastrada.', orgSave: 'Salvar organização',
         orgCancel: 'Cancelar', orgEditTitle: 'Editar organização', backToVillages: 'Voltar às vilas', noVillagesYet: 'Cadastre uma vila primeiro.',
+        orgNameRequired: 'O nome é obrigatório.', orgIdInvalid: 'O id deve ter só letras minúsculas, números e hífen (ex: anbu).',
+        orgTranslationNote: 'Escreva em inglês (idioma principal). A versão em português é gerada pela DeepL ao salvar; você pode corrigi-la na mão.',
+        clanTranslationNote: 'Versão em português deste clã (vazio = a DeepL traduz ao salvar).',
       },
       sidebar: {
         overview: 'Visão Geral',
@@ -427,9 +463,20 @@ export const dictionaries: Record<Locale, Dictionary> = {
         users: 'Usuários',
         staff: 'Equipe',
         permissions: 'Permissões',
+        errors: 'Erros',
         villages: 'Vilas',
         organizations: 'Organizações',
         backToSite: 'Voltar ao site',
+      },
+      errorsPage: {
+        title: 'Erros e problemas', subtitle: 'Tudo que quebrou no wiki (API, site, tradução, ataques). O bot também avisa no Discord.',
+        open: 'Abertos', resolved: 'Resolvidos', all: 'Todos', allSources: 'Todas as origens', empty: 'Nenhum problema por aqui. 🎉',
+        loadError: 'Não foi possível carregar os erros.', actionError: 'Não foi possível concluir a ação.',
+        occurrences: 'ocorrências', firstSeen: 'Primeira vez', lastSeen: 'Última vez', where: 'Onde no código', route: 'Rota / página', status: 'Status HTTP',
+        resolve: 'Marcar como resolvido', reopen: 'Reabrir', delete: 'Apagar', confirmDelete: 'Apagar este registro de erro?',
+        trace: 'Traceback (mascarado)', noTrace: 'Sem traceback para este tipo de problema.', resolvedBy: 'Resolvido por', ip: 'IP da última ocorrência', refresh: 'Atualizar',
+        sources: { api: 'API', web: 'Site', deepl: 'DeepL', security: 'Segurança' },
+        howTo: 'Se voltar a acontecer, o problema reabre sozinho e o bot avisa de novo.',
       },
       noticeBoard: {
         title: 'Quadro de avisos', subtitle: 'Recados e arquivos para a equipe.', empty: 'Nenhum aviso por enquanto.',
@@ -453,7 +500,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
           'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos',
-          'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'roles.manage': 'Editar permissões dos cargos',
+          'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
           'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)',
         },
       },
@@ -580,6 +627,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
         spawnLocationLabel: 'Local de spawn (Português)',
         emptyHint: 'Ainda não traduzido — salve a entry pra gerar automaticamente (se a chave da DeepL estiver configurada), ou escreva aqui na mão.',
         retranslateError: 'Erro ao retraduzir. A API está rodando? A chave da DeepL está configurada?',
+        mottoLabel: 'Lema (Português)', climateLabel: 'Clima (Português)', longDescriptionLabel: 'Descrição completa (Português)',
+        titleLabel: 'Título (Português)', excerptLabel: 'Resumo (Português)', contentLabel: 'Conteúdo (Português)',
       },
       masteryEditor: {
         title: 'Editar Mastery',
@@ -770,6 +819,20 @@ export const dictionaries: Record<Locale, Dictionary> = {
       viewAll: 'View all',
       empty: 'No news published yet.',
     },
+    lore: {
+      home: 'Home', villagesTitle: 'Hidden Villages', villagesSubtitle: 'The great shinobi powers — each with its own culture and element.',
+      villagesCrumb: 'Villages', villageNotFound: 'Village not found.', backToVillages: 'Back to Villages',
+      masteryNotFound: 'Mastery not found.', backToMasteries: 'Back to Masteries', jutsuNotFound: 'Jutsu not found.',
+      entryNotFound: 'Entry not found.', back: 'Back',
+      aboutVillage: 'About the Village', clans: 'Clans', organizations: 'Organizations', villageSheet: 'Village Sheet', otherVillages: 'Other Villages',
+      fName: 'Name', fEnglish: 'English', fPortuguese: 'Portuguese', fElement: 'Element', fMotto: 'Motto', fClimate: 'Climate', fLeader: 'Leader',
+      emblemAlt: 'Emblem of {name}', mapTitle: 'World Map', mapSubtitle: 'The three great shinobi nations and their territories.', mapCrumb: 'Map',
+      mapMarkerAria: 'View information about {title}', mapHint: 'Hover over a point — or use Tab — to see information about the place.',
+      demo: 'Demonstration', jutsuDemoAlt: 'Demonstration of the jutsu {name}',
+      guideMore: 'More in Guides', guideAttributes: 'Attributes', guideProfessions: 'Professions', guideRanks: 'Ninja Ranks', guideArcs: 'Story Arcs', guideSummons: 'Summons',
+      guideGathering: 'Gathering', guideCrafting: 'Crafting',
+    },
+    siteError: { title: 'Something went wrong', text: 'The team has been notified. Please try again in a moment.', retry: 'Try again', home: 'Back to home' },
     blog: {
       title: 'Blog',
       subtitle: 'News, patch notes and updates from the Nin world.',
@@ -926,11 +989,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'bulk-status': 'changed the status of', 'bulk-delete': 'bulk-deleted', 'bulk-import': 'imported',
           login: 'signed in', logout: 'signed out', login_denied: 'had a login denied', role_change: 'changed the role of',
           activate: 'reactivated', deactivate: 'deactivated', bootstrap: 'was created as owner', bootstrap_restore: 'had the owner role restored',
-          permission_denied: 'tried something without permission on', reset: 'restored the defaults of', delete_file: 'removed a file from',
+          permission_denied: 'tried something without permission on', resolve: 'resolved', reopen: 'reopened', reset: 'restored the defaults of', delete_file: 'removed a file from',
         },
         logEntities: {
           content_item: 'entry', jutsu: 'jutsu', mastery: 'mastery', upload: 'file',
-          auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post', roles: 'role permissions', notice: 'notice',
+          auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post', roles: 'role permissions', notice: 'notice', error: 'error',
         },
         logSources: { panel: 'Panel', bot: 'Bot', auth: 'Login', system: 'System' },
       },
@@ -964,6 +1027,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         newOrg: 'New organization', orgName: 'Name', orgDescription: 'Description', orgVillages: 'Operates in villages',
         orgConfirmDelete: 'Delete the organization "{name}"?', orgEmpty: 'No organizations registered.', orgSave: 'Save organization',
         orgCancel: 'Cancel', orgEditTitle: 'Edit organization', backToVillages: 'Back to villages', noVillagesYet: 'Register a village first.',
+        orgNameRequired: 'The name is required.', orgIdInvalid: 'The id must have only lowercase letters, numbers and hyphens (e.g. anbu).',
+        orgTranslationNote: 'Write in English (the main language). The Portuguese version is generated by DeepL when you save; you can correct it by hand.',
+        clanTranslationNote: 'Portuguese version of this clan (empty = DeepL translates it on save).',
       },
       sidebar: {
         overview: 'Overview',
@@ -976,9 +1042,20 @@ export const dictionaries: Record<Locale, Dictionary> = {
         users: 'Users',
         staff: 'Staff',
         permissions: 'Permissions',
+        errors: 'Errors',
         villages: 'Villages',
         organizations: 'Organizations',
         backToSite: 'Back to site',
+      },
+      errorsPage: {
+        title: 'Errors and problems', subtitle: 'Everything that broke in the wiki (API, website, translation, attacks). The bot also alerts on Discord.',
+        open: 'Open', resolved: 'Resolved', all: 'All', allSources: 'All sources', empty: 'No problems here. 🎉',
+        loadError: 'Could not load the errors.', actionError: 'Could not complete the action.',
+        occurrences: 'occurrences', firstSeen: 'First seen', lastSeen: 'Last seen', where: 'Where in the code', route: 'Route / page', status: 'HTTP status',
+        resolve: 'Mark as resolved', reopen: 'Reopen', delete: 'Delete', confirmDelete: 'Delete this error record?',
+        trace: 'Traceback (masked)', noTrace: 'No traceback for this kind of problem.', resolvedBy: 'Resolved by', ip: 'IP of the last occurrence', refresh: 'Refresh',
+        sources: { api: 'API', web: 'Website', deepl: 'DeepL', security: 'Security' },
+        howTo: 'If it happens again the problem reopens by itself and the bot alerts again.',
       },
       noticeBoard: {
         title: 'Notice board', subtitle: 'Announcements and files for the team.', empty: 'No notices yet.',
@@ -1002,7 +1079,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
           'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices',
-          'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'roles.manage': 'Edit role permissions',
+          'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
           'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)',
         },
       },
@@ -1129,6 +1206,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
         spawnLocationLabel: 'Spawn location (Portuguese)',
         emptyHint: 'Not translated yet — save the entry to auto-generate it (if the DeepL key is configured), or write it here by hand.',
         retranslateError: 'Error retranslating. Is the API running? Is the DeepL key configured?',
+        mottoLabel: 'Motto (Portuguese)', climateLabel: 'Climate (Portuguese)', longDescriptionLabel: 'Full description (Portuguese)',
+        titleLabel: 'Title (Portuguese)', excerptLabel: 'Excerpt (Portuguese)', contentLabel: 'Content (Portuguese)',
       },
       masteryEditor: {
         title: 'Edit Mastery',

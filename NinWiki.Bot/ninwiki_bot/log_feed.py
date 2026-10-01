@@ -23,18 +23,18 @@ MAX_SEEN = 500                       # quantos ids recentes lembrar
 MAX_TEXT = 300                       # tamanho maximo de cada texto mostrado no embed
 
 ACTION_LABEL = {
-    "create": "criou", "update": "editou", "delete": "apagou", "upload": "enviou arquivo para",
-    "delete_file": "removeu arquivo de", "reset": "restaurou o padrão de",
-    "bulk-status": "mudou o status de", "bulk-delete": "apagou em massa", "bulk-import": "importou",
-    "login": "entrou no painel", "logout": "saiu do painel", "login_denied": "teve o login negado",
-    "role_change": "mudou o cargo de", "activate": "reativou", "deactivate": "desativou",
-    "bootstrap": "foi criado como dono", "bootstrap_restore": "teve o cargo de dono restaurado",
-    "permission_denied": "tentou algo sem permissão em",
+    "create": "created", "update": "edited", "delete": "deleted", "upload": "uploaded a file to",
+    "delete_file": "removed a file from", "reset": "restored the defaults of",
+    "bulk-status": "changed the status of", "bulk-delete": "bulk-deleted", "bulk-import": "imported",
+    "login": "signed in to the panel", "logout": "signed out of the panel", "login_denied": "had a login denied",
+    "role_change": "changed the role of", "activate": "reactivated", "deactivate": "deactivated",
+    "bootstrap": "was created as owner", "bootstrap_restore": "had the owner role restored",
+    "permission_denied": "tried something without permission on", "resolve": "resolved", "reopen": "reopened",
 }
 ENTITY_LABEL = {
-    "content_item": "uma entry", "jutsu": "um jutsu", "mastery": "uma mastery", "upload": "um arquivo", "auth": "a sessão",
-    "staff": "um membro da equipe", "security": "uma rota", "village": "uma vila", "organization": "uma organização",
-    "post": "um post", "notice": "um aviso", "roles": "as permissões de um cargo",
+    "content_item": "an entry", "jutsu": "a jutsu", "mastery": "a mastery", "upload": "a file", "auth": "the session",
+    "staff": "a staff member", "security": "a route", "village": "a village", "organization": "an organization",
+    "post": "a post", "notice": "a notice", "roles": "a role's permissions", "error": "an error",
 }
 # Cores dos embeds (RGB em inteiro): verde = criou, azul = editou, vermelho = apagou/negado, laranja = equipe/seguranca.
 COLORS = {"create": 0x2ECC71, "update": 0x3498DB, "delete": 0xE74C3C, "bulk-delete": 0xE74C3C,
@@ -67,26 +67,26 @@ def describe_diff(entry: dict) -> str:
     """Resumo curto e SEGURO do que mudou (so' campos pequenos conhecidos; nunca o texto de conteudo)."""
     diff = entry.get("diff") or {}
     parts: list[str] = []
-    for key, label in (("name", "Nome"), ("title", "Título"), ("username", "Usuário"), ("file", "Arquivo")):
+    for key, label in (("name", "Name"), ("title", "Title"), ("username", "User"), ("file", "File")):
         if isinstance(diff.get(key), str):
             parts.append(f"{label}: {_clip(diff[key], 100)}")
     if isinstance(diff.get("role"), str):
-        parts.append(f"Cargo: {ROLE_LABEL.get(diff['role'], diff['role'])}")
+        parts.append(f"Role: {ROLE_LABEL.get(diff['role'], diff['role'])}")
     if isinstance(diff.get("before"), dict) and isinstance(diff.get("after"), dict):
         before, after = diff["before"], diff["after"]
         if isinstance(before.get("name"), str) and before.get("name") != after.get("name"):
-            parts.append(f"Nome: {_clip(before['name'], 60)} → {_clip(str(after.get('name')), 60)}")
-    for key, label in (("added", "Liberou"), ("removed", "Bloqueou")):
+            parts.append(f"Name: {_clip(before['name'], 60)} → {_clip(str(after.get('name')), 60)}")
+    for key, label in (("added", "Granted"), ("removed", "Revoked")):
         if isinstance(diff.get(key), list) and diff[key]:
             parts.append(f"{label}: " + ", ".join(_clip(p, 40) for p in diff[key][:8]))
     if isinstance(diff.get("missing"), list) and diff["missing"]:
-        parts.append("Faltava: " + ", ".join(_clip(p, 40) for p in diff["missing"][:5]))
+        parts.append("Missing: " + ", ".join(_clip(p, 40) for p in diff["missing"][:5]))
     return _clip("\n".join(parts), 600)
 
 
 def format_entry(entry: dict) -> dict:
     """Transforma uma linha do log em {title, description, color, footer, timestamp} (o main.py monta o embed)."""
-    actor = entry.get("actorName") or "Sistema"
+    actor = entry.get("actorName") or "System"
     role = ROLE_LABEL.get(entry.get("actorRole") or "", entry.get("actorRole") or "")
     action = ACTION_LABEL.get(entry["action"], entry["action"])
     entity = ENTITY_LABEL.get(entry["entityType"], entry["entityType"])
@@ -97,7 +97,7 @@ def format_entry(entry: dict) -> dict:
         "title": title,
         "description": describe_diff(entry),
         "color": COLORS.get(entry["action"], DEFAULT_COLOR),
-        "footer": {"painel": "Painel", "bot": "Bot", "auth": "Login", "system": "Sistema"}.get(entry.get("source", ""), entry.get("source", "")),
+        "footer": {"panel": "Panel", "bot": "Bot", "auth": "Login", "system": "System"}.get(entry.get("source", ""), entry.get("source", "")),
         "timestamp": _parse_time(entry["createdAt"]),
     }
 

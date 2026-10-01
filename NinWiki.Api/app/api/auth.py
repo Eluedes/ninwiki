@@ -167,7 +167,7 @@ async def dev_login(payload: DevLogin, request: Request, response: Response, db:
         user = await staff_service.get_by_discord_id(db, discord_id)
     if user is None or not user.is_active:
         _register_failure()
-        raise HTTPException(status_code=403, detail="Este Discord ID não está cadastrado na equipe (ou está desativado)")
+        raise HTTPException(status_code=403, detail="This Discord ID is not registered on the team (or is deactivated)")
     user.last_login_at = datetime.now(timezone.utc)
     await log_action(db, action="login", entity_type="auth", entity_id=str(user.discord_id),
                      diff={"dev_login": True}, actor=user, source="auth")

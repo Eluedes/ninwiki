@@ -27,7 +27,7 @@ const tierColors: Record<number, string> = {
 
 /** Card de um jutsu. */
 export function JutsuCard({ jutsu, mastery }: { jutsu: ApiJutsu; mastery?: ApiMastery }) {
-  const { locale } = useLanguage();
+  const { locale, dict } = useLanguage();
   const isPt = locale === 'pt';
   const name = isPt ? (jutsu.namePt ?? jutsu.name) : jutsu.name;
   // Subtitulo mostra o OUTRO idioma (mesmo padrao de antes, so' que
@@ -73,7 +73,7 @@ export function JutsuCard({ jutsu, mastery }: { jutsu: ApiJutsu; mastery?: ApiMa
         <div className="relative mt-4 aspect-video overflow-hidden rounded-md border border-ink-700 bg-ink-950">
           <Image
             src={jutsu.gif}
-            alt={`Demonstração do jutsu ${name}`}
+            alt={dict.lore.jutsuDemoAlt.replace('{name}', name)}
             fill
             unoptimized
             className="object-contain"

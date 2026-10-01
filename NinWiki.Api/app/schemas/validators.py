@@ -24,18 +24,18 @@ MAX_RICH_DEPTH = 40        # profundidade maxima de aninhamento (impede "bomba" 
 def _check_node(node: Any, depth: int) -> None:
     """Percorre o documento Tiptap conferindo tipos permitidos, profundidade e links. Levanta ValueError se algo for suspeito."""
     if depth > MAX_RICH_DEPTH:
-        raise ValueError("Conteúdo rico inválido: aninhamento profundo demais")
+        raise ValueError("Invalid rich content: nesting too deep")
     if not isinstance(node, dict):
-        raise ValueError("Conteúdo rico inválido: nó malformado")
+        raise ValueError("Invalid rich content: malformed node")
     if node.get("type") not in ALLOWED_NODE_TYPES:
-        raise ValueError(f"Conteúdo rico inválido: tipo de bloco não permitido ({str(node.get('type'))[:30]})")
+        raise ValueError(f"Invalid rich content: block type not allowed ({str(node.get('type'))[:30]})")
     for mark in node.get("marks") or []:
         if not isinstance(mark, dict) or mark.get("type") not in ALLOWED_MARK_TYPES:
-            raise ValueError("Conteúdo rico inválido: formatação não permitida")
+            raise ValueError("Invalid rich content: formatting not allowed")
         if mark.get("type") == "link":
             href = str((mark.get("attrs") or {}).get("href", "")).strip().lower()
             if not href.startswith(ALLOWED_LINK_SCHEMES):
-                raise ValueError("Conteúdo rico inválido: link com endereço não permitido")
+                raise ValueError("Invalid rich content: link address not allowed")
     for child in node.get("content") or []:
         _check_node(child, depth + 1)
 
@@ -64,13 +64,13 @@ def validate_rich_content(value: str | None) -> str | None:
         try:
             parsed = json.loads(stripped)
         except json.JSONDecodeError:
-            raise ValueError("Conteúdo rico inválido: não é um JSON válido")
+            raise ValueError("Invalid rich content: not valid JSON")
         if not isinstance(parsed, dict) or parsed.get("type") != "doc":
-            raise ValueError("Conteúdo rico inválido: esperado um documento Tiptap (\"type\": \"doc\")")
+            raise ValueError("Invalid rich content: expected a Tiptap document (\"type\": \"doc\")")
         if len(stripped.encode("utf-8")) > MAX_RICH_BYTES:
-            raise ValueError("Conteúdo rico grande demais")
+            raise ValueError("Rich content too large")
         _check_node(parsed, 0)
         return value
     if "<script" in stripped.lower():
-        raise ValueError("Conteúdo não pode conter tags <script>")
+        raise ValueError("Content cannot contain <script> tags")
     return value

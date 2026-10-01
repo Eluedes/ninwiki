@@ -18,3 +18,4 @@ from app.models.users import AuditLogEntry, User  # noqa: F401
 from app.models.posts import Post  # noqa: F401
 from app.models.roles import RolePermission  # noqa: F401
 from app.models.notices import Notice, NoticeFile  # noqa: F401
+from app.models.errors import ErrorEvent  # noqa: F401

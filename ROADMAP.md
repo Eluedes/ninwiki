@@ -4,7 +4,7 @@ Documento de controle do projeto, no mesmo espírito do roadmap do Guima:
 uma lista viva do que já foi feito e do que falta, organizada em fases.
 Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 
-**Última atualização:** 01/10/2026 (Fase 6 concluída: endurecimento, log no Discord, auditoria de bugs)
+**Última atualização:** 02/10/2026 (erros no Discord, inglês + DeepL em tudo)
 
 **Legenda:** ✅ feito e testado · 🔄 em andamento / parcial · ⬜ não iniciado
 
@@ -426,6 +426,20 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 - ✅ **Bugs achados e corrigidos na auditoria (01/10)**: horário do log (`audit_log.created_at`) sem fuso — aparecia deslocado e
   quebrava comparações (migração `b7d4e2f9a1c3`); editor de texto minúsculo (`min-h-64` não existe no Tailwind 3.3);
   extensões `link`/`underline` duplicadas no Tiptap v3; comentário "sem autenticação" desatualizado; teste 14a do clã
+- ✅ **Erros e problemas do wiki no Discord (02/10)**: tabela `error_events` (migração `d5a7c1e9b3f2`), painel **`/admin/errors`** (só S.Adm:
+  lista agrupada com contador, local no código, traceback **mascarado**, resolver/reabrir/apagar; reabre sozinho se voltar) e o bot posta no
+  canal de erros (`ERROR_CHANNEL_ID`): exceções/5xx da API (`ErrorCaptureMiddleware` devolve 500 genérico, sem vazar nada), erros de tela
+  do site (`app/error.tsx`, `global-error.tsx` e `ErrorReporter` → `POST /client-errors` público com origem+limite+teto/hora), falhas da
+  **DeepL** (cota/chave/fora do ar, antes silenciosas), alertas de **flood** e **API/banco/site fora do ar/voltou** (`/health/ready`).
+  Anti-spam (1º aviso na hora, depois 1 a cada 10 min com "+N") e segredos nunca aparecem (máscara de URL de banco, tokens, JWT,
+  valores do `.env`, parâmetros de SQL). Coberto por testes (`testar_permissoes.py` 345, `testar_bot_integracao.py` 91)
+- ✅ **Inglês padrão + DeepL em tudo (02/10)**: vilas (lema, descrição, descrição completa, clima), clãs e organizações (nome/descrição),
+  guia (profissões, ranks, arcos, summons, atributos) e posts do blog ganharam campos `_pt` (migração `c3e8a5b1d9f4`); conteúdo nasce em
+  inglês, a DeepL traduz EN→PT ao salvar (sem sobrescrever correção manual) e há botão **Retranslate** em vilas, organizações e posts.
+  Site público em PT/EN de verdade (antes havia textos fixos em português: vilas, mapa, guia, "não encontrado"...); dados iniciais
+  (`lib/village-data.ts`, `guide-data.ts`, mapa) reescritos em inglês + português; mensagens de erro da API, validações do painel e o bot
+  (`/team ...`, log, alertas) em inglês. **Idioma escolhido fica salvo** (antes cada página voltava para inglês). Script
+  `scripts/traduzir_para_ingles.py` converte conteúdo antigo em português (DeepL PT→EN, simulação por padrão)
 - ⬜ Rate limit com **Redis** se um dia houver mais de uma instância (hoje é por processo — exato com uma instância só)
 - ⬜ Cloudflare (WAF/proxy) na frente — recomendado, ver README 3.7
 

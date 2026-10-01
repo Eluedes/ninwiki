@@ -287,6 +287,7 @@ export interface ApiAttribute {
   name: string;
   namePt: string | null;
   description: string;
+  descriptionPt?: string | null;
   icon: string;
 }
 
@@ -490,6 +491,9 @@ export interface ApiClan {
   name: string;
   villageId: string;
   description: string;
+  // Traducao EN -> PT (DeepL); `name`/`description` sao o ingles (principal)
+  namePt?: string | null;
+  descriptionPt?: string | null;
   // Imagem do cla' (logo + roupa que usam), enviada pelo painel
   image: string | null;
 }
@@ -498,6 +502,9 @@ export interface ApiOrganization {
   id: string;
   name: string;
   description: string;
+  // Traducao EN -> PT (DeepL); `name`/`description` sao o ingles (principal)
+  namePt?: string | null;
+  descriptionPt?: string | null;
 }
 
 export interface ApiVillage {
@@ -509,6 +516,11 @@ export interface ApiVillage {
   motto: string;
   description: string;
   longDescription: string;
+  // Traducoes EN -> PT (DeepL); os campos sem sufixo sao o ingles (principal)
+  mottoPt?: string | null;
+  descriptionPt?: string | null;
+  longDescriptionPt?: string | null;
+  climatePt?: string | null;
   emblem: string;
   image: string | null;
   accentColor: string;
@@ -536,6 +548,9 @@ export interface ClanInput {
   id: string;
   name: string;
   description: string;
+  // Vazio = a DeepL traduz EN -> PT ao salvar
+  namePt?: string | null;
+  descriptionPt?: string | null;
   image?: string | null;
 }
 
@@ -547,6 +562,11 @@ export interface VillageInput {
   motto: string;
   description: string;
   longDescription: string;
+  // Vazio = a DeepL traduz EN -> PT ao salvar
+  mottoPt?: string | null;
+  descriptionPt?: string | null;
+  longDescriptionPt?: string | null;
+  climatePt?: string | null;
   emblem: string;
   image: string | null;
   accentColor: string;
@@ -582,6 +602,9 @@ export interface OrganizationInput {
   id: string;
   name: string;
   description: string;
+  // Vazio = a DeepL traduz EN -> PT ao salvar
+  namePt?: string | null;
+  descriptionPt?: string | null;
   villageIds: string[];
 }
 
@@ -614,6 +637,7 @@ export interface ApiProfession {
   namePt: string | null;
   group: 'gathering' | 'crafting';
   description: string;
+  descriptionPt?: string | null;
   icon: string;
 }
 
@@ -624,13 +648,16 @@ export interface ApiNinjaRank {
   namePt: string | null;
   order: number;
   description: string;
+  descriptionPt?: string | null;
 }
 
 export interface ApiStoryArc {
   id: string;
   name: string;
+  namePt?: string | null;
   levelRange: string;
   description: string;
+  descriptionPt?: string | null;
 }
 
 export interface ApiSummon {
@@ -639,9 +666,13 @@ export interface ApiSummon {
   // `name` e' o ingles (principal); `namePt` a traducao (ver lib/localized.ts)
   namePt: string | null;
   village: string;
+  villagePt?: string | null;
   stageYoung: string;
   stageTeen: string;
   stageAdult: string;
+  stageYoungPt?: string | null;
+  stageTeenPt?: string | null;
+  stageAdultPt?: string | null;
 }
 
 /** Lista as profissoes (aba do Guia). */
@@ -673,7 +704,7 @@ export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
-  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage'
+  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage'
   | 'audit.view' | 'audit.view_all';
 
@@ -757,6 +788,9 @@ export interface ApiPostSummary {
   slug: string;
   title: string;
   excerpt: string;
+  // Traducao EN -> PT (DeepL); title/excerpt/content sao o ingles (principal)
+  titlePt?: string | null;
+  excerptPt?: string | null;
   coverImage: string | null;
   status: 'draft' | 'published';
   authorName: string | null;
@@ -767,6 +801,7 @@ export interface ApiPostSummary {
 export interface ApiPost extends ApiPostSummary {
   // Tiptap JSON (texto rico) ou texto simples - mesmo formato de Conteudo
   content: string;
+  contentPt?: string | null;
 }
 
 export interface PostInput {
@@ -774,6 +809,10 @@ export interface PostInput {
   title: string;
   excerpt: string;
   content: string;
+  // Vazio = a DeepL traduz EN -> PT ao salvar
+  titlePt?: string | null;
+  excerptPt?: string | null;
+  contentPt?: string | null;
   coverImage: string | null;
   status: 'draft' | 'published';
 }
@@ -913,4 +952,66 @@ export function deleteNoticeFile(noticeId: string, fileId: string): Promise<ApiN
 // Link direto de download (o navegador manda o cookie de sessao; a API devolve como anexo).
 export function noticeFileUrl(fileId: string): string {
   return `${API_URL}/notices/files/${fileId}`;
+}
+
+// ---- Retraducao forcada (EN -> PT, DeepL) de vilas, organizacoes e posts ----
+
+/** Refaz a traducao em portugues dos textos da vila e dos cla's. */
+export function retranslateVillage(id: string): Promise<ApiVillage> {
+  return apiFetch(`/villages/${id}/retranslate`, { method: 'POST' });
+}
+
+/** Refaz a traducao em portugues de nome e descricao da organizacao. */
+export function retranslateOrganization(id: string): Promise<ApiOrganizationAdmin> {
+  return apiFetch(`/organizations/${id}/retranslate`, { method: 'POST' });
+}
+
+/** Refaz a traducao em portugues de titulo, resumo e texto do post. */
+export function retranslatePost(id: string): Promise<ApiPost> {
+  return apiFetch(`/posts/${id}/retranslate`, { method: 'POST' });
+}
+
+// ---- Registro de erros do wiki (so' S.Adm: permissao errors.view) ----
+
+export interface ApiErrorEvent {
+  id: string;
+  source: 'api' | 'web' | 'deepl' | 'security';
+  level: 'error' | 'warning';
+  title: string;
+  message: string;
+  location: string | null;
+  path: string | null;
+  method: string | null;
+  status: number | null;
+  // Traceback mascarado da ULTIMA ocorrencia e IP: so' o painel (S.Adm) recebe
+  trace: string | null;
+  ipAddress: string | null;
+  count: number;
+  firstSeen: string;
+  lastSeen: string;
+  resolved: boolean;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+}
+
+/** Lista os problemas registrados (abertos por padrao), o mais recente primeiro. */
+export function listErrors(status: 'open' | 'resolved' | 'all' = 'open', source?: string): Promise<ApiErrorEvent[]> {
+  const params = new URLSearchParams({ status });
+  if (source) params.set('source', source);
+  return apiFetch(`/errors?${params.toString()}`);
+}
+
+/** Marca um problema como resolvido (se voltar a acontecer, reabre sozinho). */
+export function resolveError(id: string): Promise<ApiErrorEvent> {
+  return apiFetch(`/errors/${id}/resolve`, { method: 'POST' });
+}
+
+/** Reabre um problema resolvido. */
+export function reopenError(id: string): Promise<ApiErrorEvent> {
+  return apiFetch(`/errors/${id}/reopen`, { method: 'POST' });
+}
+
+/** Apaga o registro de um problema. */
+export function deleteError(id: string): Promise<void> {
+  return apiFetch(`/errors/${id}`, { method: 'DELETE' });
 }

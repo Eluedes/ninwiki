@@ -59,6 +59,9 @@ class Permission(str, Enum):
     # --- Cargos e permissoes (so' S.Adm: edita o que cada cargo pode) ---
     ROLES_MANAGE = "roles.manage"
 
+    # --- Erros do wiki (traceback, IPs - so' o S.Adm) ---
+    ERRORS_VIEW = "errors.view"
+
     # --- Log ---
     AUDIT_VIEW = "audit.view"             # log de CONTEUDO
     AUDIT_VIEW_ALL = "audit.view_all"     # log COMPLETO (login, equipe, seguranca, IPs) - so' S.Adm
@@ -75,6 +78,7 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.STAFF_EDIT,
     Permission.STAFF_DEACTIVATE,
     Permission.ROLES_MANAGE,
+    Permission.ERRORS_VIEW,
 })
 
 _CREATOR: frozenset[Permission] = frozenset({

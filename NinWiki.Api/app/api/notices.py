@@ -61,7 +61,7 @@ async def _load(db: AsyncSession, notice_id: UUID) -> Notice:
     stmt = select(Notice).where(Notice.id == notice_id).options(selectinload(Notice.files))
     notice = (await db.execute(stmt)).scalar_one_or_none()
     if notice is None:
-        raise HTTPException(status_code=404, detail="Aviso não encontrado")
+        raise HTTPException(status_code=404, detail="Notice not found")
     return notice
 
 
@@ -135,10 +135,10 @@ async def add_file(
     """Anexa um arquivo ao aviso: valida tipo, tamanho e quantidade e grava com nome aleatorio."""
     notice = await _load(db, notice_id)
     if len(notice.files) >= MAX_FILES_PER_NOTICE:
-        raise HTTPException(status_code=400, detail=f"Máximo de {MAX_FILES_PER_NOTICE} arquivos por aviso")
+        raise HTTPException(status_code=400, detail=f"Maximum of {MAX_FILES_PER_NOTICE} files per notice")
     filename = _safe_filename(file.filename)
     if Path(filename).suffix.lower() in BLOCKED_EXTENSIONS:
-        raise HTTPException(status_code=415, detail="Esse tipo de arquivo não é permitido como anexo")
+        raise HTTPException(status_code=415, detail="This file type is not allowed as an attachment")
     max_bytes = settings.max_notice_file_mb * 1024 * 1024
     content = await file.read(max_bytes + 1)
     if len(content) > max_bytes:
@@ -169,7 +169,7 @@ async def remove_file(
     notice = await _load(db, notice_id)
     target = next((f for f in notice.files if f.id == file_id), None)
     if target is None:
-        raise HTTPException(status_code=404, detail="Arquivo não encontrado")
+        raise HTTPException(status_code=404, detail="File not found")
     stored, name = target.stored_name, target.filename
     notice.files.remove(target)
     await log_action(db, action="delete_file", entity_type="notice", entity_id=str(notice.id),
@@ -189,7 +189,7 @@ async def download_file(
     nf = await db.get(NoticeFile, file_id)
     path = FILES_DIR / nf.stored_name if nf else None
     if nf is None or not path.is_file():
-        raise HTTPException(status_code=404, detail="Arquivo não encontrado")
+        raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(
         path, filename=nf.filename, media_type="application/octet-stream",
         content_disposition_type="attachment", headers={"X-Content-Type-Options": "nosniff"},

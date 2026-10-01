@@ -57,7 +57,7 @@ export const Ficha = Node.create({
 
   addAttributes() {
     return {
-      title: { default: 'Ficha' },
+      title: { default: 'Sheet' },
       // rows guardado como um array de objetos direto no attrs -
       // Tiptap serializa isso como JSON dentro do proprio documento
       // JSON do editor (o campo inteiro description/lore/synergy ja'
@@ -93,7 +93,7 @@ export const Ficha = Node.create({
     return [
       'div',
       mergeAttributes(HTMLAttributes, { 'data-type': 'ficha', class: 'tiptap-ficha' }),
-      ['div', { class: 'tiptap-ficha-title' }, node.attrs.title ?? 'Ficha'],
+      ['div', { class: 'tiptap-ficha-title' }, node.attrs.title ?? 'Sheet'],
       ['div', { class: 'tiptap-ficha-rows' },
         ...rows.map((r): [string, Record<string, string>, ...unknown[]] => [
           'div',

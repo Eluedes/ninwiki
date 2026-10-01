@@ -15,3 +15,18 @@ export function alternateName(locale: Locale, name: string, namePt: string | nul
   const main = localizedName(locale, name, namePt);
   return other && other !== main ? other : null;
 }
+
+/** Texto no idioma atual: em portugues usa a traducao quando existe e senao o ingles (nunca fica vazio). */
+export function localizedText(locale: Locale, text: string, textPt: string | null | undefined): string {
+  return locale === 'pt' ? (textPt || text) : text;
+}
+
+// Elementos em portugues (o campo `element` das vilas guarda o nome em ingles). Desconhecido -> o proprio valor.
+const ELEMENTS_PT: Record<string, string> = {
+  Fire: 'Fogo', Water: 'Água', Wind: 'Vento', Earth: 'Terra', Lightning: 'Raio',
+};
+
+/** Nome do elemento no idioma atual. */
+export function elementLabel(locale: Locale, element: string): string {
+  return locale === 'pt' ? (ELEMENTS_PT[element] ?? element) : element;
+}

@@ -89,7 +89,7 @@ async def get_mastery(mastery_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(stmt)
     mastery = result.scalar_one_or_none()
     if mastery is None:
-        raise HTTPException(status_code=404, detail="Mastery não encontrada")
+        raise HTTPException(status_code=404, detail="Mastery not found")
     return mastery
 
 
@@ -117,7 +117,7 @@ async def update_mastery(mastery_id: str, payload: MasteryWrite, staff: User = D
     result = await db.execute(stmt)
     mastery = result.scalar_one_or_none()
     if mastery is None:
-        raise HTTPException(status_code=404, detail="Mastery não encontrada")
+        raise HTTPException(status_code=404, detail="Mastery not found")
 
     before = {"name": mastery.name}
 
@@ -193,7 +193,7 @@ async def retranslate_mastery(mastery_id: str, staff: User = Depends(require_per
     result = await db.execute(stmt)
     mastery = result.scalar_one_or_none()
     if mastery is None:
-        raise HTTPException(status_code=404, detail="Mastery não encontrada")
+        raise HTTPException(status_code=404, detail="Mastery not found")
     for field_en, field_pt in [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")]:
         translated = await translate_field(getattr(mastery, field_en))
         if translated:
@@ -227,7 +227,7 @@ async def create_jutsu(payload: JutsuWrite, staff: User = Depends(require_permis
     """Cria um jutsu (exige lore.edit); valida mastery/caminho e registra no log."""
     existing = await db.get(Jutsu, payload.id)
     if existing:
-        raise HTTPException(status_code=409, detail=f"Já existe um jutsu com o id '{payload.id}'")
+        raise HTTPException(status_code=409, detail=f"A jutsu with the id '{payload.id}' already exists")
 
     await _validate_mastery_and_path(payload, db)
 
@@ -246,7 +246,7 @@ async def update_jutsu(jutsu_id: str, payload: JutsuWrite, staff: User = Depends
     """Edita um jutsu (exige lore.edit); copia os campos do payload e registra no log."""
     jutsu = await _get_jutsu_or_404(jutsu_id, db)
     if payload.id != jutsu_id:
-        raise HTTPException(status_code=400, detail="Não é permitido mudar o id de um jutsu existente")
+        raise HTTPException(status_code=400, detail="Changing the id of an existing jutsu is not allowed")
 
     await _validate_mastery_and_path(payload, db)
 
@@ -290,7 +290,7 @@ async def _get_jutsu_or_404(jutsu_id: str, db: AsyncSession) -> Jutsu:
     """Busca um jutsu pelo id ou responde 404."""
     jutsu = await db.get(Jutsu, jutsu_id)
     if jutsu is None:
-        raise HTTPException(status_code=404, detail="Jutsu não encontrado")
+        raise HTTPException(status_code=404, detail="Jutsu not found")
     return jutsu
 
 
@@ -303,12 +303,12 @@ async def _validate_mastery_and_path(payload: JutsuWrite, db: AsyncSession) -> N
     """
     mastery = await db.get(Mastery, payload.mastery_id)
     if mastery is None:
-        raise HTTPException(status_code=400, detail=f"Mastery '{payload.mastery_id}' não existe")
+        raise HTTPException(status_code=400, detail=f"Mastery '{payload.mastery_id}' does not exist")
     if payload.path_id:
         from app.models.masteries import MasteryPath
         path = await db.get(MasteryPath, payload.path_id)
         if path is None or path.mastery_id != payload.mastery_id:
             raise HTTPException(
                 status_code=400,
-                detail=f"Caminho '{payload.path_id}' não existe ou não pertence à mastery '{payload.mastery_id}'",
+                detail=f"Path '{payload.path_id}' does not exist or does not belong to the mastery '{payload.mastery_id}'",
             )

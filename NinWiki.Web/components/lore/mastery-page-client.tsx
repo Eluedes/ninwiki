@@ -185,7 +185,7 @@ export function MasteryPageClient({
                 return (
                   <div key={attrId} className="rounded-md border border-ink-700 bg-ink-850/50 p-3">
                     <p className="text-sm font-semibold text-ink-100">{isPt ? (attr.namePt ?? attr.name) : attr.name}</p>
-                    <p className="text-xs text-ink-400">{attr.description}</p>
+                    <p className="text-xs text-ink-400">{isPt ? (attr.descriptionPt || attr.description) : attr.description}</p>
                   </div>
                 );
               })}

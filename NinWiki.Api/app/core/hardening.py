@@ -1,6 +1,8 @@
 """
 Endurecimento da API contra abuso e ataques comuns - tres middlewares ASGI puros:
 
+  0. ErrorCaptureMiddleware     qualquer excecao nao tratada (ou resposta 5xx) vira um registro em /admin/errors e no canal
+                                de erros do bot; o visitante recebe um 500 generico, sem detalhe interno.
   1. SecurityHeadersMiddleware  cabecalhos de seguranca em TODA resposta (nosniff, anti-iframe,
                                 HSTS fora do local, sem cache em rotas sensiveis...).
   2. RateLimitMiddleware        limite de requisicoes por IP e por minuto (leitura, escrita e
@@ -17,9 +19,15 @@ O site (Next.js) busca dados no servidor, entao as visitas chegam com o IP do se
 por isso o limite de leitura padrao e' alto.
 """
 import json
+import logging
+import time
+import traceback
 
+from app.core import error_log
 from app.core.config import settings
 from app.core.rate_limit import client_key, limiter, retry_message
+
+log = logging.getLogger("ninwiki.errors")
 
 # Rotas cujas respostas nunca devem ficar em cache (sessao, equipe, permissoes, avisos, log, bot).
 _NO_STORE_PREFIXES = ("/auth", "/staff", "/roles", "/notices", "/audit-log", "/bot")
@@ -29,6 +37,12 @@ _READ_METHODS = {"GET", "HEAD", "OPTIONS"}
 def _path_of(scope: dict) -> str:
     """Caminho da requisicao ASGI (sem query string)."""
     return scope.get("path", "")
+
+
+def _route_of(scope: dict) -> str:
+    """Rota "com buracos" (/posts/{post_id}) quando o roteador ja' a identificou; senao o caminho normalizado."""
+    route = scope.get("route")
+    return getattr(route, "path", None) or error_log.normalize_path(_path_of(scope)) or ""
 
 
 async def _send_json(send, status: int, detail: str, extra_headers: list[tuple[bytes, bytes]] | None = None) -> None:
@@ -79,6 +93,66 @@ class SecurityHeadersMiddleware:
         await self.app(scope, receive, send_with_headers)
 
 
+class ErrorCaptureMiddleware:
+    """
+    Rede de seguranca da API: se uma rota quebrar (excecao nao tratada) registra o problema (com traceback mascarado),
+    escreve no log do app e responde 500 generico. Respostas 5xx "normais" (ex: HTTPException 503) tambem sao registradas.
+    Fica DENTRO do CORS e dos cabecalhos de seguranca, entao o 500 leva os mesmos cabecalhos das demais respostas.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        started = False
+        status = 0
+
+        async def tracking_send(message):
+            """Lembra se a resposta ja' comecou e com qual status (para saber se ainda da' pra responder 500 e se foi um 5xx)."""
+            nonlocal started, status
+            if message["type"] == "http.response.start":
+                started, status = True, message["status"]
+            await send(message)
+
+        try:
+            await self.app(scope, receive, tracking_send)
+        except Exception as exc:  # noqa: BLE001 - e' justamente a rede de seguranca
+            log.error("Erro nao tratado em %s %s: %s", scope.get("method"), _route_of(scope),
+                      error_log.mask("".join(traceback.format_exception(type(exc), exc, exc.__traceback__)), 4000))
+            await error_log.record_exception(exc, path=_route_of(scope), method=scope.get("method"), status=500, ip=client_key())
+            if not started:
+                await _send_json(send, 500, "Internal server error")
+            return
+        if status >= 500:
+            await error_log.record(
+                source="api", level="error", title=f"HTTP {status}", message=f"The API answered {status} on {scope.get('method')} {_route_of(scope)}",
+                location=None, path=_route_of(scope), method=scope.get("method"), status=status, ip=client_key(),
+            )
+
+
+_flood_seen: dict[tuple[str, str], float] = {}
+_FLOOD_REPORT_SECONDS = 600
+
+
+async def _report_flood(bucket: str, limit: int) -> None:
+    """Registra (no maximo 1 vez por IP e balde a cada 10 min) que alguem estourou o limite - sinal de flood/copia em massa."""
+    key, now = (bucket, client_key()), time.monotonic()
+    if now - _flood_seen.get(key, -_FLOOD_REPORT_SECONDS) < _FLOOD_REPORT_SECONDS:
+        return
+    _flood_seen[key] = now
+    if len(_flood_seen) > 5000:
+        for k in [k for k, t in _flood_seen.items() if now - t > _FLOOD_REPORT_SECONDS]:
+            _flood_seen.pop(k, None)
+    await error_log.record(
+        source="security", level="warning", title=f"Rate limit exceeded ({bucket})",
+        message=f"A client exceeded {limit} requests/minute on bucket '{bucket}' and is being throttled (429). Possible flood or mass copying.",
+        path=None, status=429, ip=client_key(),
+    )
+
+
 class RateLimitMiddleware:
     """Limite de requisicoes por IP/minuto. Estourou: 429 com Retry-After (e o resto da API nem e' executado)."""
 
@@ -90,7 +164,7 @@ class RateLimitMiddleware:
             await self.app(scope, receive, send)
             return
         path, method = _path_of(scope), scope.get("method", "GET")
-        if path == "/health" or method == "OPTIONS":  # health-check de monitoramento e preflight de CORS nao contam
+        if path.startswith("/health") or method == "OPTIONS":  # health-check de monitoramento e preflight de CORS nao contam
             await self.app(scope, receive, send)
             return
         if path.startswith("/uploads"):
@@ -101,6 +175,7 @@ class RateLimitMiddleware:
             bucket, limit = "rl-write", settings.write_requests_per_minute
         wait = limiter.hit(bucket, client_key(), limit, 60)
         if wait is not None:
+            await _report_flood(bucket, limit)
             await _send_json(send, 429, retry_message(wait), [(b"retry-after", str(wait).encode())])
             return
         await self.app(scope, receive, send)

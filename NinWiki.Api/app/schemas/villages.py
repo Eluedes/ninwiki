@@ -26,6 +26,8 @@ class ClanRead(CamelModel):
     village_id: str
     description: str
     image: str | None = None
+    name_pt: str | None = None         # traducao EN -> PT (DeepL)
+    description_pt: str | None = None
 
 
 class OrganizationRead(CamelModel):
@@ -33,6 +35,8 @@ class OrganizationRead(CamelModel):
     id: str
     name: str
     description: str
+    name_pt: str | None = None         # traducao EN -> PT (DeepL)
+    description_pt: str | None = None
 
 
 class OrganizationAdminRead(OrganizationRead):
@@ -49,6 +53,11 @@ class VillageRead(CamelModel):
     motto: str
     description: str
     long_description: str
+    # Traducoes EN -> PT (DeepL); os campos sem sufixo acima sao o ingles
+    motto_pt: str | None = None
+    description_pt: str | None = None
+    long_description_pt: str | None = None
+    climate_pt: str | None = None
     emblem: str
     image: str | None
     accent_color: str
@@ -68,6 +77,8 @@ class ClanWrite(CamelModel):
     name: str = Field(min_length=1, max_length=100)
     description: str = ""
     image: str | None = Field(default=None, max_length=500)
+    name_pt: str | None = Field(default=None, max_length=100)   # vazio = a DeepL traduz
+    description_pt: str | None = None
 
 
 class VillageWrite(CamelModel):
@@ -79,6 +90,11 @@ class VillageWrite(CamelModel):
     motto: str = Field(default="", max_length=200)
     description: str = ""
     long_description: str = ""
+    # Traducoes (vazio = a DeepL traduz do ingles ao salvar; pode corrigir a mao)
+    motto_pt: str | None = Field(default=None, max_length=200)
+    description_pt: str | None = None
+    long_description_pt: str | None = None
+    climate_pt: str | None = Field(default=None, max_length=200)
     emblem: str = Field(min_length=1, max_length=20)
     image: str | None = Field(default=None, max_length=500)
     # Vai direto pra um `style` inline no site: so' aceita hex (#RRGGBB), nunca texto livre.
@@ -89,11 +105,11 @@ class VillageWrite(CamelModel):
     map_y: float = Field(default=50, ge=0, le=100)
     clans: list[ClanWrite] = []
 
-    @field_validator("long_description")
+    @field_validator("long_description", "long_description_pt")
     @classmethod
-    def _rich(cls, v: str) -> str:
-        """Valida a descricao longa (documento Tiptap permitido)."""
-        return validate_rich_content(v) or ""
+    def _rich(cls, v: str | None) -> str | None:
+        """Valida a descricao longa (documento Tiptap permitido), em ingles e em portugues."""
+        return validate_rich_content(v) if v else v
 
     @field_validator("clans")
     @classmethod
@@ -101,7 +117,7 @@ class VillageWrite(CamelModel):
         """Recusa dois cla's com o mesmo id na mesma vila."""
         ids = [c.id for c in v]
         if len(ids) != len(set(ids)):
-            raise ValueError("Dois clãs com o mesmo id na mesma vila")
+            raise ValueError("Two clans with the same id in the same village")
         return v
 
 
@@ -110,6 +126,8 @@ class OrganizationWrite(CamelModel):
     id: str = Field(min_length=1, max_length=50, pattern=SLUG_PATTERN, description="Slug unico, ex: anbu")
     name: str = Field(min_length=1, max_length=100)
     description: str = ""
+    name_pt: str | None = Field(default=None, max_length=100)   # vazio = a DeepL traduz
+    description_pt: str | None = None
     village_ids: list[str] = []
 
     @field_validator("village_ids")

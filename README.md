@@ -6,7 +6,7 @@ Wiki com painel administrativo. Três projetos independentes na mesma pasta:
 |---|---|---|---|
 | `NinWiki.Api` | API + banco (conteúdo, login, equipe, avisos, uploads) | Python, FastAPI, PostgreSQL | 8000 |
 | `NinWiki.Web` | Site público + painel `/admin` | Next.js 16, React 18 | 3000 |
-| `NinWiki.Bot` | Bot de Discord (`/equipe ...` + log no canal) | Python, discord.py | — |
+| `NinWiki.Bot` | Bot de Discord (`/team ...` + log no canal) | Python, discord.py | — |
 
 Outros documentos: `NinWiki.Web/GUIA_DE_EDICAO.md` (editar o frontend), `NinWiki.Web/MAESTRIAS.md`,
 `NinWiki.Bot/README.md`, `ROADMAP.md` (o que já foi feito / falta), `FASE2_LOCAL.md` (login e cargos).
@@ -62,8 +62,8 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 282 verificações de segurança/permissões (precisa do banco no ar)
-python scripts/testar_bot_integracao.py    # 61 verificações do bot + log (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 345 verificações de segurança/permissões/traduções/erros (precisa do banco no ar)
+python scripts/testar_bot_integracao.py    # 91 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
 ```
@@ -86,14 +86,47 @@ pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bib
   anexam arquivos (até 10 por aviso, `MAX_NOTICE_FILE_MB` MB cada; executáveis e HTML são recusados).
 - **Permissões** (`/admin/permissions`, só S.Adm): liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora.
 - **Log geral:** `/admin/audit-log` (quem fez o quê; o IP só o S.Adm vê).
+- **Erros e problemas** (`/admin/errors`, só S.Adm): tudo que quebrou no wiki — erros da API, erros de tela do site, falhas da DeepL e
+  alertas de flood — agrupados (um problema = uma linha com o contador), com local no código e traceback mascarado. Resolva
+  com um clique; se voltar a acontecer, reabre sozinho. O card "Open" da Visão Geral mostra quantos estão abertos.
 
-### 2.2 Log no Discord (bot)
-O bot posta num canal tudo o que acontece no painel (criou/editou/apagou, logins, mudanças de equipe e de permissões,
-tentativas negadas). **Nunca** mostra IP nem o texto dos conteúdos.
-1. Crie um canal só para a equipe e copie o ID (Modo Desenvolvedor → botão direito no canal → *Copiar ID*).
-2. Dê ao bot, **nesse canal**, as permissões *Ver canal*, *Enviar mensagens* e *Inserir links*.
-3. No `.env` do bot: `LOG_CHANNEL_ID=...` (opcional: `LOG_POLL_SECONDS=20`, `LOG_IGNORE_ACTIONS=login,logout`).
-4. Reinicie o bot. Ele guarda onde parou em `NinWiki.Bot/log_state.json` (não repete nem perde ações ao reiniciar).
+### 2.2 Log, erros e alertas no Discord (bot)
+O bot cuida de **dois canais** (podem ser o mesmo). Os comandos e as mensagens do bot são em **inglês** (comandos: `/team list|add|role|deactivate|reactivate`).
+
+**Log geral** (`LOG_CHANNEL_ID`): o que acontece no painel (criou/editou/apagou, logins, mudanças de equipe e de permissões, tentativas
+negadas). **Nunca** mostra IP nem o texto dos conteúdos.
+
+**Erros e alertas** (`ERROR_CHANNEL_ID`; vazio = usa o canal de log): o bot avisa quando
+- a **API** dá erro (5xx / exceção) — com tipo do erro, local no código, rota e quantas vezes;
+- o **site** quebra na tela de um visitante (o navegador reporta sozinho);
+- a **DeepL** para de funcionar (chave recusada, cota do plano gratuito acabou, fora do ar);
+- alguém estoura o limite de requisições (possível flood/cópia em massa);
+- a **API, o banco ou o site** (`SITE_URL`) **caem** — e quando **voltam**.
+Anti-spam: o 1º aviso sai na hora; se o mesmo problema continua, só um novo aviso a cada 10 min (com "+N desde o último").
+Problema marcado como resolvido no painel não é repostado (se voltar a acontecer, reabre). Detalhes e traceback: `/admin/errors`.
+
+Como ligar:
+1. Crie o(s) canal(is) só para a equipe e copie o ID (Modo Desenvolvedor → botão direito no canal → *Copiar ID*).
+2. Dê ao bot, **nesses canais**, *Ver canal*, *Enviar mensagens* e *Inserir links*.
+3. No `.env` do bot: `LOG_CHANNEL_ID`, `ERROR_CHANNEL_ID`, `SITE_URL=https://wiki.seudominio.com` (opcional: `LOG_POLL_SECONDS`,
+   `HEALTH_POLL_SECONDS`, `LOG_IGNORE_ACTIONS=login,logout`).
+4. Reinicie o bot. Ele guarda onde parou em `log_state.json` e `error_state.json` (não repete nem perde avisos ao reiniciar).
+Se o **próprio bot** ou a SquareCloud inteira caírem, ninguém avisa — vale ter também um monitor externo (ex: UptimeRobot) no `/health/ready` da API.
+
+### 2.2b Inglês por padrão + DeepL em tudo
+O site, o painel, as mensagens da API e o bot são **inglês por padrão**. Todo conteúdo é escrito em **inglês** e a **DeepL traduz EN→PT-BR**
+para os campos `_pt` ao salvar (se estiverem vazios; correção manual nunca é sobrescrita; botão **Retranslate** refaz). Vale para:
+conteúdo (mobs/itens/armas…), masteries, jutsus, **vilas** (lema, descrição, descrição completa, clima), **clãs** e **organizações** (nome e
+descrição) e **posts do blog**. O visitante escolhe PT/EN no seletor; a escolha **fica salva** no navegador. Sem `DEEPL_API_KEY` tudo
+funciona, só não traduz sozinho.
+
+Tem conteúdo antigo escrito em português nos campos principais? Converta com a DeepL (PT→EN) — faça backup antes:
+```bash
+python scripts/migrar_banco.py exportar                      # backup
+python scripts/traduzir_para_ingles.py                       # SIMULAÇÃO: só mostra o que mudaria
+python scripts/traduzir_para_ingles.py --aplicar             # converte (precisa de DEEPL_API_KEY)
+```
+O português antigo vai para o campo `_pt` e a tradução em inglês vira o campo principal. Só mexe no que parece português e ainda não tem `_pt`.
 
 ### 2.3 Segurança embutida (resumo)
 - Sessão em cookie `httpOnly`/`SameSite=Lax`/`Secure`; checagem de `Origin` (CSRF); login com limite de tentativas.
@@ -192,7 +225,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"   # rode 2x: JWT_SE
 ### 3.5 App do bot (opcional) e deploy automático
 
 **Bot:** crie o `.env` (base em `NinWiki.Bot/.env.example`: `DISCORD_BOT_TOKEN`, `NINWIKI_API_URL=https://api.seudominio.com`,
-`BOT_API_TOKEN` igual ao da API, `ALLOWED_GUILD_IDS`, `LOG_CHANNEL_ID`), zip (`-x "venv/*" "__pycache__/*" "log_state.json"`) e envie
+`BOT_API_TOKEN` igual ao da API, `ALLOWED_GUILD_IDS`, `LOG_CHANNEL_ID`, `ERROR_CHANNEL_ID`, `SITE_URL`), zip (`-x "venv/*" "__pycache__/*" "log_state.json" "error_state.json"`) e envie
 como app. Não precisa de subdomínio nem porta.
 
 **Deploy automático (GitHub Actions, manual):** cada app tem seu workflow (`deploy-api.yml`, `deploy-web.yml`, `deploy-bot.yml`)
@@ -223,7 +256,7 @@ Proxy + WAF + cache. Aponte o DNS de `wiki.` e `api.` pela Cloudflare (nuvem lar
 | `redirect_uri` inválido no Discord | redirect não cadastrado/idêntico no Developer Portal |
 | Muitos `429` para todo mundo | `TRUST_PROXY_HEADERS=false` atrás de proxy (todos parecem o mesmo IP) ou limite baixo demais — aumente `PUBLIC_REQUESTS_PER_MINUTE` / `WEB_RATE_LIMIT_PER_MINUTE` |
 | Bot: "BOT_API_TOKEN diferente nos dois .env" | tokens diferentes entre bot e API |
-| Canal de log vazio | `LOG_CHANNEL_ID` errado, bot sem permissão no canal, ou nada aconteceu ainda (o log começa "de agora") |
+| Canal de erros/log vazio | `LOG_CHANNEL_ID` errado, bot sem permissão no canal, ou nada aconteceu ainda (o log começa "de agora") |
 | Imagens sumiram após deploy | pasta `uploads` apagada no redeploy (ver 3.0, item 2) |
 | Build do site morre | pouca memória: aumente `MEMORY` em `NinWiki.Web/squarecloud.app` |
 

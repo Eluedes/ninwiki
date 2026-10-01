@@ -37,7 +37,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   if (!post) notFound();
 
   return (
-    <PostPageClient post={post}>
+    <PostPageClient post={post} childrenPt={post.contentPt ? <RichText content={post.contentPt} /> : undefined}>
       <RichText content={post.content} />
     </PostPageClient>
   );

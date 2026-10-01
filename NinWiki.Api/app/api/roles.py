@@ -26,7 +26,7 @@ from app.schemas.roles import PermissionInfo, RolePermissionsRead, RolePermissio
 router = APIRouter(prefix="/roles", tags=["roles"])
 
 _GROUPS = {"content": "content", "posts": "posts", "lore": "lore", "uploads": "tools", "translation": "tools",
-           "notices": "notices", "staff": "staff", "roles": "staff", "audit": "audit"}
+           "notices": "notices", "staff": "staff", "roles": "staff", "audit": "audit", "errors": "audit"}
 
 
 def _group(p: Permission) -> str:
@@ -57,7 +57,7 @@ def _overview() -> RolesOverview:
 def _editable_role(role: StaffRole) -> StaffRole:
     """Recusa (400) editar o cargo S.Adm - ele sempre tem tudo."""
     if role not in EDITABLE_ROLES:
-        raise HTTPException(status_code=400, detail="O cargo S.Adm sempre tem todas as permissões e não pode ser editado")
+        raise HTTPException(status_code=400, detail="The S.Adm role always has every permission and cannot be edited")
     return role
 
 
@@ -80,11 +80,11 @@ async def set_permissions(
     by_name = {p.value: p for p in Permission}
     unknown = [n for n in payload.permissions if n not in by_name]
     if unknown:
-        raise HTTPException(status_code=422, detail=f"Permissão desconhecida: {unknown[0]}")
+        raise HTTPException(status_code=422, detail=f"Unknown permission: {unknown[0]}")
     wanted = {by_name[n] for n in payload.permissions}
     forbidden = wanted & SUPER_ONLY_PERMISSIONS
     if forbidden:
-        raise HTTPException(status_code=400, detail=f"A permissão '{sorted(p.value for p in forbidden)[0]}' é exclusiva do S.Adm")
+        raise HTTPException(status_code=400, detail=f"The permission '{sorted(p.value for p in forbidden)[0]}' is exclusive to S.Adm")
     await role_config.load_overrides(db)
     before = {p.value for p in ROLE_PERMISSIONS[role]}
     await role_config.save_role_permissions(db, role, wanted)

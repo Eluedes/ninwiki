@@ -61,18 +61,18 @@ import {
 // (ex: o nome de um efeito, um numero importante) sem virar uma roda
 // de cores gigante que ninguem usa direito.
 const TEXT_COLORS = [
-  { label: 'Padrão', value: '' },
-  { label: 'Vermelho', value: '#dc2626' },
-  { label: 'Verde', value: '#16a34a' },
-  { label: 'Azul', value: '#2563eb' },
-  { label: 'Amarelo', value: '#ca8a04' },
-  { label: 'Roxo', value: '#9333ea' },
+  { label: 'Default', value: '' },
+  { label: 'Red', value: '#dc2626' },
+  { label: 'Green', value: '#16a34a' },
+  { label: 'Blue', value: '#2563eb' },
+  { label: 'Yellow', value: '#ca8a04' },
+  { label: 'Purple', value: '#9333ea' },
 ];
 
 const FONT_FAMILIES = [
-  { label: 'Padrão', value: '' },
-  { label: 'Serifada', value: 'Georgia, serif' },
-  { label: 'Monoespaçada', value: '"Courier New", monospace' },
+  { label: 'Default', value: '' },
+  { label: 'Serif', value: 'Georgia, serif' },
+  { label: 'Monospace', value: '"Courier New", monospace' },
 ];
 
 /**

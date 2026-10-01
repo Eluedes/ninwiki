@@ -19,7 +19,7 @@ def parse_discord_id(value: str) -> int:
     """
     value = str(value).strip()
     if not re.fullmatch(r"\d{15,20}", value):
-        raise ValueError("Discord ID inválido (são 15 a 20 dígitos)")
+        raise ValueError("Invalid Discord ID (15 to 20 digits)")
     return int(value)
 
 

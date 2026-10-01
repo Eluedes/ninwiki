@@ -286,7 +286,7 @@ async def get_content_item_by_slug(
     result = await db.execute(stmt)
     item = result.scalar_one_or_none()
     if item is None:
-        raise HTTPException(status_code=404, detail="Entry não encontrada")
+        raise HTTPException(status_code=404, detail="Entry not found")
     _hide_draft_from_public(item, user)
     return item
 
@@ -306,7 +306,7 @@ async def _validate_dropped_item_ids(drops: list, db: AsyncSession) -> None:
     found = set(result.scalars().all())
     missing = ids - found
     if missing:
-        raise HTTPException(status_code=400, detail=f"Item(ns) ligado(s) ao drop não existe(m): {', '.join(str(i) for i in missing)}")
+        raise HTTPException(status_code=400, detail=f"Item(s) linked to the drop do not exist: {', '.join(str(i) for i in missing)}")
 
 
 async def _validate_cast_village_id(cast_village_id: str | None, db: AsyncSession) -> None:
@@ -316,7 +316,7 @@ async def _validate_cast_village_id(cast_village_id: str | None, db: AsyncSessio
     from app.models.villages import Village
     village = await db.get(Village, cast_village_id)
     if village is None:
-        raise HTTPException(status_code=400, detail=f"Vila '{cast_village_id}' não existe")
+        raise HTTPException(status_code=400, detail=f"Village '{cast_village_id}' does not exist")
 
 
 # Pares (campo EN, campo PT) - usado tanto por _fill_missing_translations
@@ -367,7 +367,7 @@ async def create_content_item(
     # PUT com status/bulk-status, ambos protegidos por CONTENT_PUBLISH)
     existing = await db.execute(select(ContentItem).where(ContentItem.slug == payload.slug))
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail=f"Já existe uma entry com o slug '{payload.slug}'")
+        raise HTTPException(status_code=409, detail=f"An entry with the slug '{payload.slug}' already exists")
 
     await _validate_dropped_item_ids(payload.drops, db)
     await _validate_cast_village_id(payload.cast_village_id, db)
@@ -471,7 +471,7 @@ async def update_content_item(
     if payload.slug != item.slug:
         existing = await db.execute(select(ContentItem).where(ContentItem.slug == payload.slug))
         if existing.scalar_one_or_none():
-            raise HTTPException(status_code=409, detail=f"Já existe uma entry com o slug '{payload.slug}'")
+            raise HTTPException(status_code=409, detail=f"An entry with the slug '{payload.slug}' already exists")
         item.slug = payload.slug
 
     item.attributes.clear()
@@ -549,13 +549,13 @@ async def delete_content_item(
 def _hide_draft_from_public(item: ContentItem, user: User | None) -> None:
     """Rascunho e' invisivel pra' quem nao e' da equipe: responde 404, como se nao existisse."""
     if user is None and item.status != ContentStatus.PUBLISHED:
-        raise HTTPException(status_code=404, detail="Entry não encontrada")
+        raise HTTPException(status_code=404, detail="Entry not found")
 
 
 def _guard_publish(staff: User, new_status: ContentStatus) -> None:
     """Quem nao tem CONTENT_PUBLISH (Creator) nao coloca nada no ar."""
     if new_status == ContentStatus.PUBLISHED and not has_permission(staff.role, Permission.CONTENT_PUBLISH):
-        raise HTTPException(status_code=403, detail="Só um Adm pode publicar. Salve como rascunho.")
+        raise HTTPException(status_code=403, detail="Only an Adm can publish. Save as a draft.")
 
 
 def _guard_edit(staff: User, item: ContentItem, new_status: ContentStatus | None) -> None:
@@ -565,7 +565,7 @@ def _guard_edit(staff: User, item: ContentItem, new_status: ContentStatus | None
     app/core/permissions.py - a regra segue a permissao, nao o nome do cargo.)
     """
     if not has_permission(staff.role, Permission.CONTENT_PUBLISH) and item.status == ContentStatus.PUBLISHED:
-        raise HTTPException(status_code=403, detail="Esta entry já está publicada. Só um Adm pode alterá-la.")
+        raise HTTPException(status_code=403, detail="This entry is already published. Only an Adm can change it.")
     if new_status is not None:
         _guard_publish(staff, new_status)
 
@@ -594,5 +594,5 @@ async def _get_item_or_404(item_id: UUID, db: AsyncSession) -> ContentItem:
     result = await db.execute(stmt)
     item = result.scalar_one_or_none()
     if item is None:
-        raise HTTPException(status_code=404, detail="Entry não encontrada")
+        raise HTTPException(status_code=404, detail="Entry not found")
     return item

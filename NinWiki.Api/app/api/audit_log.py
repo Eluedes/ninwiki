@@ -32,7 +32,7 @@ router = APIRouter(prefix="/audit-log", tags=["audit-log"])
 
 # Tipos de registro que sao "trabalho de conteudo" - o que o Adm pode ver.
 # Todo o resto (auth, staff, security...) e' log completo, so' do S.Adm.
-CONTENT_ENTITY_TYPES = {"content_item", "jutsu", "mastery", "upload", "village", "organization", "post", "notice"}
+CONTENT_ENTITY_TYPES = {"content_item", "jutsu", "mastery", "upload", "village", "organization", "post", "notice"}  # (errors/roles/staff ficam so' com o S.Adm)
 
 
 class AuditLogEntryRead(BaseModel):
@@ -76,7 +76,7 @@ async def list_audit_log(
     is_entry_history = entity_type is not None and entity_id is not None
 
     if not is_entry_history and not has_permission(user.role, Permission.AUDIT_VIEW):
-        raise HTTPException(status_code=403, detail="Você não tem permissão para fazer isso")
+        raise HTTPException(status_code=403, detail="You do not have permission to do this")
 
     stmt = select(AuditLogEntry).order_by(AuditLogEntry.created_at.desc()).limit(limit)
     if not sees_everything:

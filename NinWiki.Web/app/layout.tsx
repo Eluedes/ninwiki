@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import { LanguageProvider } from '@/components/providers/language-provider';
 import { ColorThemeProvider } from '@/components/providers/color-theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { ErrorReporter } from '@/components/error-reporter';
 
 // next/font/google baixa e otimiza a fonte Inter no momento do build,
 // evitando uma requisicao externa ao Google Fonts no navegador do usuario.
@@ -45,6 +46,8 @@ export default function RootLayout({
           <ColorThemeProvider>
             <LanguageProvider>
               {children}
+              {/* Reporta erros de JavaScript nao tratados para a equipe (nao desenha nada) */}
+              <ErrorReporter />
               {/* Toaster: renderiza as notificacoes toast (ver
                   hooks/use-toast.ts) - precisa estar montado uma unica
                   vez aqui na raiz, nao dentro de cada pagina. */}

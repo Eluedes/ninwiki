@@ -32,7 +32,7 @@ async def _get_or_404(db: AsyncSession, staff_id: UUID) -> User:
     """Busca um membro da equipe pelo id ou responde 404."""
     target = await db.get(User, staff_id)
     if target is None:
-        raise HTTPException(status_code=404, detail="Membro da equipe não encontrado")
+        raise HTTPException(status_code=404, detail="Team member not found")
     return target
 
 

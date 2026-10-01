@@ -231,7 +231,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         setDrops(item.drops);
         setAttacks(item.attacks);
       })
-      .catch((err) => setApiError(err instanceof ApiError ? err.message : 'Erro ao carregar entry.'))
+      .catch((err) => setApiError(err instanceof ApiError ? err.message : 'Error loading the entry.'))
       .finally(() => setLoading(false));
   }, [isEdit, rawId, reset]);
 
@@ -348,7 +348,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
       }
       router.push('/admin/content');
     } catch (err) {
-      setApiError(err instanceof ApiError ? err.message : 'Erro ao salvar. A API está rodando?');
+      setApiError(err instanceof ApiError ? err.message : 'Error saving. Is the API running?');
       setSaving(false);
     }
   }
