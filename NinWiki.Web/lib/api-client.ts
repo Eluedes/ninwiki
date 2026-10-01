@@ -179,7 +179,7 @@ export class ApiError extends Error {
 }
 
 /** Chamada base a' API: manda o cookie de sessao, lê o JSON e transforma erros em ApiError com a mensagem da API. */
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+async function apiFetch<T>(path: string, options?: RequestInit, quiet = false): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     // credentials: 'include' = manda o cookie de SESSAO (httpOnly) junto. Sem
@@ -188,7 +188,8 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
   });
-  if (res.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/')) {
+  // quiet = chamada de LEITOR do site: 401 ali so' significa "entre com o Discord", nunca derruba a sessao da equipe.
+  if (res.status === 401 && !quiet && typeof window !== 'undefined' && !path.startsWith('/auth/')) {
     window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   }
   if (!res.ok) {
@@ -702,7 +703,7 @@ export type StaffRole = 'super_admin' | 'admin' | 'creator';
 // Nomes das permissoes - espelham app/core/permissions.py::Permission no backend.
 export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
-  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete'
+  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage'
@@ -783,6 +784,16 @@ export function setStaffActive(id: string, active: boolean): Promise<ApiStaff> {
 
 // ---- Blog (posts) ----
 
+export interface ApiTag {
+  id: string; // slug (usado no filtro ?tag=)
+  name: string; // ingles
+  namePt?: string | null;
+}
+
+export interface ApiTagWithCount extends ApiTag {
+  postCount: number;
+}
+
 export interface ApiPostSummary {
   id: string;
   slug: string;
@@ -794,6 +805,11 @@ export interface ApiPostSummary {
   coverImage: string | null;
   status: 'draft' | 'published';
   authorName: string | null;
+  tags: ApiTag[];
+  publishedAt: string | null;
+  isScheduled: boolean; // publicado com data no futuro (ainda invisivel ao publico)
+  likeCount: number;
+  commentCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -802,6 +818,8 @@ export interface ApiPost extends ApiPostSummary {
   // Tiptap JSON (texto rico) ou texto simples - mesmo formato de Conteudo
   content: string;
   contentPt?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
 }
 
 export interface PostInput {
@@ -815,11 +833,143 @@ export interface PostInput {
   contentPt?: string | null;
   coverImage: string | null;
   status: 'draft' | 'published';
+  tags: string[]; // slugs
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  publishedAt?: string | null; // ISO; futuro = agendado
 }
 
-/** Lista posts do blog (o publico so' recebe os publicados). */
-export function listPosts(status?: 'draft' | 'published'): Promise<ApiPostSummary[]> {
-  return apiFetch(`/posts${status ? `?status=${status}` : ''}`);
+/** Lista posts do blog (o publico so' recebe os publicados e ja' no ar). `tag` filtra pelo slug da tag. */
+export function listPosts(status?: 'draft' | 'published', tag?: string): Promise<ApiPostSummary[]> {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (tag) params.set('tag', tag);
+  const query = params.toString();
+  return apiFetch(`/posts${query ? `?${query}` : ''}`);
+}
+
+/** Tags do blog com a contagem de posts no ar. */
+export function listTags(): Promise<ApiTagWithCount[]> {
+  return apiFetch('/tags');
+}
+
+/** Cria uma tag nova (so' o nome em ingles; exige posts.create). */
+export function createTag(name: string): Promise<ApiTag> {
+  return apiFetch('/tags', { method: 'POST', body: JSON.stringify({ name }) });
+}
+
+/** Procura itens/masteries para o "@" do editor (exige posts.create). */
+export interface ApiMentionResult {
+  id: string;
+  label: string;
+  href: string;
+  kind: string;
+}
+export function searchMentions(q: string): Promise<ApiMentionResult[]> {
+  return apiFetch(`/search/mentions?q=${encodeURIComponent(q)}`);
+}
+
+// ---- Leitores, curtidas e comentarios (site publico) ----
+// Todas usam `quiet`: um 401 aqui so' quer dizer "entre com o Discord" - nunca deve derrubar a sessao da equipe.
+
+export interface ApiReader {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
+export interface ApiEngagement {
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
+}
+
+export interface ApiComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: { username: string; avatarUrl: string | null };
+  mine: boolean;
+}
+
+/** Leitor logado agora (ou null). */
+export function getReaderMe(): Promise<ApiReader | null> {
+  return apiFetch('/auth/reader/me', undefined, true);
+}
+
+/** Sai da conta de leitor. */
+export function readerLogout(): Promise<void> {
+  return apiFetch('/auth/reader/logout', { method: 'POST' }, true);
+}
+
+/** Endereco que inicia o login de leitor com o Discord e volta para `returnTo` (caminho interno). */
+export function readerLoginUrl(returnTo: string): string {
+  return `${API_URL}/auth/discord/login?mode=reader&returnTo=${encodeURIComponent(returnTo)}`;
+}
+
+/** Curtidas/comentarios do post e se o leitor logado ja' curtiu. */
+export function getEngagement(slug: string): Promise<ApiEngagement> {
+  return apiFetch(`/posts/${encodeURIComponent(slug)}/engagement`, undefined, true);
+}
+
+/** Curte (liked=true) ou descurte o post. */
+export function setLike(slug: string, liked: boolean): Promise<ApiEngagement> {
+  return apiFetch(`/posts/${encodeURIComponent(slug)}/like`, { method: liked ? 'PUT' : 'DELETE' }, true);
+}
+
+/** Comentarios visiveis do post. */
+export function listComments(slug: string): Promise<ApiComment[]> {
+  return apiFetch(`/posts/${encodeURIComponent(slug)}/comments`, undefined, true);
+}
+
+/** Comenta no post (texto simples). */
+export function addComment(slug: string, body: string): Promise<ApiComment> {
+  return apiFetch(`/posts/${encodeURIComponent(slug)}/comments`, { method: 'POST', body: JSON.stringify({ body }) }, true);
+}
+
+/** Apaga o proprio comentario. */
+export function deleteOwnComment(slug: string, id: string): Promise<void> {
+  return apiFetch(`/posts/${encodeURIComponent(slug)}/comments/${id}`, { method: 'DELETE' }, true);
+}
+
+// ---- Moderacao de comentarios (painel; exige comments.moderate) ----
+
+export interface ApiModerationComment {
+  id: string;
+  body: string;
+  createdAt: string;
+  hidden: boolean;
+  hiddenBy: string | null;
+  postSlug: string;
+  postTitle: string;
+  readerId: string;
+  readerName: string;
+  readerDiscordId: string;
+  readerBanned: boolean;
+}
+
+/** Comentarios mais recentes (filtro: so' escondidos, busca por texto/nome). */
+export function listModerationComments(onlyHidden: boolean, q: string): Promise<ApiModerationComment[]> {
+  const params = new URLSearchParams();
+  if (onlyHidden) params.set('only_hidden', 'true');
+  if (q.trim()) params.set('q', q.trim());
+  const query = params.toString();
+  return apiFetch(`/comments/moderation${query ? `?${query}` : ''}`);
+}
+
+/** Esconde ou mostra um comentario. */
+export function setCommentHidden(id: string, hidden: boolean): Promise<void> {
+  return apiFetch(`/comments/moderation/${id}`, { method: 'PATCH', body: JSON.stringify({ hidden }) });
+}
+
+/** Apaga um comentario de vez. */
+export function deleteCommentModeration(id: string): Promise<void> {
+  return apiFetch(`/comments/moderation/${id}`, { method: 'DELETE' });
+}
+
+/** Bane ou desbane um leitor. */
+export function setReaderBanned(readerId: string, banned: boolean): Promise<void> {
+  return apiFetch(`/comments/moderation/readers/${readerId}`, { method: 'PATCH', body: JSON.stringify({ banned }) });
 }
 
 /** Ficha de um post pelo slug (pagina publica do blog). */

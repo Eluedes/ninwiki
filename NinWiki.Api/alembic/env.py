@@ -22,6 +22,7 @@ load_dotenv()
 # Importa a Base com TODOS os modelos ja registrados (ver
 # app/models/__init__.py) - e' isso que da' ao autogenerate a lista
 # completa de tabelas para comparar contra o banco real.
+from app.core import db_ssl
 from app.models import Base
 
 config = context.config
@@ -67,10 +68,16 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Modo online do Alembic: conecta no banco (driver sincrono psycopg) e aplica as migrations."""
+    # TLS com certificado de cliente (SquareCloud): mesmas variaveis DATABASE_SSL_* da API, no formato do libpq.
+    ssl_ca, ssl_cert, ssl_key = (os.getenv(k, "") for k in ("DATABASE_SSL_CA", "DATABASE_SSL_CERT", "DATABASE_SSL_KEY"))
+    connect_args = {}
+    if db_ssl.is_enabled(ssl_ca, ssl_cert, ssl_key):
+        connect_args = db_ssl.libpq_args(ssl_ca, ssl_cert, ssl_key, os.getenv("DATABASE_SSL_VERIFY_HOSTNAME", "").lower() == "true")
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
 
     with connectable.connect() as connection:

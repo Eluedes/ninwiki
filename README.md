@@ -62,7 +62,7 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 345 verificações de segurança/permissões/traduções/erros (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 436 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
 python scripts/testar_bot_integracao.py    # 91 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
@@ -80,6 +80,13 @@ pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bib
 - **Entrar:** `/login` → "Entrar com Discord". Só entra quem foi cadastrado na equipe (ter Discord não basta).
 - **Conteúdo / Blog / Jutsus / Masteries:** rascunho ou publicado, imagem (upload), histórico, tradução automática EN→PT
   (com `DEEPL_API_KEY`). O blog público fica em `/blog` e os 3 últimos posts aparecem na Home.
+- **Blog (editor):** tags/categorias (multi-seleção, cria tag nova na hora), imagem no texto (upload), citação, bloco de código,
+  vídeo do **YouTube/Twitch**, **@menção** (busca itens e masteries e vira link), **spoiler** (abre/fecha), contador de
+  palavras/caracteres, **Pré-visualizar**, SEO (título/descrição para o Google) e **data de publicação**: no futuro =
+  **agendado** (só aparece para os leitores quando chegar a hora). Aviso ao sair com alterações não salvas.
+- **Comentários e curtidas:** leitores entram com o Discord (sessão **separada** da equipe — não dá acesso ao painel) e
+  comentam/curtem posts. `/admin/comments` (permissão `comments.moderate`: Adm por padrão) esconde, apaga e **bane**
+  leitores; tudo vai pro log. Texto simples, 1000 caracteres, no máximo 2 links, 5 comentários/min por leitor.
 - **Vilas, Clãs e Organizações:** `/admin/villages` (cada clã tem nome, descrição e **imagem** com a logo e a roupa) e
   `/admin/organizations` (liga cada organização às vilas em que atua).
 - **Quadro de avisos** (Visão Geral): toda a equipe lê e baixa os arquivos; **S.Adm e Adm** postam, fixam, editam, apagam e
@@ -159,29 +166,70 @@ PostgreSQL. **Ela não executa Docker** — o `docker-compose.yml` é só para o
 python -c "import secrets; print(secrets.token_urlsafe(48))"   # rode 2x: JWT_SECRET_KEY e BOT_API_TOKEN
 ```
 
-### 3.2 Banco: criar na SquareCloud e levar o conteúdo do seu Docker
-1. Painel da SquareCloud → *Databases* → criar **PostgreSQL**. Copie a URL de conexão.
-2. **Exportar** o banco que está no seu Docker (com o container no ar):
-   ```bash
-   cd NinWiki.Api
-   python scripts/migrar_banco.py exportar        # gera backups/ninwiki-AAAAMMDD-HHMM.dump
-   ```
-3. **Importar** na SquareCloud (**substitui** as tabelas do destino — por isso o `--confirmo`):
-   ```bash
-   python scripts/migrar_banco.py importar backups/ninwiki-....dump --url "postgresql://USER:SENHA@HOST:PORTA/BANCO" --confirmo
-   ```
-   (Se o banco exigir SSL, acrescente `?sslmode=require` à URL. Usa o próprio Docker para rodar `pg_restore`; nada a instalar.)
-4. **Imagens:** envie o conteúdo da sua pasta `NinWiki.Api/uploads/` para a pasta `uploads/` do app da API
-   (painel do app → *Files*). Os arquivos de avisos (`staff_files/`) só existem se você já postou avisos.
-5. O `DATABASE_URL` do `.env` da API usa o formato `postgresql+asyncpg://USER:SENHA@HOST:PORTA/BANCO`
-   (com `?ssl=require` se necessário). Esse mesmo script serve como **backup** periódico (rode o `exportar` apontando para o
-   banco que quiser salvar).
+### 3.2 Banco: criar na SquareCloud, ligar a API a ele e levar o conteúdo do seu Docker
+
+A SquareCloud protege o PostgreSQL com **certificados TLS de cliente** (a conexão só abre para quem apresenta o certificado).
+Você baixa 3 arquivos no painel e a API/o script de migração usam eles — sem certificado a conexão é recusada.
+
+**Passo 1 — Criar o banco**
+1. Painel da SquareCloud → *Databases* → **Create** → PostgreSQL (escolha o plano) → crie.
+2. Abra o banco → aba de conexão. Anote **host, porta, usuário, senha e nome do banco**.
+3. Na mesma tela baixe os **3 certificados**: o da autoridade (**CA**, `.crt`), o do cliente (**`.pem`**) e a **chave privada** (`.key`).
+   > ⚠️ Esses arquivos são como uma senha: **nunca** vão para o Git (o `.gitignore` já ignora `certs/`, `*.pem` e `*.key`).
+
+**Passo 2 — Guardar os certificados no projeto (só na sua máquina)**
+```
+NinWiki.Api/certs/ca.crt        # certificado da autoridade (CA)
+NinWiki.Api/certs/client.pem    # certificado do cliente
+NinWiki.Api/certs/client.key    # chave privada
+```
+No Linux/Mac: `chmod 600 NinWiki.Api/certs/client.key` (o Postgres recusa chave legível por outros usuários).
+
+**Passo 3 — Levar o conteúdo do seu Docker para o banco da SquareCloud**
+```bash
+cd NinWiki.Api
+python scripts/migrar_banco.py exportar        # gera backups/ninwiki-AAAAMMDD-HHMM.dump (do banco do seu Docker)
+
+python scripts/migrar_banco.py importar backups/ninwiki-....dump \
+  --url "postgresql://USUARIO:SENHA@HOST:PORTA/BANCO" \
+  --ssl-ca certs/ca.crt --ssl-cert certs/client.pem --ssl-key certs/client.key --confirmo
+```
+- O `importar` **substitui** as tabelas do destino — por isso o `--confirmo`.
+- Se você já preencheu `DATABASE_SSL_*` no `.env` (passo 4), pode omitir os 3 `--ssl-*`.
+- O script usa o próprio Docker para rodar `pg_dump`/`pg_restore`; não precisa instalar nada. (Ele copia os certificados para
+  dentro do container com a permissão certa — não se preocupe com `chmod` nesse caso.)
+- **Backup do banco da SquareCloud** (para o seu computador): `python scripts/migrar_banco.py exportar --url "postgresql://..." --ssl-ca ... --ssl-cert ... --ssl-key ...`.
+
+**Passo 4 — Configurar a API para usar o banco com certificado** (`NinWiki.Api/.env`)
+```env
+DATABASE_URL=postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/BANCO
+DATABASE_SSL_CA=certs/ca.crt
+DATABASE_SSL_CERT=certs/client.pem
+DATABASE_SSL_KEY=certs/client.key
+# DATABASE_SSL_VERIFY_HOSTNAME=false   # deixe false: o certificado da SquareCloud é validado pela CA (verify-ca)
+```
+Os caminhos são relativos a `NinWiki.Api`. A API (asyncpg) e as migrações (Alembic) leem as mesmas variáveis. **Não** coloque
+`?ssl=require` na URL quando usar certificados. Se faltar algum arquivo, a API **não sobe** (de propósito: nunca conecta sem segurança em silêncio).
+
+**Passo 5 — Enviar os certificados junto com a API**
+- **Deploy manual (zip):** o `certs/` precisa estar **dentro do zip** (ele não está no `.squarecloudignore` de propósito).
+- **Deploy automático (GitHub Actions):** crie 3 Secrets no GitHub — `DB_SSL_CA`, `DB_SSL_CERT`, `DB_SSL_KEY` — colando o
+  **conteúdo inteiro** de cada arquivo. O workflow `deploy-api.yml` grava os arquivos em `certs/` só dentro do zip e apaga em seguida.
+
+**Passo 6 — Imagens:** envie o conteúdo da sua pasta `NinWiki.Api/uploads/` para a pasta `uploads/` do app da API
+(painel do app → *Files*). Os arquivos de avisos (`staff_files/`) só existem se você já postou avisos.
+
+> Usando outro banco (Neon, Supabase…) sem certificado de cliente? Deixe `DATABASE_SSL_*` vazio e use `?ssl=require` na
+> `DATABASE_URL` (e `?sslmode=require` no `--url` do script).
 
 ### 3.3 App da API (`NinWiki.Api`)
 1. Crie o `.env` dentro de `NinWiki.Api` (base no `.env.example`) com **pelo menos**:
    ```env
    ENVIRONMENT=production
    DATABASE_URL=postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/BANCO
+   DATABASE_SSL_CA=certs/ca.crt        # certificados do banco da SquareCloud (ver 3.2)
+   DATABASE_SSL_CERT=certs/client.pem
+   DATABASE_SSL_KEY=certs/client.key
    JWT_SECRET_KEY=<segredo gerado, 32+ caracteres>
    FRONTEND_ORIGIN=https://wiki.seudominio.com
    API_BASE_URL=https://api.seudominio.com
@@ -212,6 +260,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"   # rode 2x: JWT_SE
 1. Crie `NinWiki.Web/.env` (o Next lê no build):
    ```env
    NEXT_PUBLIC_API_URL=https://api.seudominio.com
+   NEXT_PUBLIC_SITE_URL=https://wiki.seudominio.com
    # opcionais: WEB_RATE_LIMIT_PER_MINUTE=300   BLOCK_SCRAPER_UAS=true
    ```
    ⚠️ `NEXT_PUBLIC_API_URL` é embutido **durante o build**: mudou o valor → novo deploy.
@@ -232,7 +281,7 @@ como app. Não precisa de subdomínio nem porta.
 que só roda quando você clica em *Actions → Run workflow*. O `.env` fica nos **Secrets** do GitHub.
 1. Faça o primeiro envio de cada app pelo painel (passos acima) para ele existir e ter um ID.
 2. *Settings → Secrets and variables → Actions*: `SQUARE_API_KEY`, `SQUARE_APP_ID_API/WEB/BOT`,
-   `API_ENV`, `WEB_ENV`, `BOT_ENV` (cole o conteúdo **inteiro** de cada `.env`).
+   `API_ENV`, `WEB_ENV`, `BOT_ENV` (cole o conteúdo **inteiro** de cada `.env`) e, para o banco com certificado, `DB_SSL_CA`, `DB_SSL_CERT`, `DB_SSL_KEY` (3.2).
 3. Mudou uma configuração? Edite o Secret e rode o workflow de novo (no site, isso refaz o build).
 O workflow não envia `uploads/`, `staff_files/` nem `backups/` (para não sobrescrever o que já está em produção).
 
@@ -250,7 +299,10 @@ Proxy + WAF + cache. Aponte o DNS de `wiki.` e `api.` pela Cloudflare (nuvem lar
 | Sintoma | Causa provável |
 |---|---|
 | API não inicia, log fala de `JWT_SECRET_KEY` / `DEV_LOGIN_ENABLED` | `.env` inseguro com `ENVIRONMENT=production` — corrija |
-| `connection refused` / erro de SSL no banco | `DATABASE_URL` errada; tente `?ssl=require` |
+| `connection refused` / erro de SSL no banco | `DATABASE_URL` errada, certificados faltando/errados (`DATABASE_SSL_*`, ver 3.2) ou, em banco sem certificado de cliente, falta `?ssl=require` |
+| `Arquivo de certificado do banco nao encontrado` | `certs/` não foi no zip (ou os Secrets `DB_SSL_*` não foram criados) |
+| `private key file ... has group or world access` | `chmod 600 NinWiki.Api/certs/client.key` |
+| Build do site: `unrs-resolver install scripts blocked` | já resolvido no `package.json` (`allowScripts`); se aparecer, confira se o `package.json` enviado é o atual |
 | Site: "Não foi possível conectar à API" | `NEXT_PUBLIC_API_URL` errada (precisa novo deploy) ou API fora do ar |
 | Login volta para `/login` sem erro | domínios em sites diferentes (cookie Lax), ou `FRONTEND_ORIGIN` diferente do endereço real do site |
 | `redirect_uri` inválido no Discord | redirect não cadastrado/idêntico no Developer Portal |
@@ -264,8 +316,8 @@ Proxy + WAF + cache. Aponte o DNS de `wiki.` e `api.` pela Cloudflare (nuvem lar
 
 ## 4. Variáveis de ambiente (referência)
 
-API — todas em `NinWiki.Api/.env.example`, comentadas. Web — `NEXT_PUBLIC_API_URL` (+ `WEB_RATE_LIMIT_PER_MINUTE`,
-`BLOCK_SCRAPER_UAS`). Bot — `NinWiki.Bot/.env.example`.
+API — todas em `NinWiki.Api/.env.example`, comentadas. Web — `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_SITE_URL` (endereço público do site: sitemap, RSS, links e domínio dos vídeos
+da Twitch; ambos entram no build) (+ `WEB_RATE_LIMIT_PER_MINUTE`, `BLOCK_SCRAPER_UAS`). Bot — `NinWiki.Bot/.env.example`.
 
 ## 5. Mapa do código (onde cada coisa mora)
 

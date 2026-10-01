@@ -158,6 +158,11 @@ export const postSchema = z.object({
   excerptPt: z.string().nullable().optional(),
   contentPt: z.string().nullable().optional(),
   coverImage: z.string().nullable().optional(),
+  tags: z.array(z.string()).max(8, 'Maximum of 8 tags.'),
+  // SEO e agendamento (vazio = automatico / publicar agora)
+  metaTitle: z.string().max(70, 'Maximum of 70 characters.').nullable().optional(),
+  metaDescription: z.string().max(200, 'Maximum of 200 characters.').nullable().optional(),
+  publishedAt: z.string().nullable().optional(),
 });
 
 export type PostFormValues = z.infer<typeof postSchema>;

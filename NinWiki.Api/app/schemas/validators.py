@@ -13,12 +13,36 @@ from typing import Any
 ALLOWED_NODE_TYPES = frozenset({
     "doc", "paragraph", "text", "heading", "bulletList", "orderedList", "listItem", "blockquote",
     "codeBlock", "hardBreak", "horizontalRule", "table", "tableRow", "tableCell", "tableHeader", "ficha",
+    # blog: imagem, mencao (@), video do YouTube/Twitch e spoiler (details/summary)
+    "image", "mention", "video", "details", "detailsSummary", "detailsContent",
 })
 ALLOWED_MARK_TYPES = frozenset({"bold", "italic", "underline", "strike", "code", "link", "textStyle"})
 # Esquemas de link aceitos (links relativos "/..." e ancoras "#..." tambem). Bloqueia javascript:, data:, vbscript:...
 ALLOWED_LINK_SCHEMES = ("http://", "https://", "mailto:", "/", "#")
+# Enderecos aceitos para midia embutida: imagens locais (/uploads/...) ou https; videos SO' dos players oficiais.
+ALLOWED_IMAGE_PREFIXES = ("/uploads/", "https://", "http://localhost", "http://127.0.0.1")
+ALLOWED_VIDEO_PREFIXES = ("https://www.youtube-nocookie.com/embed/", "https://player.twitch.tv/")
 MAX_RICH_BYTES = 300_000   # tamanho maximo de UM campo rico (impede encher o banco / travar o render)
 MAX_RICH_DEPTH = 40        # profundidade maxima de aninhamento (impede "bomba" de listas dentro de listas...)
+
+
+def _check_attrs(node: dict) -> None:
+    """Confere os atributos dos nos de midia/mencao: so' enderecos permitidos e textos curtos (nada de javascript:/data:)."""
+    kind, attrs = node.get("type"), node.get("attrs") or {}
+    if kind == "image":
+        src = str(attrs.get("src", "")).strip()
+        if not src.startswith(ALLOWED_IMAGE_PREFIXES) or len(src) > 500:
+            raise ValueError("Invalid rich content: image address not allowed")
+    elif kind == "video":
+        src = str(attrs.get("src", "")).strip()
+        if not src.startswith(ALLOWED_VIDEO_PREFIXES) or len(src) > 300:
+            raise ValueError("Invalid rich content: video address not allowed (only YouTube and Twitch)")
+    elif kind == "mention":
+        if len(str(attrs.get("id", ""))) > 120 or len(str(attrs.get("label", ""))) > 120:
+            raise ValueError("Invalid rich content: mention too long")
+        href = str(attrs.get("href") or "")
+        if href and (not href.startswith("/") or href.startswith("//") or "\\" in href or len(href) > 200):
+            raise ValueError("Invalid rich content: mention link must be a page of this site")
 
 
 def _check_node(node: Any, depth: int) -> None:
@@ -29,6 +53,7 @@ def _check_node(node: Any, depth: int) -> None:
         raise ValueError("Invalid rich content: malformed node")
     if node.get("type") not in ALLOWED_NODE_TYPES:
         raise ValueError(f"Invalid rich content: block type not allowed ({str(node.get('type'))[:30]})")
+    _check_attrs(node)
     for mark in node.get("marks") or []:
         if not isinstance(mark, dict) or mark.get("type") not in ALLOWED_MARK_TYPES:
             raise ValueError("Invalid rich content: formatting not allowed")

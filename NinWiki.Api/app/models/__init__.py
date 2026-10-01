@@ -19,3 +19,5 @@ from app.models.posts import Post  # noqa: F401
 from app.models.roles import RolePermission  # noqa: F401
 from app.models.notices import Notice, NoticeFile  # noqa: F401
 from app.models.errors import ErrorEvent  # noqa: F401
+from app.models.posts import Tag, post_tag_links  # noqa: F401
+from app.models.readers import PostComment, PostLike, Reader  # noqa: F401

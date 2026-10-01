@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.core import db_ssl
 from app.core.config import settings
 
 # engine: objeto que gerencia o pool de conexoes com o Postgres.
@@ -31,11 +32,19 @@ from app.core.config import settings
 # estiver morta; pool_recycle=300 forca a troca de qualquer conexao
 # com mais de 5 minutos, antes que ela tenha chance de ficar velha
 # demais e ser derrubada.
+# TLS com certificado de cliente (SquareCloud): so' liga se DATABASE_SSL_* estiverem preenchidos (ver app/core/db_ssl.py).
+_connect_args: dict = {}
+if db_ssl.is_enabled(settings.database_ssl_ca, settings.database_ssl_cert, settings.database_ssl_key):
+    _connect_args["ssl"] = db_ssl.asyncpg_ssl_context(
+        settings.database_ssl_ca, settings.database_ssl_cert, settings.database_ssl_key, settings.database_ssl_verify_hostname
+    )
+
 engine = create_async_engine(
     settings.database_url,
     echo=(settings.environment == "development"),
     pool_pre_ping=True,
     pool_recycle=300,
+    connect_args=_connect_args,
 )
 
 # AsyncSessionLocal: fabrica de sessoes. Uma "sessao" e' o objeto que

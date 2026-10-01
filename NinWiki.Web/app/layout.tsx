@@ -18,7 +18,9 @@ const inter = Inter({ subsets: ['latin'] });
 // Metadata usada pelo Next.js para gerar as tags <title> e <meta description>
 // automaticamente - importante para SEO e para o preview ao compartilhar o link.
 export const metadata: Metadata = {
-  title: 'Nin Online Brasil Wiki',
+  // base dos enderecos absolutos (og:image, canonical...): NEXT_PUBLIC_SITE_URL, ex: https://wiki.seudominio.com
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  title: 'Nin Online Wiki',
   description: 'The definitive encyclopedia of the Nin Online MMORPG — mobs, items, weapons, masteries, guides and missions.',
 };
 

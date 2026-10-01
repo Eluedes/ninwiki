@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, Bug, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, Bug, MessageSquare, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { requiredPermissionFor } from '@/lib/admin-routes';
 import { NinLogo } from '@/components/icons/nin-logo';
@@ -22,6 +22,7 @@ const navItems = [
   { key: 'jutsus', href: '/admin/jutsus', icon: Zap },
   { key: 'bulkImport', href: '/admin/import', icon: FileJson },
   { key: 'blogPosts', href: '/admin/blog-posts', icon: FileText },
+  { key: 'comments', href: '/admin/comments', icon: MessageSquare },
   { key: 'auditLog', href: '/admin/audit-log', icon: History },
   { key: 'villages', href: '/admin/villages', icon: Castle },
   { key: 'organizations', href: '/admin/organizations', icon: Building2 },

@@ -17,6 +17,7 @@ export const ROUTE_PERMISSIONS: { prefix: string; permission: PermissionName }[]
   { prefix: '/admin/errors', permission: 'errors.view' },
   { prefix: '/admin/audit-log', permission: 'audit.view' },
   { prefix: '/admin/blog-posts', permission: 'posts.create' },
+  { prefix: '/admin/comments', permission: 'comments.moderate' },
   { prefix: '/admin/import', permission: 'content.import' },
   { prefix: '/admin/masteries', permission: 'lore.edit' },
   { prefix: '/admin/jutsus', permission: 'lore.edit' },

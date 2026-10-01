@@ -1,14 +1,14 @@
 """
 Blog (posts) - mesma logica de permissoes de Conteudo:
 
-  Publico (o site): so' enxerga posts PUBLICADOS; rascunho responde 404.
+  Publico (o site): so' enxerga posts PUBLICADOS cuja data de publicacao ja' chegou; rascunho e agendado respondem 404.
   Creator: cria e edita RASCUNHOS. Nao publica, nao apaga, nao mexe em post ja' publicado.
-  Adm/S.Adm: publicam, tiram do ar, editam publicados e apagam.
+  Adm/S.Adm: publicam (inclusive agendando para o futuro), tiram do ar, editam publicados e apagam.
 
 Rotas:
-  GET    /posts             lista (resumo)        - publico so' ve publicados
+  GET    /posts             lista (resumo; ?tag=slug filtra)  - publico so' ve publicados e ja' no ar
   GET    /posts/{id}        ficha completa
-  GET    /posts/slug/{slug} ficha completa por slug (URL legivel, pro futuro site publico)
+  GET    /posts/slug/{slug} ficha completa por slug (URL legivel do site publico)
   POST   /posts             cria                  (posts.create)
   PUT    /posts/{id}        edita                 (posts.edit)
   DELETE /posts/{id}        apaga                 (posts.delete)
@@ -16,7 +16,9 @@ Rotas:
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from datetime import datetime, timezone
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -26,7 +28,8 @@ from app.core.database import get_db
 from app.core.payloads import apply_scalar_fields
 from app.core.permissions import Permission, has_permission
 from app.models.enums import ContentStatus
-from app.models.posts import Post
+from app.models.posts import Post, Tag
+from app.models.readers import PostComment, PostLike
 from app.core.translation import fill_missing_translations, retranslate_fields
 from app.models.users import User
 from app.schemas.posts import PostRead, PostSummary, PostWrite
@@ -37,26 +40,72 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 POST_TRANSLATABLE = [("title", "title_pt"), ("excerpt", "excerpt_pt"), ("content", "content_pt")]
 
 
-def _summary(post: Post) -> dict:
+def _is_live(post: Post, now: datetime | None = None) -> bool:
+    """True se o post esta' NO AR para o publico: publicado e com data de publicacao ja' alcancada."""
+    now = now or datetime.now(timezone.utc)
+    return post.status == ContentStatus.PUBLISHED and (post.published_at is None or post.published_at <= now)
+
+
+async def _counts(db: AsyncSession, post_ids: list[UUID]) -> dict[UUID, tuple[int, int]]:
+    """Curtidas e comentarios VISIVEIS de cada post, em 2 consultas (nao uma por post)."""
+    if not post_ids:
+        return {}
+    likes = dict((await db.execute(
+        select(PostLike.post_id, func.count()).where(PostLike.post_id.in_(post_ids)).group_by(PostLike.post_id))).all())
+    comments = dict((await db.execute(
+        select(PostComment.post_id, func.count()).where(PostComment.post_id.in_(post_ids), PostComment.hidden.is_(False))
+        .group_by(PostComment.post_id))).all())
+    return {pid: (likes.get(pid, 0), comments.get(pid, 0)) for pid in post_ids}
+
+
+def _summary(post: Post, counts: tuple[int, int] = (0, 0)) -> dict:
     """Converte um Post no resumo da listagem (sem o conteudo)."""
     return {
         "id": post.id, "slug": post.slug, "title": post.title, "excerpt": post.excerpt,
         "title_pt": post.title_pt, "excerpt_pt": post.excerpt_pt,
         "cover_image": post.cover_image, "status": post.status,
         "author_name": post.author.username if post.author else None,
+        "tags": list(post.tags), "published_at": post.published_at,
+        "is_scheduled": post.status == ContentStatus.PUBLISHED and not _is_live(post),
+        "like_count": counts[0], "comment_count": counts[1],
         "created_at": post.created_at, "updated_at": post.updated_at,
     }
 
 
-def _read(post: Post) -> PostRead:
+def _read(post: Post, counts: tuple[int, int] = (0, 0)) -> PostRead:
     """Converte um Post na ficha completa."""
-    return PostRead(**_summary(post), content=post.content, content_pt=post.content_pt)
+    return PostRead(**_summary(post, counts), content=post.content, content_pt=post.content_pt,
+                    meta_title=post.meta_title, meta_description=post.meta_description)
+
+
+async def _read_full(db: AsyncSession, post: Post) -> PostRead:
+    """Ficha completa ja' com os contadores de curtidas/comentarios."""
+    return _read(post, (await _counts(db, [post.id])).get(post.id, (0, 0)))
 
 
 def _hide_draft_from_public(post: Post, user: User | None) -> None:
-    """Rascunho responde 404 para quem nao e' da equipe."""
-    if user is None and post.status != ContentStatus.PUBLISHED:
+    """Rascunho e post agendado (data no futuro) respondem 404 para quem nao e' da equipe."""
+    if user is None and not _is_live(post):
         raise HTTPException(status_code=404, detail="Post not found")
+
+
+async def _resolve_tags(db: AsyncSession, slugs: list[str]) -> list[Tag]:
+    """Transforma os slugs enviados em objetos Tag; slug que nao existe -> 422."""
+    if not slugs:
+        return []
+    found = {t.id: t for t in (await db.execute(select(Tag).where(Tag.id.in_(slugs)))).scalars().all()}
+    missing = [s for s in slugs if s not in found]
+    if missing:
+        raise HTTPException(status_code=422, detail=f"Unknown tag: {missing[0]}")
+    return [found[s] for s in slugs]
+
+
+def _stamp_publication(post: Post, payload_published_at: datetime | None) -> None:
+    """Define a data de publicacao: a escolhida; senao a ja' existente; senao AGORA (ao publicar). Rascunho nao mexe."""
+    if post.status != ContentStatus.PUBLISHED:
+        post.published_at = payload_published_at
+        return
+    post.published_at = payload_published_at or post.published_at or datetime.now(timezone.utc)
 
 
 def _guard_publish(staff: User, new_status: ContentStatus) -> None:
@@ -74,7 +123,7 @@ def _guard_edit(staff: User, post: Post, new_status: ContentStatus) -> None:
 
 async def _load(db: AsyncSession, post_id: UUID) -> Post:
     """Carrega um post (com o autor) ou responde 404."""
-    stmt = select(Post).where(Post.id == post_id).options(selectinload(Post.author))
+    stmt = select(Post).where(Post.id == post_id).options(selectinload(Post.author))  # tags vem do selectin do modelo
     post = (await db.execute(stmt)).scalar_one_or_none()
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -91,16 +140,23 @@ async def _slug_taken(db: AsyncSession, slug: str, ignore_id: UUID | None = None
 @router.get("", response_model=list[PostSummary])
 async def list_posts(
     status: ContentStatus | None = Query(None, description="Filtra por status (so' vale pra equipe logada)"),
+    tag: str | None = Query(None, max_length=50, description="Filtra pelo slug de uma tag"),
     user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Lista posts, mais recentes primeiro; o publico so' ve' os publicados."""
-    stmt = select(Post).options(selectinload(Post.author)).order_by(Post.created_at.desc())
+    """Lista posts, mais recentes primeiro; o publico so' ve' os publicados que ja' estao no ar."""
+    stmt = select(Post).options(selectinload(Post.author))
     if user is None:
-        stmt = stmt.where(Post.status == ContentStatus.PUBLISHED)  # rascunho NUNCA aparece pro publico
+        # rascunho e agendado NUNCA aparecem pro publico
+        stmt = stmt.where(Post.status == ContentStatus.PUBLISHED, func.coalesce(Post.published_at, Post.created_at) <= func.now())
     elif status is not None:
         stmt = stmt.where(Post.status == status)
-    return [_summary(p) for p in (await db.execute(stmt)).scalars().all()]
+    if tag:
+        stmt = stmt.where(Post.tags.any(Tag.id == tag))
+    stmt = stmt.order_by(func.coalesce(Post.published_at, Post.created_at).desc())
+    posts = (await db.execute(stmt)).scalars().all()
+    counts = await _counts(db, [p.id for p in posts])
+    return [_summary(p, counts.get(p.id, (0, 0))) for p in posts]
 
 
 @router.get("/slug/{slug}", response_model=PostRead)
@@ -111,7 +167,7 @@ async def get_post_by_slug(slug: str, user: User | None = Depends(get_optional_u
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
     _hide_draft_from_public(post, user)
-    return _read(post)
+    return await _read_full(db, post)
 
 
 @router.get("/{post_id}", response_model=PostRead)
@@ -119,7 +175,7 @@ async def get_post(post_id: UUID, user: User | None = Depends(get_optional_user)
     """Ficha de um post pelo id (usado pelo painel)."""
     post = await _load(db, post_id)
     _hide_draft_from_public(post, user)
-    return _read(post)
+    return await _read_full(db, post)
 
 
 @router.post("", response_model=PostRead, status_code=201)
@@ -132,14 +188,17 @@ async def create_post(
     _guard_publish(staff, payload.status)
     if await _slug_taken(db, payload.slug):
         raise HTTPException(status_code=409, detail=f"A post with the slug '{payload.slug}' already exists")
-    post = Post(author_id=staff.id, **payload.model_dump())
+    data = payload.model_dump(exclude={"tags", "published_at"})
+    post = Post(author_id=staff.id, **data)
+    post.tags = await _resolve_tags(db, payload.tags)
+    _stamp_publication(post, payload.published_at)
     db.add(post)
     await fill_missing_translations(post, POST_TRANSLATABLE)  # DeepL EN -> PT (so' o que veio vazio)
     await db.flush()
     await log_action(db, action="create", entity_type="post", entity_id=str(post.id),
                      diff={"name": post.title, "status": post.status.value}, actor=staff)
     await db.commit()
-    return _read(await _load(db, post.id))
+    return await _read_full(db, await _load(db, post.id))
 
 
 @router.put("/{post_id}", response_model=PostRead)
@@ -155,13 +214,15 @@ async def update_post(
     if await _slug_taken(db, payload.slug, ignore_id=post.id):
         raise HTTPException(status_code=409, detail=f"A post with the slug '{payload.slug}' already exists")
     before = {"name": post.title, "status": post.status.value}
-    apply_scalar_fields(post, payload)
+    apply_scalar_fields(post, payload, exclude={"tags", "published_at"})
+    post.tags = await _resolve_tags(db, payload.tags)
+    _stamp_publication(post, payload.published_at)
     await fill_missing_translations(post, POST_TRANSLATABLE)  # DeepL EN -> PT (so' o que ficou vazio)
     await log_action(db, action="update", entity_type="post", entity_id=str(post.id),
                      diff={"before": before, "after": {"name": post.title, "status": post.status.value}}, actor=staff)
     await db.commit()
     db.expire_all()
-    return _read(await _load(db, post_id))
+    return await _read_full(db, await _load(db, post_id))
 
 
 @router.post("/{post_id}/retranslate", response_model=PostRead)
@@ -176,7 +237,7 @@ async def retranslate_post(
     await retranslate_fields(post, POST_TRANSLATABLE)
     await db.commit()
     db.expire_all()
-    return _read(await _load(db, post_id))
+    return await _read_full(db, await _load(db, post_id))
 
 
 @router.delete("/{post_id}", status_code=204)

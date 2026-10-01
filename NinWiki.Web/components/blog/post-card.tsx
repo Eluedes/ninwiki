@@ -4,7 +4,7 @@
 // O card inteiro e' um link para /blog/[slug].
 
 import Link from 'next/link';
-import { ArrowRight, Newspaper } from 'lucide-react';
+import { ArrowRight, Heart, MessageSquare, Newspaper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { localizedText } from '@/lib/localized';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -41,7 +41,7 @@ export function PostCard({ post }: { post: ApiPostSummary }) {
       />
       <div className="min-w-0 flex-1">
         <div className="mb-1 text-sm text-muted-foreground">
-          {formatPostDate(post.createdAt, locale)}
+          {formatPostDate(post.publishedAt ?? post.createdAt, locale)}
           {post.authorName ? ` · ${dict.blog.by} ${post.authorName}` : ''}
         </div>
         <h3 className="text-base font-bold tracking-tight text-card-foreground transition-colors group-hover:text-primary">
@@ -50,10 +50,23 @@ export function PostCard({ post }: { post: ApiPostSummary }) {
         {post.excerpt && (
           <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{localizedText(locale, post.excerpt, post.excerptPt)}</p>
         )}
-        <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary">
-          {dict.news.readMore}
-          <ArrowRight className="h-3 w-3" />
-        </span>
+        {post.tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {post.tags.map((tag) => (
+              <span key={tag.id} className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
+                {localizedText(locale, tag.name, tag.namePt)}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1 font-medium text-primary">
+            {dict.news.readMore}
+            <ArrowRight className="h-3 w-3" />
+          </span>
+          <span className="inline-flex items-center gap-1" title={dict.blogx.public.likes}><Heart className="h-3 w-3" />{post.likeCount}</span>
+          <span className="inline-flex items-center gap-1" title={dict.blogx.public.comments}><MessageSquare className="h-3 w-3" />{post.commentCount}</span>
+        </div>
       </div>
     </Link>
   );

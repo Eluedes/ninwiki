@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     # em vez de tentar rodar sem banco e quebrar de forma confusa depois.
     database_url: str
 
+    # TLS com certificado de cliente (usado pelos bancos da SquareCloud). Caminhos relativos a' pasta NinWiki.Api.
+    # Todos vazios = sem TLS (banco local). Ver app/core/db_ssl.py e o README (secao do banco na SquareCloud).
+    database_ssl_ca: str = ""             # Certificate CA (.crt)
+    database_ssl_cert: str = ""           # certificado do cliente (.pem)
+    database_ssl_key: str = ""            # chave privada (.key) - vazio se estiver dentro do .pem
+    database_ssl_verify_hostname: bool = False   # confere tambem o NOME do host (so' se o certificado do banco bater com ele)
+
     # Segredo usado para ASSINAR os tokens JWT (prova que o token foi
     # emitido por nos e nao forjado por outra pessoa). NUNCA reaproveitar
     # entre ambientes (local/beta/producao) - se vazar, invalidar e trocar.
@@ -111,7 +118,7 @@ class Settings(BaseSettings):
     max_json_body_kb: int = 512              # corpo maximo de requisicoes comuns (uploads tem limite proprio)
 
     # Tamanho maximo de um arquivo anexado a um aviso do quadro da equipe, em MB.
-    max_notice_file_mb: int = 20
+    max_notice_file_mb: int = 50
 
     # Chave da API da DeepL, usada pra traduzir conteudo automaticamente
     # PT->EN ao criar/editar uma entry (ver app/core/translation.py).

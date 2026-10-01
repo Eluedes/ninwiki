@@ -16,6 +16,8 @@ const csp = [
   `img-src 'self' data: blob: https: ${API_URL}`,
   "font-src 'self' data:",
   `connect-src 'self' ${API_URL}${isDev ? ' ws:' : ''}`,
+  // Videos do blog: so' os players oficiais (YouTube no modo sem cookies e Twitch). Nenhum outro iframe e' permitido.
+  "frame-src https://www.youtube-nocookie.com https://player.twitch.tv",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

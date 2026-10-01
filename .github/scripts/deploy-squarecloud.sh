@@ -16,6 +16,15 @@ done
 # Grava o .env só aqui dentro do runner (nunca vai pro Git).
 printf '%s\n' "$APP_ENV" > "$DIR/.env"
 
+# Certificados do banco da SquareCloud (TLS com certificado de cliente) - só para a API, vindos dos Secrets.
+# O conteúdo de cada arquivo fica num Secret; aqui eles viram NinWiki.Api/certs/* DENTRO do zip enviado.
+if [ -n "${DB_SSL_CA:-}${DB_SSL_CERT:-}${DB_SSL_KEY:-}" ]; then
+  mkdir -p "$DIR/certs"
+  [ -n "${DB_SSL_CA:-}" ]   && printf '%s\n' "$DB_SSL_CA"   > "$DIR/certs/ca.crt"
+  [ -n "${DB_SSL_CERT:-}" ] && printf '%s\n' "$DB_SSL_CERT" > "$DIR/certs/client.pem"
+  [ -n "${DB_SSL_KEY:-}" ]  && printf '%s\n' "$DB_SSL_KEY"  > "$DIR/certs/client.key"
+fi
+
 rm -f "$ZIP"
 ( cd "$DIR" && zip -qr "$ZIP" . \
     -x "node_modules/*" ".next/*" "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" \
@@ -34,7 +43,7 @@ HTTP=$(curl -sS -o resp.json -w '%{http_code}' -X POST \
 echo "HTTP ${HTTP}"
 # Mostra a resposta mas nunca o .env.
 cat resp.json; echo
-rm -f resp.json "$ZIP" "$DIR/.env"
+rm -rf resp.json "$ZIP" "$DIR/.env" "$DIR/certs"
 
 [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || { echo "::error::Deploy falhou (HTTP $HTTP)"; exit 1; }
 echo "Deploy enviado."

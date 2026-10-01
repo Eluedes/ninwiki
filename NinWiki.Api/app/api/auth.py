@@ -29,11 +29,15 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import ROLE_LABEL, assignable_roles, visible_permissions_of
 from app.core.rate_limit import AUTH, LOGIN_FAIL, client_key, limiter, retry_message
+from app.core.reader_auth import get_optional_reader
 from app.core.security import (
-    STATE_COOKIE, clear_session_cookie, clear_state_cookie, create_session_token,
-    ensure_same_origin, set_session_cookie, set_state_cookie,
+    RETURN_COOKIE, STATE_COOKIE, clear_reader_cookie, clear_return_cookie, clear_session_cookie, clear_state_cookie,
+    create_reader_token, create_session_token, ensure_same_origin, safe_return_path, set_reader_cookie,
+    set_return_cookie, set_session_cookie, set_state_cookie,
 )
+from app.models.readers import Reader
 from app.models.users import User
+from app.schemas.posts import ReaderMe
 from app.schemas.staff import DevLogin, MeRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -53,11 +57,34 @@ def _me(user: User) -> MeRead:
     )
 
 
-def _login_redirect(reason: str) -> RedirectResponse:
-    """Redireciona de volta para a tela de login do site com o motivo do erro na URL."""
-    resp = RedirectResponse(f"{settings.frontend_origin}/login?error={reason}", status_code=302)
+def _login_redirect(reason: str, back: str | None = None) -> RedirectResponse:
+    """Redireciona de volta com o motivo do erro: para o login da equipe, ou (leitor) para a pagina de onde ele veio."""
+    if back is not None:
+        sep = "&" if "?" in back else "?"
+        resp = RedirectResponse(f"{settings.frontend_origin}{back}{sep}loginError={reason}", status_code=302)
+    else:
+        resp = RedirectResponse(f"{settings.frontend_origin}/login?error={reason}", status_code=302)
     clear_state_cookie(resp)
+    clear_return_cookie(resp)
     return resp
+
+
+def _reader_me(reader: Reader) -> ReaderMe:
+    """Monta a resposta de /auth/reader/me."""
+    return ReaderMe(id=reader.id, username=reader.username, avatar_url=reader.avatar_url)
+
+
+async def _upsert_reader(db: AsyncSession, profile: dict) -> Reader:
+    """Cria o leitor na primeira vez, ou atualiza nome/avatar/ultimo login."""
+    from sqlalchemy import select
+    reader = (await db.execute(select(Reader).where(Reader.discord_id == profile["id"]))).scalar_one_or_none()
+    if reader is None:
+        reader = Reader(discord_id=profile["id"], username=profile["username"], avatar_url=profile["avatar_url"])
+        db.add(reader)
+    reader.username, reader.avatar_url = profile["username"], profile["avatar_url"]
+    reader.last_login_at = datetime.now(timezone.utc)
+    await db.flush()
+    return reader
 
 
 def _too_many_requests() -> int | None:
@@ -87,15 +114,23 @@ async def auth_config():
 
 
 @router.get("/discord/login")
-async def discord_login():
-    """Inicia o login: gera o state anti-CSRF e redireciona o navegador para o Discord."""
+async def discord_login(mode: str = "staff", returnTo: str | None = None):
+    """
+    Inicia o login: gera o state anti-CSRF e redireciona o navegador para o Discord.
+    `mode=reader` = login de LEITOR do site (comentar/curtir): volta para `returnTo` (caminho interno) e nao da' acesso ao painel.
+    """
+    back = safe_return_path(returnTo) if mode == "reader" else None
     if _too_many_requests() is not None:
-        return _login_redirect("rate_limited")
+        return _login_redirect("rate_limited", back)
     if not discord.is_configured():
-        return _login_redirect("discord_not_configured")
+        return _login_redirect("discord_not_configured", back)
     state = secrets.token_urlsafe(32)
     resp = RedirectResponse(discord.build_authorize_url(state), status_code=302)
     set_state_cookie(resp, state)
+    if back is not None:
+        set_return_cookie(resp, f"reader|{back}")
+    else:
+        clear_return_cookie(resp)
     return resp
 
 
@@ -105,23 +140,39 @@ async def discord_callback(
     error: str | None = None, db: AsyncSession = Depends(get_db),
 ):
     """Volta do Discord: confere o state, troca o code pelo perfil, valida se e' staff ativa e cria a sessao."""
+    # Login de leitor ou de equipe? O cookie de retorno foi gravado em /discord/login.
+    ret = request.cookies.get(RETURN_COOKIE, "")
+    back = safe_return_path(ret.split("|", 1)[1]) if ret.startswith("reader|") else None
+
     # Freio ANTES de qualquer trabalho (Discord, banco, log): quem ja' errou demais nem chega la'.
     if _too_many_requests() is not None or _too_many_failures() is not None:
-        return _login_redirect("rate_limited")
+        return _login_redirect("rate_limited", back)
 
     if error:
-        return _login_redirect("discord_denied")
+        return _login_redirect("discord_denied", back)
 
     cookie_state = request.cookies.get(STATE_COOKIE)
     if not code or not state or not cookie_state or not hmac.compare_digest(state, cookie_state):
         _register_failure()
-        return _login_redirect("invalid_state")
+        return _login_redirect("invalid_state", back)
 
     try:
         access_token = await discord.exchange_code(code)
         profile = await discord.fetch_profile(access_token)
     except discord.DiscordError:
-        return _login_redirect("discord_failed")
+        return _login_redirect("discord_failed", back)
+
+    if back is not None:  # leitor: so' prova quem e' (nao consulta a equipe nem abre o painel)
+        reader = await _upsert_reader(db, profile)
+        if reader.banned:
+            await db.commit()
+            return _login_redirect("banned", back)
+        await db.commit()
+        resp = RedirectResponse(f"{settings.frontend_origin}{back}", status_code=302)
+        set_reader_cookie(resp, create_reader_token(str(reader.id)))
+        clear_state_cookie(resp)
+        clear_return_cookie(resp)
+        return resp
 
     user = await staff_service.ensure_owner_account(db, profile["id"], profile["username"], profile["avatar_url"])
     if user is None:
@@ -174,6 +225,38 @@ async def dev_login(payload: DevLogin, request: Request, response: Response, db:
     await db.commit()
     set_session_cookie(response, create_session_token(user))
     return _me(user)
+
+
+@router.get("/reader/me", response_model=ReaderMe | None)
+async def reader_me(reader: Reader | None = Depends(get_optional_reader)):
+    """O leitor logado agora (ou null) - o site usa para mostrar 'Entrar com Discord' ou o avatar."""
+    return _reader_me(reader) if reader else None
+
+
+@router.post("/reader/logout")
+async def reader_logout(response: Response):
+    """Sai da conta de leitor (apaga so' o cookie dele; a sessao da equipe, se houver, continua)."""
+    clear_reader_cookie(response)
+    return {"ok": True}
+
+
+@router.post("/reader/dev-login", response_model=ReaderMe)
+async def reader_dev_login(payload: DevLogin, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    """Entra como leitor so' com um Discord ID, SEM Discord - so' para testar localmente (ver dev_login_enabled)."""
+    if not _dev_login_enabled():
+        raise HTTPException(status_code=404, detail="Not Found")
+    ensure_same_origin(request)
+    wait = _too_many_requests()
+    if wait is not None:
+        raise HTTPException(status_code=429, detail=retry_message(wait), headers={"Retry-After": str(wait)})
+    discord_id = int(payload.discord_id)
+    reader = await _upsert_reader(db, {"id": discord_id, "username": f"Reader {discord_id}", "avatar_url": None})
+    if reader.banned:
+        await db.commit()
+        raise HTTPException(status_code=403, detail="This account is banned")
+    await db.commit()
+    set_reader_cookie(response, create_reader_token(str(reader.id)))
+    return _reader_me(reader)
 
 
 @router.post("/logout")

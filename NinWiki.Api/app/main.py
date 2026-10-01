@@ -38,13 +38,16 @@ from app.api.audit_log import router as audit_log_router
 from app.api.auth import router as auth_router
 from app.api.bot import router as bot_router
 from app.api.content_items import router as content_items_router
+from app.api.engagement import moderation_router as comments_moderation_router, router as engagement_router
 from app.api.errors import client_router as client_errors_router, router as errors_router
 from app.api.guide import router as guide_router
 from app.api.masteries import router as masteries_router
 from app.api.notices import router as notices_router
 from app.api.roles import router as roles_router
 from app.api.posts import router as posts_router
+from app.api.search import router as search_router
 from app.api.staff import router as staff_router
+from app.api.tags import router as tags_router
 from app.api.uploads import router as uploads_router
 from app.api.villages import organizations_router, router as villages_router
 from app.core.config import settings
@@ -118,6 +121,10 @@ app.include_router(masteries_router)
 app.include_router(uploads_router)
 app.include_router(villages_router)
 app.include_router(posts_router)
+app.include_router(engagement_router)
+app.include_router(comments_moderation_router)
+app.include_router(tags_router)
+app.include_router(search_router)
 app.include_router(organizations_router)
 app.include_router(guide_router)
 app.include_router(auth_router)
