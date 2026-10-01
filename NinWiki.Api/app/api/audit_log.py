@@ -14,16 +14,17 @@ QUEM VE O QUE (camadas):
     SO' o S.Adm (permissao audit.view_all). Pra' os demais cargos esses
     registros simplesmente nao aparecem, e o IP vem sempre vazio.
 """
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auth import get_current_user
+from app.core.audit import log_action
+from app.core.auth import get_current_user, require_permission
 from app.core.database import get_db
 from app.core.permissions import Permission, has_permission
 from app.models.users import AuditLogEntry, User
@@ -96,3 +97,29 @@ async def list_audit_log(
         for entry in out:
             entry.ip_address = None  # IP e' dado sensivel: so' o S.Adm enxerga
     return out
+
+
+@router.delete("")
+async def clear_audit_log(
+    older_than_days: int | None = Query(None, alias="olderThanDays", ge=1, le=3650,
+                                        description="Apaga so' o que for mais antigo que N dias; vazio = apaga TUDO"),
+    staff: User = Depends(require_permission(Permission.AUDIT_CLEAR)),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    LIMPA o log (so' S.Adm; os demais cargos recebem 404): apaga tudo ou so' o que passou de N dias, para a equipe nao ver
+    mais o historico antigo. A propria limpeza NAO some: fica registrada como a primeira linha do log novo
+    (quem limpou, quantas linhas e o criterio).
+    """
+    stmt = delete(AuditLogEntry)
+    count_stmt = select(func.count()).select_from(AuditLogEntry)
+    if older_than_days is not None:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=older_than_days)
+        stmt = stmt.where(AuditLogEntry.created_at < cutoff)
+        count_stmt = count_stmt.where(AuditLogEntry.created_at < cutoff)
+    total = (await db.execute(count_stmt)).scalar_one()
+    await db.execute(stmt)
+    await log_action(db, action="clear_log", entity_type="security", entity_id="audit-log",
+                     diff={"deleted": total, "older_than_days": older_than_days}, actor=staff)
+    await db.commit()
+    return {"deleted": total}

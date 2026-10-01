@@ -89,3 +89,8 @@ class DevLogin(CamelModel):
 def role_label(role: StaffRole) -> str:
     """Nome curto do cargo para mostrar (S.Adm, Adm, Creator)."""
     return ROLE_LABEL[role]
+
+
+class StaffRename(CamelModel):
+    """Corpo de trocar o nome (nick) de alguem da equipe."""
+    username: str

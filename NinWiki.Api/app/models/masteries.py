@@ -11,8 +11,8 @@ decorar UUIDs. jutsus continua com esse padrao tambem, pelo mesmo motivo.
 """
 import uuid
 
-from sqlalchemy import Enum, ForeignKey, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Enum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -130,17 +130,30 @@ class Jutsu(Base):
     # Nullable: nem toda mastery tem caminhos (ver MAESTRIAS.md/comentarios
     # do front) - um jutsu de uma mastery SEM caminhos deixa isso vazio.
     path_id: Mapped[str | None] = mapped_column(ForeignKey("mastery_paths.id", ondelete="SET NULL"), nullable=True)
-    tier: Mapped[int]  # 1 a 5
+    tier: Mapped[int]  # 1 a 4 (maximo 4)
     chakra_cost: Mapped[int]
     description: Mapped[str] = mapped_column(Text)
     long_description: Mapped[str] = mapped_column(Text)
     # Mesmo padrao/motivo de Mastery.description_pt logo acima.
     description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     long_description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
-    effect: Mapped[str] = mapped_column(String(200))
+    effect: Mapped[str] = mapped_column(String(200))           # "Special Effect" na ficha
     range: Mapped[str] = mapped_column(String(100))
     cast_time: Mapped[str] = mapped_column(String(100))
-    cooldown: Mapped[str] = mapped_column(String(100))
+    cooldown: Mapped[str] = mapped_column(String(100))         # texto unico; se cooldown_by_level existir, a ficha mostra ele
+    # ---- Ficha do jutsu (secoes Requirements / Acquisition / Technique Details / Battle Data) ----
+    # Texto vazio = a linha nao aparece na pagina. Valores em ingles (termos do jogo), como effect/range.
+    required_level: Mapped[str] = mapped_column(String(50), default="", server_default="")     # "20+"
+    required_stat: Mapped[str] = mapped_column(String(100), default="", server_default="")     # "35 Intellect"
+    scroll_type: Mapped[str] = mapped_column(String(100), default="", server_default="")       # "Sealable Scroll" (+ numero romano do tier)
+    shop: Mapped[str] = mapped_column(String(100), default="", server_default="")              # "Any"
+    max_level: Mapped[int] = mapped_column(Integer, default=1, server_default="1")             # nivel maximo do jutsu (1-10)
+    damage_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")    # ["6", "6", "8"] (um por nivel)
+    cooldown_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")  # ["16s", "14s", "14s"]
+    cast_type: Mapped[str] = mapped_column(String(100), default="", server_default="")         # "Walk cast"
+    jutsu_class: Mapped[str] = mapped_column(String(100), default="", server_default="")       # "Trap"
+    debuff: Mapped[str] = mapped_column(String(150), default="", server_default="")            # "Burn III"
+    battle_extra: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")       # [{"label": "Duration", "value": "5s"}]
     icon: Mapped[str] = mapped_column(String(50))
     # Demonstracao em GIF, opcional - ver components/lore/jutsu-gif.tsx
     # no front, que ja trata o caso desse arquivo nao existir ainda.

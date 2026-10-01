@@ -93,6 +93,34 @@ async def add_staff(
     return user
 
 
+def clean_username(raw: str) -> str:
+    """Nome de exibicao: sem caracteres de controle, espacos extras e quebras de linha; de 1 a 100 caracteres."""
+    name = " ".join("".join(ch if ch.isprintable() else " " for ch in raw).split())
+    if not name:
+        raise StaffError(422, "The name cannot be empty")
+    if len(name) > 100:
+        raise StaffError(422, "The name can have at most 100 characters")
+    return name
+
+
+async def rename(db: AsyncSession, actor: User, target: User, new_name: str, source: str = "panel") -> User:
+    """
+    Troca o nome (nick) de exibicao de alguem da equipe - o S.Adm pode mudar o de qualquer um, inclusive o proprio e o dos
+    donos (so' o NOME muda; cargo e acesso nao). O nome fica "travado": o login do Discord nao o sobrescreve mais.
+    """
+    _require(actor, Permission.STAFF_EDIT)
+    name = clean_username(new_name)
+    before = target.username
+    target.username = name
+    target.username_locked = True
+    if before != name:
+        await log_action(
+            db, action="rename", entity_type="staff", entity_id=str(target.discord_id),
+            diff={"before": before, "after": name}, actor=actor, source=source,
+        )
+    return target
+
+
 async def change_role(db: AsyncSession, actor: User, target: User, new_role: StaffRole, source: str = "panel") -> User:
     """Troca o cargo de alguem, derruba a sessao dele e registra no log."""
     _require(actor, Permission.STAFF_EDIT)

@@ -14,7 +14,7 @@ from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.permissions import Permission
 from app.models.users import User
-from app.schemas.staff import StaffCreate, StaffRead, StaffRoleUpdate
+from app.schemas.staff import StaffCreate, StaffRead, StaffRename, StaffRoleUpdate
 
 router = APIRouter(prefix="/staff", tags=["staff"])
 
@@ -62,6 +62,18 @@ async def update_role(
     """Troca o cargo de alguem; a sessao dele cai na hora."""
     target = await _get_or_404(db, staff_id)
     await staff_service.change_role(db, actor, target, payload.role)
+    await db.commit()
+    return to_read(target)
+
+
+@router.patch("/{staff_id}/name", response_model=StaffRead)
+async def update_name(
+    staff_id: UUID, payload: StaffRename,
+    actor: User = Depends(require_permission(Permission.STAFF_EDIT)), db: AsyncSession = Depends(get_db),
+):
+    """Troca o nome (nick) de exibicao de alguem (so' S.Adm, inclusive o proprio); o login do Discord nao o desfaz."""
+    target = await _get_or_404(db, staff_id)
+    await staff_service.rename(db, actor, target, payload.username)
     await db.commit()
     return to_read(target)
 

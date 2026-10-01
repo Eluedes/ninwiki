@@ -42,6 +42,18 @@ export interface BlogxDict {
   };
 }
 
+/** Textos da ficha do jutsu (pagina publica) e dos campos novos do editor de jutsu. */
+export interface JutsuInfoDict {
+  requirements: string; acquisition: string; techniqueDetails: string; battleData: string;
+  mastery: string; level: string; stat: string; tier: string; shop: string; maxLevel: string; baseDamage: string;
+  chakraCost: string; cooldown: string; castTime: string; castType: string; specialEffect: string;
+  jutsuClass: string; range: string; debuff: string; levelWord: string; cpUnit: string;
+  // editor
+  sheetTitle: string; sheetHint: string; requiredLevel: string; requiredStat: string; scrollType: string; scrollTypeHint: string;
+  maxLevelHint: string; perLevelHint: string; levelN: string; battleExtra: string; addRow: string; rowLabel: string; rowValue: string;
+  removeRow: string; tierHint: string;
+}
+
 export interface Dictionary {
   siteName: string;
   siteTagline: string;
@@ -60,6 +72,7 @@ export interface Dictionary {
   };
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
+  jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterSpecial: string };
   detail: { attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string };
@@ -92,7 +105,7 @@ export interface Dictionary {
       displayName: string; displayNameHint: string; role: string; status: string; lastLogin: string;
       neverLoggedIn: string; active: string; inactive: string; owner: string; ownerHint: string;
       deactivate: string; activate: string; confirmDeactivate: string; you: string;
-      add: string; adding: string; noStaff: string; loadError: string; actionError: string; noManageable: string;
+      add: string; adding: string; noStaff: string; loadError: string; actionError: string; noManageable: string; editName: string; saveName: string; cancelName: string; nameHint: string;
       logByLabel: string; logAll: string; logContent: string; logAuth: string; logStaff: string; logSecurity: string;
       logActions: Record<string, string>; logEntities: Record<string, string>; logSources: Record<string, string>;
     };
@@ -128,7 +141,7 @@ export interface Dictionary {
       confirmDelete: string; trace: string; noTrace: string; resolvedBy: string; ip: string; refresh: string; sources: Record<string, string>;
       howTo: string;
     };
-    noticeBoard: { title: string; subtitle: string; empty: string; newNotice: string; titleLabel: string; bodyLabel: string; pin: string; pinned: string; save: string; saving: string; cancel: string; edit: string; delete: string; confirmDelete: string; attachFiles: string; files: string; download: string; removeFile: string; uploading: string; by: string; loadError: string; saveError: string; uploadError: string; maxInfo: string };
+    noticeBoard: { title: string; subtitle: string; empty: string; newNotice: string; titleLabel: string; bodyLabel: string; pin: string; pinned: string; save: string; saving: string; cancel: string; edit: string; delete: string; confirmDelete: string; attachFiles: string; files: string; download: string; removeFile: string; uploading: string; by: string; loadError: string; saveError: string; uploadError: string; maxInfo: string; fileTooBig: string };
     rolesPage: { title: string; subtitle: string; permission: string; locked: string; lockedHint: string; save: string; saving: string; saved: string; reset: string; confirmReset: string; loadError: string; saveError: string; unsavedChanges: string; alwaysAll: string; groups: Record<string, string>; names: Record<string, string> };
     header: { role: { admin: string; mod: string } };
     overview: {
@@ -157,6 +170,7 @@ export interface Dictionary {
     auditLog: {
       title: string; subtitle: string; loading: string; loadError: string; empty: string;
       created: string; updated: string; deleted: string; system: string;
+      clearLog: string; clearAll: string; clearOlder7: string; clearOlder30: string; clearConfirmAll: string; clearConfirmOlder: string; clearDone: string; clearError: string;
       entityContentItem: string; entityJutsu: string; entityMastery: string;
     };
     masteries: {
@@ -418,6 +432,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
         actionError: 'Não foi possível concluir a ação.', refresh: 'Atualizar', discordId: 'ID do Discord',
       },
     },
+    jutsuInfo: {
+      requirements: 'Requisitos', acquisition: 'Aquisição', techniqueDetails: 'Detalhes da técnica', battleData: 'Dados de batalha',
+      mastery: 'Mastery', level: 'Nível', stat: 'Atributo', tier: 'Tier', shop: 'Loja', maxLevel: 'Nível máximo', baseDamage: 'Dano base',
+      chakraCost: 'Custo de chakra', cooldown: 'Recarga', castTime: 'Tempo de conjuração', castType: 'Tipo de conjuração', specialEffect: 'Efeito especial',
+      jutsuClass: 'Classe', range: 'Alcance', debuff: 'Debuff', levelWord: 'Nível', cpUnit: 'CP',
+      sheetTitle: 'Ficha do jutsu', sheetHint: 'Cada linha vazia some da página. Os valores ficam em inglês (termos do jogo).',
+      requiredLevel: 'Nível exigido (ex.: 20+)', requiredStat: 'Atributo exigido (ex.: 35 Intellect)', scrollType: 'Tipo de pergaminho',
+      scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (ex.: Sealable Scroll II).',
+      maxLevelHint: 'De 1 a 10. Define quantos campos por nível aparecem abaixo.', perLevelHint: 'Um valor por nível; deixe vazio o que não se aplica.',
+      levelN: 'Nível {n}', battleExtra: 'Linhas extras de Dados de batalha', addRow: 'Adicionar linha', rowLabel: 'Nome (ex.: Duração)', rowValue: 'Valor (ex.: 5s)',
+      removeRow: 'Remover linha', tierHint: 'De 1 a 4 (o máximo é 4).',
+    },
     admin: {
       login: {
         welcome: 'Bem-vindo de volta',
@@ -468,12 +494,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loadError: 'Erro ao carregar a equipe.',
         actionError: 'Não foi possível concluir a ação.',
         noManageable: 'sem permissão',
+        editName: 'Editar nome', saveName: 'Salvar', cancelName: 'Cancelar', nameHint: 'O nome fica salvo e o login com o Discord não o troca mais.',
         logByLabel: 'Tipo',
         logAll: 'Tudo', logContent: 'Conteúdo', logAuth: 'Logins', logStaff: 'Equipe', logSecurity: 'Segurança',
         logActions: {
           create: 'criou', update: 'editou', delete: 'apagou', upload: 'enviou imagem',
           'bulk-status': 'mudou o status de', 'bulk-delete': 'apagou em massa', 'bulk-import': 'importou',
-          login: 'entrou', logout: 'saiu', login_denied: 'teve o login negado', role_change: 'mudou o cargo de',
+          login: 'entrou', logout: 'saiu', login_denied: 'teve o login negado', role_change: 'mudou o cargo de', rename: 'renomeou', clear_log: 'limpou o log',
           activate: 'reativou', deactivate: 'desativou', bootstrap: 'foi criado como dono', bootstrap_restore: 'teve o cargo de dono restaurado',
           permission_denied: 'tentou algo sem permissão em', resolve: 'resolveu', reopen: 'reabriu', reset: 'restaurou o padrão de', delete_file: 'removeu um arquivo de',
         },
@@ -551,7 +578,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         confirmDelete: 'Apagar o aviso "{title}" e os arquivos anexados?', attachFiles: 'Anexar arquivo', files: 'Arquivos',
         download: 'Baixar', removeFile: 'Remover arquivo', uploading: 'Enviando...', by: 'por',
         loadError: 'Não foi possível carregar os avisos.', saveError: 'Não foi possível salvar o aviso.',
-        uploadError: 'Não foi possível enviar o arquivo.', maxInfo: 'Até 10 arquivos por aviso — aceita .zip, .rar, .7z, PDF, imagens e outros (máx. 50 MB cada).',
+        uploadError: 'Não foi possível enviar o arquivo.', maxInfo: 'Até 10 arquivos por aviso — aceita .zip, .rar, .7z, PDF, imagens e outros (máx. 50 MB cada).', fileTooBig: 'O arquivo "{name}" passa de {mb} MB.',
       },
       rolesPage: {
         title: 'Permissões por cargo', subtitle: 'Defina o que cada cargo pode fazer no painel. As alterações valem na hora.',
@@ -669,6 +696,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loadError: 'Não foi possível conectar à API.',
         empty: 'Nenhuma ação registrada ainda.',
         created: 'Criou', updated: 'Editou', deleted: 'Apagou',
+        clearLog: 'Limpar log', clearAll: 'Apagar tudo', clearOlder7: 'Mais antigos que 7 dias', clearOlder30: 'Mais antigos que 30 dias',
+        clearConfirmAll: 'Apagar TODO o log? A equipe não verá mais nenhum registro anterior. Isso não pode ser desfeito (a limpeza fica registrada).',
+        clearConfirmOlder: 'Apagar os registros com mais de {days} dias? Isso não pode ser desfeito (a limpeza fica registrada).',
+        clearDone: '{n} registros apagados.', clearError: 'Não foi possível limpar o log.',
         system: 'Sistema',
         entityContentItem: 'Conteúdo', entityJutsu: 'Jutsu', entityMastery: 'Mastery',
       },
@@ -1034,6 +1065,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
         actionError: 'Could not complete the action.', refresh: 'Refresh', discordId: 'Discord ID',
       },
     },
+    jutsuInfo: {
+      requirements: 'Requirements', acquisition: 'Acquisition', techniqueDetails: 'Technique Details', battleData: 'Battle Data',
+      mastery: 'Mastery', level: 'Level', stat: 'Stat', tier: 'Tier', shop: 'Shop', maxLevel: 'Maximum Level', baseDamage: 'Base Damage',
+      chakraCost: 'Chakra Cost', cooldown: 'Cooldown', castTime: 'Cast Time', castType: 'Cast Type', specialEffect: 'Special Effect',
+      jutsuClass: 'Class', range: 'Range', debuff: 'Debuff', levelWord: 'Level', cpUnit: 'CP',
+      sheetTitle: 'Jutsu sheet', sheetHint: 'Empty rows are hidden on the page. Values are in English (game terms).',
+      requiredLevel: 'Required level (e.g. 20+)', requiredStat: 'Required stat (e.g. 35 Intellect)', scrollType: 'Scroll type',
+      scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (e.g. Sealable Scroll II).',
+      maxLevelHint: 'From 1 to 10. Sets how many per-level fields appear below.', perLevelHint: 'One value per level; leave empty what does not apply.',
+      levelN: 'Level {n}', battleExtra: 'Extra Battle Data rows', addRow: 'Add row', rowLabel: 'Name (e.g. Duration)', rowValue: 'Value (e.g. 5s)',
+      removeRow: 'Remove row', tierHint: 'From 1 to 4 (4 is the maximum).',
+    },
     admin: {
       login: {
         welcome: 'Welcome back',
@@ -1084,12 +1127,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loadError: 'Error loading the staff.',
         actionError: 'Could not complete the action.',
         noManageable: 'no permission',
+        editName: 'Edit name', saveName: 'Save', cancelName: 'Cancel', nameHint: 'The name is saved and signing in with Discord no longer changes it.',
         logByLabel: 'Type',
         logAll: 'All', logContent: 'Content', logAuth: 'Logins', logStaff: 'Staff', logSecurity: 'Security',
         logActions: {
           create: 'created', update: 'updated', delete: 'deleted', upload: 'uploaded an image',
           'bulk-status': 'changed the status of', 'bulk-delete': 'bulk-deleted', 'bulk-import': 'imported',
-          login: 'signed in', logout: 'signed out', login_denied: 'had a login denied', role_change: 'changed the role of',
+          login: 'signed in', logout: 'signed out', login_denied: 'had a login denied', role_change: 'changed the role of', rename: 'renamed', clear_log: 'cleared the log',
           activate: 'reactivated', deactivate: 'deactivated', bootstrap: 'was created as owner', bootstrap_restore: 'had the owner role restored',
           permission_denied: 'tried something without permission on', resolve: 'resolved', reopen: 'reopened', reset: 'restored the defaults of', delete_file: 'removed a file from',
         },
@@ -1167,7 +1211,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         confirmDelete: 'Delete the notice "{title}" and its attached files?', attachFiles: 'Attach file', files: 'Files',
         download: 'Download', removeFile: 'Remove file', uploading: 'Uploading...', by: 'by',
         loadError: 'Could not load the notices.', saveError: 'Could not save the notice.',
-        uploadError: 'Could not upload the file.', maxInfo: 'Up to 10 files per notice — accepts .zip, .rar, .7z, PDF, images and more (max 50 MB each).',
+        uploadError: 'Could not upload the file.', maxInfo: 'Up to 10 files per notice — accepts .zip, .rar, .7z, PDF, images and more (max 50 MB each).', fileTooBig: 'The file "{name}" is larger than {mb} MB.',
       },
       rolesPage: {
         title: 'Role permissions', subtitle: 'Choose what each role can do in the panel. Changes apply immediately.',
@@ -1285,6 +1329,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loadError: 'Could not connect to the API.',
         empty: 'No actions recorded yet.',
         created: 'Created', updated: 'Updated', deleted: 'Deleted',
+        clearLog: 'Clear log', clearAll: 'Delete everything', clearOlder7: 'Older than 7 days', clearOlder30: 'Older than 30 days',
+        clearConfirmAll: 'Delete the ENTIRE log? The team will no longer see any earlier record. This cannot be undone (the clearing itself is recorded).',
+        clearConfirmOlder: 'Delete records older than {days} days? This cannot be undone (the clearing itself is recorded).',
+        clearDone: '{n} records deleted.', clearError: 'Could not clear the log.',
         system: 'System',
         entityContentItem: 'Content', entityJutsu: 'Jutsu', entityMastery: 'Mastery',
       },

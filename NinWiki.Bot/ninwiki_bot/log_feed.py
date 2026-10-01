@@ -27,7 +27,7 @@ ACTION_LABEL = {
     "delete_file": "removed a file from", "reset": "restored the defaults of",
     "bulk-status": "changed the status of", "bulk-delete": "bulk-deleted", "bulk-import": "imported",
     "login": "signed in to the panel", "logout": "signed out of the panel", "login_denied": "had a login denied",
-    "role_change": "changed the role of", "activate": "reactivated", "deactivate": "deactivated",
+    "role_change": "changed the role of", "rename": "renamed", "clear_log": "cleared the log", "activate": "reactivated", "deactivate": "deactivated",
     "bootstrap": "was created as owner", "bootstrap_restore": "had the owner role restored",
     "permission_denied": "tried something without permission on", "resolve": "resolved", "reopen": "reopened",
 }
@@ -38,7 +38,7 @@ ENTITY_LABEL = {
 }
 # Cores dos embeds (RGB em inteiro): verde = criou, azul = editou, vermelho = apagou/negado, laranja = equipe/seguranca.
 COLORS = {"create": 0x2ECC71, "update": 0x3498DB, "delete": 0xE74C3C, "bulk-delete": 0xE74C3C,
-          "login_denied": 0xE74C3C, "permission_denied": 0xE74C3C, "role_change": 0xE67E22,
+          "login_denied": 0xE74C3C, "permission_denied": 0xE74C3C, "role_change": 0xE67E22, "rename": 0xE67E22,
           "deactivate": 0xE67E22, "activate": 0xE67E22, "reset": 0xE67E22, "login": 0x95A5A6, "logout": 0x95A5A6}
 DEFAULT_COLOR = 0x7F8C8D
 ROLE_LABEL = {"super_admin": "S.Adm", "admin": "Adm", "creator": "Creator"}

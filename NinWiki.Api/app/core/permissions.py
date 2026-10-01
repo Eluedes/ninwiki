@@ -68,6 +68,7 @@ class Permission(str, Enum):
     # --- Log ---
     AUDIT_VIEW = "audit.view"             # log de CONTEUDO
     AUDIT_VIEW_ALL = "audit.view_all"     # log COMPLETO (login, equipe, seguranca, IPs) - so' S.Adm
+    AUDIT_CLEAR = "audit.clear"           # LIMPAR o log (apaga registros antigos) - so' S.Adm
 
 
 # Permissoes que so' o S.Adm tem E que os outros cargos nem podem saber
@@ -75,6 +76,7 @@ class Permission(str, Enum):
 # crescendo com o tempo, conforme o S.Adm ganhar poderes exclusivos.
 SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.AUDIT_VIEW_ALL,
+    Permission.AUDIT_CLEAR,
     # A parte "Equipe" do painel e' so' do S.Adm.
     Permission.STAFF_VIEW,
     Permission.STAFF_CREATE,

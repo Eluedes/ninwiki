@@ -30,9 +30,8 @@ export default async function JutsuPage({
   // por algum motivo a mastery do jutsu nao carregar, a pagina ainda
   // mostra o jutsu em si, so' sem a cor de destaque/link da mastery).
   const mastery = await getMastery(jutsu.masteryId).catch(() => undefined);
-  const path = mastery?.paths.find((p) => p.id === jutsu.pathId);
 
-  return <JutsuPageClient jutsu={jutsu} mastery={mastery} path={path} />;
+  return <JutsuPageClient jutsu={jutsu} mastery={mastery} />;
 }
 
 // Busca da API a cada acesso: sem isso o Next pre-renderiza a pagina no build

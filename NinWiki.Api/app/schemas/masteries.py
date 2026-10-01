@@ -156,6 +156,18 @@ class JutsuRead(CamelModel):
     cooldown: str
     icon: str
     gif: str | None
+    # ficha completa
+    required_level: str = ""
+    required_stat: str = ""
+    scroll_type: str = ""
+    shop: str = ""
+    max_level: int = 1
+    damage_by_level: list[str] = []
+    cooldown_by_level: list[str] = []
+    cast_type: str = ""
+    jutsu_class: str = ""
+    debuff: str = ""
+    battle_extra: list[dict[str, str]] = []
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
@@ -167,18 +179,59 @@ class JutsuWrite(CamelModel):
     name_pt: str | None = None
     mastery_id: str
     path_id: str | None = None
-    tier: int = Field(ge=1, le=5)
+    tier: int = Field(ge=1, le=4, description="1 a 4 (maximo 4)")
     chakra_cost: int = Field(ge=0)
     description: str
     long_description: str
     description_pt: str | None = None
     long_description_pt: str | None = None
-    effect: str
-    range: str
-    cast_time: str
-    cooldown: str
+    effect: str = ""
+    range: str = ""
+    cast_time: str = ""
+    cooldown: str = ""
     icon: str
     gif: str | None = None
+    # ---- ficha completa (linha vazia nao aparece na pagina) ----
+    required_level: str = Field(default="", max_length=50)
+    required_stat: str = Field(default="", max_length=100)
+    scroll_type: str = Field(default="", max_length=100)
+    shop: str = Field(default="", max_length=100)
+    max_level: int = Field(default=1, ge=1, le=10)
+    damage_by_level: list[str] = Field(default_factory=list, max_length=10)
+    cooldown_by_level: list[str] = Field(default_factory=list, max_length=10)
+    cast_type: str = Field(default="", max_length=100)
+    jutsu_class: str = Field(default="", max_length=100)
+    debuff: str = Field(default="", max_length=150)
+    battle_extra: list[dict[str, str]] = Field(default_factory=list, max_length=10)
+
+    @field_validator("effect", "range", "cast_time", "cooldown", "required_level", "required_stat", "scroll_type", "shop",
+                     "cast_type", "jutsu_class", "debuff")
+    @classmethod
+    def _clean_text(cls, value: str) -> str:
+        """Tira espacos extras e quebras de linha dos textos curtos da ficha."""
+        return " ".join(value.split())
+
+    @field_validator("damage_by_level", "cooldown_by_level")
+    @classmethod
+    def _clean_levels(cls, value: list[str]) -> list[str]:
+        """Um valor curto por nivel (ate' 10 niveis, 40 caracteres cada), sem espacos extras."""
+        out = [" ".join(v.split()) for v in value]
+        if any(len(v) > 40 for v in out):
+            raise ValueError("Each level value can have at most 40 characters")
+        return out
+
+    @field_validator("battle_extra")
+    @classmethod
+    def _clean_extra(cls, value: list[dict[str, str]]) -> list[dict[str, str]]:
+        """Linhas extras de Battle Data: so' {label, value}, textos curtos; linha sem rotulo e' descartada."""
+        rows = []
+        for row in value:
+            label, val = " ".join(str(row.get("label", "")).split()), " ".join(str(row.get("value", "")).split())
+            if len(label) > 60 or len(val) > 150:
+                raise ValueError("Extra battle row too long (label up to 60, value up to 150 characters)")
+            if label:
+                rows.append({"label": label, "value": val})
+        return rows
 
     @field_validator("description", "long_description")
     @classmethod

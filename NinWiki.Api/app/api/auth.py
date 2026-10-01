@@ -187,7 +187,8 @@ async def discord_callback(
         await db.commit()
         return _login_redirect("inactive" if user else "not_staff")
 
-    user.username = profile["username"]
+    if not user.username_locked:  # nome escolhido a mao no painel nao e' sobrescrito pelo do Discord
+        user.username = profile["username"]
     user.avatar_url = profile["avatar_url"]
     user.last_login_at = datetime.now(timezone.utc)
     await log_action(db, action="login", entity_type="auth", entity_id=str(user.discord_id), actor=user, source="auth")

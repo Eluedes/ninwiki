@@ -327,6 +327,18 @@ export interface ApiJutsu {
   cooldown: string;
   icon: string;
   gif: string | null;
+  // ficha completa (linha vazia nao aparece na pagina)
+  requiredLevel: string;
+  requiredStat: string;
+  scrollType: string;
+  shop: string;
+  maxLevel: number;
+  damageByLevel: string[];
+  cooldownByLevel: string[];
+  castType: string;
+  jutsuClass: string;
+  debuff: string;
+  battleExtra: { label: string; value: string }[];
 }
 
 // Corpo aceito em criar/editar um jutsu - igual a ApiJutsu, mas `id`
@@ -414,6 +426,11 @@ export function listAuditLog(limit = 50, entityType?: string): Promise<ApiAuditL
   const params = new URLSearchParams({ limit: String(limit) });
   if (entityType) params.set('entityType', entityType);
   return apiFetch(`/audit-log?${params.toString()}`);
+}
+
+/** Limpa o log (so' S.Adm): sem argumento apaga TUDO; com `olderThanDays` apaga so' o que passou de N dias. */
+export function clearAuditLog(olderThanDays?: number): Promise<{ deleted: number }> {
+  return apiFetch(`/audit-log${olderThanDays ? `?olderThanDays=${olderThanDays}` : ''}`, { method: 'DELETE' });
 }
 
 // Historico de UMA entry especifica (usado na aba "Historico" dentro
@@ -707,7 +724,7 @@ export type PermissionName =
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage'
-  | 'audit.view' | 'audit.view_all';
+  | 'audit.view' | 'audit.view_all' | 'audit.clear';
 
 export interface ApiMe {
   id: string;
@@ -775,6 +792,11 @@ export function createStaff(payload: { discordId: string; role: StaffRole; usern
 /** Troca o cargo de alguem da equipe. */
 export function updateStaffRole(id: string, role: StaffRole): Promise<ApiStaff> {
   return apiFetch(`/staff/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) });
+}
+
+/** Troca o nome (nick) de alguem da equipe (so' S.Adm, inclusive o proprio). */
+export function updateStaffName(id: string, username: string): Promise<ApiStaff> {
+  return apiFetch(`/staff/${id}/name`, { method: 'PATCH', body: JSON.stringify({ username }) });
 }
 
 /** Ativa ou desativa alguem da equipe. */
@@ -1080,18 +1102,39 @@ export function deleteNotice(id: string): Promise<void> {
   return apiFetch(`/notices/${id}`, { method: 'DELETE' });
 }
 
-/** Anexa um arquivo a um aviso (multipart). */
-export async function uploadNoticeFile(noticeId: string, file: File): Promise<ApiNotice> {
-  const formData = new FormData();
-  formData.append('file', file);
-  // Mesmo motivo do uploadImage: multipart nao pode levar o Content-Type JSON do apiFetch.
-  const res = await fetch(`${API_URL}/notices/${noticeId}/files`, { method: 'POST', body: formData, credentials: 'include' });
-  if (res.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new ApiError(res.status, body?.detail ?? `Erro ${res.status}`);
-  }
-  return res.json();
+/**
+ * Anexa um arquivo a um aviso (multipart) com PROGRESSO (0-100) e limite de tempo. Usa XMLHttpRequest (e nao fetch) porque so'
+ * ele informa o andamento do envio - arquivo grande (.zip/.rar) leva tempo e a tela nao pode ficar "girando" sem dizer nada.
+ * Sempre termina: ou devolve o aviso atualizado, ou lanca ApiError com o motivo (inclusive queda de conexao e tempo esgotado).
+ */
+export function uploadNoticeFile(noticeId: string, file: File, onProgress?: (percent: number) => void): Promise<ApiNotice> {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_URL}/notices/${noticeId}/files`);
+    xhr.withCredentials = true; // manda o cookie de sessao; o Content-Type multipart o navegador define sozinho
+    xhr.timeout = 10 * 60 * 1000; // 10 minutos
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      let body: { detail?: string } | null = null;
+      try {
+        body = JSON.parse(xhr.responseText);
+      } catch {
+        // resposta que nao e' JSON (ex: erro de um proxy no meio do caminho)
+      }
+      if (xhr.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+      if (xhr.status >= 200 && xhr.status < 300 && body) return resolve(body as unknown as ApiNotice);
+      const hint = xhr.status === 413 ? ' (file too large for the server)' : '';
+      reject(new ApiError(xhr.status, body?.detail ?? `Erro ${xhr.status}${hint}`));
+    };
+    xhr.onerror = () => reject(new ApiError(0, 'Connection lost while sending the file (it may be too large for the server).'));
+    xhr.ontimeout = () => reject(new ApiError(0, 'The upload took too long and was cancelled.'));
+    xhr.onabort = () => reject(new ApiError(0, 'Upload cancelled.'));
+    xhr.send(formData);
+  });
 }
 
 /** Remove um arquivo anexado de um aviso. */

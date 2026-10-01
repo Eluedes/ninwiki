@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import {
   Loader2, AlertTriangle, Plus, Pencil, Trash2, History, LogIn, LogOut, UserCog, ShieldAlert, Upload,
 } from 'lucide-react';
-import { listAuditLog, ApiError, type ApiAuditLogEntry } from '@/lib/api-client';
+import { listAuditLog, ApiError, clearAuditLog, type ApiAuditLogEntry } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
@@ -28,6 +28,7 @@ const ACTION_STYLE: Record<string, { icon: typeof Plus; className: string }> = {
   login_denied: { icon: ShieldAlert, className: 'bg-red-900/30 text-red-400' },
   permission_denied: { icon: ShieldAlert, className: 'bg-red-900/30 text-red-400' },
   role_change: { icon: UserCog, className: 'bg-amber-900/30 text-amber-400' },
+  rename: { icon: UserCog, className: 'bg-amber-900/30 text-amber-400' },
   activate: { icon: UserCog, className: 'bg-emerald-900/30 text-emerald-400' },
   deactivate: { icon: UserCog, className: 'bg-red-900/30 text-red-400' },
 };
@@ -58,6 +59,9 @@ export default function AuditLogPage() {
   const [entries, setEntries] = useState<ApiAuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null); // resultado da limpeza
+  const [reloadKey, setReloadKey] = useState(0); // muda para recarregar a lista
 
   // O "carregando" do filtro novo e' ligado no CLIQUE (changeFilter), nao aqui dentro: chamar setState
   // direto no corpo de um efeito dispara renders em cascata.
@@ -76,7 +80,26 @@ export default function AuditLogPage() {
     return () => {
       cancelled = true;
     };
-  }, [filter, t.loadError]);
+  }, [filter, reloadKey, t.loadError]);
+
+  /** Limpa o log (so' S.Adm): tudo, ou so' o que passou de N dias; pede confirmacao e recarrega a lista. */
+  async function handleClear(days?: number) {
+    const question = days ? t.clearConfirmOlder.replace('{days}', String(days)) : t.clearConfirmAll;
+    if (!window.confirm(question)) return;
+    setClearing(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const { deleted } = await clearAuditLog(days);
+      setNotice(t.clearDone.replace('{n}', String(deleted)));
+      setLoading(true);
+      setReloadKey((k) => k + 1);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t.clearError);
+    } finally {
+      setClearing(false);
+    }
+  }
 
   function changeFilter(next: string) {
     setFilter(next);
@@ -90,6 +113,17 @@ export default function AuditLogPage() {
         <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
         <p className="text-sm text-muted-foreground">{t.subtitle}</p>
       </div>
+
+      {can('audit.clear') && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3">
+          <span className="text-xs font-semibold text-muted-foreground">{t.clearLog}:</span>
+          <button disabled={clearing} onClick={() => handleClear(30)} className="rounded-md bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground hover:text-card-foreground disabled:opacity-50">{t.clearOlder30}</button>
+          <button disabled={clearing} onClick={() => handleClear(7)} className="rounded-md bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground hover:text-card-foreground disabled:opacity-50">{t.clearOlder7}</button>
+          <button disabled={clearing} onClick={() => handleClear()} className="rounded-md bg-red-900/30 px-3 py-1 text-xs font-semibold text-red-400 hover:bg-red-900/50 disabled:opacity-50">{t.clearAll}</button>
+          {clearing && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        </div>
+      )}
+      {notice && <p className="text-sm text-emerald-400">{notice}</p>}
 
       {seesEverything && (
         <div className="flex flex-wrap items-center gap-2">
