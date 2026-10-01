@@ -16,6 +16,11 @@ done
 # Secrets colados no GitHub costumam trazer espaço/quebra de linha no fim: no cabeçalho HTTP isso invalida a chave.
 SQUARE_API_KEY="$(printf '%s' "$SQUARE_API_KEY" | tr -d '[:space:]')"
 APP_ID="$(printf '%s' "$APP_ID" | tr -d '[:space:]')"
+# O ID do app é só letras e números (32 caracteres). Se veio outra coisa (URL inteira, "id: ...", aspas), a URL do envio quebra.
+if ! [[ "$APP_ID" =~ ^[A-Za-z0-9]+$ ]]; then
+  echo "::error::O Secret do ID do app está inválido (deve ser só o ID, ex.: 3f9a...; sem URL, aspas, espaços ou o nome do campo). Valor recebido tem ${#APP_ID} caracteres."
+  exit 1
+fi
 echo "Chave: ${#SQUARE_API_KEY} caracteres | ID do app: ${APP_ID}"
 
 # Diagnóstico (só informa, não bloqueia): a SquareCloud reconhece a chave e esse ID de app?
