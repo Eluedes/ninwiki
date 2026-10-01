@@ -99,6 +99,7 @@ def interacao(user_id: int, guild_id: int = 1) -> MagicMock:
     i.response.defer = AsyncMock()
     i.response.send_message = AsyncMock()
     i.followup.send = AsyncMock()
+    i.response.send_modal = AsyncMock()
     return i
 
 
@@ -237,67 +238,115 @@ async def testar() -> None:
         await http.aclose()
         return
 
-    secao("3) Comandos de barra /equipe (Discord simulado)")
+    secao("3) Comandos de barra /team (Discord simulado) e o modal /team manage")
+    from unittest.mock import PropertyMock, patch
+    from ninwiki_bot.staff_commands import ManageStaffModal, run_manage_action
     grupo = StaffGroup(api, allowed_guilds=set())
     cmd = {c.name: c for c in grupo.commands}
-    check("the 5 commands exist", set(cmd) == {"list", "add", "role", "deactivate", "reactivate"})
+    check("os 3 comandos existem: list, manage, status", set(cmd) == {"list", "manage", "status"})
     check("grupo so' funciona em servidor (nao em DM)", grupo.guild_only is True)
-    adm_cargo_creator = app_commands.Choice(name="Creator", value="creator")
-    adm_cargo_admin = app_commands.Choice(name="Adm", value="admin")
 
     i = interacao(IDS["sadm"])
     await cmd["list"].callback(grupo, i)
-    check("/equipe listar mostra a equipe (embed)", "TESTE_adm" in texto_enviado(i) and "Adm" in texto_enviado(i))
+    check("/team list mostra a equipe (embed)", "TESTE_adm" in texto_enviado(i) and "Adm" in texto_enviado(i))
     check("resposta e' efemera (so' quem digitou ve)", todas_efemeras(i))
 
     i = interacao(IDS["creator"])
     await cmd["list"].callback(grupo, i)
-    check("Creator em /equipe listar recebe recusa clara", texto_enviado(i).startswith("❌") and "permission" in texto_enviado(i).lower(), texto_enviado(i))
+    check("Creator em /team list recebe recusa clara", texto_enviado(i).startswith("❌") and "permission" in texto_enviado(i).lower(), texto_enviado(i))
 
+    # ---- o modal (componentes novos: selects dentro do modal) ----
+    modal = ManageStaffModal(api, set())
+    tipos = [type(getattr(modal, n).component).__name__ for n in ("action", "member", "role", "name")]
+    check("o modal tem 4 campos: acao (select), pessoa (user select), cargo (select) e nome (texto)",
+          tipos == ["Select", "UserSelect", "Select", "TextInput"], str(tipos))
+    check("acao e pessoa sao obrigatorias; cargo e nome opcionais",
+          modal.action.component.required and modal.member.component.required and not modal.role.component.required and not modal.name.component.required)
+    check("o select de acao oferece as 5 acoes", {o.value for o in modal.action.component.options} == {"add", "role", "rename", "deactivate", "reactivate"})
     i = interacao(IDS["sadm"])
-    await cmd["add"].callback(grupo, i, fake_user("alvo2"), adm_cargo_creator)
+    await cmd["manage"].callback(grupo, i, None)
+    check("/team manage abre o modal (send_modal)", i.response.send_modal.await_count == 1 and isinstance(i.response.send_modal.call_args.args[0], ManageStaffModal))
+
+    # (cada acao abaixo roda a MESMA funcao que o on_submit do modal chama)
+    i = interacao(IDS["sadm"])
+    await run_manage_action(api, i, "add", fake_user("alvo2"), "creator", "")
     u = await buscar(IDS["alvo2"])
-    check("/equipe adicionar cria a pessoa no banco como Creator", u is not None and u.role == StaffRole.CREATOR and u.created_by_id is not None)
+    check("Add: cria a pessoa no banco como Creator (nome do Discord quando o nome vem vazio)", u is not None and u.role == StaffRole.CREATOR and u.created_by_id is not None and u.username == "TESTE_alvo2")
     check("...e confirma com ✅", texto_enviado(i).startswith("✅") and "Creator" in texto_enviado(i), texto_enviado(i))
 
     i = interacao(IDS["adm"])
-    await cmd["add"].callback(grupo, i, fake_user("estranho"), adm_cargo_admin)
-    check("Adm trying to register an Adm: ❌ e NADA foi criado", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
+    await run_manage_action(api, i, "add", fake_user("estranho"), "admin", "")
+    check("Adm tentando cadastrar um Adm: ❌ e NADA foi criado", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
 
     i = interacao(IDS["sadm"])
-    await cmd["add"].callback(grupo, i, fake_user("estranho", bot=True), adm_cargo_creator)
+    await run_manage_action(api, i, "add", fake_user("estranho", bot=True), "creator", "")
     check("cadastrar um BOT e' recusado antes de chamar a API", "Bots cannot" in texto_enviado(i) and await buscar(IDS["estranho"]) is None)
 
+    i = interacao(IDS["sadm"])
+    await run_manage_action(api, i, "add", fake_user("estranho"), None, "")
+    check("Add sem escolher o cargo: pede o cargo e nada e' criado", "Pick a role" in texto_enviado(i) and await buscar(IDS["estranho"]) is None, texto_enviado(i))
+
     i = interacao(IDS["estranho"])
-    await cmd["add"].callback(grupo, i, fake_user("estranho"), adm_cargo_creator)
+    await run_manage_action(api, i, "add", fake_user("estranho"), "creator", "")
     check("quem nao e' da equipe nao consegue cadastrar (nem a si mesmo)", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
 
     i = interacao(IDS["adm"])
-    await cmd["role"].callback(grupo, i, fake_user("alvo2"), adm_cargo_admin)
+    await run_manage_action(api, i, "role", fake_user("alvo2"), "admin", "")
     u = await buscar(IDS["alvo2"])
     check("Adm NAO promove Creator a Adm (❌, cargo continua Creator)", texto_enviado(i).startswith("❌") and u.role == StaffRole.CREATOR, texto_enviado(i))
 
     i = interacao(IDS["sadm"])
-    await cmd["role"].callback(grupo, i, fake_user("alvo2"), adm_cargo_admin)
+    await run_manage_action(api, i, "role", fake_user("alvo2"), "admin", "")
     u = await buscar(IDS["alvo2"])
-    check("S.Adm promove pelo comando (✅, cargo mudou e sessao invalidada)", texto_enviado(i).startswith("✅") and u.role == StaffRole.ADMIN and u.token_version >= 1, texto_enviado(i))
+    check("S.Adm promove pelo modal (✅, cargo mudou e sessao invalidada)", texto_enviado(i).startswith("✅") and u.role == StaffRole.ADMIN and u.token_version >= 1, texto_enviado(i))
 
     i = interacao(IDS["sadm"])
-    await cmd["deactivate"].callback(grupo, i, fake_user("alvo2"))
-    u = await buscar(IDS["alvo2"])
-    check("/equipe desativar desativa", texto_enviado(i).startswith("✅") and u.is_active is False)
+    await run_manage_action(api, i, "role", fake_user("alvo2"), None, "")
+    check("Change role sem escolher o cargo: pede o cargo", "Pick the new role" in texto_enviado(i))
+
     i = interacao(IDS["sadm"])
-    await cmd["reactivate"].callback(grupo, i, fake_user("alvo2"))
+    await run_manage_action(api, i, "rename", fake_user("alvo2"), None, "  Nick   Bot  ")
     u = await buscar(IDS["alvo2"])
-    check("/equipe reativar reativa", texto_enviado(i).startswith("✅") and u.is_active is True)
+    check("Rename: S.Adm troca o nome (espacos limpos) e ele fica travado", texto_enviado(i).startswith("✅") and u.username == "Nick Bot" and u.username_locked is True, texto_enviado(i))
+    i = interacao(IDS["sadm"])
+    await run_manage_action(api, i, "rename", fake_user("alvo2"), None, "")
+    check("Rename sem digitar o nome: pede o nome", "Type the new display name" in texto_enviado(i))
+    i = interacao(IDS["adm"])
+    await run_manage_action(api, i, "rename", fake_user("alvo2"), None, "Hack")
+    check("Adm NAO renomeia ninguem (❌, nome intacto)", texto_enviado(i).startswith("❌") and (await buscar(IDS["alvo2"])).username == "Nick Bot", texto_enviado(i))
+
+    i = interacao(IDS["sadm"])
+    await run_manage_action(api, i, "deactivate", fake_user("alvo2"), None, "")
+    u = await buscar(IDS["alvo2"])
+    check("Deactivate desativa", texto_enviado(i).startswith("✅") and u.is_active is False)
+    i = interacao(IDS["sadm"])
+    await run_manage_action(api, i, "reactivate", fake_user("alvo2"), None, "")
+    u = await buscar(IDS["alvo2"])
+    check("Reactivate reativa", texto_enviado(i).startswith("✅") and u.is_active is True)
 
     i = interacao(IDS["adm"])
-    await cmd["deactivate"].callback(grupo, i, fake_user("sadm"))
+    await run_manage_action(api, i, "deactivate", fake_user("sadm"), None, "")
     check("Adm NAO desativa S.Adm (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["sadm"])).is_active)
 
     i = interacao(IDS["sadm"])
-    await cmd["deactivate"].callback(grupo, i, fake_user("sadm"))
+    await run_manage_action(api, i, "deactivate", fake_user("sadm"), None, "")
     check("ninguem se desativa a si mesmo (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["sadm"])).is_active, texto_enviado(i))
+
+    i = interacao(IDS["sadm"])
+    await run_manage_action(api, i, "inexistente", fake_user("alvo2"), None, "")
+    check("acao desconhecida e' recusada", "Unknown action" in texto_enviado(i))
+
+    # servidor nao permitido no on_submit do modal
+    m = ManageStaffModal(api, {555})
+    i = interacao(IDS["sadm"], guild_id=999)
+    with patch.object(type(m.action.component), "values", new_callable=PropertyMock, return_value=["add"]):
+        await m.on_submit(i)
+    check("modal enviado em servidor nao permitido e' recusado", "not available" in texto_enviado(i))
+
+    # /team status
+    i = interacao(IDS["sadm"])
+    await cmd["status"].callback(grupo, i)
+    check("/team status mostra API e banco", "NinWiki status" in texto_enviado(i) and "API" in texto_enviado(i) and "Database" in texto_enviado(i), texto_enviado(i))
 
     # o invoker enviado a' API e' SEMPRE quem digitou o comando (interaction.user), nunca o "alvo"
     async with AsyncSessionLocal() as db:

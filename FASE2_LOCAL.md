@@ -78,7 +78,7 @@ Simula ataques (token forjado, CSRF, promoção indevida, bot com token errado..
 as rotas da API**: uma rota nova sem proteção faz o teste falhar. Cria e apaga os próprios dados.
 
 ## 7) Registrar a equipe pelo Discord (bot)
-O bot (`NinWiki.Bot`, discord.py) tem os comandos `/team list|add|role|deactivate|reactivate` e segue
+O bot (`NinWiki.Bot`, discord.py) tem os comandos `/team list|manage|status` (o `manage` abre um formulário/modal que faz tudo: adicionar, trocar cargo, renomear, desativar e reativar) e segue
 exatamente as mesmas regras do painel. Passo a passo em `NinWiki.Bot/README.md`. Resumo: crie o bot no Discord,
 gere um `BOT_API_TOKEN` e coloque **o mesmo valor** no `.env` da API e no `.env` do bot, e rode `python main.py`.
 Teste sem Discord: `py scripts/testar_bot_integracao.py` (na pasta `NinWiki.Api`).
