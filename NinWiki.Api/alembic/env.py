@@ -41,6 +41,8 @@ if database_url:
     # acento) quebra a decodificacao ANTES do erro real aparecer -
     # o psycopg3 nao tem esse problema.
     sync_url = database_url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+    # asyncpg usa "?ssl=require"; o psycopg (sincrono, usado so' aqui) usa "?sslmode=require".
+    sync_url = sync_url.replace("?ssl=", "?sslmode=").replace("&ssl=", "&sslmode=")
     config.set_main_option("sqlalchemy.url", sync_url)
 
 if config.config_file_name is not None:

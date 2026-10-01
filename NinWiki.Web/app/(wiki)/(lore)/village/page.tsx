@@ -24,3 +24,7 @@ export default async function VillagesPage() {
     </div>
   );
 }
+
+// Busca da API a cada acesso: sem isso o Next pre-renderiza a pagina no build
+// (quebra se a API estiver fora do ar) e o conteudo nunca mais atualiza.
+export const dynamic = 'force-dynamic';
