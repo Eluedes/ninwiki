@@ -22,7 +22,7 @@ export async function GET() {
   } catch {
     // feed vazio
   }
-  const body = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Nin Online Brasil Wiki - Blog</title><link>${SITE}/blog</link><description>News, patch notes and updates from the Nin world.</description>${items}</channel></rss>`;
+  const body = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Nin Online Wiki - Blog</title><link>${SITE}/blog</link><description>News, patch notes and updates from the Nin world.</description>${items}</channel></rss>`;
   return new Response(body, { headers: { 'Content-Type': 'application/rss+xml; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
 }
 

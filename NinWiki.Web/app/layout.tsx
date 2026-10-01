@@ -20,7 +20,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   // base dos enderecos absolutos (og:image, canonical...): NEXT_PUBLIC_SITE_URL, ex: https://wiki.seudominio.com
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: 'Nin Online Brasil Wiki',
+  title: 'Nin Online Wiki',
   description: 'The definitive encyclopedia of the Nin Online MMORPG — mobs, items, weapons, masteries, guides and missions.',
 };
 

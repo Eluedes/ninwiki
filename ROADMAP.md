@@ -390,7 +390,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   **Anil** (azul) — as 4 cores da bandeira do Brasil
 - ✅ Logo do site trocado para a arte enviada pelo mantenedor (shuriken com anel), recolorida
   por processamento de imagem (4 variantes, uma por tema) e aplicada em header/footer/admin/login
-- ✅ Site renomeado para "Nin Online Brasil Wiki"
+- ✅ Site renomeado para "Nin Online Wiki" (antes "Nin Online Brasil Wiki")
 - ⬜ Trocar o SVG do Mapa pela imagem de referência real, se for oficial
 - ✅ **Conteúdo bilíngue de verdade**: inglês é o principal e a DeepL traduz EN → PT-BR (campos `_pt`,
   nunca sobrescreve correção manual, botão "Retraduzir") em Conteúdo, Masteries e Jutsus. Village,

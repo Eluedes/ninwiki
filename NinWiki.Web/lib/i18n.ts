@@ -243,7 +243,7 @@ export interface Dictionary {
 // exatamente a estrutura da interface Dictionary acima.
 export const dictionaries: Record<Locale, Dictionary> = {
   pt: {
-    siteName: 'Nin Online Brasil Wiki',
+    siteName: 'Nin Online Wiki',
     siteTagline: 'A enciclopédia definitiva do mundo Nin',
     nav: {
       home: 'Início',
@@ -859,7 +859,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
   },
   en: {
-    siteName: 'Nin Online Brasil Wiki',
+    siteName: 'Nin Online Wiki',
     siteTagline: 'The definitive encyclopedia of the Nin world',
     nav: {
       home: 'Home',
