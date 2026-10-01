@@ -4,7 +4,7 @@ Documento de controle do projeto, no mesmo espírito do roadmap do Guima:
 uma lista viva do que já foi feito e do que falta, organizada em fases.
 Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 
-**Última atualização:** 28/09/2026
+**Última atualização:** 01/10/2026
 
 **Legenda:** ✅ feito e testado · 🔄 em andamento / parcial · ⬜ não iniciado
 
@@ -353,7 +353,8 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 4. **Mapa** ainda usa dados de mentira de vila (`lib/village-data.ts`): ligar na API
 5. **Testes de tela dentro do projeto** (vitest + jsdom — 19 já escritos, faltam entrar no `package.json` e num
    `npm test`)
-6. Rate limit nas rotas públicas de busca (Fase 6) e o deploy (Fase 7)
+6. Rate limit nas rotas públicas de busca (Fase 6) e **finalizar o deploy** (Fase 7 — preparação já feita, falta
+   subir na SquareCloud)
 
 ## Fase 5 — Frontend público (visual)
 - ✅ Sistema de Masteries/Jutsus com caminhos (`MasteryPath`), visual "dossiê shinobi" portado
@@ -390,7 +391,19 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 - ⬜ Revisão final de `npm audit` / `pip audit` antes do deploy
 
 ## Fase 7 — Deploy
-- ⬜ SquareCloud (API + Web) + Cloudflare (WAF, proxy, DNS)
+- ✅ **Preparação para a SquareCloud (01/10)**: `README.md` na raiz (rodar local, usar o painel, passo a passo do
+  deploy e tabela de problemas); `squarecloud.app` + `.squarecloudignore` em `NinWiki.Api`, `NinWiki.Web` e
+  `NinWiki.Bot`; `NinWiki.Api/start.py` (roda `alembic upgrade head` e liga o Uvicorn na porta 80; se a migration
+  falhar, a API não sobe). **Ainda não testado numa conta real da SquareCloud** — conferir o primeiro deploy nos logs
+- ✅ **Auditoria pré-deploy (01/10)**: (1) as páginas públicas que buscam da API (catálogo, detalhe, jutsus, masteries,
+  vilas) eram pré-renderizadas no build — o build quebrava com a API fora do ar e o conteúdo ficava congelado; agora
+  são `force-dynamic`. (2) Alembic não entendia `?ssl=require` (asyncpg vs psycopg); `alembic/env.py` converte para
+  `sslmode=`. `tsc`, `eslint` e `next build` passam
+- ⬜ Criar os apps na SquareCloud (API, Web, Bot opcional) + banco PostgreSQL e testar o login Discord em produção
+- ⬜ **Domínio próprio com subdomínios** (`wiki.` e `api.`): o cookie `SameSite=Lax` exige os dois no mesmo site
+- ⬜ **Uploads em disco local**: um redeploy pode apagar `NinWiki.Api/uploads` — fazer backup ou migrar para storage
+  externo (S3/R2)
+- ⬜ Cloudflare (WAF, proxy, DNS) — ao ligar, usar `TRUST_PROXY_HEADERS=true`
 - ⬜ Schema de banco separado por ambiente (`public` / `beta_ninwiki`, mesmo padrão do Guima)
 
 ---
