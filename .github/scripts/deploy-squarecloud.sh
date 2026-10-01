@@ -14,15 +14,17 @@ for v in SQUARE_API_KEY APP_ID APP_ENV; do
 done
 
 # Grava o .env só aqui dentro do runner (nunca vai pro Git).
-printf '%s\n' "$APP_ENV" > "$DIR/.env"
+# (tr -d '\r': um Secret colado do Windows vem com quebra de linha CRLF - o "\r" ficaria grudado no fim de cada valor.)
+printf '%s\n' "$APP_ENV" | tr -d '\r' > "$DIR/.env"
 
 # Certificados do banco da SquareCloud (TLS com certificado de cliente) - só para a API, vindos dos Secrets.
 # O conteúdo de cada arquivo fica num Secret; aqui eles viram NinWiki.Api/certs/* DENTRO do zip enviado.
 if [ -n "${DB_SSL_CA:-}${DB_SSL_CERT:-}${DB_SSL_KEY:-}" ]; then
   mkdir -p "$DIR/certs"
-  [ -n "${DB_SSL_CA:-}" ]   && printf '%s\n' "$DB_SSL_CA"   > "$DIR/certs/ca.crt"
-  [ -n "${DB_SSL_CERT:-}" ] && printf '%s\n' "$DB_SSL_CERT" > "$DIR/certs/client.pem"
-  [ -n "${DB_SSL_KEY:-}" ]  && printf '%s\n' "$DB_SSL_KEY"  > "$DIR/certs/client.key"
+  [ -n "${DB_SSL_CA:-}" ]   && printf '%s\n' "$DB_SSL_CA"   | tr -d '\r' > "$DIR/certs/ca.crt"
+  [ -n "${DB_SSL_CERT:-}" ] && printf '%s\n' "$DB_SSL_CERT" | tr -d '\r' > "$DIR/certs/client.pem"
+  [ -n "${DB_SSL_KEY:-}" ]  && printf '%s\n' "$DB_SSL_KEY"  | tr -d '\r' > "$DIR/certs/client.key"
+  chmod 600 "$DIR/certs/"* 2>/dev/null || true
 fi
 
 rm -f "$ZIP"

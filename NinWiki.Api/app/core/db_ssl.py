@@ -12,7 +12,11 @@ Se o .pem ja' tiver a chave dentro, deixe DATABASE_SSL_KEY vazio. Sem nenhuma de
 Este modulo NAO le' configuracao sozinho: recebe os caminhos por parametro, para servir tanto a API (pydantic-settings)
 quanto o Alembic (que le' o .env por conta propria) - ver app/core/database.py e alembic/env.py.
 """
+import atexit
+import os
+import shutil
 import ssl
+import tempfile
 from pathlib import Path
 
 API_ROOT = Path(__file__).resolve().parent.parent.parent  # pasta NinWiki.Api
@@ -47,6 +51,22 @@ def asyncpg_ssl_context(ca: str, cert: str, key: str, verify_hostname: bool = Fa
     return ctx
 
 
+def private_key_for_libpq(path: str) -> str:
+    """
+    O libpq (Alembic) RECUSA uma chave privada legivel por outros usuarios ("private key file has group or world
+    access") - e um zip enviado para a SquareCloud costuma extrair os arquivos como 0644. Se a permissao estiver aberta
+    demais (Linux/Mac), usa uma COPIA temporaria com permissao 0600, apagada ao sair. No Windows nada muda.
+    """
+    if os.name == "nt" or (Path(path).stat().st_mode & 0o077) == 0:
+        return path
+    fd, tmp = tempfile.mkstemp(prefix="ninwiki-key-")
+    os.close(fd)
+    shutil.copyfile(path, tmp)
+    os.chmod(tmp, 0o600)
+    atexit.register(lambda: Path(tmp).unlink(missing_ok=True))
+    return tmp
+
+
 def libpq_args(ca: str, cert: str, key: str, verify_hostname: bool = False) -> dict[str, str]:
     """Os mesmos certificados no formato do libpq/psycopg (usado pelo Alembic, que roda em modo sincrono)."""
     args: dict[str, str] = {"sslmode": "verify-full" if verify_hostname else "verify-ca"}
@@ -55,5 +75,5 @@ def libpq_args(ca: str, cert: str, key: str, verify_hostname: bool = False) -> d
     if cert:
         args["sslcert"] = resolve(cert)
     if key:
-        args["sslkey"] = resolve(key)
+        args["sslkey"] = private_key_for_libpq(resolve(key))
     return args
