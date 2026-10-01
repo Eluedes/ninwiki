@@ -1,12 +1,15 @@
 name: Deploy Web na SquareCloud (manual)
 
 # Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
-# O .env NÃO fica no repositório: vem dos Secrets do GitHub e é gravado só dentro do zip enviado.
+#
+# O site é COMPILADO aqui no GitHub (que tem memória de sobra) e só o resultado vai para a SquareCloud, que apenas executa
+# `node server.js`. Compilar dentro da SquareCloud estoura a RAM do app e o processo morre com "Killed".
+# O .env NÃO fica no repositório: vem do Secret WEB_ENV, é usado no build (os NEXT_PUBLIC_* ficam embutidos) e vai junto no pacote.
 #
 # Secrets necessários:
-#   SQUARE_API_KEY   chave da API da SquareCloud
-#   SQUARE_APP_ID_WEB   ID do app site na SquareCloud
-#   WEB_ENV   conteúdo COMPLETO do NinWiki.Web/.env (NEXT_PUBLIC_API_URL=...)
+#   SQUARE_API_KEY      chave da API da SquareCloud
+#   SQUARE_APP_ID_WEB   ID do app do site na SquareCloud
+#   WEB_ENV             conteúdo COMPLETO do .env do site (NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SITE_URL...)
 
 on:
   workflow_dispatch:
@@ -28,10 +31,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Enviar NinWiki.Web
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: NinWiki.Web/package-lock.json
+      - name: Instalar dependências
+        working-directory: NinWiki.Web
+        run: npm ci
+      - name: Compilar o site (standalone)
+        working-directory: NinWiki.Web
+        env:
+          WEB_ENV: ${{ secrets.WEB_ENV }}
+          STANDALONE_BUILD: 'true'
+        run: |
+          if [ -z "$WEB_ENV" ]; then echo "::error::Secret WEB_ENV vazio. Veja o cabeçalho deste workflow."; exit 1; fi
+          printf '%s\n' "$WEB_ENV" | tr -d '\r' > .env   # o Next lê o .env no build
+          npm run build
+          rm -f .env
+      - name: Montar o pacote (só o necessário para rodar)
+        working-directory: NinWiki.Web
+        run: |
+          rm -rf ../pkg-web && mkdir ../pkg-web
+          cp -r .next/standalone/. ../pkg-web/
+          mkdir -p ../pkg-web/.next && cp -r .next/static ../pkg-web/.next/static
+          [ -d public ] && cp -r public ../pkg-web/public || true
+          cp squarecloud.app ../pkg-web/squarecloud.app
+          [ -f ../pkg-web/server.js ] || { echo "::error::server.js não foi gerado (output standalone)."; exit 1; }
+          du -sh ../pkg-web
+      - name: Enviar para a SquareCloud
         env:
           SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
           APP_ID: ${{ secrets.SQUARE_APP_ID_WEB }}
           APP_ENV: ${{ secrets.WEB_ENV }}
           RESTART: ${{ inputs.restart }}
-        run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Web ninwiki-web.zip
+          PREBUILT: 'true'
+        run: bash .github/scripts/deploy-squarecloud.sh pkg-web ninwiki-web.zip

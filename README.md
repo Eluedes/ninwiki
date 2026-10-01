@@ -178,7 +178,7 @@ na SquareCloud, que reinicia. A API, ao iniciar, aplica sozinha as migrações d
 
 ### 3.1 Antes de começar: contas e segredos
 Você vai precisar de:
-- conta na **SquareCloud** com plano que comporte 2–3 apps + 1 banco (API 512 MB, site 1024 MB, bot 256 MB);
+- conta na **SquareCloud** com plano que comporte 2–3 apps + 1 banco (API 512 MB, site 512 MB, bot 256 MB);
 - um **domínio** (ex.: `seudominio.com`) — de preferência com DNS na **Cloudflare** (3.8);
 - este repositório no **GitHub** (você já tem) com permissão para criar *Secrets* e rodar *Actions*;
 - uma **aplicação no Discord Developer Portal** (3.2).
@@ -240,7 +240,7 @@ envie um **pacote mínimo**; o primeiro workflow (3.7) coloca o código de verda
 | App | Arquivos do pacote mínimo (copie da pasta indicada e zipe) |
 |---|---|
 | API | `NinWiki.Api/squarecloud.app` + `NinWiki.Api/start.py` |
-| Site | `NinWiki.Web/squarecloud.app` + `NinWiki.Web/package.json` |
+| Site | `NinWiki.Web/squarecloud.app` + um arquivo vazio chamado `server.js` (crie no Bloco de Notas) |
 | Bot (opcional) | `NinWiki.Bot/squarecloud.app` + `NinWiki.Bot/main.py` |
 
 No Windows: selecione os 2 arquivos → botão direito → *Enviar para → Pasta compactada*. Depois, para cada um:
@@ -320,7 +320,7 @@ GitHub → aba **Actions** → escolha o workflow na lista da esquerda → **Run
 1. **Deploy API na SquareCloud (manual)** → espere ficar verde. Painel da SquareCloud → app da API → **Logs**: deve aparecer
    `aplicando migrations...` e depois `iniciando API na porta 80...`. Teste `https://api.seudominio.com/health` (depois do 3.8; antes
    disso use o endereço `*.squareweb.app` do app só para testar).
-2. **Deploy Web na SquareCloud (manual)** → o primeiro start **demora alguns minutos** (faz o `npm install` e o `next build`; precisa dos 1024 MB). Acompanhe nos Logs até `Ready`.
+2. **Deploy Web na SquareCloud (manual)** → o site é **compilado no próprio GitHub** (leva 2–4 min no workflow) e só o resultado vai para a SquareCloud, que apenas executa `node server.js` (uns 200 MB de RAM). Nos Logs do app deve aparecer `Ready`. (Compilar dentro da SquareCloud estoura a memória e o processo morre com `Killed` — por isso não fazemos assim.)
 3. **Deploy Bot na SquareCloud (manual)** (opcional) → Logs: o bot conecta e, em até 1 h (ou na hora com `DEV_GUILD_ID`), os comandos `/team` aparecem.
 
 O que o workflow faz por você: monta o `.env` a partir do Secret, grava os certificados em `certs/`, zipa a pasta **sem** `node_modules`, `.next`, `venv`,
@@ -368,8 +368,8 @@ Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o 
 | API: `private key file ... has group or world access` | já tratado automaticamente; se aparecer, atualize para a versão mais recente do repositório |
 | API 500 em `/posts` ou `/auth/me` logo após atualizar | migração não aplicada: veja nos Logs se `aplicando migrations` terminou; reinicie o app |
 | Site: "Não foi possível conectar à API" | `NEXT_PUBLIC_API_URL` errada no `WEB_ENV` (rode o workflow do site de novo) ou API fora do ar |
-| Build do site morre / reinicia sozinho | pouca memória: aumente `MEMORY` em `NinWiki.Web/squarecloud.app` e rode o workflow de novo |
-| Build do site: `unrs-resolver install scripts blocked` | já resolvido no `package.json` (`allowScripts`) — rode o workflow com o repositório atualizado |
+| Site: log com `Creating an optimized production build ...` e depois `Killed` | o app ainda está com a versão antiga (que compilava dentro da SquareCloud). Rode o workflow **Deploy Web** atualizado; se o app seguir com o comando antigo, no painel do app ajuste o arquivo principal para `server.js` e o comando de início para `HOSTNAME=0.0.0.0 PORT=80 node --env-file=.env server.js` |
+| Aviso `unrs-resolver install scripts blocked` | era do build dentro da SquareCloud; com o build no GitHub não aparece mais (e o `package.json` já tem o `allowScripts`) |
 | Login volta para `/login` sem erro | site e API em "sites" diferentes (use `wiki.` e `api.` do mesmo domínio) ou `FRONTEND_ORIGIN` diferente do endereço real do site |
 | `redirect_uri` inválido no Discord | redirect da 3.2 não cadastrado ou diferente do `DISCORD_REDIRECT_URI` |
 | Muitos `429` para todo mundo | `TRUST_PROXY_HEADERS=false` atrás de proxy, ou limite baixo: aumente `PUBLIC_REQUESTS_PER_MINUTE` / `WEB_RATE_LIMIT_PER_MINUTE` |

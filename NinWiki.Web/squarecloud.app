@@ -1,7 +1,7 @@
 DISPLAY_NAME=NinWiki Web
 DESCRIPTION=Frontend Next.js do NinWiki
-MAIN=package.json
-MEMORY=1024
+MAIN=server.js
+MEMORY=512
 VERSION=recommended
 SUBDOMAIN=ninwiki
-START=npm run build && npx next start -p 80 -H 0.0.0.0
+START=HOSTNAME=0.0.0.0 PORT=80 node --env-file=.env server.js
