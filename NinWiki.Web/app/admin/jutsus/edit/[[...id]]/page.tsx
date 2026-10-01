@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm, useWatch, Controller } from 'react-hook-form';
+import { useForm, useWatch, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { EntryHistory } from '@/components/admin/entry-history';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ArrowLeft, Save, Loader2, Languages } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Languages, Plus, Trash2 } from 'lucide-react';
 import {
   getJutsu,
   createJutsu,
@@ -46,7 +46,24 @@ const emptyForm: JutsuFormValues = {
   cooldown: '',
   icon: 'flame',
   gif: null,
+  requiredLevel: '',
+  requiredStat: '',
+  scrollType: '',
+  shop: '',
+  maxLevel: 1,
+  damageByLevel: [],
+  cooldownByLevel: [],
+  castType: '',
+  jutsuClass: '',
+  debuff: '',
+  battleExtra: [],
 };
+
+/** Valores por nivel: corta no nivel maximo; se todos estiverem vazios, devolve lista vazia. */
+function trimLevels(values: string[] | undefined, max: number): string[] {
+  const cut = (values ?? []).slice(0, max).map((v) => (v ?? '').trim());
+  return cut.some(Boolean) ? cut : [];
+}
 
 /** Mensagem de erro de um campo do formulario. */
 function FieldError({ message }: { message?: string }) {
@@ -83,6 +100,9 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
   });
 
   const masteryId = useWatch({ control, name: 'masteryId' });
+  const maxLevel = Math.min(10, Math.max(1, Number(useWatch({ control, name: 'maxLevel' })) || 1));
+  const extraRows = useFieldArray({ control, name: 'battleExtra' });
+  const jf = dict.jutsuInfo;
 
   // Mensagem de "erro ao carregar" guardada numa ref: assim o efeito de carga NAO precisa depender de
   // `t` (trocar o idioma no meio da edicao recarregaria o formulario e jogaria fora o que a pessoa digitou).
@@ -98,7 +118,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
     Promise.all([loadMasteries, loadJutsu])
       .then(([m, j]) => {
         setMasteries(m);
-        if (j) reset(j);
+        if (j) reset({ ...emptyForm, ...j, damageByLevel: j.damageByLevel ?? [], cooldownByLevel: j.cooldownByLevel ?? [], battleExtra: j.battleExtra ?? [] });
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : loadErrorRef.current))
       .finally(() => setLoading(false));
@@ -131,6 +151,9 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         ...values,
         pathId: values.pathId ?? null,
         gif: values.gif || null,
+        // um valor por nivel (corta o que passou do nivel maximo; tudo vazio vira lista vazia)
+        damageByLevel: trimLevels(values.damageByLevel, values.maxLevel),
+        cooldownByLevel: trimLevels(values.cooldownByLevel, values.maxLevel),
         namePt: values.namePt ?? null,
         descriptionPt: values.descriptionPt ?? null,
         longDescriptionPt: values.longDescriptionPt ?? null,
@@ -234,7 +257,8 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.tier}</label>
-            <Input type="number" {...register('tier')} />
+            <Input type="number" min={1} max={4} {...register('tier')} />
+            <p className="text-xs text-muted-foreground">{dict.jutsuInfo.tierHint}</p>
             <FieldError message={errors.tier?.message} />
           </div>
           <div className="space-y-2">
@@ -272,6 +296,90 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
           <Input {...register('effect')} placeholder={t.effectPlaceholder} />
           <FieldError message={errors.effect?.message} />
         </div>
+        {/* Ficha do jutsu (mesmas secoes da pagina publica) */}
+        <div className="space-y-4 rounded-lg border border-border p-4">
+          <div>
+            <h2 className="font-semibold text-card-foreground">{jf.sheetTitle}</h2>
+            <p className="text-xs text-muted-foreground">{jf.sheetHint}</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.requiredLevel}</label>
+              <Input {...register('requiredLevel')} placeholder="20+" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.requiredStat}</label>
+              <Input {...register('requiredStat')} placeholder="35 Intellect" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.scrollType}</label>
+              <Input {...register('scrollType')} placeholder="Sealable Scroll" />
+              <p className="text-xs text-muted-foreground">{jf.scrollTypeHint}</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.shop}</label>
+              <Input {...register('shop')} placeholder="Any" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.maxLevel}</label>
+              <Input type="number" min={1} max={10} {...register('maxLevel')} />
+              <p className="text-xs text-muted-foreground">{jf.maxLevelHint}</p>
+              <FieldError message={errors.maxLevel?.message} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.castType}</label>
+              <Input {...register('castType')} placeholder="Walk cast" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.jutsuClass}</label>
+              <Input {...register('jutsuClass')} placeholder="Trap" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.debuff}</label>
+              <Input {...register('debuff')} placeholder="Burn III" />
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground">{jf.perLevelHint}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.baseDamage}</label>
+              {Array.from({ length: maxLevel }, (_, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{jf.levelN.replace('{n}', String(i + 1))}</span>
+                  <Input {...register(`damageByLevel.${i}` as const)} placeholder="6" maxLength={40} />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.cooldown}</label>
+              {Array.from({ length: maxLevel }, (_, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{jf.levelN.replace('{n}', String(i + 1))}</span>
+                  <Input {...register(`cooldownByLevel.${i}` as const)} placeholder="16s" maxLength={40} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">{jf.battleExtra}</label>
+            {extraRows.fields.map((field, i) => (
+              <div key={field.id} className="flex items-center gap-2">
+                <Input {...register(`battleExtra.${i}.label` as const)} placeholder={jf.rowLabel} maxLength={60} />
+                <Input {...register(`battleExtra.${i}.value` as const)} placeholder={jf.rowValue} maxLength={150} />
+                <button type="button" title={jf.removeRow} onClick={() => extraRows.remove(i)}
+                  className="rounded p-2 text-muted-foreground hover:bg-secondary hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+              </div>
+            ))}
+            {extraRows.fields.length < 10 && (
+              <Button type="button" variant="outline" size="sm" onClick={() => extraRows.append({ label: '', value: '' })}>
+                <Plus className="mr-1.5 h-4 w-4" />{jf.addRow}
+              </Button>
+            )}
+          </div>
+        </div>
+
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.shortDescription}</label>
           <Controller

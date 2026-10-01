@@ -94,7 +94,11 @@ pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bib
 - **Nome (nick) da equipe:** em `/admin/staff` (só S.Adm) o lápis ao lado do nome edita o nome de qualquer um, **inclusive o seu**. O nome editado
   fica salvo: o login com o Discord não o sobrescreve mais.
 - **Permissões** (`/admin/permissions`, só S.Adm): liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora.
-- **Log geral:** `/admin/audit-log` (quem fez o quê; o IP só o S.Adm vê).
+- **Log geral:** `/admin/audit-log` (quem fez o quê; o IP só o S.Adm vê). O **S.Adm pode limpar o log** (tudo, ou só o mais antigo que 7/30 dias) para a
+  equipe não ver o histórico antigo; a própria limpeza fica registrada como a primeira linha do log novo.
+- **Jutsus:** a página mostra a ficha em seções que abrem e fecham (Requisitos, Aquisição, Detalhes da técnica, Dados de batalha). No editor você preenche
+  nível/atributo exigido, tipo de pergaminho + tier (**1 a 4**), nível máximo com **dano e recarga por nível**, tipo de conjuração, classe, debuff e linhas extras;
+  linha vazia some da página.
 - **Erros e problemas** (`/admin/errors`, só S.Adm): tudo que quebrou no wiki — erros da API, erros de tela do site, falhas da DeepL e
   alertas de flood — agrupados (um problema = uma linha com o contador), com local no código e traceback mascarado. Resolva
   com um clique; se voltar a acontecer, reabre sozinho. O card "Open" da Visão Geral mostra quantos estão abertos.

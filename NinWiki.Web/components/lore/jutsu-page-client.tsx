@@ -9,33 +9,21 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
-import { Infobox } from '@/components/lore/infobox';
+import { JutsuSheet } from '@/components/lore/jutsu-sheet';
 import { PageHeader } from '@/components/lore/page-header';
 import { MasteryIcon } from '@/components/lore/mastery-icon';
 import { JutsuGif } from '@/components/lore/jutsu-gif';
 import { RichText } from '@/components/lore/rich-text';
-import { Zap, Target, Clock, Timer, Gauge } from 'lucide-react';
-import type { ApiJutsu, ApiMastery, ApiMasteryPath } from '@/lib/api-client';
-
-// Cor do numero do tier - mesma logica de cores do JutsuCard, mas em
-// hex direto (usado via style inline) em vez de classes Tailwind.
-const tierColors: Record<number, string> = {
-  1: '#9a9ab5',
-  2: '#c5c5d8',
-  3: '#0ea5e9',
-  4: '#dc2626',
-  5: '#fbbf24',
-};
+import { Zap } from 'lucide-react';
+import type { ApiJutsu, ApiMastery } from '@/lib/api-client';
 
 /** Pagina de um jutsu. */
 export function JutsuPageClient({
   jutsu,
   mastery,
-  path,
 }: {
   jutsu: ApiJutsu;
   mastery?: ApiMastery;
-  path?: ApiMasteryPath;
 }) {
   const { dict, locale } = useLanguage();
   const t = dict.jutsuDetail;
@@ -49,11 +37,6 @@ export function JutsuPageClient({
     ? (jutsu.longDescriptionPt || jutsu.longDescription)
     : (jutsu.longDescription || jutsu.longDescriptionPt);
   const masteryName = mastery ? (isPt ? (mastery.namePt ?? mastery.name) : mastery.name) : undefined;
-
-  const tierLabels: Record<number, string> = {
-    1: t.tier1, 2: t.tier2, 3: t.tier3, 4: t.tier4, 5: t.tier5,
-  };
-  const tierColor = tierColors[jutsu.tier];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 animate-fade-in">
@@ -83,77 +66,10 @@ export function JutsuPageClient({
           {jutsu.gif && (
             <JutsuGif src={jutsu.gif as string} alt={name} />
           )}
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <div className="dossier-panel p-4">
-              <div className="flex items-center gap-2 text-ink-400">
-                <Gauge className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-wide">{t.chakraCostLabel}</span>
-              </div>
-              <p className="mt-1 text-2xl font-bold text-chakra-300">{jutsu.chakraCost}</p>
-            </div>
-            <div className="dossier-panel p-4">
-              <div className="flex items-center gap-2 text-ink-400">
-                <Target className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-wide">{t.rangeLabel}</span>
-              </div>
-              <p className="mt-1 text-sm font-semibold text-ink-100">{jutsu.range}</p>
-            </div>
-            <div className="dossier-panel p-4">
-              <div className="flex items-center gap-2 text-ink-400">
-                <Clock className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-wide">{t.castTimeLabel}</span>
-              </div>
-              <p className="mt-1 text-sm font-semibold text-ink-100">{jutsu.castTime}</p>
-            </div>
-            <div className="dossier-panel p-4">
-              <div className="flex items-center gap-2 text-ink-400">
-                <Timer className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-wide">{t.cooldownLabel}</span>
-              </div>
-              <p className="mt-1 text-sm font-semibold text-ink-100">{jutsu.cooldown}</p>
-            </div>
-            <div className="dossier-panel p-4">
-              <div className="flex items-center gap-2 text-ink-400">
-                <Zap className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-wide">{t.effectLabel}</span>
-              </div>
-              <p className="mt-1 text-sm font-semibold text-ink-100">{jutsu.effect}</p>
-            </div>
-            <div className="dossier-panel p-4">
-              <div className="flex items-center gap-2 text-ink-400">
-                <span className="text-xs uppercase tracking-wide">{t.tierLabel}</span>
-              </div>
-              <p className="mt-1 text-2xl font-bold" style={{ color: tierColor }}>
-                T{jutsu.tier}
-              </p>
-            </div>
-          </div>
         </div>
 
         <div className="space-y-4">
-          <Infobox
-            title={t.jutsuSheet}
-            icon={<MasteryIcon icon={jutsu.icon} className="h-4 w-4" />}
-            accentColor={mastery?.color}
-            entries={[
-              { label: dict.masteryDetail.nameLabel, value: name },
-              {
-                label: t.masteryLabel,
-                value: mastery ? (
-                  <Link href={`/masteries/${mastery.id}`} className="text-chakra-400 hover:underline">
-                    {masteryName}
-                  </Link>
-                ) : '—',
-              },
-              { label: t.pathLabel, value: path ? path.label : t.noPath },
-              { label: t.tierLabel, value: `T${jutsu.tier} · ${tierLabels[jutsu.tier]}` },
-              { label: t.chakraCostLabel, value: `${jutsu.chakraCost}` },
-              { label: t.rangeLabel, value: jutsu.range },
-              { label: t.castTimeLabel, value: jutsu.castTime },
-              { label: t.cooldownLabel, value: jutsu.cooldown },
-            ]}
-          />
+          <JutsuSheet jutsu={jutsu} mastery={mastery} masteryName={masteryName} />
         </div>
       </div>
     </div>

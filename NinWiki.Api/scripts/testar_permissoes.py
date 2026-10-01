@@ -1430,6 +1430,54 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         ok = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "rename", AuditLogEntry.entity_id == str(IDS["creator2"])))).scalars().first()
     check("a troca de nome fica no log de auditoria", ok is not None and ok.diff.get("after") == "Nick Novo")
 
+    secao("23) Jutsu: ficha completa (tier maximo 4) e limpar o log (so' S.Adm)")
+    base_j = {"id": f"{SLUG}-jf", "name": "TESTE Jutsu Ficha", "masteryId": "fire", "tier": 2, "chakraCost": 25,
+              "description": "d", "longDescription": "l", "icon": "flame"}
+    r = await c.post("/jutsus", json={**base_j, "tier": 5}, headers=A)
+    check("tier 5 e' recusado (maximo 4)", r.status_code == 422)
+    r = await c.post("/jutsus", json={**base_j, "tier": 0}, headers=A)
+    check("tier 0 e' recusado", r.status_code == 422)
+    ficha = {**base_j, "tier": 4, "requiredLevel": "20+", "requiredStat": "35 Intellect", "scrollType": "Sealable Scroll",
+             "shop": "Any", "maxLevel": 3, "damageByLevel": ["6", "6", "8"], "cooldownByLevel": ["16s", "14s", "14s"],
+             "castTime": "1 Second", "castType": "Walk cast", "effect": "Burn", "jutsuClass": "Trap",
+             "range": "3 Tiles in front of caster", "debuff": "Burn III",
+             "battleExtra": [{"label": "  Duration ", "value": "5s"}, {"label": "", "value": "sem rotulo some"}]}
+    r = await c.post("/jutsus", json=ficha, headers=A)
+    check("Adm cria jutsu com a ficha completa (tier 4)", r.status_code == 201, r.text[:160])
+    j = r.json()
+    check("campos da ficha voltam certinhos", j["requiredLevel"] == "20+" and j["maxLevel"] == 3 and j["damageByLevel"] == ["6", "6", "8"]
+          and j["cooldownByLevel"] == ["16s", "14s", "14s"] and j["jutsuClass"] == "Trap" and j["debuff"] == "Burn III", str(j)[:200])
+    check("linha extra: espacos limpos e linha sem rotulo descartada", j["battleExtra"] == [{"label": "Duration", "value": "5s"}])
+    r = await c.get(f"/jutsus/{SLUG}-jf")
+    check("a ficha tambem vem na leitura publica", r.status_code == 200 and r.json()["castType"] == "Walk cast")
+    r = await c.post("/jutsus", json={**base_j, "id": f"{SLUG}-jg"}, headers=A)
+    check("jutsu simples (sem a ficha) continua valido, com padroes vazios", r.status_code == 201 and r.json()["maxLevel"] == 1 and r.json()["damageByLevel"] == [], r.text[:120])
+    r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "tier": 3, "maxLevel": 11}, headers=A)
+    check("nivel maximo acima de 10 e' recusado", r.status_code == 422)
+    r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "damageByLevel": ["x" * 41]}, headers=A)
+    check("valor por nivel acima de 40 caracteres e' recusado", r.status_code == 422)
+    r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "debuff": "Burn IV"}, headers=A)
+    check("editar a ficha salva", r.status_code == 200 and r.json()["debuff"] == "Burn IV")
+    await c.delete(f"/jutsus/{SLUG}-jf", headers=A)
+    await c.delete(f"/jutsus/{SLUG}-jg", headers=A)
+
+    # limpar o log
+    async with AsyncSessionLocal() as db:
+        db.add(AuditLogEntry(action="create", entity_type="content_item", entity_id=f"{SLUG}-velho", actor_name="TESTE_velho",
+                             source="panel", created_at=datetime.now(timezone.utc) - timedelta(days=4000)))
+        await db.commit()
+    check("Adm nao limpa o log (rota exclusiva do S.Adm = 404)", (await c.delete("/audit-log?olderThanDays=3650", headers=A)).status_code == 404)
+    check("Creator nao limpa o log", (await c.delete("/audit-log?olderThanDays=3650", headers=C)).status_code == 404)
+    c.cookies.clear()  # o cliente de teste guarda cookies de logins anteriores
+    check("anonimo nao limpa o log", (await c.delete("/audit-log?olderThanDays=3650")).status_code == 401)
+    check("dias invalidos -> 422", (await c.delete("/audit-log?olderThanDays=0", headers=S)).status_code == 422)
+    r = await c.delete("/audit-log?olderThanDays=3650", headers=S)
+    check("S.Adm limpa o log mais antigo que N dias", r.status_code == 200 and r.json()["deleted"] >= 1, r.text)
+    async with AsyncSessionLocal() as db:
+        velho = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.entity_id == f"{SLUG}-velho"))).scalars().first()
+        marca = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log").order_by(AuditLogEntry.created_at.desc()))).scalars().first()
+    check("o registro antigo sumiu e a limpeza ficou registrada no log", velho is None and marca is not None and marca.diff.get("older_than_days") == 3650)
+
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []
     total = 0

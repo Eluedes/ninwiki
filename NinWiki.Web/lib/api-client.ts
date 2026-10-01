@@ -327,6 +327,18 @@ export interface ApiJutsu {
   cooldown: string;
   icon: string;
   gif: string | null;
+  // ficha completa (linha vazia nao aparece na pagina)
+  requiredLevel: string;
+  requiredStat: string;
+  scrollType: string;
+  shop: string;
+  maxLevel: number;
+  damageByLevel: string[];
+  cooldownByLevel: string[];
+  castType: string;
+  jutsuClass: string;
+  debuff: string;
+  battleExtra: { label: string; value: string }[];
 }
 
 // Corpo aceito em criar/editar um jutsu - igual a ApiJutsu, mas `id`
@@ -414,6 +426,11 @@ export function listAuditLog(limit = 50, entityType?: string): Promise<ApiAuditL
   const params = new URLSearchParams({ limit: String(limit) });
   if (entityType) params.set('entityType', entityType);
   return apiFetch(`/audit-log?${params.toString()}`);
+}
+
+/** Limpa o log (so' S.Adm): sem argumento apaga TUDO; com `olderThanDays` apaga so' o que passou de N dias. */
+export function clearAuditLog(olderThanDays?: number): Promise<{ deleted: number }> {
+  return apiFetch(`/audit-log${olderThanDays ? `?olderThanDays=${olderThanDays}` : ''}`, { method: 'DELETE' });
 }
 
 // Historico de UMA entry especifica (usado na aba "Historico" dentro
@@ -707,7 +724,7 @@ export type PermissionName =
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage'
-  | 'audit.view' | 'audit.view_all';
+  | 'audit.view' | 'audit.view_all' | 'audit.clear';
 
 export interface ApiMe {
   id: string;

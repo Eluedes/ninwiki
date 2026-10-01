@@ -27,7 +27,7 @@ ACTION_LABEL = {
     "delete_file": "removed a file from", "reset": "restored the defaults of",
     "bulk-status": "changed the status of", "bulk-delete": "bulk-deleted", "bulk-import": "imported",
     "login": "signed in to the panel", "logout": "signed out of the panel", "login_denied": "had a login denied",
-    "role_change": "changed the role of", "rename": "renamed", "activate": "reactivated", "deactivate": "deactivated",
+    "role_change": "changed the role of", "rename": "renamed", "clear_log": "cleared the log", "activate": "reactivated", "deactivate": "deactivated",
     "bootstrap": "was created as owner", "bootstrap_restore": "had the owner role restored",
     "permission_denied": "tried something without permission on", "resolve": "resolved", "reopen": "reopened",
 }
