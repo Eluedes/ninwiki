@@ -37,8 +37,9 @@ import { NinLogo } from '@/components/icons/nin-logo';
 // idiomas pt e en). A ordem aqui e' a ordem em que os itens aparecem,
 // tanto no menu de desktop quanto no menu mobile - os dois usam o
 // MESMO array, entao so' precisa editar em um lugar.
-const navItems: { key: 'home' | 'village' | 'map'; href: string }[] = [
+const navItems: { key: 'home' | 'blog' | 'village' | 'map'; href: string }[] = [
   { key: 'home', href: '/' },
+  { key: 'blog', href: '/blog' },
   { key: 'village', href: '/village' },
   { key: 'map', href: '/map' },
 ];

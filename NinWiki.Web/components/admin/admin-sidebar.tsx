@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { requiredPermissionFor } from '@/lib/admin-routes';
 import { NinLogo } from '@/components/icons/nin-logo';
@@ -24,7 +24,9 @@ const navItems = [
   { key: 'blogPosts', href: '/admin/blog-posts', icon: FileText },
   { key: 'auditLog', href: '/admin/audit-log', icon: History },
   { key: 'villages', href: '/admin/villages', icon: Castle },
+  { key: 'organizations', href: '/admin/organizations', icon: Building2 },
   { key: 'staff', href: '/admin/staff', icon: UserCog },
+  { key: 'permissions', href: '/admin/permissions', icon: ShieldCheck },
 ] as const;
 
 export function AdminSidebar() {

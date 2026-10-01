@@ -1,0 +1,37 @@
+name: Deploy Web na SquareCloud (manual)
+
+# Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
+# O .env NÃO fica no repositório: vem dos Secrets do GitHub e é gravado só dentro do zip enviado.
+#
+# Secrets necessários:
+#   SQUARE_API_KEY   chave da API da SquareCloud
+#   SQUARE_APP_ID_WEB   ID do app site na SquareCloud
+#   WEB_ENV   conteúdo COMPLETO do NinWiki.Web/.env (NEXT_PUBLIC_API_URL=...)
+
+on:
+  workflow_dispatch:
+    inputs:
+      restart:
+        description: 'Reiniciar o app depois do envio'
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-squarecloud-web
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enviar NinWiki.Web
+        env:
+          SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
+          APP_ID: ${{ secrets.SQUARE_APP_ID_WEB }}
+          APP_ENV: ${{ secrets.WEB_ENV }}
+          RESTART: ${{ inputs.restart }}
+        run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Web ninwiki-web.zip

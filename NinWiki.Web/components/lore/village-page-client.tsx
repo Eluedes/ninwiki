@@ -74,11 +74,18 @@ export function VillagePageClient({ village, allVillages }: { village: ApiVillag
               <div className="grid gap-3 sm:grid-cols-2">
                 {village.clans.map((clan) => (
                   <div key={clan.id} className="rounded-md border border-ink-700 bg-ink-850/50 p-3">
+                    {clan.image && (
+                      // Logo + roupa do cla' numa imagem so': object-contain pra nao cortar nada.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={clan.image}
+                        alt={clan.name}
+                        className="mb-3 h-44 w-full rounded bg-ink-900/60 object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    )}
                     <p className="text-sm font-semibold text-ink-100">{clan.name}</p>
                     <p className="mt-1 text-xs text-ink-400">{clan.description}</p>
-                    <p className="mt-2 text-xs text-ink-500">
-                      Nível mínimo {clan.levelRequirement} · {clan.priceRyo.toLocaleString('pt-BR')} Ryo
-                    </p>
                   </div>
                 ))}
               </div>

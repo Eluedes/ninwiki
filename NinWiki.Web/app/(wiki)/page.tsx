@@ -1,64 +1,18 @@
-'use client';
+// Pagina inicial (rota "/"): busca os 3 posts publicados mais recentes do blog
+// e repassa pro Client Component (HomeClient). Se a API estiver fora do ar a
+// Home continua abrindo, so' sem noticias.
 
-// Pagina inicial (rota "/"): hero de boas-vindas, grade de categorias
-// e lista de noticias recentes.
+import { listPosts, type ApiPostSummary } from '@/lib/api-client';
+import { HomeClient } from '@/components/wiki/home-client';
 
-import { useLanguage } from '@/components/providers/language-provider';
-import { WikiButton } from '@/components/wiki/wiki-button';
-import { NewsCard } from '@/components/wiki/news-card';
-import { categories, newsItems } from '@/lib/data';
-import { Slash, Newspaper } from 'lucide-react';
-
-export default function HomePage() {
-  const { locale, dict } = useLanguage();
-
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      {/* Hero: bloco de destaque no topo com o slogan do site.
-          O <div> com blur-3xl e' so' um efeito decorativo de "brilho"
-          no canto, nao tem funcao alem de visual. */}
-      <section className="relative mb-12 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-8 md:p-12">
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-        <div className="relative">
-          <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
-            <Slash className="h-4 w-4" />
-            {dict.siteTagline}
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-            {dict.home.welcome} <span className="text-primary">{dict.siteName}</span>
-          </h1>
-          <p className="mt-3 max-w-2xl text-muted-foreground">
-            {dict.home.subtitle}
-          </p>
-        </div>
-      </section>
-
-      {/* Grade de categorias (Mobs, Itens, Guias, etc.) - vem direto
-          de lib/data.ts, nao ha filtro nem busca aqui. */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {categories.map((cat) => (
-          <WikiButton key={cat.key} category={cat} locale={locale} />
-        ))}
-      </div>
-
-      <section className="mt-12">
-        <div className="mb-5 flex items-center gap-3">
-          <Newspaper className="h-6 w-6 text-primary" />
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">{dict.news.title}</h2>
-            <p className="text-sm text-muted-foreground">{dict.news.subtitle}</p>
-          </div>
-        </div>
-
-        {/* Lista de noticias - sem paginacao, mostra o array inteiro
-            de newsItems. So' tem 3 itens hoje, mas vale revisar se o
-            numero de noticias crescer muito. */}
-        <div className="space-y-3">
-          {newsItems.map((item) => (
-            <NewsCard key={item.id} item={item} locale={locale} />
-          ))}
-        </div>
-      </section>
-    </div>
-  );
+export default async function HomePage() {
+  let posts: ApiPostSummary[] = [];
+  try {
+    posts = (await listPosts('published')).slice(0, 3);
+  } catch {
+    // Home nunca deve quebrar por causa das noticias
+  }
+  return <HomeClient posts={posts} />;
 }
+
+export const dynamic = 'force-dynamic';

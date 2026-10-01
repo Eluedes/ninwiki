@@ -467,9 +467,9 @@ export interface ApiClan {
   id: string;
   name: string;
   villageId: string;
-  levelRequirement: number;
-  priceRyo: number;
   description: string;
+  // Imagem do cla' (logo + roupa que usam), enviada pelo painel
+  image: string | null;
 }
 
 export interface ApiOrganization {
@@ -511,9 +511,8 @@ export function getVillage(id: string): Promise<ApiVillage> {
 export interface ClanInput {
   id: string;
   name: string;
-  levelRequirement: number;
-  priceRyo: number;
   description: string;
+  image?: string | null;
 }
 
 export interface VillageInput {
@@ -639,7 +638,8 @@ export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
-  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate'
+  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage'
+  | 'notices.view' | 'notices.manage'
   | 'audit.view' | 'audit.view_all';
 
 export interface ApiMe {
@@ -739,6 +739,10 @@ export function listPosts(status?: 'draft' | 'published'): Promise<ApiPostSummar
   return apiFetch(`/posts${status ? `?status=${status}` : ''}`);
 }
 
+export function getPostBySlug(slug: string): Promise<ApiPost> {
+  return apiFetch(`/posts/slug/${encodeURIComponent(slug)}`);
+}
+
 export function getPost(id: string): Promise<ApiPost> {
   return apiFetch(`/posts/${id}`);
 }
@@ -753,4 +757,102 @@ export function updatePost(id: string, payload: PostInput): Promise<ApiPost> {
 
 export function deletePost(id: string): Promise<void> {
   return apiFetch(`/posts/${id}`, { method: 'DELETE' });
+}
+
+
+// ---- Cargos e permissoes editaveis (so' S.Adm) ----
+
+export interface ApiPermissionInfo {
+  name: PermissionName;
+  group: string;
+  // Exclusiva do S.Adm: nao pode ser dada a Adm/Creator
+  superOnly: boolean;
+  defaults: Record<string, boolean>;
+}
+
+export interface ApiRolePermissions {
+  role: StaffRole;
+  label: string;
+  editable: boolean;
+  permissions: PermissionName[];
+}
+
+export interface ApiRolesOverview {
+  roles: ApiRolePermissions[];
+  permissions: ApiPermissionInfo[];
+}
+
+export function getRolesOverview(): Promise<ApiRolesOverview> {
+  return apiFetch('/roles/permissions');
+}
+
+export function setRolePermissions(role: StaffRole, permissions: PermissionName[]): Promise<ApiRolesOverview> {
+  return apiFetch(`/roles/${role}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }) });
+}
+
+export function resetRolePermissions(role: StaffRole): Promise<ApiRolesOverview> {
+  return apiFetch(`/roles/${role}/permissions/reset`, { method: 'POST' });
+}
+
+// ---- Quadro de avisos da equipe ----
+
+export interface ApiNoticeFile {
+  id: string;
+  filename: string;
+  size: number;
+}
+
+export interface ApiNotice {
+  id: string;
+  title: string;
+  body: string;
+  pinned: boolean;
+  authorName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  files: ApiNoticeFile[];
+}
+
+export interface NoticeInput {
+  title: string;
+  body: string;
+  pinned: boolean;
+}
+
+export function listNotices(): Promise<ApiNotice[]> {
+  return apiFetch('/notices');
+}
+
+export function createNotice(payload: NoticeInput): Promise<ApiNotice> {
+  return apiFetch('/notices', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function updateNotice(id: string, payload: NoticeInput): Promise<ApiNotice> {
+  return apiFetch(`/notices/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export function deleteNotice(id: string): Promise<void> {
+  return apiFetch(`/notices/${id}`, { method: 'DELETE' });
+}
+
+export async function uploadNoticeFile(noticeId: string, file: File): Promise<ApiNotice> {
+  const formData = new FormData();
+  formData.append('file', file);
+  // Mesmo motivo do uploadImage: multipart nao pode levar o Content-Type JSON do apiFetch.
+  const res = await fetch(`${API_URL}/notices/${noticeId}/files`, { method: 'POST', body: formData, credentials: 'include' });
+  if (res.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new ApiError(res.status, body?.detail ?? `Erro ${res.status}`);
+  }
+  return res.json();
+}
+
+export function deleteNoticeFile(noticeId: string, fileId: string): Promise<ApiNotice> {
+  return apiFetch(`/notices/${noticeId}/files/${fileId}`, { method: 'DELETE' });
+}
+
+// Link direto de download (o navegador manda o cookie de sessao; a API devolve como anexo).
+export function noticeFileUrl(fileId: string): string {
+  return `${API_URL}/notices/files/${fileId}`;
 }

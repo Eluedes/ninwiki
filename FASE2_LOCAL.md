@@ -50,11 +50,14 @@ Só entra quem está na equipe (ou é dono pelo `.env`). Ter Discord não dá ac
 | Blog: criar/editar **rascunho** | sim | sim | sim |
 | Blog: publicar / apagar / editar post publicado | não | sim | sim |
 | Upload de imagem / Retraduzir | sim | sim | sim |
-| Ver equipe / cadastrar / trocar cargo / desativar | não | só **Creators** | todos |
+| **Equipe** (ver / cadastrar / trocar cargo / desativar) | não | não | **só ele** |
+| **Permissões por cargo** (editar o que Adm e Creator podem) | não | não | **só ele** |
+| **Quadro de avisos**: ler e baixar arquivos | sim | sim | sim |
+| **Quadro de avisos**: postar, editar, apagar, anexar arquivos | não | sim | sim |
 | Log de **conteúdo** | histórico da entry | sim | sim |
 | Log **completo** (logins, equipe, tentativas negadas, IPs) | não | não | **só ele** |
 
-Para mudar uma regra: edite a tabela `ROLE_PERMISSIONS`. Para criar um poder que **só o S.Adm
+Esta tabela é o **padrão de fábrica**. O S.Adm ajusta o que **Adm** e **Creator** podem pelo painel, em **Permissões** (`/admin/permissions`), e vale na hora; "Restaurar padrão" volta ao que está acima. Permissões exclusivas do S.Adm aparecem travadas e não podem ser dadas a ninguém. Para mudar o padrão no código: edite `DEFAULT_ROLE_PERMISSIONS`. Para criar um poder que **só o S.Adm
 enxerga** (quem não é S.Adm recebe 404, nem sabe que existe): crie a permissão e coloque em
 `SUPER_ONLY_PERMISSIONS`. Depois rode o teste (item 6).
 

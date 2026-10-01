@@ -82,7 +82,7 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
           namePt: v.namePt ?? '',
           image: v.image ?? null,
           clans: v.clans.map((c) => ({
-            id: c.id, name: c.name, levelRequirement: c.levelRequirement, priceRyo: c.priceRyo, description: c.description,
+            id: c.id, name: c.name, description: c.description, image: c.image ?? null,
           })),
         });
         setLockedClanIds(new Set(v.clans.map((c) => c.id)));
@@ -291,7 +291,7 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ id: '', name: '', levelRequirement: 0, priceRyo: 0, description: '' })}
+            onClick={() => append({ id: '', name: '', description: '', image: null })}
           >
             <Plus className="mr-1.5 h-4 w-4" /> {t.addClan}
           </Button>
@@ -303,7 +303,7 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
           const rowErrors = errors.clans?.[index];
           return (
             <div key={field.rowKey} className="space-y-3 rounded-lg border border-border bg-secondary/20 p-4">
-              <div className="grid gap-3 sm:grid-cols-[2fr_2fr_1fr_1fr_auto]">
+              <div className="grid gap-3 sm:grid-cols-[2fr_2fr_auto]">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-muted-foreground">{t.clanName}</label>
                   <Input
@@ -322,16 +322,6 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
                   <Input {...register(`clans.${index}.id` as const)} disabled={locked} className="font-mono" />
                   <FieldError message={rowErrors?.id?.message} />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">{t.clanLevel}</label>
-                  <Input type="number" {...register(`clans.${index}.levelRequirement` as const)} />
-                  <FieldError message={rowErrors?.levelRequirement?.message} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-muted-foreground">{t.clanPrice}</label>
-                  <Input type="number" {...register(`clans.${index}.priceRyo` as const)} />
-                  <FieldError message={rowErrors?.priceRyo?.message} />
-                </div>
                 <div className="flex items-end">
                   <button
                     type="button"
@@ -346,6 +336,17 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground">{t.clanDescription}</label>
                 <Textarea rows={2} {...register(`clans.${index}.description` as const)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">{t.clanImage}</label>
+                <p className="text-xs text-muted-foreground">{t.clanImageHint}</p>
+                <Controller
+                  control={control}
+                  name={`clans.${index}.image` as const}
+                  render={({ field: imgField }) => (
+                    <ImageUploadField value={imgField.value} onChange={imgField.onChange} />
+                  )}
+                />
               </div>
             </div>
           );

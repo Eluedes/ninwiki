@@ -139,6 +139,8 @@ async def main() -> None:
             for k, v in orig.items():
                 setattr(settings, k, v)
             await limpar(inicio)
+            from app.core import role_config
+            role_config.invalidate()
 
 
 async def limpar(inicio: datetime) -> None:
@@ -148,6 +150,8 @@ async def limpar(inicio: datetime) -> None:
         await db.execute(text("DELETE FROM posts WHERE slug LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM organizations WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM villages WHERE id LIKE :p"), {"p": f"{SLUG}%"})
+        await db.execute(text("DELETE FROM notices WHERE title LIKE :p"), {"p": f"{SLUG}%"})
+        await db.execute(text("DELETE FROM role_permissions"))
         # Apaga o log ANTES dos usuarios de teste. Por user_id (e nao so' pelo nome): o teste do login
         # do Discord RENOMEIA usuarios, e linhas de log de quem foi renomeado nao casam mais com "TESTE_%".
         ids_teste = select(User.id).where(User.discord_id.in_([int(x) for x in TESTE_IDS_TEXTO]))
@@ -240,33 +244,31 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("Creator passa da checagem de permissao do upload (415/400, nao 401/403)", r.status_code in (400, 415), f"veio {r.status_code}")
 
     # ------------------------------------------------------------------
-    secao("5) Equipe: hierarquia (Adm so' mexe em Creator)")
+    secao("5) Equipe: so' o S.Adm (Adm e Creator recebem 404, como se a parte Equipe nao existisse)")
     r = await c.get("/staff", headers=C)
-    check("Creator NAO lista equipe (403)", r.status_code == 403)
+    check("Creator NAO lista equipe (404)", r.status_code == 404)
     r = await c.get("/staff", headers=A)
-    check("Adm lista equipe (200)", r.status_code == 200)
+    check("Adm NAO lista equipe (404)", r.status_code == 404)
     r = await c.post("/staff", json={"discordId": str(BASE + 8), "role": "creator", "username": "TESTE_novo"}, headers=A)
-    check("Adm cadastra Creator (201)", r.status_code == 201, f"veio {r.status_code} {r.text[:100]}")
-    novo_id = r.json().get("id")
-    r = await c.post("/staff", json={"discordId": str(BASE + 9), "role": "admin"}, headers=A)
-    check("Adm NAO cadastra Adm (403)", r.status_code == 403)
-    r = await c.post("/staff", json={"discordId": str(BASE + 9), "role": "super_admin"}, headers=A)
-    check("Adm NAO cadastra S.Adm (403)", r.status_code == 403)
-    r = await c.post("/staff", json={"discordId": str(BASE + 8), "role": "creator"}, headers=A)
-    check("Discord ID repetido (409)", r.status_code == 409)
-    r = await c.post("/staff", json={"discordId": "abc", "role": "creator"}, headers=A)
-    check("Discord ID invalido (422)", r.status_code == 422)
+    check("Adm NAO cadastra Creator (404)", r.status_code == 404)
     r = await c.post("/staff", json={"discordId": "123456789012345678", "role": "creator", "username": "x"}, headers=C)
-    check("Creator NAO cadastra ninguem (403)", r.status_code == 403)
+    check("Creator NAO cadastra ninguem (404)", r.status_code == 404)
+    r = await c.get("/staff", headers=S)
+    check("S.Adm lista equipe (200)", r.status_code == 200)
+    r = await c.post("/staff", json={"discordId": str(BASE + 8), "role": "creator", "username": "TESTE_novo"}, headers=S)
+    check("S.Adm cadastra Creator (201)", r.status_code == 201, f"veio {r.status_code} {r.text[:100]}")
+    novo_id = r.json().get("id")
+    r = await c.post("/staff", json={"discordId": str(BASE + 8), "role": "creator"}, headers=S)
+    check("Discord ID repetido (409)", r.status_code == 409)
+    r = await c.post("/staff", json={"discordId": "abc", "role": "creator"}, headers=S)
+    check("Discord ID invalido (422)", r.status_code == 422)
     r = await c.patch(f"/staff/{novo_id}/role", json={"role": "admin"}, headers=A)
-    check("Adm NAO promove Creator a Adm (403)", r.status_code == 403)
-    r = await c.patch(f"/staff/{adm2.id}/role", json={"role": "creator"}, headers=A)
-    check("Adm NAO rebaixa outro Adm (403)", r.status_code == 403)
+    check("Adm NAO promove ninguem (404)", r.status_code == 404)
     r = await c.post(f"/staff/{adm2.id}/deactivate", headers=A)
-    check("Adm NAO desativa outro Adm (403)", r.status_code == 403)
+    check("Adm NAO desativa outro Adm (404)", r.status_code == 404)
     r = await c.post(f"/staff/{sadm.id}/deactivate", headers=A)
-    check("Adm NAO desativa S.Adm (403)", r.status_code == 403)
-    r = await c.patch(f"/staff/{adm.id}/role", json={"role": "creator"}, headers=A)
+    check("Adm NAO desativa S.Adm (404)", r.status_code == 404)
+    r = await c.patch(f"/staff/{sadm.id}/role", json={"role": "creator"}, headers=S)
     check("Ninguem altera a si mesmo (400)", r.status_code == 400)
 
     # ------------------------------------------------------------------
@@ -274,12 +276,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     C2 = cookie(creator2)
     r = await c.get("/auth/me", headers=C2)
     check("Creator2 esta logado (200)", r.status_code == 200)
-    r = await c.post(f"/staff/{creator2.id}/deactivate", headers=A)
-    check("Adm desativa Creator (200)", r.status_code == 200)
+    r = await c.post(f"/staff/{creator2.id}/deactivate", headers=S)
+    check("S.Adm desativa Creator (200)", r.status_code == 200)
     r = await c.get("/auth/me", headers=C2)
     check("sessao do desativado morre imediatamente (401)", r.status_code == 401)
-    r = await c.post(f"/staff/{creator2.id}/activate", headers=A)
-    check("Adm reativa Creator (200)", r.status_code == 200)
+    r = await c.post(f"/staff/{creator2.id}/activate", headers=S)
+    check("S.Adm reativa Creator (200)", r.status_code == 200)
     r = await c.get("/auth/me", headers=C2)
     check("token ANTIGO continua invalido apos reativar (401)", r.status_code == 401)
     r = await c.get("/auth/me", headers=cookie(await recarregar(creator2)))
@@ -382,23 +384,25 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}", headers={"X-Bot-Token": "errado"})
     check("token do bot errado (401)", r.status_code == 401)
     r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}", headers=B)
-    check("bot + invoker Adm lista equipe (200)", r.status_code == 200)
+    check("bot + invoker Adm NAO lista equipe (403) - Equipe e' so' do S.Adm", r.status_code == 403)
+    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['sadm']}", headers=B)
+    check("bot + invoker S.Adm lista equipe (200)", r.status_code == 200)
     r = await c.get(f"/bot/staff?invokerDiscordId={IDS['creator']}", headers=B)
     check("bot + invoker Creator NAO lista (403)", r.status_code == 403)
     r = await c.get(f"/bot/staff?invokerDiscordId={BASE + 20}", headers=B)
     check("bot + invoker que nao e' da equipe (403)", r.status_code == 403)
     r = await c.get(f"/bot/staff?invokerDiscordId={IDS['inativo']}", headers=B)
     check("bot + invoker desativado (403)", r.status_code == 403)
-    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["adm"]), "discordId": str(BASE + 12), "role": "creator", "username": "TESTE_bot"}, headers=B)
-    check("bot cadastra Creator pelo Adm (201)", r.status_code == 201, f"veio {r.status_code} {r.text[:100]}")
-    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["adm"]), "discordId": str(BASE + 13), "role": "admin"}, headers=B)
-    check("bot NAO deixa Adm cadastrar Adm (403) - mesma regra do painel", r.status_code == 403)
+    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["sadm"]), "discordId": str(BASE + 12), "role": "creator", "username": "TESTE_bot"}, headers=B)
+    check("bot cadastra Creator pelo S.Adm (201)", r.status_code == 201, f"veio {r.status_code} {r.text[:100]}")
+    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["adm"]), "discordId": str(BASE + 13), "role": "creator"}, headers=B)
+    check("bot NAO deixa Adm cadastrar ninguem (403) - mesma regra do painel", r.status_code == 403)
     r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["creator"]), "discordId": str(BASE + 13), "role": "creator"}, headers=B)
     check("bot NAO deixa Creator cadastrar ninguem (403)", r.status_code == 403)
-    r = await c.post(f"/bot/staff/{BASE + 12}/deactivate", json={"invokerDiscordId": str(IDS["adm"])}, headers=B)
+    r = await c.post(f"/bot/staff/{BASE + 12}/deactivate", json={"invokerDiscordId": str(IDS["sadm"])}, headers=B)
     check("bot desativa Creator (200)", r.status_code == 200 and r.json()["isActive"] is False)
     r = await c.post(f"/bot/staff/{IDS['sadm']}/deactivate", json={"invokerDiscordId": str(IDS["adm"])}, headers=B)
-    check("bot NAO deixa Adm desativar S.Adm (403)", r.status_code == 403)
+    check("bot NAO deixa Adm desativar ninguem (403)", r.status_code == 403)
     r = await c.get("/audit-log?source=bot&limit=50", headers=S)
     check("acoes do bot ficam marcadas source=bot no log", len(r.json()) >= 2 and all(e["source"] == "bot" for e in r.json()))
 
@@ -481,8 +485,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         base = {"id": vid, "name": "TESTE Village", "namePt": "TESTE Vila", "element": "Fire", "motto": "lema", "description": "d",
                 "longDescription": "texto", "emblem": "🔥", "image": None, "accentColor": "#112233", "climate": "quente",
                 "leader": "Alguem", "mapX": 10, "mapY": 20,
-                "clans": [{"id": f"{SLUG}-cla-a", "name": "Clan A", "levelRequirement": 5, "priceRyo": 100, "description": "a"},
-                          {"id": f"{SLUG}-cla-b", "name": "Clan B", "levelRequirement": 6, "priceRyo": 200, "description": "b"}]}
+                "clans": [{"id": f"{SLUG}-cla-a", "name": "Clan A", "description": "a"},
+                          {"id": f"{SLUG}-cla-b", "name": "Clan B", "description": "b"}]}
         return {**base, **extra}
     r = await c.post("/villages", json=vila())
     check("anonimo NAO cria vila (401)", r.status_code == 401)
@@ -496,17 +500,17 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     for nome, extra in [("cor invalida (so' hex)", {"accentColor": "red"}), ("id de vila fora do formato slug", {"id": "Vila Ruim"}),
                         ("longDescription com <script", {"longDescription": "<script>alert(1)</script>"}),
                         ("mapX fora de 0-100", {"mapX": 500}),
-                        ("dois clas com o mesmo id", {"clans": [{"id": "x-1", "name": "a", "levelRequirement": 1, "priceRyo": 1}, {"id": "x-1", "name": "b", "levelRequirement": 1, "priceRyo": 1}]}),
-                        ("clan com preco negativo", {"clans": [{"id": "x-2", "name": "a", "levelRequirement": 1, "priceRyo": -5}]})]:
+                        ("dois clas com o mesmo id", {"clans": [{"id": "x-1", "name": "a"}, {"id": "x-1", "name": "b"}]}),
+                        ("clan com imagem gigante (url > 500)", {"clans": [{"id": "x-2", "name": "a", "image": "x" * 600}]})]:
         r = await c.post("/villages", json=vila(**({"id": f"{SLUG}-v2"} | extra)), headers=A)
         check(f"validacao: {nome} (422)", r.status_code == 422, f"veio {r.status_code}")
     r = await c.put(f"/villages/{vid}", json=vila(name="TESTE Village 2", clans=[
-        {"id": f"{SLUG}-cla-a", "name": "Clan A editado", "levelRequirement": 7, "priceRyo": 150, "description": "a"},
-        {"id": f"{SLUG}-cla-c", "name": "Clan C", "levelRequirement": 1, "priceRyo": 1, "description": "c"}]), headers=C)
+        {"id": f"{SLUG}-cla-a", "name": "Clan A editado", "description": "a"},
+        {"id": f"{SLUG}-cla-c", "name": "Clan C", "description": "c"}]), headers=C)
     check("Creator NAO edita vila (403)", r.status_code == 403)
     r = await c.put(f"/villages/{vid}", json=vila(name="TESTE Village 2", clans=[
-        {"id": f"{SLUG}-cla-a", "name": "Clan A editado", "levelRequirement": 7, "priceRyo": 150, "description": "a"},
-        {"id": f"{SLUG}-cla-c", "name": "Clan C", "levelRequirement": 1, "priceRyo": 1, "description": "c"}]), headers=A)
+        {"id": f"{SLUG}-cla-a", "name": "Clan A editado", "description": "a"},
+        {"id": f"{SLUG}-cla-c", "name": "Clan C", "description": "c"}]), headers=A)
     nomes = {cl["id"].rsplit("-", 1)[1]: cl["name"] for cl in r.json().get("clans", [])}
     check("Adm edita a vila (200)", r.status_code == 200 and r.json()["name"] == "TESTE Village 2", r.text[:150])
     check("clas sincronizados: A editado, B removido, C novo", nomes == {"a": "Clan A editado", "c": "Clan C"}, str(nomes))
@@ -514,7 +518,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("id da vila nao pode ser alterado (400)", r.status_code == 400)
     r = await c.put(f"/villages/{SLUG}-nao-existe", json=vila(id=f"{SLUG}-nao-existe"), headers=A)
     check("editar vila inexistente (404)", r.status_code == 404)
-    r = await c.post("/villages", json=vila(id=f"{SLUG}-v3", clans=[{"id": f"{SLUG}-cla-a", "name": "roubado", "levelRequirement": 1, "priceRyo": 1}]), headers=A)
+    r = await c.post("/villages", json=vila(id=f"{SLUG}-v3", clans=[{"id": f"{SLUG}-cla-a", "name": "roubado"}]), headers=A)
     check("clan que ja' pertence a OUTRA vila e' recusado (409)", r.status_code == 409)
     check("...e essa vila nao ficou criada pela metade", (await c.get(f"/villages/{SLUG}-v3")).status_code == 404)
 
@@ -689,7 +693,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         # -- token do bot: forca bruta --
         settings.bot_api_token = "token-de-teste-do-bot-1234567890"
         certo = {"X-Bot-Token": settings.bot_api_token}
-        consulta = f"/bot/staff?invokerDiscordId={IDS['adm']}"
+        consulta = f"/bot/staff?invokerDiscordId={IDS['sadm']}"
         async with cliente("198.51.100.15") as x:
             codigos = [(await x.get(consulta, headers={"X-Bot-Token": f"chute-{i}"})).status_code for i in range(10)]
             check("bot: 10 tokens errados dao 401", codigos == [401] * 10, str(codigos))
@@ -708,6 +712,150 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     finally:
         limiter._time = time.monotonic
         limiter.reset()
+
+    secao("16) Cargos editaveis pelo painel (so' S.Adm) e imagem do cla'")
+    from app.api import notices as notices_api
+    from app.core import role_config
+    for quem, h in (("Creator", C), ("Adm", A)):
+        r = await c.get("/roles/permissions", headers=h)
+        check(f"{quem} NAO enxerga a tela de cargos (404)", r.status_code == 404)
+        r = await c.put("/roles/creator/permissions", json={"permissions": ["notices.manage"]}, headers=h)
+        check(f"{quem} NAO edita permissoes (404)", r.status_code == 404)
+    r = await c.get("/roles/permissions", headers=S)
+    ok = r.status_code == 200
+    check("S.Adm ve o catalogo de permissoes (200)", ok)
+    visao = r.json() if ok else {"roles": [], "permissions": []}
+    check("catalogo marca as permissoes exclusivas do S.Adm", {p["name"] for p in visao["permissions"] if p["superOnly"]} >= {"staff.view", "roles.manage", "audit.view_all"})
+    check("S.Adm aparece como nao editavel", any(x["role"] == "super_admin" and not x["editable"] for x in visao["roles"]))
+    r = await c.put("/roles/super_admin/permissions", json={"permissions": []}, headers=S)
+    check("S.Adm NAO pode ser editado (400)", r.status_code == 400)
+    r = await c.put("/roles/admin/permissions", json={"permissions": ["staff.view"]}, headers=S)
+    check("nao da' pra dar permissao exclusiva do S.Adm a um Adm (400)", r.status_code == 400)
+    r = await c.put("/roles/admin/permissions", json={"permissions": ["roles.manage"]}, headers=S)
+    check("nem a de gerenciar cargos (400)", r.status_code == 400)
+    r = await c.put("/roles/admin/permissions", json={"permissions": ["inventada.x"]}, headers=S)
+    check("permissao desconhecida (422)", r.status_code == 422)
+    r = await c.put("/roles/admin/permissions", json={"permissions": ["content.create"]}, headers=C)
+    check("Creator NAO se da' permissao (404)", r.status_code == 404)
+
+    # -- editar de verdade: tirar do Adm, dar ao Creator --
+    me = (await c.get("/auth/me", headers=A)).json()["permissions"]
+    check("antes: Adm tem content.delete", "content.delete" in me)
+    sem_delete = [p for p in me if p != "content.delete"]
+    r = await c.put("/roles/admin/permissions", json={"permissions": sem_delete}, headers=S)
+    check("S.Adm tira content.delete do Adm (200)", r.status_code == 200, r.text[:100])
+    me = (await c.get("/auth/me", headers=A)).json()["permissions"]
+    check("na HORA: /auth/me do Adm nao lista mais content.delete", "content.delete" not in me)
+    r = await c.post("/content-items/bulk-delete", json={"ids": []}, headers=A)
+    check("na HORA: Adm leva 403 em rota que exige content.delete", r.status_code == 403, f"{r.status_code}")
+    r = await c.post("/notices", json={"title": f"{SLUG}-x"}, headers=C)
+    check("antes: Creator NAO posta aviso (403)", r.status_code == 403)
+    me_c = (await c.get("/auth/me", headers=C)).json()["permissions"]
+    r = await c.put("/roles/creator/permissions", json={"permissions": me_c + ["notices.manage"]}, headers=S)
+    check("S.Adm da' notices.manage ao Creator (200)", r.status_code == 200)
+    r = await c.post("/notices", json={"title": f"{SLUG}-do-creator"}, headers=C)
+    check("depois: Creator posta aviso (201)", r.status_code == 201, f"{r.status_code}")
+    r = await c.get("/audit-log?entityType=roles&limit=5", headers=S)
+    check("a mudanca de permissoes fica no log (S.Adm ve)", r.status_code == 200 and len(r.json()) >= 2 and r.json()[0]["diff"] is not None)
+    r = await c.get("/audit-log?entityType=roles&limit=5", headers=A)
+    check("...e o Adm nao enxerga esse log", r.status_code == 200 and r.json() == [])
+    for papel in ("admin", "creator"):
+        r = await c.post(f"/roles/{papel}/permissions/reset", headers=S)
+        check(f"reset de {papel} volta ao padrao (200)", r.status_code == 200)
+    me = (await c.get("/auth/me", headers=A)).json()["permissions"]
+    check("depois do reset o Adm volta a ter content.delete", "content.delete" in me)
+    r = await c.post("/notices", json={"title": f"{SLUG}-y"}, headers=C)
+    check("depois do reset o Creator NAO posta mais (403)", r.status_code == 403)
+    # outra instancia da API (cache velho): relê o banco sozinha depois do TTL
+    async with AsyncSessionLocal() as db:
+        from app.models.roles import RolePermission
+        db.add(RolePermission(role=StaffRole.CREATOR, permission="notices.manage", granted=True))
+        await db.commit()
+    role_config.invalidate()
+    r = await c.post("/notices", json={"title": f"{SLUG}-z"}, headers=C)
+    check("ajuste gravado direto no banco vale apos o cache expirar", r.status_code == 201, f"{r.status_code}")
+    async with AsyncSessionLocal() as db:
+        await db.execute(text("DELETE FROM role_permissions"))
+        await db.commit()
+    role_config.invalidate()
+
+    # -- Quadro de avisos --
+    r = await c.get("/notices")
+    check("anonimo NAO le avisos (401)", r.status_code == 401)
+    r = await c.get("/notices", headers=C)
+    check("Creator le avisos (200)", r.status_code == 200)
+    r = await c.post("/notices", json={"title": ""}, headers=A)
+    check("aviso sem titulo (422)", r.status_code == 422)
+    r = await c.post("/notices", json={"title": f"{SLUG}-aviso", "body": "linha1\nlinha2", "pinned": True}, headers=A)
+    check("Adm posta aviso (201)", r.status_code == 201)
+    nid = r.json().get("id")
+    check("aviso guarda o nome de quem postou", r.json().get("authorName") == "TESTE_adm")
+    r = await c.post("/notices", json={"title": f"{SLUG}-aviso-s"}, headers=S)
+    check("S.Adm posta aviso (201)", r.status_code == 201)
+    r = await c.put(f"/notices/{nid}", json={"title": f"{SLUG}-aviso2", "body": "novo", "pinned": False}, headers=C)
+    check("Creator NAO edita aviso (403)", r.status_code == 403)
+    r = await c.put(f"/notices/{nid}", json={"title": f"{SLUG}-aviso2", "body": "novo", "pinned": True}, headers=A)
+    check("Adm edita aviso (200)", r.status_code == 200 and r.json()["title"].endswith("aviso2"))
+    r = await c.post(f"/notices/{nid}/files", files={"file": ("regras.pdf", b"%PDF-1.4 teste", "application/pdf")}, headers=C)
+    check("Creator NAO anexa arquivo (403)", r.status_code == 403)
+    r = await c.post(f"/notices/{nid}/files", files={"file": ("regras.pdf", b"%PDF-1.4 teste", "application/pdf")}, headers=A)
+    check("Adm anexa arquivo (201)", r.status_code == 201 and len(r.json()["files"]) == 1, r.text[:100])
+    fid = r.json()["files"][0]["id"] if r.status_code == 201 else None
+    r = await c.post(f"/notices/{nid}/files", files={"file": ("../../etc/passwd.txt", b"abc", "text/plain")}, headers=A)
+    nomes = [f["filename"] for f in r.json().get("files", [])]
+    check("nome com ../ vira so' o nome do arquivo", "passwd.txt" in nomes and not any("/" in n for n in nomes), str(nomes))
+    for ruim in ("virus.exe", "pagina.html", "x.svg", "run.sh"):
+        r = await c.post(f"/notices/{nid}/files", files={"file": (ruim, b"abc", "text/plain")}, headers=A)
+        check(f"anexo {ruim} e' recusado (415)", r.status_code == 415)
+    r = await c.post(f"/notices/{nid}/files", files={"file": ("vazio.txt", b"", "text/plain")}, headers=A)
+    check("arquivo vazio (400)", r.status_code == 400)
+    antigo = settings.max_notice_file_mb
+    settings.max_notice_file_mb = 1
+    r = await c.post(f"/notices/{nid}/files", files={"file": ("grande.bin", b"x" * (1024 * 1024 + 1), "application/octet-stream")}, headers=A)
+    settings.max_notice_file_mb = antigo
+    check("arquivo acima do limite (413)", r.status_code == 413)
+    r = await c.get(f"/notices/files/{fid}")
+    check("anonimo NAO baixa arquivo (401)", r.status_code == 401)
+    r = await c.get(f"/notices/files/{fid}", headers=C)
+    check("Creator baixa o arquivo (200, conteudo igual)", r.status_code == 200 and r.content == b"%PDF-1.4 teste")
+    check("...sempre como download (attachment + octet-stream + nosniff)",
+          "attachment" in r.headers.get("content-disposition", "") and "regras.pdf" in r.headers.get("content-disposition", "")
+          and r.headers.get("content-type") == "application/octet-stream" and r.headers.get("x-content-type-options") == "nosniff")
+    r = await c.get("/uploads/regras.pdf")
+    check("arquivo da equipe NAO esta' na pasta publica", r.status_code == 404)
+    r = await c.get("/notices", headers=C)
+    lista = r.json()
+    ours = [n for n in lista if n["title"].startswith(SLUG)]
+    check("lista traz fixados primeiro", lista[0]["pinned"] is True or not any(n["pinned"] for n in lista))
+    check("lista inclui os anexos", any(n["id"] == nid and len(n["files"]) >= 2 for n in ours))
+    r = await c.delete(f"/notices/{nid}/files/{fid}", headers=C)
+    check("Creator NAO remove anexo (403)", r.status_code == 403)
+    r = await c.delete(f"/notices/{nid}/files/{fid}", headers=A)
+    check("Adm remove anexo (200)", r.status_code == 200 and all(f["id"] != fid for f in r.json()["files"]))
+    r = await c.get(f"/notices/files/{fid}", headers=C)
+    check("anexo removido nao baixa mais (404)", r.status_code == 404)
+    antes = set(p.name for p in notices_api.FILES_DIR.iterdir())
+    r = await c.delete(f"/notices/{nid}", headers=C)
+    check("Creator NAO apaga aviso (403)", r.status_code == 403)
+    r = await c.delete(f"/notices/{nid}", headers=A)
+    check("Adm apaga aviso (204)", r.status_code == 204)
+    depois = set(p.name for p in notices_api.FILES_DIR.iterdir())
+    check("apagar o aviso apaga os arquivos do disco", len(depois) < len(antes), f"{len(antes)} -> {len(depois)}")
+    r = await c.get("/audit-log?entityType=notice&limit=20", headers=A)
+    check("avisos aparecem no log de conteudo (Adm ve)", r.status_code == 200 and len(r.json()) >= 3)
+
+    # -- imagem no cla' (no lugar de nivel/ryo) --
+    vid16 = f"{SLUG}-v16"
+    corpo = {"id": vid16, "name": "TESTE V16", "element": "Fire", "emblem": "🔥", "accentColor": "#112233",
+             "clans": [{"id": f"{SLUG}-cla-img", "name": "Com imagem", "description": "d", "image": "http://x/y.png"},
+                       {"id": f"{SLUG}-cla-sem", "name": "Sem imagem"}]}
+    r = await c.post("/villages", json=corpo, headers=A)
+    check("cla' com imagem e sem imagem salvam (201)", r.status_code == 201, r.text[:150])
+    cl = {x["id"]: x for x in r.json().get("clans", [])}
+    check("imagem do cla' volta na API", cl.get(f"{SLUG}-cla-img", {}).get("image") == "http://x/y.png")
+    check("cla' nao tem mais nivel nem preco", all("levelRequirement" not in x and "priceRyo" not in x for x in cl.values()))
+    check("cla' sem imagem fica com image = null", cl.get(f"{SLUG}-cla-sem", {}).get("image") is None)
+    await c.delete(f"/villages/{vid16}", headers=A)
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []

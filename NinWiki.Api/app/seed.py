@@ -127,8 +127,7 @@ async def seed_clans(session, data: list[dict]) -> None:
     for c in data:
         session.add(Clan(
             id=c["id"], name=c["name"], village_id=c["villageId"],
-            level_requirement=c["levelRequirement"], price_ryo=c["priceRyo"],
-            description=c["description"],
+            description=c["description"], image=c.get("image"),
         ))
 
 

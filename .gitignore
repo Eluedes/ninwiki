@@ -72,6 +72,8 @@ NinWiki.Api/seed_data.json
 # Imagens enviadas via upload pelo painel admin (app/api/uploads.py) -
 # sao dado de usuario, nao codigo, nao devem ir pro repositorio
 NinWiki.Api/uploads/
+# Arquivos anexados aos avisos da equipe (app/api/notices.py) - privados, nao vao pro Git.
+NinWiki.Api/staff_files/
 
 # ==========================================
 # NinWiki.Bot (Python / discord.py)

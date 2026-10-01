@@ -10,6 +10,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { listContentItems, listJutsus, listAuditLog, listPosts, listStaff, type ApiAuditLogEntry, type ApiContentItemSummary } from '@/lib/api-client';
 import { FileText, Boxes, Users, Zap, Loader2, Plus, Pencil, Trash2, History, Send, FileEdit, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { NoticeBoard } from '@/components/admin/notice-board';
 import { cn } from '@/lib/utils';
 
 // Quantos dias sem edicao pra uma entry contar como "desatualizada" -
@@ -90,6 +91,9 @@ export default function AdminOverviewPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">{dict.admin.overview.title}</h1>
+
+      {/* Quadro de avisos da equipe (Adm/S.Adm postam e anexam arquivos; todos leem e baixam) */}
+      {can('notices.view') && <NoticeBoard />}
 
       {/* Cards de estatistica - todo dashboard precisa disso: um
           resumo numerico rapido, sem precisar entrar em cada secao. */}
