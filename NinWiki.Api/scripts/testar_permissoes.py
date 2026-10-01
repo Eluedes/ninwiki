@@ -1393,6 +1393,13 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
               args["sslmode"] == "verify-ca" and all(args[k].startswith("/") for k in ("sslrootcert", "sslcert", "sslkey")), str(args))
         check("libpq: verify-full quando pedir verificacao do nome do servidor",
               db_ssl.libpq_args(*paths, verify_hostname=True)["sslmode"] == "verify-full")
+    with tempfile.TemporaryDirectory() as tmp:  # chave com permissao aberta (0644) vira copia 0600 para o libpq
+        chave = _P(tmp) / "k.key"
+        chave.write_text("x")
+        chave.chmod(0o644)
+        usada = db_ssl.private_key_for_libpq(str(chave))
+        check("chave 0644 vira copia privada 0600 (o libpq recusaria a original)",
+              usada != str(chave) and (_P(usada).stat().st_mode & 0o077) == 0)
     try:
         db_ssl.libpq_args("nao/existe.crt", "nao/existe.pem", "nao/existe.key")
         check("certificado inexistente erra alto", False)

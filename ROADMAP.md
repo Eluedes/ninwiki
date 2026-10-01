@@ -451,7 +451,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   (`/team ...`, log, alertas) em inglês. **Idioma escolhido fica salvo** (antes cada página voltava para inglês). Script
   `scripts/traduzir_para_ingles.py` converte conteúdo antigo em português (DeepL PT→EN, simulação por padrão)
 - ⬜ Rate limit com **Redis** se um dia houver mais de uma instância (hoje é por processo — exato com uma instância só)
-- ⬜ Cloudflare (WAF/proxy) na frente — recomendado, ver README 3.7
+- ⬜ Cloudflare (WAF/proxy) na frente — recomendado, ver README 3.8
 
 ## Fase 7 — Deploy
 - ✅ **Preparação para a SquareCloud (01/10)**: `README.md` na raiz (rodar local, usar o painel, passo a passo do
@@ -468,10 +468,10 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   externo (S3/R2)
 - ⬜ Cloudflare (WAF, proxy, DNS) — ao ligar, usar `TRUST_PROXY_HEADERS=true`
 - ✅ **Levar o banco do Docker para a SquareCloud (01/10)**: `NinWiki.Api/scripts/migrar_banco.py exportar|importar` (round-trip testado:
-  15 entries e a versão do Alembic preservadas); passo a passo no README 3.2
+  15 entries e a versão do Alembic preservadas); passo a passo no README 3.3 e 3.4
 - ✅ **Banco da SquareCloud com certificados TLS de cliente (01/10)**: `DATABASE_SSL_CA/CERT/KEY` (asyncpg + Alembic), `scripts/migrar_banco.py`
   com `--ssl-*` (importar e exportar remoto), Secrets `DB_SSL_*` no deploy da API; testado ponta a ponta com uma CA local e
-  Postgres `hostssl ... cert`. Tutorial no README 3.2
+  Postgres `hostssl ... cert`. Tutorial no README 3.3 a 3.6
 - ✅ **Correção do build da SquareCloud (01/10)**: `unrs-resolver install scripts blocked` → `allowScripts` no `package.json` do site
 - ⬜ Schema de banco separado por ambiente (`public` / `beta_ninwiki`, mesmo padrão do Guima)
 

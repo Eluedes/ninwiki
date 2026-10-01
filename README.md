@@ -144,173 +144,230 @@ O português antigo vai para o campo `_pt` e a tradução em inglês vira o camp
 - Cabeçalhos de segurança + **CSP** + HSTS no site e na API; corpo de requisição limitado (413); uploads com limite de pixels.
 - Texto rico validado no servidor (só blocos/formatações permitidos, links `javascript:` recusados) e filtro no "colar" do editor.
 - Honestidade: conteúdo **público** precisa ser legível por qualquer visitante, então ninguém impede 100% a cópia por um robô
-  decidido — o que se faz é torná-la lenta e cara, e proteger o servidor. Com a **Cloudflare** na frente (ver 3.7) fica bem melhor.
+  decidido — o que se faz é torná-la lenta e cara, e proteger o servidor. Com a **Cloudflare** na frente (ver 3.8) fica bem melhor.
 
 ---
 
-## 3. Hospedar na SquareCloud
+## 3. Hospedar na SquareCloud (com o deploy automático do GitHub)
 
-A SquareCloud hospeda **cada projeto como um app separado**: 2 apps obrigatórios (API e site), 1 opcional (bot) e 1 banco
-PostgreSQL. **Ela não executa Docker** — o `docker-compose.yml` é só para o seu computador; na nuvem o banco é o
-*Databases → PostgreSQL* da SquareCloud (ou Neon/Supabase), e os dados do seu Postgres local são levados por backup (3.2).
+Este é o passo a passo **completo, do zero até o site no ar**, usando os **workflows do GitHub Actions** para enviar o
+código. Você **não precisa** ter Python, Node nem Docker para publicar: o GitHub monta o pacote e manda para a SquareCloud.
+(Docker só serve, no seu computador, para levar o conteúdo que você já tem localmente — passo 3.4.)
 
-### 3.0 Decisões importantes
-1. **Domínio próprio com subdomínios** (`wiki.seudominio.com` = site, `api.seudominio.com` = API). O login usa cookie
-   `SameSite=Lax`: site e API precisam estar no **mesmo site** ou o login não persiste. Em cada app: *Custom Domain*.
-2. **Imagens e arquivos da equipe ficam em disco** (`NinWiki.Api/uploads` e `NinWiki.Api/staff_files`). Um redeploy pode
-   apagar essas pastas → baixe-as antes (painel do app → *Files*) ou use um armazenamento externo no futuro.
-3. Segredos ficam no `.env` **dentro do zip enviado** ou nos Secrets do GitHub (3.5) — nunca no Git.
+### 3.0 Visão geral — o que vai existir no final
 
-### 3.1 Gerar os segredos
+| Peça | Onde roda | Endereço | Obrigatória |
+|---|---|---|---|
+| Banco PostgreSQL | *Databases* da SquareCloud | interno (host/porta + certificados) | sim |
+| **API** (`NinWiki.Api`) | app da SquareCloud | `https://api.seudominio.com` | sim |
+| **Site** (`NinWiki.Web`) | app da SquareCloud | `https://wiki.seudominio.com` | sim |
+| **Bot** (`NinWiki.Bot`) | app da SquareCloud | — (não tem endereço) | não |
+
+Como funciona o ciclo: você **empurra o código para o GitHub** → abre *Actions → Deploy ... → Run workflow* → o GitHub
+zipa a pasta, grava o `.env` e os certificados **só dentro do zip** (vindos dos *Secrets*, nunca do Git) e envia para o app
+na SquareCloud, que reinicia. A API, ao iniciar, aplica sozinha as migrações do banco.
+
+**Ordem do passo a passo:** 3.1 contas e segredos → 3.2 Discord → 3.3 banco → 3.4 (opcional) levar seu conteúdo local →
+3.5 criar os apps na SquareCloud → 3.6 GitHub Secrets → 3.7 rodar os workflows → 3.8 domínios → 3.9 conferir → depois, 3.10 no dia a dia.
+
+> ⚠️ **Domínio próprio é obrigatório.** O login usa cookie `SameSite=Lax`: o site e a API precisam estar no **mesmo site**
+> (`wiki.seudominio.com` + `api.seudominio.com`). Com os endereços gratuitos `*.squareweb.app` o navegador trata os dois
+> como sites diferentes e **o login não funciona**. O recurso de domínio personalizado pode depender do plano da SquareCloud — confira no painel.
+
+### 3.1 Antes de começar: contas e segredos
+Você vai precisar de:
+- conta na **SquareCloud** com plano que comporte 2–3 apps + 1 banco (API 512 MB, site 1024 MB, bot 256 MB);
+- um **domínio** (ex.: `seudominio.com`) — de preferência com DNS na **Cloudflare** (3.8);
+- este repositório no **GitHub** (você já tem) com permissão para criar *Secrets* e rodar *Actions*;
+- uma **aplicação no Discord Developer Portal** (3.2).
+
+Gere os dois segredos (rode 2×; **guarde os valores**, são senhas):
 ```bash
-python -c "import secrets; print(secrets.token_urlsafe(48))"   # rode 2x: JWT_SECRET_KEY e BOT_API_TOKEN
+python -c "import secrets; print(secrets.token_urlsafe(48))"   # 1º = JWT_SECRET_KEY   2º = BOT_API_TOKEN
 ```
+(Sem Python à mão? Qualquer gerador de senha com 48+ caracteres aleatórios serve.)
 
-### 3.2 Banco: criar na SquareCloud, ligar a API a ele e levar o conteúdo do seu Docker
+### 3.2 Discord: aplicação do login (e do bot)
+1. <https://discord.com/developers/applications> → **New Application** (o nome aparece na tela de autorização).
+2. **OAuth2** → copie **Client ID** e **Client Secret** (*Reset Secret* se precisar) → vão para `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET`.
+3. **OAuth2 → Redirects** → *Add Redirect*: `https://api.seudominio.com/auth/discord/callback` (idêntico ao `DISCORD_REDIRECT_URI`;
+   esse mesmo endereço serve ao login da equipe **e** ao dos leitores do blog). Salve.
+4. Seu **Discord ID** (vai em `SUPER_ADMIN_DISCORD_IDS`): Discord → Configurações → Avançado → *Modo Desenvolvedor* → botão
+   direito no seu nome → *Copiar ID do usuário*.
+5. **Só se for usar o bot:** aba **Bot** → *Reset Token* (vai em `DISCORD_BOT_TOKEN`; **não** é o Client Secret) → convide o bot
+   ao seu servidor em *OAuth2 → URL Generator* (scopes `bot` e `applications.commands`; permissões *Ver canais*, *Enviar mensagens*, *Inserir links*).
 
-A SquareCloud protege o PostgreSQL com **certificados TLS de cliente** (a conexão só abre para quem apresenta o certificado).
-Você baixa 3 arquivos no painel e a API/o script de migração usam eles — sem certificado a conexão é recusada.
+### 3.3 Banco: criar o PostgreSQL na SquareCloud e baixar os certificados
+A SquareCloud protege o PostgreSQL com **certificados TLS de cliente**: a conexão só abre para quem apresenta o certificado.
+1. Painel da SquareCloud → *Databases* → **Create** → PostgreSQL → crie.
+2. Abra o banco e anote **host, porta, usuário, senha e nome do banco**.
+3. Na mesma tela baixe os **3 arquivos**: **Certificate CA** (`.crt`), **PEM** (`.pem`) e **Private Key** (`.key`).
+   > ⚠️ São como uma senha: **nunca** vão para o Git (o `.gitignore` já ignora `certs/`, `*.pem` e `*.key`).
+4. Você vai usá-los em **dois lugares**: nos *Secrets* do GitHub (3.6, para a API publicada) e, se for migrar dados do seu
+   computador, numa pasta local `NinWiki.Api/certs/` (3.4).
 
-**Passo 1 — Criar o banco**
-1. Painel da SquareCloud → *Databases* → **Create** → PostgreSQL (escolha o plano) → crie.
-2. Abra o banco → aba de conexão. Anote **host, porta, usuário, senha e nome do banco**.
-3. Na mesma tela baixe os **3 certificados**: o da autoridade (**CA**, `.crt`), o do cliente (**`.pem`**) e a **chave privada** (`.key`).
-   > ⚠️ Esses arquivos são como uma senha: **nunca** vão para o Git (o `.gitignore` já ignora `certs/`, `*.pem` e `*.key`).
-
-**Passo 2 — Guardar os certificados no projeto (só na sua máquina)**
-```
-NinWiki.Api/certs/ca.crt        # certificado da autoridade (CA)
-NinWiki.Api/certs/client.pem    # certificado do cliente
-NinWiki.Api/certs/client.key    # chave privada
-```
-No Linux/Mac: `chmod 600 NinWiki.Api/certs/client.key` (o Postgres recusa chave legível por outros usuários).
-
-**Passo 3 — Levar o conteúdo do seu Docker para o banco da SquareCloud**
+### 3.4 (Opcional) Levar para a SquareCloud o conteúdo que você já tem no Docker
+Pule este passo para **começar com o banco vazio** (a API cria as tabelas sozinha no primeiro start; o conteúdo você cria no painel).
+Este é o **único passo que roda no seu computador** (precisa do Docker, com o container do banco no ar):
 ```bash
 cd NinWiki.Api
 python scripts/migrar_banco.py exportar        # gera backups/ninwiki-AAAAMMDD-HHMM.dump (do banco do seu Docker)
-
+mkdir certs                                     # coloque aqui ca.crt, client.pem e client.key (3.3)
 python scripts/migrar_banco.py importar backups/ninwiki-....dump \
   --url "postgresql://USUARIO:SENHA@HOST:PORTA/BANCO" \
   --ssl-ca certs/ca.crt --ssl-cert certs/client.pem --ssl-key certs/client.key --confirmo
 ```
-- O `importar` **substitui** as tabelas do destino — por isso o `--confirmo`.
-- Se você já preencheu `DATABASE_SSL_*` no `.env` (passo 4), pode omitir os 3 `--ssl-*`.
-- O script usa o próprio Docker para rodar `pg_dump`/`pg_restore`; não precisa instalar nada. (Ele copia os certificados para
-  dentro do container com a permissão certa — não se preocupe com `chmod` nesse caso.)
-- **Backup do banco da SquareCloud** (para o seu computador): `python scripts/migrar_banco.py exportar --url "postgresql://..." --ssl-ca ... --ssl-cert ... --ssl-key ...`.
+- O `importar` **substitui** as tabelas do destino (por isso o `--confirmo`). Se o banco da SquareCloud já tem dados, faça antes um backup:
+  `python scripts/migrar_banco.py exportar --url "postgresql://..." --ssl-ca ... --ssl-cert ... --ssl-key ...`.
+- O script usa o próprio Docker para rodar `pg_dump`/`pg_restore` e já ajusta a permissão da chave; nada a instalar.
+- **Imagens do blog/wiki** (`NinWiki.Api/uploads/`): o workflow **não** envia essa pasta (para nunca sobrescrever o que está
+  em produção). Depois de criar o app da API (3.5), envie as imagens pelo painel do app → *Files* → pasta `uploads/`.
+- Banco sem certificado de cliente (Neon, Supabase…)? Pule os `--ssl-*`, use `?sslmode=require` no `--url` e deixe `DB_SSL_*` vazio na 3.6.
 
-**Passo 4 — Configurar a API para usar o banco com certificado** (`NinWiki.Api/.env`)
+### 3.5 Criar os apps na SquareCloud (uma vez só) e anotar os IDs
+O workflow **atualiza** um app que já existe, então cada app precisa ser criado uma vez. Truque para não ter de zipar o projeto:
+envie um **pacote mínimo**; o primeiro workflow (3.7) coloca o código de verdade por cima.
+
+| App | Arquivos do pacote mínimo (copie da pasta indicada e zipe) |
+|---|---|
+| API | `NinWiki.Api/squarecloud.app` + `NinWiki.Api/start.py` |
+| Site | `NinWiki.Web/squarecloud.app` + `NinWiki.Web/package.json` |
+| Bot (opcional) | `NinWiki.Bot/squarecloud.app` + `NinWiki.Bot/main.py` |
+
+No Windows: selecione os 2 arquivos → botão direito → *Enviar para → Pasta compactada*. Depois, para cada um:
+1. Painel → **Add New → New Application** → envie o `.zip`. (Ele vai dar erro ao iniciar — é esperado, ainda falta o código.)
+2. Se o `SUBDOMAIN` (`ninwiki-api`, `ninwiki`) já estiver em uso, troque no `squarecloud.app` do pacote **e** no do repositório.
+3. Anote o **ID do app** (aparece na página do app, e na URL).
+
+Depois pegue sua **chave da API da SquareCloud**: painel → seu perfil/conta → **API Key** (gere/regenere). É a `SQUARE_API_KEY`.
+> Tratar a chave como senha: quem a tem controla todos os seus apps.
+
+### 3.6 GitHub Secrets (onde ficam o `.env` e os certificados)
+GitHub → o repositório → **Settings → Secrets and variables → Actions → New repository secret**. Crie um por linha:
+
+| Secret | Valor | Obrigatório |
+|---|---|---|
+| `SQUARE_API_KEY` | chave da API da SquareCloud (3.5) | sim |
+| `SQUARE_APP_ID_API` | ID do app da API (3.5) | sim |
+| `SQUARE_APP_ID_WEB` | ID do app do site (3.5) | sim |
+| `SQUARE_APP_ID_BOT` | ID do app do bot (3.5) | só se usar o bot |
+| `API_ENV` | conteúdo **inteiro** do `.env` da API (modelo abaixo) | sim |
+| `WEB_ENV` | conteúdo **inteiro** do `.env` do site (modelo abaixo) | sim |
+| `BOT_ENV` | conteúdo **inteiro** do `.env` do bot (modelo abaixo) | só se usar o bot |
+| `DB_SSL_CA` | texto completo do arquivo `.crt` (`-----BEGIN CERTIFICATE-----` até o `END`) | se o banco usa certificado |
+| `DB_SSL_CERT` | texto completo do arquivo `.pem` | idem |
+| `DB_SSL_KEY` | texto completo do arquivo `.key` | idem |
+
+Para colar um certificado: abra o arquivo no Bloco de Notas, selecione **tudo** (Ctrl+A), copie e cole no campo do Secret.
+
+**Modelo do `API_ENV`** (troque tudo que está em MAIÚSCULAS/`seudominio`):
 ```env
+ENVIRONMENT=production
 DATABASE_URL=postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/BANCO
 DATABASE_SSL_CA=certs/ca.crt
 DATABASE_SSL_CERT=certs/client.pem
 DATABASE_SSL_KEY=certs/client.key
-# DATABASE_SSL_VERIFY_HOSTNAME=false   # deixe false: o certificado da SquareCloud é validado pela CA (verify-ca)
+JWT_SECRET_KEY=COLE_O_PRIMEIRO_SEGREDO_GERADO
+FRONTEND_ORIGIN=https://wiki.seudominio.com
+API_BASE_URL=https://api.seudominio.com
+DISCORD_CLIENT_ID=SEU_CLIENT_ID
+DISCORD_CLIENT_SECRET=SEU_CLIENT_SECRET
+DISCORD_REDIRECT_URI=https://api.seudominio.com/auth/discord/callback
+SUPER_ADMIN_DISCORD_IDS=SEU_DISCORD_ID
+DEV_LOGIN_ENABLED=false
+TRUST_PROXY_HEADERS=true
+BOT_API_TOKEN=COLE_O_SEGUNDO_SEGREDO_GERADO
+DEEPL_API_KEY=
 ```
-Os caminhos são relativos a `NinWiki.Api`. A API (asyncpg) e as migrações (Alembic) leem as mesmas variáveis. **Não** coloque
-`?ssl=require` na URL quando usar certificados. Se faltar algum arquivo, a API **não sobe** (de propósito: nunca conecta sem segurança em silêncio).
+- Os 3 `DATABASE_SSL_*` apontam para os arquivos que o workflow cria a partir dos Secrets `DB_SSL_*` (não mude os caminhos). Sem
+  certificado de cliente: apague essas 3 linhas e use `?ssl=require` no fim da `DATABASE_URL`.
+- `ENVIRONMENT=production` desliga `/docs`, liga cookie `Secure`/HSTS, e a API **recusa iniciar** com `JWT_SECRET_KEY` fraco ou `DEV_LOGIN_ENABLED=true`.
+- `TRUST_PROXY_HEADERS=true` é necessário atrás da SquareCloud/Cloudflare (senão todos os visitantes parecem ter o mesmo IP).
+- `DEEPL_API_KEY` (opcional): ativa a tradução automática EN→PT. Chaves gratuitas terminam em `:fx`.
 
-**Passo 5 — Enviar os certificados junto com a API**
-- **Deploy manual (zip):** o `certs/` precisa estar **dentro do zip** (ele não está no `.squarecloudignore` de propósito).
-- **Deploy automático (GitHub Actions):** crie 3 Secrets no GitHub — `DB_SSL_CA`, `DB_SSL_CERT`, `DB_SSL_KEY` — colando o
-  **conteúdo inteiro** de cada arquivo. O workflow `deploy-api.yml` grava os arquivos em `certs/` só dentro do zip e apaga em seguida.
+**Modelo do `WEB_ENV`:**
+```env
+NEXT_PUBLIC_API_URL=https://api.seudominio.com
+NEXT_PUBLIC_SITE_URL=https://wiki.seudominio.com
+# opcionais: WEB_RATE_LIMIT_PER_MINUTE=300   BLOCK_SCRAPER_UAS=true
+```
+⚠️ Esses valores são embutidos **no build**: mudou algo → edite o Secret e rode o workflow do site de novo.
 
-**Passo 6 — Imagens:** envie o conteúdo da sua pasta `NinWiki.Api/uploads/` para a pasta `uploads/` do app da API
-(painel do app → *Files*). Os arquivos de avisos (`staff_files/`) só existem se você já postou avisos.
+**Modelo do `BOT_ENV`** (detalhes de cada opção em `NinWiki.Bot/.env.example`):
+```env
+DISCORD_BOT_TOKEN=TOKEN_DO_BOT
+NINWIKI_API_URL=https://api.seudominio.com
+BOT_API_TOKEN=O_MESMO_SEGUNDO_SEGREDO_DA_API
+ALLOWED_GUILD_IDS=ID_DO_SEU_SERVIDOR
+LOG_CHANNEL_ID=ID_DO_CANAL_DE_LOG
+ERROR_CHANNEL_ID=ID_DO_CANAL_DE_ALERTAS
+SITE_URL=https://wiki.seudominio.com
+```
 
-> Usando outro banco (Neon, Supabase…) sem certificado de cliente? Deixe `DATABASE_SSL_*` vazio e use `?ssl=require` na
-> `DATABASE_URL` (e `?sslmode=require` no `--url` do script).
+### 3.7 Rodar os workflows (nesta ordem)
+GitHub → aba **Actions** → escolha o workflow na lista da esquerda → **Run workflow** (branch `main`, ou a que você publica) → **Run workflow**.
+1. **Deploy API na SquareCloud (manual)** → espere ficar verde. Painel da SquareCloud → app da API → **Logs**: deve aparecer
+   `aplicando migrations...` e depois `iniciando API na porta 80...`. Teste `https://api.seudominio.com/health` (depois do 3.8; antes
+   disso use o endereço `*.squareweb.app` do app só para testar).
+2. **Deploy Web na SquareCloud (manual)** → o primeiro start **demora alguns minutos** (faz o `npm install` e o `next build`; precisa dos 1024 MB). Acompanhe nos Logs até `Ready`.
+3. **Deploy Bot na SquareCloud (manual)** (opcional) → Logs: o bot conecta e, em até 1 h (ou na hora com `DEV_GUILD_ID`), os comandos `/team` aparecem.
 
-### 3.3 App da API (`NinWiki.Api`)
-1. Crie o `.env` dentro de `NinWiki.Api` (base no `.env.example`) com **pelo menos**:
-   ```env
-   ENVIRONMENT=production
-   DATABASE_URL=postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/BANCO
-   DATABASE_SSL_CA=certs/ca.crt        # certificados do banco da SquareCloud (ver 3.2)
-   DATABASE_SSL_CERT=certs/client.pem
-   DATABASE_SSL_KEY=certs/client.key
-   JWT_SECRET_KEY=<segredo gerado, 32+ caracteres>
-   FRONTEND_ORIGIN=https://wiki.seudominio.com
-   API_BASE_URL=https://api.seudominio.com
-   DISCORD_CLIENT_ID=...
-   DISCORD_CLIENT_SECRET=...
-   DISCORD_REDIRECT_URI=https://api.seudominio.com/auth/discord/callback
-   SUPER_ADMIN_DISCORD_IDS=SEU_ID_DISCORD
-   DEV_LOGIN_ENABLED=false
-   BOT_API_TOKEN=<segredo gerado>      # só se for usar o bot
-   DEEPL_API_KEY=                      # opcional
-   TRUST_PROXY_HEADERS=true            # SIM em produção (atrás da SquareCloud/Cloudflare) - o limite por IP depende disso
-   ```
-   `ENVIRONMENT=production` desliga `/docs`, ativa cookie `Secure`/HSTS e a API **recusa iniciar** com `JWT_SECRET_KEY` fraco
-   ou `DEV_LOGIN_ENABLED=true`.
-2. Zip o **conteúdo** da pasta (`squarecloud.app` na raiz do zip), sem `venv`, `uploads`, `staff_files` e `backups`:
-   ```bash
-   cd NinWiki.Api && zip -r ../ninwiki-api.zip . -x "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" "uploads/*" "staff_files/*" "backups/*"
-   ```
-   (No Windows sem `zip`: selecione os arquivos da pasta **exceto** essas e use *Enviar para → Pasta compactada*.)
-3. Painel → *Add New → New Application* → envie o zip. O `squarecloud.app` já define tudo (`MAIN=start.py`, 512 MB, porta 80).
-4. O `start.py` roda `alembic upgrade head` e liga a API. Nos logs deve aparecer `iniciando API na porta 80`.
-   Teste `https://api.seudominio.com/health`.
-5. **Discord Developer Portal** → sua aplicação → *OAuth2 → Redirects* → adicione
-   `https://api.seudominio.com/auth/discord/callback` (idêntico ao `DISCORD_REDIRECT_URI`).
-6. Ajuste `SUBDOMAIN` no `squarecloud.app` (ou remova) se `ninwiki-api` já estiver em uso.
+O que o workflow faz por você: monta o `.env` a partir do Secret, grava os certificados em `certs/`, zipa a pasta **sem** `node_modules`, `.next`, `venv`,
+`uploads`, `staff_files` e `backups`, envia pela API da SquareCloud e apaga tudo (`.env`, certificados, zip) do runner no fim.
+Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o conteúdo do `.env`).
 
-### 3.4 App do site (`NinWiki.Web`)
-1. Crie `NinWiki.Web/.env` (o Next lê no build):
-   ```env
-   NEXT_PUBLIC_API_URL=https://api.seudominio.com
-   NEXT_PUBLIC_SITE_URL=https://wiki.seudominio.com
-   # opcionais: WEB_RATE_LIMIT_PER_MINUTE=300   BLOCK_SCRAPER_UAS=true
-   ```
-   ⚠️ `NEXT_PUBLIC_API_URL` é embutido **durante o build**: mudou o valor → novo deploy.
-2. Zip sem `node_modules` e `.next`:
-   ```bash
-   cd NinWiki.Web && zip -r ../ninwiki-web.zip . -x "node_modules/*" ".next/*"
-   ```
-3. Envie como novo app. O `START` faz `npm run build && next start -p 80` (o primeiro start demora; 1024 MB de RAM — se faltar
-   memória no build, aumente `MEMORY`). Configure o domínio `wiki.seudominio.com`.
+### 3.8 Domínios e DNS
+1. Em **cada app** (API e site) → painel → *Custom Domain* → informe `api.seudominio.com` / `wiki.seudominio.com`. A SquareCloud mostra o **registro DNS** a criar (normalmente um CNAME).
+2. No DNS do domínio (Cloudflare recomendada) crie esses registros exatamente como a SquareCloud mostrou.
+3. **Cloudflare (recomendado):** nuvem laranja ligada, modo SSL **Full (strict)**, *Bot Fight Mode* ligado e uma regra de rate limit.
+   Com isso `TRUST_PROXY_HEADERS=true` usa o IP real do visitante (`CF-Connecting-IP`) e floods são barrados antes de chegar na SquareCloud.
+4. Espere o DNS propagar (minutos a horas) e confira `https://api.seudominio.com/health`.
 
-### 3.5 App do bot (opcional) e deploy automático
+### 3.9 Conferir se está tudo certo (checklist)
+- [ ] `https://api.seudominio.com/health` → `{"status":"ok","environment":"production"}`
+- [ ] `https://api.seudominio.com/health/ready` → `{"status":"ok","database":"ok"}` (se `503`, a API não alcança o banco: revise `DATABASE_URL` e os certificados)
+- [ ] `https://wiki.seudominio.com` abre a Home; `/blog` abre (vazio, se começou sem dados)
+- [ ] `https://wiki.seudominio.com/login` → **Entrar com Discord** com a conta do `SUPER_ADMIN_DISCORD_IDS` → cai no `/admin`
+- [ ] Em `/admin/staff` cadastre o resto da equipe e ajuste `/admin/permissions`
+- [ ] Crie um post de teste com imagem; confira a imagem no site (se não aparecer, `API_BASE_URL` está errado)
+- [ ] Num navegador sem login: abra um post, entre com o Discord (leitor), comente e curta
+- [ ] Bot: `/team ...` responde e os canais de log/erros recebem mensagens
 
-**Bot:** crie o `.env` (base em `NinWiki.Bot/.env.example`: `DISCORD_BOT_TOKEN`, `NINWIKI_API_URL=https://api.seudominio.com`,
-`BOT_API_TOKEN` igual ao da API, `ALLOWED_GUILD_IDS`, `LOG_CHANNEL_ID`, `ERROR_CHANNEL_ID`, `SITE_URL`), zip (`-x "venv/*" "__pycache__/*" "log_state.json" "error_state.json"`) e envie
-como app. Não precisa de subdomínio nem porta.
+### 3.10 No dia a dia
+- **Publicar uma atualização:** *commit/push* no GitHub → Actions → rode **só** o workflow do que mudou (API, site ou bot). A API reinicia e
+  aplica migrações novas sozinha; se a migração falhar, **a API não sobe** (o banco nunca fica desatualizado em silêncio).
+- **Mudar uma configuração:** edite o Secret (`API_ENV`/`WEB_ENV`/`BOT_ENV`) e rode o workflow de novo. Você pode desmarcar *Reiniciar o app* se quiser reiniciar depois.
+- **Voltar uma versão:** em *Run workflow* escolha outra branch/tag (ou faça *revert* no Git e rode de novo). Migrações **não** voltam sozinhas: se a versão antiga for incompatível com o banco, restaure um backup.
+- **Backup do banco:** `python scripts/migrar_banco.py exportar --url "postgresql://..." --ssl-ca ... --ssl-cert ... --ssl-key ...` (no seu computador, com Docker). Faça antes de mudanças grandes.
+- **Backup das imagens:** painel do app da API → *Files* → baixe `uploads/` e `staff_files/` (um redeploy do app inteiro pelo painel pode apagá-las; o workflow não mexe nelas).
+- **Ver o que está acontecendo:** painel do app → *Logs*; no Discord, canais de log e de erros do bot; no site, `/admin/errors` (S.Adm).
 
-**Deploy automático (GitHub Actions, manual):** cada app tem seu workflow (`deploy-api.yml`, `deploy-web.yml`, `deploy-bot.yml`)
-que só roda quando você clica em *Actions → Run workflow*. O `.env` fica nos **Secrets** do GitHub.
-1. Faça o primeiro envio de cada app pelo painel (passos acima) para ele existir e ter um ID.
-2. *Settings → Secrets and variables → Actions*: `SQUARE_API_KEY`, `SQUARE_APP_ID_API/WEB/BOT`,
-   `API_ENV`, `WEB_ENV`, `BOT_ENV` (cole o conteúdo **inteiro** de cada `.env`) e, para o banco com certificado, `DB_SSL_CA`, `DB_SSL_CERT`, `DB_SSL_KEY` (3.2).
-3. Mudou uma configuração? Edite o Secret e rode o workflow de novo (no site, isso refaz o build).
-O workflow não envia `uploads/`, `staff_files/` nem `backups/` (para não sobrescrever o que já está em produção).
-
-### 3.6 Primeiro acesso
-1. `https://wiki.seudominio.com/login` → entre com o Discord de um ID de `SUPER_ADMIN_DISCORD_IDS`.
-2. Cadastre o resto da equipe em `/admin/staff` e ajuste `/admin/permissions`.
-3. Se importou o banco do seu Docker (3.2), o conteúdo já está lá.
-
-### 3.7 Recomendado: Cloudflare na frente
-Proxy + WAF + cache. Aponte o DNS de `wiki.` e `api.` pela Cloudflare (nuvem laranja), modo SSL *Full (strict)*, ligue
-*Bot Fight Mode* e regras de rate limit. Com isso, `TRUST_PROXY_HEADERS=true` passa a usar o IP real do visitante
-(`CF-Connecting-IP`) e ataques de flood são barrados antes de chegar na SquareCloud.
-
-### 3.8 Problemas comuns
-| Sintoma | Causa provável |
+### 3.11 Problemas comuns
+| Sintoma | Causa provável / o que fazer |
 |---|---|
-| API não inicia, log fala de `JWT_SECRET_KEY` / `DEV_LOGIN_ENABLED` | `.env` inseguro com `ENVIRONMENT=production` — corrija |
-| `connection refused` / erro de SSL no banco | `DATABASE_URL` errada, certificados faltando/errados (`DATABASE_SSL_*`, ver 3.2) ou, em banco sem certificado de cliente, falta `?ssl=require` |
-| `Arquivo de certificado do banco nao encontrado` | `certs/` não foi no zip (ou os Secrets `DB_SSL_*` não foram criados) |
-| `private key file ... has group or world access` | `chmod 600 NinWiki.Api/certs/client.key` |
-| Build do site: `unrs-resolver install scripts blocked` | já resolvido no `package.json` (`allowScripts`); se aparecer, confira se o `package.json` enviado é o atual |
-| Site: "Não foi possível conectar à API" | `NEXT_PUBLIC_API_URL` errada (precisa novo deploy) ou API fora do ar |
-| Login volta para `/login` sem erro | domínios em sites diferentes (cookie Lax), ou `FRONTEND_ORIGIN` diferente do endereço real do site |
-| `redirect_uri` inválido no Discord | redirect não cadastrado/idêntico no Developer Portal |
-| Muitos `429` para todo mundo | `TRUST_PROXY_HEADERS=false` atrás de proxy (todos parecem o mesmo IP) ou limite baixo demais — aumente `PUBLIC_REQUESTS_PER_MINUTE` / `WEB_RATE_LIMIT_PER_MINUTE` |
-| Bot: "BOT_API_TOKEN diferente nos dois .env" | tokens diferentes entre bot e API |
-| Canal de erros/log vazio | `LOG_CHANNEL_ID` errado, bot sem permissão no canal, ou nada aconteceu ainda (o log começa "de agora") |
-| Imagens sumiram após deploy | pasta `uploads` apagada no redeploy (ver 3.0, item 2) |
-| Build do site morre | pouca memória: aumente `MEMORY` em `NinWiki.Web/squarecloud.app` |
+| Workflow: `Secret/variável 'SQUARE_API_KEY' vazia` (ou `APP_ID`/`APP_ENV`) | o Secret não existe ou tem outro nome — confira a tabela da 3.6 (maiúsculas exatas) |
+| Workflow: `Deploy falhou (HTTP 401/403)` | `SQUARE_API_KEY` errada, regenerada ou sem permissão |
+| Workflow: `HTTP 404` | `SQUARE_APP_ID_*` errado (ID de outro app ou digitado errado) |
+| Workflow verde, mas o app não funciona | olhe os **Logs do app** na SquareCloud — o erro real aparece lá |
+| API não inicia: `JWT_SECRET_KEY` / `DEV_LOGIN_ENABLED` | `.env` inseguro com `ENVIRONMENT=production` — corrija o `API_ENV` |
+| API: `Arquivo de certificado do banco nao encontrado` | Secrets `DB_SSL_CA/CERT/KEY` não criados (ou o `API_ENV` aponta para outro caminho) |
+| API: `SSL error`, `certificate verify failed`, `connection refused` | `DATABASE_URL`/porta errada, certificado trocado ou colado incompleto (precisa do `BEGIN`/`END`) |
+| API: `private key file ... has group or world access` | já tratado automaticamente; se aparecer, atualize para a versão mais recente do repositório |
+| API 500 em `/posts` ou `/auth/me` logo após atualizar | migração não aplicada: veja nos Logs se `aplicando migrations` terminou; reinicie o app |
+| Site: "Não foi possível conectar à API" | `NEXT_PUBLIC_API_URL` errada no `WEB_ENV` (rode o workflow do site de novo) ou API fora do ar |
+| Build do site morre / reinicia sozinho | pouca memória: aumente `MEMORY` em `NinWiki.Web/squarecloud.app` e rode o workflow de novo |
+| Build do site: `unrs-resolver install scripts blocked` | já resolvido no `package.json` (`allowScripts`) — rode o workflow com o repositório atualizado |
+| Login volta para `/login` sem erro | site e API em "sites" diferentes (use `wiki.` e `api.` do mesmo domínio) ou `FRONTEND_ORIGIN` diferente do endereço real do site |
+| `redirect_uri` inválido no Discord | redirect da 3.2 não cadastrado ou diferente do `DISCORD_REDIRECT_URI` |
+| Muitos `429` para todo mundo | `TRUST_PROXY_HEADERS=false` atrás de proxy, ou limite baixo: aumente `PUBLIC_REQUESTS_PER_MINUTE` / `WEB_RATE_LIMIT_PER_MINUTE` |
+| Bot: "BOT_API_TOKEN diferente nos dois .env" | o `BOT_ENV` e o `API_ENV` precisam ter o **mesmo** `BOT_API_TOKEN` |
+| Canal de log/erros vazio | `LOG_CHANNEL_ID` errado, bot sem permissão no canal, ou nada aconteceu ainda (o log começa "de agora") |
+| Imagens sumiram | pasta `uploads` apagada em um redeploy feito pelo painel (restaure do backup — 3.10) |
+| Imagens aparecem quebradas | `API_BASE_URL` errado no `API_ENV` (precisa ser o endereço público da API) |
+
+### 3.12 Alternativa sem GitHub Actions (envio manual do zip)
+Se preferir não usar os workflows: crie o `.env` dentro da pasta do app, zipe o **conteúdo** da pasta (sem `venv`, `node_modules`, `.next`,
+`uploads`, `staff_files`, `backups`) e envie pelo painel. Na API inclua também `certs/`. O resto (Discord, domínios, conferência) é igual.
 
 ---
 
