@@ -13,6 +13,7 @@ export interface Breadcrumb {
   href?: string; // se ausente, renderiza como texto simples (item atual)
 }
 
+/** Cabecalho das paginas de lore: breadcrumb, titulo e subtitulo. */
 export function PageHeader({
   title,
   subtitle,

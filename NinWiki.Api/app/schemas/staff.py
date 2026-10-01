@@ -19,11 +19,12 @@ def parse_discord_id(value: str) -> int:
     """
     value = str(value).strip()
     if not re.fullmatch(r"\d{15,20}", value):
-        raise ValueError("Discord ID inválido (são 15 a 20 dígitos)")
+        raise ValueError("Invalid Discord ID (15 to 20 digits)")
     return int(value)
 
 
 class StaffRead(CamelModel):
+    """Membro da equipe como a API devolve."""
     id: uuid.UUID
     discord_id: str          # texto pelo motivo acima
     username: str
@@ -48,6 +49,7 @@ class MeRead(CamelModel):
 
 
 class StaffCreate(CamelModel):
+    """Corpo de cadastrar alguem na equipe."""
     discord_id: str
     role: StaffRole
     username: str | None = None
@@ -55,29 +57,35 @@ class StaffCreate(CamelModel):
     @field_validator("discord_id")
     @classmethod
     def _check_id(cls, v: str) -> str:
+        """Valida o Discord ID (15 a 20 digitos, como texto)."""
         parse_discord_id(v)
         return v.strip()
 
     @field_validator("username")
     @classmethod
     def _clean_username(cls, v: str | None) -> str | None:
+        """Limpa espacos do nome informado."""
         v = (v or "").strip()
         return v[:100] or None
 
 
 class StaffRoleUpdate(CamelModel):
+    """Corpo de trocar o cargo."""
     role: StaffRole
 
 
 class DevLogin(CamelModel):
+    """Corpo do login de desenvolvimento (so' funciona em ambiente local)."""
     discord_id: str
 
     @field_validator("discord_id")
     @classmethod
     def _check_id(cls, v: str) -> str:
+        """Valida o Discord ID do login de desenvolvimento."""
         parse_discord_id(v)
         return v.strip()
 
 
 def role_label(role: StaffRole) -> str:
+    """Nome curto do cargo para mostrar (S.Adm, Adm, Creator)."""
     return ROLE_LABEL[role]

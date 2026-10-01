@@ -44,6 +44,7 @@ const actionTypes = {
 
 let count = 0;
 
+/** Gera um id incremental para cada aviso (toast). */
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER;
   return count.toString();
@@ -91,6 +92,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout);
 };
 
+/** Regras de estado dos avisos (toasts): adicionar, atualizar, fechar e remover. */
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case 'ADD_TOAST':

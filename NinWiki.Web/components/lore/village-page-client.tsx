@@ -12,13 +12,16 @@ import { PageHeader } from '@/components/lore/page-header';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import { RichText } from '@/components/lore/rich-text';
 import { useLanguage } from '@/components/providers/language-provider';
-import { alternateName, localizedName } from '@/lib/localized';
+import { alternateName, elementLabel, localizedName, localizedText } from '@/lib/localized';
 import { MapPin, Users, ShieldCheck } from 'lucide-react';
 
+/** Pagina de uma vila: descricao, cla's (com imagem) e organizacoes. */
 export function VillagePageClient({ village, allVillages }: { village: ApiVillage; allVillages: ApiVillage[] }) {
-  const { locale } = useLanguage();
+  const { locale, dict } = useLanguage();
+  const t = dict.lore;
   const name = localizedName(locale, village.name, village.namePt);
   const altName = alternateName(locale, village.name, village.namePt);
+  const motto = localizedText(locale, village.motto, village.mottoPt);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 animate-fade-in">
@@ -26,14 +29,14 @@ export function VillagePageClient({ village, allVillages }: { village: ApiVillag
         title={name}
         subtitle={altName ?? undefined}
         breadcrumbs={[
-          { label: 'Início', href: '/' },
-          { label: 'Vilas', href: '/village' },
+          { label: t.home, href: '/' },
+          { label: t.villagesCrumb, href: '/village' },
           { label: name },
         ]}
         icon={
           <WikiImage
             src={village.image}
-            alt={`Emblema da ${name}`}
+            alt={t.emblemAlt.replace('{name}', name)}
             fallback={village.emblem}
             className="h-12 w-12 rounded-lg"
             imageClassName="object-contain p-1"
@@ -48,17 +51,17 @@ export function VillagePageClient({ village, allVillages }: { village: ApiVillag
             <div className="mb-3 flex items-center gap-2">
               <WikiImage
                 src={village.image}
-                alt={`Emblema da ${name}`}
+                alt={t.emblemAlt.replace('{name}', name)}
                 fallback={village.emblem}
                 className="h-12 w-12 shrink-0 rounded-lg"
                 imageClassName="object-contain p-1"
               />
               <div>
-                <h2 className="font-display text-lg font-bold text-ink-100">Sobre a Vila</h2>
-                <p className="text-xs text-ink-400 italic">&quot;{village.motto}&quot;</p>
+                <h2 className="font-display text-lg font-bold text-ink-100">{t.aboutVillage}</h2>
+                <p className="text-xs text-ink-400 italic">&quot;{motto}&quot;</p>
               </div>
             </div>
-            <RichText content={village.longDescription} />
+            <RichText content={locale === 'pt' && village.longDescriptionPt ? village.longDescriptionPt : village.longDescription} />
           </div>
 
           {/* Cla: escolhido na criacao do personagem. So' renderiza a
@@ -68,7 +71,7 @@ export function VillagePageClient({ village, allVillages }: { village: ApiVillag
               <div className="mb-3 flex items-center gap-2">
                 <Users className="h-5 w-5" style={{ color: village.accentColor }} />
                 <h2 className="font-display text-lg font-bold text-ink-100">
-                  Clãs ({village.clans.length})
+                  {t.clans} ({village.clans.length})
                 </h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -79,13 +82,13 @@ export function VillagePageClient({ village, allVillages }: { village: ApiVillag
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={clan.image}
-                        alt={clan.name}
+                        alt={localizedName(locale, clan.name, clan.namePt)}
                         className="mb-3 h-44 w-full rounded bg-ink-900/60 object-contain"
                         style={{ imageRendering: 'pixelated' }}
                       />
                     )}
-                    <p className="text-sm font-semibold text-ink-100">{clan.name}</p>
-                    <p className="mt-1 text-xs text-ink-400">{clan.description}</p>
+                    <p className="text-sm font-semibold text-ink-100">{localizedName(locale, clan.name, clan.namePt)}</p>
+                    <p className="mt-1 text-xs text-ink-400">{localizedText(locale, clan.description, clan.descriptionPt)}</p>
                   </div>
                 ))}
               </div>
@@ -99,14 +102,14 @@ export function VillagePageClient({ village, allVillages }: { village: ApiVillag
               <div className="mb-3 flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5" style={{ color: village.accentColor }} />
                 <h2 className="font-display text-lg font-bold text-ink-100">
-                  Organizações ({village.organizations.length})
+                  {t.organizations} ({village.organizations.length})
                 </h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 {village.organizations.map((org) => (
                   <div key={org.id} className="rounded-md border border-ink-700 bg-ink-850/50 p-3">
-                    <p className="text-sm font-semibold text-ink-100">{org.name}</p>
-                    <p className="mt-1 text-xs text-ink-400">{org.description}</p>
+                    <p className="text-sm font-semibold text-ink-100">{localizedName(locale, org.name, org.namePt)}</p>
+                    <p className="mt-1 text-xs text-ink-400">{localizedText(locale, org.description, org.descriptionPt)}</p>
                   </div>
                 ))}
               </div>
@@ -116,22 +119,22 @@ export function VillagePageClient({ village, allVillages }: { village: ApiVillag
 
         <div className="space-y-4">
           <Infobox
-            title="Ficha da Vila"
+            title={t.villageSheet}
             icon={<MapPin className="h-4 w-4" />}
             accentColor={village.accentColor}
             entries={[
-              { label: 'Nome', value: name },
-              ...(altName ? [{ label: locale === 'pt' ? 'Inglês' : 'Português', value: altName }] : []),
-              { label: 'Elemento', value: village.element },
-              { label: 'Lema', value: village.motto },
-              { label: 'Clima', value: village.climate },
-              { label: 'Líder', value: village.leader },
+              { label: t.fName, value: name },
+              ...(altName ? [{ label: locale === 'pt' ? t.fEnglish : t.fPortuguese, value: altName }] : []),
+              { label: t.fElement, value: elementLabel(locale, village.element) },
+              { label: t.fMotto, value: motto },
+              { label: t.fClimate, value: localizedText(locale, village.climate, village.climatePt) },
+              { label: t.fLeader, value: village.leader },
             ]}
           />
 
           <div className="dossier-panel p-4">
             <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wider text-ink-100">
-              Outras Vilas
+              {t.otherVillages}
             </h3>
             <div className="space-y-2">
               {allVillages
@@ -144,7 +147,7 @@ export function VillagePageClient({ village, allVillages }: { village: ApiVillag
                   >
                     <WikiImage
                       src={v.image}
-                      alt={`Emblema da ${localizedName(locale, v.name, v.namePt)}`}
+                      alt={t.emblemAlt.replace('{name}', localizedName(locale, v.name, v.namePt))}
                       fallback={v.emblem}
                       className="h-9 w-9 shrink-0 rounded-md"
                       imageClassName="object-contain p-0.5"

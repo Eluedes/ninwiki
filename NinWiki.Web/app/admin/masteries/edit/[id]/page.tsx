@@ -34,6 +34,7 @@ import {
 } from '@/lib/api-client';
 import { masterySchema, type MasteryFormValues } from '@/lib/validation';
 
+/** Mensagem de erro de um campo do formulario. */
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className="text-xs text-destructive">{message}</p>;
@@ -46,6 +47,7 @@ function FieldError({ message }: { message?: string }) {
 // nesta tela, ainda deixa escolher o id.
 type EditablePath = ApiMasteryPath & { isNew: boolean };
 
+/** Editor de mastery (nome, descricoes, icone, cor, imagem e GIF). */
 export default function MasteryEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);

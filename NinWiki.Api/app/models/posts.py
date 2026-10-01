@@ -16,6 +16,7 @@ from app.models.enums import ContentStatus
 
 
 class Post(Base, TimestampMixin):
+    """Post do blog (noticia/atualizacao), separado das entries do catalogo."""
     __tablename__ = "posts"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -23,6 +24,10 @@ class Post(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(200))
     excerpt: Mapped[str] = mapped_column(Text)
     content: Mapped[str] = mapped_column(Text)
+    # Traducoes EN -> PT-BR (DeepL preenche sozinho; o titulo/resumo/texto sem sufixo e' o INGLES).
+    title_pt: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    excerpt_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    content_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     cover_image: Mapped[str | None] = mapped_column(String(500), nullable=True)
     author_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     status: Mapped[ContentStatus] = mapped_column(Enum(ContentStatus, name="content_status"), default=ContentStatus.DRAFT)

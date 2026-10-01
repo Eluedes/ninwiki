@@ -4,6 +4,7 @@
 import { listPosts, type ApiPostSummary } from '@/lib/api-client';
 import { BlogPageClient } from '@/components/blog/blog-page-client';
 
+/** Listagem publica do blog (so' posts publicados). */
 export default async function BlogPage() {
   let posts: ApiPostSummary[] = [];
   let failed = false;

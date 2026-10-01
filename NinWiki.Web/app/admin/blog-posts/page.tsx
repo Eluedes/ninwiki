@@ -13,6 +13,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { ApiError, deletePost, listPosts, type ApiPostSummary } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
+/** Lista de posts no painel. */
 export default function BlogPostsPage() {
   const { dict, locale } = useLanguage();
   const t = dict.admin.blogAdmin;

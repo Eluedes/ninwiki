@@ -12,6 +12,7 @@ interface DropRowProps {
   drop: ApiDropEntry;
 }
 
+/** Linha de um drop: item, quantidade e chance (vira link se o item estiver publicado). */
 export function DropRow({ drop }: DropRowProps) {
   const rarity = rarityConfig[drop.rarity];
 

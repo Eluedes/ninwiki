@@ -35,6 +35,7 @@ interface WikiButtonProps {
   locale: Locale;
 }
 
+/** Botao grande de categoria da pagina inicial. */
 export function WikiButton({ category, locale }: WikiButtonProps) {
   const Icon = iconMap[category.icon] ?? Bug;
 

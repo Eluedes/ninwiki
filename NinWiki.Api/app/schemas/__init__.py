@@ -1,1 +1,1 @@
-# Arquivo intencionalmente vazio - so' marca a pasta como pacote Python.
+"""Schemas Pydantic: o formato (e a validacao) do JSON que a API recebe e devolve."""

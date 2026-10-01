@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, Bug, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { requiredPermissionFor } from '@/lib/admin-routes';
 import { NinLogo } from '@/components/icons/nin-logo';
@@ -27,8 +27,10 @@ const navItems = [
   { key: 'organizations', href: '/admin/organizations', icon: Building2 },
   { key: 'staff', href: '/admin/staff', icon: UserCog },
   { key: 'permissions', href: '/admin/permissions', icon: ShieldCheck },
+  { key: 'errors', href: '/admin/errors', icon: Bug },
 ] as const;
 
+/** Menu lateral do painel, filtrado pelas permissoes do cargo. */
 export function AdminSidebar() {
   const { dict } = useLanguage();
   const pathname = usePathname();

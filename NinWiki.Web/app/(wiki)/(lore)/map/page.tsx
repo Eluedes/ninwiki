@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Summary: mapa vetorial do mundo com pontos de interesse interativos.
  *
@@ -12,6 +14,8 @@ import { MapPin } from 'lucide-react';
 import { PageHeader } from '@/components/lore/page-header';
 import { mapMarkers } from '@/lib/map-data';
 import { villages } from '@/lib/village-data';
+import { elementLabel, localizedText } from '@/lib/localized';
+import { useLanguage } from '@/components/providers/language-provider';
 
 const routeNodes = [
   [18, 324, '#f59e0b'],
@@ -55,13 +59,16 @@ const routeNodes = [
   [610, 269, '#22c55e'],
 ] as const;
 
+/** Mapa do jogo (ainda com marcadores de exemplo). */
 export default function MapPage() {
+  const { locale, dict } = useLanguage();
+  const t = dict.lore;
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 animate-fade-in">
       <PageHeader
-        title="Mapa do Mundo"
-        subtitle="As três grandes nações shinobi e seus territórios."
-        breadcrumbs={[{ label: 'Início', href: '/' }, { label: 'Mapa' }]}
+        title={t.mapTitle}
+        subtitle={t.mapSubtitle}
+        breadcrumbs={[{ label: t.home, href: '/' }, { label: t.mapCrumb }]}
         icon={<MapPin className="h-7 w-7" />}
       />
 
@@ -210,7 +217,7 @@ export default function MapPage() {
             <button
               key={marker.id}
               type="button"
-              aria-label={`Ver informação sobre ${marker.title}`}
+              aria-label={t.mapMarkerAria.replace('{title}', localizedText(locale, marker.title, marker.titlePt))}
               className="group absolute -translate-x-1/2 -translate-y-1/2 outline-none"
               style={{ left: `${marker.x}%`, top: `${marker.y}%` }}
             >
@@ -221,9 +228,9 @@ export default function MapPage() {
                 />
               </span>
               <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-56 -translate-x-1/2 rounded-md border border-white/15 bg-slate-950/95 px-3 py-2 text-left opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100">
-                <strong className="block text-sm font-semibold text-white">{marker.title}</strong>
+                <strong className="block text-sm font-semibold text-white">{localizedText(locale, marker.title, marker.titlePt)}</strong>
                 <span className="mt-1 block text-xs leading-relaxed text-slate-300">
-                  {marker.description}
+                  {localizedText(locale, marker.description, marker.descriptionPt)}
                 </span>
               </span>
             </button>
@@ -232,7 +239,7 @@ export default function MapPage() {
       </div>
 
       <p className="mt-3 text-center text-sm text-ink-400">
-        Passe o mouse sobre um ponto — ou use Tab — para ver informações sobre o local.
+        {t.mapHint}
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -244,8 +251,8 @@ export default function MapPage() {
           >
             <span className="text-2xl">{village.emblem}</span>
             <div>
-              <p className="text-sm font-semibold text-ink-100">{village.name}</p>
-              <p className="text-xs text-ink-400">{village.element}</p>
+              <p className="text-sm font-semibold text-ink-100">{locale === 'pt' ? village.name : village.englishName}</p>
+              <p className="text-xs text-ink-400">{elementLabel(locale, village.element)}</p>
             </div>
           </Link>
         ))}

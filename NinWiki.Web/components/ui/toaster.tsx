@@ -17,6 +17,7 @@ import {
   ToastViewport,
 } from '@/components/ui/toast';
 
+/** Area onde os avisos (toasts) aparecem. */
 export function Toaster() {
   const { toasts } = useToast();
 

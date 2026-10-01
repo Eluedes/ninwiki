@@ -29,11 +29,13 @@ from app.core.security import client_ip_var
 
 
 class RateLimiter:
+    """Limitador de tentativas por chave (IP), em memoria, com janela deslizante."""
     def __init__(self, time_fn: Callable[[], float] = time.monotonic):
         self._time = time_fn
         self._hits: dict[tuple[str, str], deque[float]] = {}
 
     def _window(self, bucket: str, key: str, window: float) -> deque[float]:
+        """Devolve a fila de instantes do balde, ja' sem os que sairam da janela."""
         dq = self._hits.setdefault((bucket, key), deque())
         cutoff = self._time() - window
         while dq and dq[0] <= cutoff:
@@ -41,6 +43,7 @@ class RateLimiter:
         return dq
 
     def _cleanup(self) -> None:
+        """Apaga baldes vazios para o dicionario nao crescer sem fim."""
         # Memoria limitada: se acumularem muitas chaves (ataque com IPs variados), joga fora as vazias.
         if len(self._hits) > 5000:
             for k in [k for k, dq in self._hits.items() if not dq]:
@@ -66,9 +69,11 @@ class RateLimiter:
         self._cleanup()
 
     def _retry_after(self, dq: deque[float], window: float) -> int:
+        """Segundos ate' o instante mais antigo sair da janela (quanto esperar)."""
         return max(1, int(dq[0] + window - self._time()) + 1)
 
     def reset(self) -> None:
+        """Zera todos os contadores (usado nos testes)."""
         self._hits.clear()
 
 
@@ -81,8 +86,10 @@ BOT_FAIL = "bot_fail"    # token de bot errado
 
 
 def client_key() -> str:
+    """Chave do limitador: o IP de quem chamou."""
     return client_ip_var.get() or "desconhecido"
 
 
 def retry_message(seconds: int) -> str:
-    return f"Muitas tentativas. Tente de novo em {seconds} segundos."
+    """Mensagem em portugues para o 429 ('tente de novo em N segundos')."""
+    return f"Too many attempts. Try again in {seconds} seconds."

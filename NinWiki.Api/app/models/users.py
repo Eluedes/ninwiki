@@ -70,7 +70,9 @@ class AuditLogEntry(Base):
     entity_id: Mapped[str] = mapped_column(String(100))  # guarda como texto pra caber tanto UUID quanto id-texto
     diff: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     # index=True: o log geral so' cresce, e a tela sempre pede "os mais recentes primeiro".
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), index=True)
+    # timezone=True: guarda o INSTANTE exato (com fuso). Sem isso o horario do log saia errado pra quem nao
+    # estava no mesmo fuso do servidor de banco, e comparar com datas com fuso (feed do bot) dava erro.
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
 
     actor_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     actor_role: Mapped[str | None] = mapped_column(String(20), nullable=True)

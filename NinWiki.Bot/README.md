@@ -8,11 +8,11 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 ## Comandos (só funcionam em servidor, respostas só você vê)
 | Comando | Faz |
 |---|---|
-| `/equipe listar` | mostra a equipe e o cargo de cada um |
-| `/equipe adicionar usuario cargo` | cadastra alguém (o nome vem do Discord) |
-| `/equipe cargo usuario cargo` | troca o cargo (derruba a sessão da pessoa) |
-| `/equipe desativar usuario` | tira o acesso na hora |
-| `/equipe reativar usuario` | devolve o acesso |
+| `/team list` | mostra a equipe e o cargo de cada um |
+| `/team add user role` | cadastra alguém (o nome vem do Discord) |
+| `/team role user role` | troca o cargo (derruba a sessão da pessoa) |
+| `/team deactivate user` | tira o acesso na hora |
+| `/team reactivate user` | devolve o acesso |
 
 Quem pode o quê é decidido pela API (`NinWiki.Api/app/core/permissions.py`): só o S.Adm gerencia a equipe (Adm e Creator recebem uma recusa). Quem não é da equipe recebe uma recusa.
 
@@ -66,6 +66,24 @@ Sem o discord.py instalado, a parte dos comandos é pulada e o resto roda.
 main.py                      entrada (python main.py)
 ninwiki_bot/config.py        lê e valida o .env
 ninwiki_bot/api_client.py    fala com /bot/* da API (não importa discord.py)
-ninwiki_bot/staff_commands.py  os comandos /equipe
+ninwiki_bot/staff_commands.py  os comandos /team
 ```
 Contrato completo das rotas: `NinWiki.Api/app/api/bot.py`.
+
+
+## Log geral no Discord (opcional)
+Com `LOG_CHANNEL_ID` preenchido no `.env`, o bot posta nesse canal tudo o que acontece no painel: quem criou/editou/apagou, logins,
+mudanças de equipe e de permissões, tentativas negadas, avisos postados. **Nunca** mostra IP nem o texto dos conteúdos.
+- O bot precisa de *Ver canal*, *Enviar mensagens* e *Inserir links* **nesse canal** (mantenha o canal visível só para a equipe).
+- Ele consulta a API a cada `LOG_POLL_SECONDS` (padrão 20, mínimo 10) e guarda onde parou em `log_state.json` (não repete nem
+  perde ações ao reiniciar; na primeira vez começa "de agora", sem despejar o histórico).
+- `LOG_IGNORE_ACTIONS=login,logout` esconde as ações citadas (menos ruído).
+- Código: `ninwiki_bot/log_feed.py` (o que postar e onde parou) e `main.py` (`_log_tick`). Rota da API: `GET /bot/audit-log`.
+
+
+## Erros e alertas no Discord (opcional)
+Com `ERROR_CHANNEL_ID` (ou só `LOG_CHANNEL_ID`) preenchido, o bot também posta **erros e problemas do wiki** e vigia se a **API, o banco e o site**
+estão no ar. Mensagens em inglês; um problema que se repete só gera novo aviso a cada 10 min. Detalhes no README da raiz (seção 2.2).
+- `ERROR_CHANNEL_ID`: canal dos erros/alertas (vazio = usa o canal de log). `SITE_URL`: endereço do site para vigiar. `HEALTH_POLL_SECONDS` (mín. 30).
+- Código: `ninwiki_bot/error_feed.py` (o que postar, anti-spam, estado dos serviços) e `main.py` (`_error_tick`, `_health_tick`). Rotas da API: `GET /bot/errors` e `GET /health/ready`.
+- Os comandos agora são `/team ...` (antes `/equipe ...`): `/team list`, `/team add user role`, `/team role user role`, `/team deactivate user`, `/team reactivate user`.

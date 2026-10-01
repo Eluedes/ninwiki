@@ -25,6 +25,7 @@ const cinzelDecorative = Cinzel_Decorative({
   variable: '--font-cinzel-decorative',
 });
 
+/** Layout das paginas de lore (masteries, vilas, mapa). */
 export default function LoreLayout({
   children,
 }: {

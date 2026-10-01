@@ -12,6 +12,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
 import { Loader2, AlertTriangle, Plus, Pencil, Trash2, History } from 'lucide-react';
 
+/** Resume em texto o que mudou numa linha do historico. */
 function formatDiff(entry: ApiAuditLogEntry): string | null {
   const diff = entry.diff;
   if (!diff) return null;
@@ -28,6 +29,7 @@ function formatDiff(entry: ApiAuditLogEntry): string | null {
   return null;
 }
 
+/** Secao 'Historico' de uma entry: quem mudou o que e quando. */
 export function EntryHistory({ entityType, entityId }: { entityType: HistoryEntityType; entityId: string }) {
   const { dict, locale } = useLanguage();
   const t = dict.admin.entryHistory;

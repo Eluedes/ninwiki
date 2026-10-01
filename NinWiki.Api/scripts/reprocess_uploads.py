@@ -30,6 +30,7 @@ EXT_TO_KEY = {".png": ".png", ".jpg": ".jpg", ".jpeg": ".jpg", ".gif": ".gif", "
 
 
 def main() -> None:
+    """Redimensiona as imagens que ja' estavam em uploads/ (nao mexe no banco; o nome do arquivo nao muda)."""
     if not UPLOAD_DIR.exists():
         print(f"Pasta {UPLOAD_DIR} não existe - nada pra fazer.")
         return

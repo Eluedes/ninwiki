@@ -14,6 +14,7 @@ from app.schemas.validators import validate_rich_content
 
 
 class CamelModel(BaseModel):
+    """Base dos schemas: converte nomes para camelCase no JSON, igual ao TypeScript do site."""
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
@@ -23,12 +24,14 @@ class AttributeRead(CamelModel):
     name: str
     name_pt: str | None
     description: str
+    description_pt: str | None = None  # traducao EN -> PT (DeepL)
     icon: str
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
 class MasteryPathRead(CamelModel):
+    """Caminho de uma mastery como a API devolve."""
     id: str
     label: str
     description: str
@@ -78,6 +81,7 @@ class MasteryRead(CamelModel):
     @model_validator(mode="before")
     @classmethod
     def _pull_attribute_ids_from_orm(cls, data):
+        """Transforma a relacao de atributos do ORM em lista de ids simples."""
         if hasattr(data, "attributes") and not isinstance(data, dict):
             ids = [a.id for a in data.attributes]
             # Mastery e' um objeto ORM, nao um dict - nao da' pra' so'
@@ -134,6 +138,7 @@ class MasteryWrite(CamelModel):
 
 
 class JutsuRead(CamelModel):
+    """Jutsu como a API devolve."""
     id: str
     name: str
     name_pt: str | None

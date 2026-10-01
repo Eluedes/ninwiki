@@ -101,6 +101,15 @@ class Settings(BaseSettings):
     # Tamanho maximo aceito num upload de imagem, em megabytes.
     max_upload_size_mb: int = 5
 
+    # ---- Protecao contra abuso (ver app/core/hardening.py) ----
+    # Limites por IP, por minuto. A API le' o IP real quando TRUST_PROXY_HEADERS=true (atras da Cloudflare).
+    # ATENCAO: o site (Next.js) busca os dados NO SERVIDOR, entao todas as visitas chegam aqui com o IP
+    # do servidor do site - por isso o limite de leitura e' alto. Site com muito acesso: aumente.
+    public_requests_per_minute: int = 1200   # leituras (GET) por IP
+    upload_requests_per_minute: int = 1500   # imagens em /uploads por IP (uma pagina carrega varias)
+    write_requests_per_minute: int = 120     # POST/PUT/PATCH/DELETE por IP
+    max_json_body_kb: int = 512              # corpo maximo de requisicoes comuns (uploads tem limite proprio)
+
     # Tamanho maximo de um arquivo anexado a um aviso do quadro da equipe, em MB.
     max_notice_file_mb: int = 20
 
@@ -139,6 +148,7 @@ class Settings(BaseSettings):
 
     @property
     def is_development(self) -> bool:
+        """True quando ENVIRONMENT=development."""
         return self.environment == "development"
 
     @property
@@ -148,7 +158,15 @@ class Settings(BaseSettings):
 
     @property
     def effective_discord_redirect_uri(self) -> str:
+        """URL de retorno do login do Discord (a do .env ou a derivada de API_BASE_URL)."""
         return self.discord_redirect_uri or f"{self.api_base_url.rstrip('/')}/auth/discord/callback"
+
+    @model_validator(mode="after")
+    def _normalizar_urls(self) -> "Settings":
+        """Tira a "/" final das URLs: FRONTEND_ORIGIN="https://x.com/" nunca bateria com o Origin do navegador (CORS/CSRF quebrariam)."""
+        self.frontend_origin = self.frontend_origin.strip().rstrip("/")
+        self.api_base_url = self.api_base_url.strip().rstrip("/")
+        return self
 
     @model_validator(mode="after")
     def _validar_seguranca(self) -> "Settings":

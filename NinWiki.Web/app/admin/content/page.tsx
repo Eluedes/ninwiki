@@ -35,6 +35,7 @@ const categoryFilters: { key: Category | 'all'; label: string }[] = [
   { key: 'guides', label: 'guides' },
 ];
 
+/** Lista de entries do catalogo no painel (filtro, busca, acoes em massa). */
 export default function ContentListPage() {
   const { dict } = useLanguage();
   const { can } = useAuth();

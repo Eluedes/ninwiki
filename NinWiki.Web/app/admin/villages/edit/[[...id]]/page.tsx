@@ -16,7 +16,7 @@ import { RichTextEditor } from '@/components/admin/rich-text-editor';
 import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { useLanguage } from '@/components/providers/language-provider';
 import { ArrowLeft, Save, Plus, Trash2, Loader2, Languages, AlertTriangle } from 'lucide-react';
-import { ApiError, createVillage, getVillage, updateVillage, type VillageInput } from '@/lib/api-client';
+import { ApiError, createVillage, getVillage, retranslateVillage, updateVillage, type ApiVillage, type VillageInput } from '@/lib/api-client';
 import { villageSchema, type VillageFormValues } from '@/lib/validation';
 import { slugify } from '@/lib/utils';
 
@@ -28,6 +28,10 @@ const emptyForm: VillageFormValues = {
   motto: '',
   description: '',
   longDescription: '',
+  mottoPt: '',
+  descriptionPt: '',
+  longDescriptionPt: '',
+  climatePt: '',
   emblem: '🏯',
   image: null,
   accentColor: '#558930',
@@ -38,11 +42,32 @@ const emptyForm: VillageFormValues = {
   clans: [],
 };
 
+/** Texto vazio vira null (a API entende "vazio" como "a DeepL traduz"). */
+const emptyToNull = (v: string | null | undefined) => (v && v.trim() ? v : null);
+
+/** Valores do formulario a partir da vila vinda da API (campos opcionais viram texto vazio). */
+function toFormValues(v: ApiVillage): VillageFormValues {
+  return {
+    ...v,
+    namePt: v.namePt ?? '',
+    mottoPt: v.mottoPt ?? '',
+    descriptionPt: v.descriptionPt ?? '',
+    longDescriptionPt: v.longDescriptionPt ?? '',
+    climatePt: v.climatePt ?? '',
+    image: v.image ?? null,
+    clans: v.clans.map((c) => ({
+      id: c.id, name: c.name, description: c.description, namePt: c.namePt ?? '', descriptionPt: c.descriptionPt ?? '', image: c.image ?? null,
+    })),
+  };
+}
+
+/** Mensagem de erro de um campo do formulario. */
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className="text-xs text-destructive">{message}</p>;
 }
 
+/** Editor de vila (criar/editar) com os cla's dentro, incluindo a imagem de cada cla'. */
 export default function VillageEditorPage({ params }: { params: Promise<{ id?: string[] }> }) {
   const router = useRouter();
   const { id } = use(params);
@@ -53,6 +78,7 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  const [retranslating, setRetranslating] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   // ids de clas que JA existiam no banco: ficam travados (mudar o id = apagar um e criar outro)
   const [lockedClanIds, setLockedClanIds] = useState<Set<string>>(new Set());
@@ -77,14 +103,7 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
     getVillage(rawId)
       .then((v) => {
         if (cancelled) return;
-        reset({
-          ...v,
-          namePt: v.namePt ?? '',
-          image: v.image ?? null,
-          clans: v.clans.map((c) => ({
-            id: c.id, name: c.name, description: c.description, image: c.image ?? null,
-          })),
-        });
+        reset(toFormValues(v));
         setLockedClanIds(new Set(v.clans.map((c) => c.id)));
       })
       .catch((err) => {
@@ -98,14 +117,33 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
     };
   }, [isEdit, rawId, reset, t.loadError]);
 
+  /** Refaz a traducao EN -> PT (DeepL) da vila e dos cla's e recarrega o formulario. */
+  async function handleRetranslate() {
+    if (!rawId || !window.confirm(dict.admin.translation.retranslateConfirm)) return;
+    setRetranslating(true);
+    setApiError(null);
+    try {
+      reset(toFormValues(await retranslateVillage(rawId)));
+    } catch (err) {
+      setApiError(err instanceof ApiError ? err.message : dict.admin.translation.retranslateError);
+    } finally {
+      setRetranslating(false);
+    }
+  }
+
   async function onValid(values: VillageFormValues) {
     setSaving(true);
     setApiError(null);
     try {
       const payload: VillageInput = {
         ...values,
-        namePt: values.namePt?.trim() || null,
+        namePt: emptyToNull(values.namePt),
+        mottoPt: emptyToNull(values.mottoPt),
+        descriptionPt: emptyToNull(values.descriptionPt),
+        longDescriptionPt: emptyToNull(values.longDescriptionPt),
+        climatePt: emptyToNull(values.climatePt),
         image: values.image || null,
+        clans: values.clans.map((c) => ({ ...c, namePt: emptyToNull(c.namePt), descriptionPt: emptyToNull(c.descriptionPt) })),
       };
       if (isEdit && rawId) {
         await updateVillage(rawId, payload);
@@ -270,15 +308,46 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
         </div>
       </div>
 
-      {/* Traducao: mesmo padrao de Conteudo/Mastery/Jutsu - o campo principal e' o ingles. */}
-      <div className="space-y-3 rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
-          <Languages className="h-4 w-4" /> {dict.admin.translation.sectionTitle}
-        </h2>
+      {/* Traducao (PT): o campo principal e' o ingles; a DeepL preenche estes ao salvar (se estiverem vazios). */}
+      <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 font-semibold text-card-foreground">
+            <Languages className="h-4 w-4" /> {dict.admin.translation.sectionTitle}
+          </h2>
+          {isEdit && (
+            <Button type="button" variant="outline" size="sm" disabled={retranslating} onClick={handleRetranslate}>
+              {retranslating ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Languages className="mr-1.5 h-4 w-4" />}
+              {retranslating ? dict.admin.translation.retranslating : dict.admin.translation.retranslate}
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">{dict.admin.translation.emptyHint}</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label className={label}>{dict.admin.translation.nameLabel}</label>
+            <Input {...register('namePt')} />
+            <FieldError message={errors.namePt?.message} />
+          </div>
+          <div className="space-y-2">
+            <label className={label}>{dict.admin.translation.climateLabel}</label>
+            <Input {...register('climatePt')} />
+          </div>
+        </div>
         <div className="space-y-2">
-          <label className={label}>{dict.admin.translation.nameLabel}</label>
-          <Input {...register('namePt')} />
-          <FieldError message={errors.namePt?.message} />
+          <label className={label}>{dict.admin.translation.mottoLabel}</label>
+          <Input {...register('mottoPt')} />
+        </div>
+        <div className="space-y-2">
+          <label className={label}>{dict.admin.translation.descriptionLabel}</label>
+          <Textarea rows={2} {...register('descriptionPt')} />
+        </div>
+        <div className="space-y-2">
+          <label className={label}>{dict.admin.translation.longDescriptionLabel}</label>
+          <Controller
+            control={control}
+            name="longDescriptionPt"
+            render={({ field }) => <RichTextEditor value={field.value ?? ''} onChange={field.onChange} />}
+          />
         </div>
       </div>
 
@@ -291,7 +360,7 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append({ id: '', name: '', description: '', image: null })}
+            onClick={() => append({ id: '', name: '', description: '', namePt: '', descriptionPt: '', image: null })}
           >
             <Plus className="mr-1.5 h-4 w-4" /> {t.addClan}
           </Button>
@@ -336,6 +405,14 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground">{t.clanDescription}</label>
                 <Textarea rows={2} {...register(`clans.${index}.description` as const)} />
+              </div>
+              <div className="space-y-2 rounded-md border border-dashed border-border p-3">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                  <Languages className="h-3.5 w-3.5" /> {dict.admin.translation.sectionTitle}
+                </p>
+                <p className="text-xs text-muted-foreground">{t.clanTranslationNote}</p>
+                <Input placeholder={dict.admin.translation.nameLabel} {...register(`clans.${index}.namePt` as const)} />
+                <Textarea rows={2} placeholder={dict.admin.translation.descriptionLabel} {...register(`clans.${index}.descriptionPt` as const)} />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted-foreground">{t.clanImage}</label>

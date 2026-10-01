@@ -53,8 +53,9 @@ async def get_optional_user(request: Request, db: AsyncSession = Depends(get_db)
 
 
 async def get_current_user(user: User | None = Depends(get_optional_user)) -> User:
+    """Exige login: devolve o usuario logado ou responde 401."""
     if user is None:
-        raise HTTPException(status_code=401, detail="Não autenticado")
+        raise HTTPException(status_code=401, detail="Not authenticated")
     return user
 
 
@@ -88,12 +89,13 @@ def require_permission(*permissions: Permission):
     hidden = any(p in SUPER_ONLY_PERMISSIONS for p in permissions)
 
     async def dependency(request: Request, user: User = Depends(get_current_user)) -> User:
+        """A checagem em si: sem a permissao exigida, 403 (ou 404 se for exclusiva do S.Adm) e registra a tentativa."""
         missing = [p for p in permissions if not has_permission(user.role, p)]
         if missing:
             await _log_denied(user, request, missing, hidden)
             if hidden:
                 raise HTTPException(status_code=404, detail="Not Found")
-            raise HTTPException(status_code=403, detail="Você não tem permissão para fazer isso")
+            raise HTTPException(status_code=403, detail="You do not have permission to do this")
         return user
 
     return dependency

@@ -9,6 +9,7 @@
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 
+/** Layout do site publico: cabecalho, conteudo e rodape. */
 export default function WikiLayout({
   children,
 }: {

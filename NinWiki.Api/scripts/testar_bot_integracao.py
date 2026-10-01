@@ -17,6 +17,7 @@ import asyncio
 import random
 import sys
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
@@ -51,6 +52,7 @@ TODOS = [str(BASE + n) for n in range(1, 30)]
 
 
 def check(nome: str, cond: bool, detalhe: str = "") -> None:
+    """Registra e imprime o resultado de uma verificacao."""
     global PASS, FAIL
     if cond:
         PASS += 1
@@ -62,21 +64,25 @@ def check(nome: str, cond: bool, detalhe: str = "") -> None:
 
 
 def secao(t: str) -> None:
+    """Imprime o titulo de uma secao de testes."""
     print(f"\n== {t}")
 
 
 async def criar(chave: str, role: StaffRole) -> None:
+    """Cria um usuario de teste com o cargo informado."""
     async with AsyncSessionLocal() as db:
         db.add(User(discord_id=IDS[chave], username=f"TESTE_{chave}", role=role))
         await db.commit()
 
 
 async def buscar(discord_id: int) -> User | None:
+    """Le um usuario de teste do banco pelo Discord ID."""
     async with AsyncSessionLocal() as db:
         return (await db.execute(select(User).where(User.discord_id == discord_id))).scalar_one_or_none()
 
 
 async def limpar() -> None:
+    """Apaga do banco tudo que o teste criou (usuarios e linhas de log)."""
     async with AsyncSessionLocal() as db:
         await db.execute(delete(AuditLogEntry).where(
             AuditLogEntry.actor_name.like("TESTE_%") | AuditLogEntry.entity_id.in_(TODOS)))
@@ -86,6 +92,7 @@ async def limpar() -> None:
 
 
 def interacao(user_id: int, guild_id: int = 1) -> MagicMock:
+    """Simula uma interacao do Discord (quem digitou, em qual servidor)."""
     i = MagicMock()
     i.user.id = user_id
     i.guild_id = guild_id
@@ -96,6 +103,7 @@ def interacao(user_id: int, guild_id: int = 1) -> MagicMock:
 
 
 def fake_user(chave: str, bot: bool = False) -> MagicMock:
+    """Simula o usuario escolhido no comando (alvo), podendo ser um bot."""
     u = MagicMock()
     u.id = IDS[chave]
     u.name = f"TESTE_{chave}"
@@ -119,11 +127,13 @@ def texto_enviado(i: MagicMock) -> str:
 
 
 def todas_efemeras(i: MagicMock) -> bool:
+    """True se todas as respostas do comando foram so' para quem digitou."""
     chamadas = list(i.followup.send.call_args_list) + list(i.response.send_message.call_args_list)
     return bool(chamadas) and all(c.kwargs.get("ephemeral") is True for c in chamadas)
 
 
 async def testar() -> None:
+    """Roda todas as secoes de teste do bot contra a API real."""
     limiter.reset()
     await criar("sadm", StaffRole.SUPER_ADMIN)
     await criar("adm", StaffRole.ADMIN)
@@ -164,12 +174,12 @@ async def testar() -> None:
         await api.add_staff(IDS["adm"], IDS["alvo2"], "admin", "x")
         check("Adm cadastrar Adm e' barrado", False)
     except ApiError as e:
-        check("Adm cadastrar Adm e' barrado (403, msg em portugues)", e.status_code == 403 and ("permiss" in e.detail.lower() or "cargo" in e.detail.lower()), e.detail)
+        check("Adm cadastrar Adm e' barrado (403, msg em portugues)", e.status_code == 403 and ("permission" in e.detail.lower() or "role" in e.detail.lower()), e.detail)
     try:
         await api.list_staff(IDS["estranho"])
         check("quem nao e' da equipe e' barrado", False)
     except ApiError as e:
-        check("quem nao e' da equipe e' barrado (403)", e.status_code == 403 and "equipe" in e.detail, e.detail)
+        check("quem nao e' da equipe e' barrado (403)", e.status_code == 403 and "team" in e.detail, e.detail)
     try:
         await api.list_staff(IDS["creator"])
         check("Creator listar e' barrado", False)
@@ -210,7 +220,7 @@ async def testar() -> None:
         await api.list_staff(IDS["sadm"])
         check("bloqueio por forca bruta", False)
     except ApiError as e:
-        check("apos muitos tokens errados a API bloqueia e o bot mostra a mensagem (429)", e.status_code == 429 and "Muitas tentativas" in e.detail, e.detail)
+        check("apos muitos tokens errados a API bloqueia e o bot mostra a mensagem (429)", e.status_code == 429 and "Too many attempts" in e.detail, e.detail)
     limiter.reset()
     fora = NinWikiApi("http://127.0.0.1:9", TOKEN)
     try:
@@ -230,63 +240,63 @@ async def testar() -> None:
     secao("3) Comandos de barra /equipe (Discord simulado)")
     grupo = StaffGroup(api, allowed_guilds=set())
     cmd = {c.name: c for c in grupo.commands}
-    check("os 5 comandos existem", set(cmd) == {"listar", "adicionar", "cargo", "desativar", "reativar"})
+    check("the 5 commands exist", set(cmd) == {"list", "add", "role", "deactivate", "reactivate"})
     check("grupo so' funciona em servidor (nao em DM)", grupo.guild_only is True)
     adm_cargo_creator = app_commands.Choice(name="Creator", value="creator")
     adm_cargo_admin = app_commands.Choice(name="Adm", value="admin")
 
     i = interacao(IDS["sadm"])
-    await cmd["listar"].callback(grupo, i)
+    await cmd["list"].callback(grupo, i)
     check("/equipe listar mostra a equipe (embed)", "TESTE_adm" in texto_enviado(i) and "Adm" in texto_enviado(i))
     check("resposta e' efemera (so' quem digitou ve)", todas_efemeras(i))
 
     i = interacao(IDS["creator"])
-    await cmd["listar"].callback(grupo, i)
-    check("Creator em /equipe listar recebe recusa clara", texto_enviado(i).startswith("❌") and "permiss" in texto_enviado(i).lower(), texto_enviado(i))
+    await cmd["list"].callback(grupo, i)
+    check("Creator em /equipe listar recebe recusa clara", texto_enviado(i).startswith("❌") and "permission" in texto_enviado(i).lower(), texto_enviado(i))
 
     i = interacao(IDS["sadm"])
-    await cmd["adicionar"].callback(grupo, i, fake_user("alvo2"), adm_cargo_creator)
+    await cmd["add"].callback(grupo, i, fake_user("alvo2"), adm_cargo_creator)
     u = await buscar(IDS["alvo2"])
     check("/equipe adicionar cria a pessoa no banco como Creator", u is not None and u.role == StaffRole.CREATOR and u.created_by_id is not None)
     check("...e confirma com ✅", texto_enviado(i).startswith("✅") and "Creator" in texto_enviado(i), texto_enviado(i))
 
     i = interacao(IDS["adm"])
-    await cmd["adicionar"].callback(grupo, i, fake_user("estranho"), adm_cargo_admin)
-    check("Adm tentando cadastrar Adm: ❌ e NADA foi criado", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
+    await cmd["add"].callback(grupo, i, fake_user("estranho"), adm_cargo_admin)
+    check("Adm trying to register an Adm: ❌ e NADA foi criado", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
 
     i = interacao(IDS["sadm"])
-    await cmd["adicionar"].callback(grupo, i, fake_user("estranho", bot=True), adm_cargo_creator)
-    check("cadastrar um BOT e' recusado antes de chamar a API", "Bots" in texto_enviado(i) and await buscar(IDS["estranho"]) is None)
+    await cmd["add"].callback(grupo, i, fake_user("estranho", bot=True), adm_cargo_creator)
+    check("cadastrar um BOT e' recusado antes de chamar a API", "Bots cannot" in texto_enviado(i) and await buscar(IDS["estranho"]) is None)
 
     i = interacao(IDS["estranho"])
-    await cmd["adicionar"].callback(grupo, i, fake_user("estranho"), adm_cargo_creator)
+    await cmd["add"].callback(grupo, i, fake_user("estranho"), adm_cargo_creator)
     check("quem nao e' da equipe nao consegue cadastrar (nem a si mesmo)", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
 
     i = interacao(IDS["adm"])
-    await cmd["cargo"].callback(grupo, i, fake_user("alvo2"), adm_cargo_admin)
+    await cmd["role"].callback(grupo, i, fake_user("alvo2"), adm_cargo_admin)
     u = await buscar(IDS["alvo2"])
     check("Adm NAO promove Creator a Adm (❌, cargo continua Creator)", texto_enviado(i).startswith("❌") and u.role == StaffRole.CREATOR, texto_enviado(i))
 
     i = interacao(IDS["sadm"])
-    await cmd["cargo"].callback(grupo, i, fake_user("alvo2"), adm_cargo_admin)
+    await cmd["role"].callback(grupo, i, fake_user("alvo2"), adm_cargo_admin)
     u = await buscar(IDS["alvo2"])
     check("S.Adm promove pelo comando (✅, cargo mudou e sessao invalidada)", texto_enviado(i).startswith("✅") and u.role == StaffRole.ADMIN and u.token_version >= 1, texto_enviado(i))
 
     i = interacao(IDS["sadm"])
-    await cmd["desativar"].callback(grupo, i, fake_user("alvo2"))
+    await cmd["deactivate"].callback(grupo, i, fake_user("alvo2"))
     u = await buscar(IDS["alvo2"])
     check("/equipe desativar desativa", texto_enviado(i).startswith("✅") and u.is_active is False)
     i = interacao(IDS["sadm"])
-    await cmd["reativar"].callback(grupo, i, fake_user("alvo2"))
+    await cmd["reactivate"].callback(grupo, i, fake_user("alvo2"))
     u = await buscar(IDS["alvo2"])
     check("/equipe reativar reativa", texto_enviado(i).startswith("✅") and u.is_active is True)
 
     i = interacao(IDS["adm"])
-    await cmd["desativar"].callback(grupo, i, fake_user("sadm"))
+    await cmd["deactivate"].callback(grupo, i, fake_user("sadm"))
     check("Adm NAO desativa S.Adm (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["sadm"])).is_active)
 
     i = interacao(IDS["sadm"])
-    await cmd["desativar"].callback(grupo, i, fake_user("sadm"))
+    await cmd["deactivate"].callback(grupo, i, fake_user("sadm"))
     check("ninguem se desativa a si mesmo (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["sadm"])).is_active, texto_enviado(i))
 
     # o invoker enviado a' API e' SEMPRE quem digitou o comando (interaction.user), nunca o "alvo"
@@ -298,15 +308,140 @@ async def testar() -> None:
     secao("4) Restricao por servidor (ALLOWED_GUILD_IDS)")
     restrito = StaffGroup(api, allowed_guilds={555})
     i = interacao(IDS["sadm"], guild_id=999)
-    check("servidor nao permitido: comando recusado", await restrito.interaction_check(i) is False and "não está disponível" in texto_enviado(i))
+    check("servidor nao permitido: comando recusado", await restrito.interaction_check(i) is False and "not available" in texto_enviado(i))
     i = interacao(IDS["sadm"], guild_id=555)
     check("servidor permitido: comando liberado", await restrito.interaction_check(i) is True)
     check("sem lista: qualquer servidor", await grupo.interaction_check(interacao(IDS["sadm"], guild_id=42)) is True)
+
+    # ------------------------------------------------------------------
+    secao("5) Feed do log geral no Discord")
+    import tempfile
+    from ninwiki_bot.log_feed import FeedState, LogFeedStore, format_entry, pick_new, query_since
+    desde = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+    linhas = await api.audit_log_since(desde)
+    check("API devolve as acoes recentes (lista)", isinstance(linhas, list) and len(linhas) >= 1)
+    check("SEM IP nem dados sensiveis nas linhas", all("ipAddress" not in l and "ip_address" not in l for l in linhas))
+    check("ordem cronologica (mais antiga primeiro)", [l["createdAt"] for l in linhas] == sorted(l["createdAt"] for l in linhas))
+    futuro = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
+    check("nada novo depois de um instante futuro", await api.audit_log_since(futuro) == [])
+    try:
+        await NinWikiApi("http://test", "token-errado-1234567890", client=http).audit_log_since(desde)
+        check("feed com token errado e' barrado", False)
+    except ApiError as e:
+        check("feed com token errado e' barrado (401)", e.status_code == 401)
+
+    exemplo = {"id": "a1", "createdAt": "2026-10-01T12:00:00Z", "action": "update", "entityType": "post", "entityId": "x",
+               "diff": {"before": {"name": "Velho"}, "after": {"name": "Novo"}, "content": "TEXTO SECRETO LONGO", "ip": "1.2.3.4"},
+               "actorName": "Rafa", "actorRole": "admin", "source": "panel"}
+    f = format_entry(exemplo)
+    check("embed: titulo diz quem fez o que", "Rafa (Adm) edited a post" in f["title"], f["title"])
+    check("embed: mostra o que mudou (nome antigo -> novo)", "Velho" in f["description"] and "Novo" in f["description"])
+    check("embed NUNCA mostra conteudo de texto nem IP", "SECRETO" not in f["description"] and "1.2.3.4" not in f["description"])
+    check("acao desconhecida nao quebra", format_entry({**exemplo, "action": "xyz", "entityType": "abc", "diff": None})["title"].startswith("Rafa"))
+    check("login nao cita alvo", format_entry({**exemplo, "action": "login"})["title"].endswith("signed in to the panel"))
+    texto_longo = format_entry({**exemplo, "diff": {"name": "n" * 5000}})["description"]
+    check("texto enorme e' cortado", len(texto_longo) <= 700)
+
+    estado = FeedState(since=datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc))
+    novos = pick_new(estado, [exemplo, {**exemplo, "id": "a2", "createdAt": "2026-10-01T12:01:00Z"}])
+    check("pick_new devolve as 2 e avanca o 'since'", len(novos) == 2 and estado.since.minute == 1)
+    check("repetir as mesmas acoes nao posta de novo (dedup)", pick_new(estado, [exemplo, {**exemplo, "id": "a2"}]) == [])
+    check("consulta volta alguns minutos (sobreposicao)", query_since(estado) < estado.since)
+    with tempfile.TemporaryDirectory() as tmp:
+        loja = LogFeedStore(Path(tmp) / "estado.json")
+        check("sem arquivo: comeca de agora (nao despeja historico)", abs((loja.load().since - datetime.now(timezone.utc)).total_seconds()) < 5)
+        loja.save(estado)
+        carregado = loja.load()
+        check("estado salvo e relido (sobrevive a reinicio)", carregado.since == estado.since and carregado.seen == estado.seen)
+        (Path(tmp) / "estado.json").write_text("{lixo", encoding="utf-8")
+        check("arquivo corrompido nao derruba o bot", abs((loja.load().since - datetime.now(timezone.utc)).total_seconds()) < 5)
+    ok_cfg = {"discord_bot_token": "abc", "bot_api_token": "x" * 20}
+    check("LOG_CHANNEL_ID vazio = recurso desligado", BotSettings(**ok_cfg, log_channel_id="").log_channel_id is None)
+    check("LOG_CHANNEL_ID numerico e' lido", BotSettings(**ok_cfg, log_channel_id="123456789").log_channel_id == 123456789)
+    try:
+        BotSettings(**ok_cfg, log_poll_seconds=2)
+        check("LOG_POLL_SECONDS < 10 e' recusado", False)
+    except ValueError:
+        check("LOG_POLL_SECONDS < 10 e' recusado", True)
+    check("LOG_IGNORE_ACTIONS vira conjunto", BotSettings(**ok_cfg, log_ignore_actions="login, logout").ignored_log_actions == {"login", "logout"})
+
+    # ------------------------------------------------------------------
+    secao("6) Feed de ERROS e vigia de saude (API, banco, site)")
+    from ninwiki_bot.error_feed import (
+        COOLDOWN, DOWN_AFTER, ErrorFeedState, ErrorFeedStore, ServiceStatus, decide, format_error, update_status,
+    )
+    from ninwiki_bot.error_feed import query_since as err_query_since
+    agora = datetime(2026, 10, 2, 12, 0, tzinfo=timezone.utc)
+    erro = {"id": "e1", "fingerprint": "fp1", "source": "api", "level": "error", "title": "RuntimeError", "message": "boom",
+            "location": "app/api/posts.py:131 in create_post", "path": "/posts/{post_id}", "method": "POST", "status": 500,
+            "count": 1, "firstSeen": "2026-10-02T11:59:00Z", "lastSeen": "2026-10-02T12:00:00Z", "resolved": False}
+    estado = ErrorFeedState(since=agora - timedelta(minutes=5))
+    p1 = decide(estado, [erro], agora)
+    check("problema novo avisa na hora", len(p1) == 1 and p1[0][1] == 1)
+    check("o MESMO problema na proxima volta NAO avisa de novo", decide(estado, [{**erro, "count": 1}], agora + timedelta(seconds=20)) == [])
+    check("contador subiu mas ainda dentro do cooldown: NAO avisa (anti-spam)", decide(estado, [{**erro, "count": 50}], agora + timedelta(minutes=3)) == [])
+    p3 = decide(estado, [{**erro, "count": 50}], agora + COOLDOWN + timedelta(seconds=1))
+    check("passou o cooldown e continua acontecendo: avisa de novo com o delta", len(p3) == 1 and p3[0][1] == 49, str(p3))
+    check("depois desse aviso o cooldown recomeca", decide(estado, [{**erro, "count": 60}], agora + COOLDOWN + timedelta(minutes=1)) == [])
+    check("'since' avanca para a ultima ocorrencia vista", estado.since == datetime(2026, 10, 2, 12, 0, tzinfo=timezone.utc))
+    check("consulta volta alguns minutos (sobreposicao)", err_query_since(estado) < estado.since)
+    resolvido = ErrorFeedState(since=agora)
+    check("problema ja' resolvido e nunca avisado nao e' postado", decide(resolvido, [{**erro, "resolved": True}], agora) == [])
+    est2 = ErrorFeedState(since=agora)
+    decide(est2, [erro], agora)
+    check("resolvido depois de avisado: nao avisa mesmo com contador subindo", decide(est2, [{**erro, "resolved": True, "count": 99}], agora + timedelta(hours=1)) == [])
+    check("reaberto (voltou a acontecer) e passou o cooldown: avisa de novo", len(decide(est2, [{**erro, "resolved": False, "count": 120}], agora + timedelta(hours=2))) == 1)
+    f = format_error(erro, 1)
+    check("embed de problema novo: titulo, local, rota e contador", "API: RuntimeError" in f["title"] and any("create_post" in v for _, v in f["fields"])
+          and any("POST /posts/{post_id}" in v for _, v in f["fields"]) and f["footer"].startswith("New problem"))
+    f2 = format_error({**erro, "count": 50}, 49)
+    check("embed de repeticao mostra o delta desde o ultimo aviso", any("+49" in v for _, v in f2["fields"]) and f2["footer"].startswith("Still happening"))
+    check("embed de erro enorme e' cortado", len(format_error({**erro, "message": "m" * 5000}, 1)["description"]) <= 360)
+    check("fonte desconhecida nao quebra", format_error({**erro, "source": "xyz"}, 1)["title"].endswith("RuntimeError"))
+
+    st = ServiceStatus("API")
+    msgs = [update_status(st, False, agora + timedelta(seconds=i)) for i in range(DOWN_AFTER)]
+    check("falhas isoladas NAO alertam; so' a ultima falha seguida avisa que caiu", msgs[:-1] == [None] * (DOWN_AFTER - 1) and msgs[-1] and "DOWN" in msgs[-1]["title"])
+    check("continuar fora do ar nao repete o alerta", update_status(st, False, agora + timedelta(minutes=1)) is None)
+    back = update_status(st, True, agora + timedelta(minutes=5))
+    check("quando volta, avisa uma vez com o tempo fora", back and "back online" in back["title"] and "4 min" in back["description"], str(back))
+    check("estando ok nada acontece", update_status(st, True, agora + timedelta(minutes=6)) is None)
+    st2 = ServiceStatus("Website")
+    update_status(st2, False, agora); update_status(st2, True, agora)
+    check("uma falha seguida de sucesso zera a contagem (rede oscilando)", st2.failures == 0 and not st2.down)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        loja = ErrorFeedStore(Path(tmp) / "e.json")
+        check("sem arquivo: comeca de agora (nao despeja historico)", abs((loja.load().since - datetime.now(timezone.utc)).total_seconds()) < 5)
+        loja.save(estado)
+        carregado = loja.load()
+        check("estado de erros salvo e relido (sobrevive a reinicio)", carregado.since == estado.since and carregado.posted == estado.posted)
+        (Path(tmp) / "e.json").write_text("{lixo", encoding="utf-8")
+        check("arquivo corrompido nao derruba o bot", abs((loja.load().since - datetime.now(timezone.utc)).total_seconds()) < 5)
+
+    desde = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+    lista_erros = await api.errors_since(desde)
+    check("cliente do bot le' /bot/errors (lista)", isinstance(lista_erros, list))
+    check("SEM traceback nem IP", all("trace" not in e and "ipAddress" not in e for e in lista_erros))
+    ok_api, ok_db = await api.api_status()
+    check("api_status: API e banco no ar", ok_api is True and ok_db is True)
+    morto = NinWikiApi("http://nada.invalid", "x" * 20, client=httpx.AsyncClient(transport=httpx.MockTransport(lambda r: (_ for _ in ()).throw(httpx.ConnectError("sem rede"))), base_url="http://nada.invalid"))
+    check("api_status com a API fora do ar devolve (False, False) sem levantar excecao", await morto.api_status() == (False, False))
+    cfg = {"discord_bot_token": "abc", "bot_api_token": "x" * 20}
+    check("ERROR_CHANNEL_ID vazio usa o canal de log", BotSettings(**cfg, log_channel_id="55").errors_channel == 55)
+    check("ERROR_CHANNEL_ID proprio tem prioridade", BotSettings(**cfg, log_channel_id="55", error_channel_id="66").errors_channel == 66)
+    check("sem nenhum canal o feed de erros fica desligado", BotSettings(**cfg).errors_channel is None)
+    try:
+        BotSettings(**cfg, health_poll_seconds=5)
+        check("HEALTH_POLL_SECONDS < 30 e' recusado", False)
+    except ValueError:
+        check("HEALTH_POLL_SECONDS < 30 e' recusado", True)
 
     await http.aclose()
 
 
 async def main() -> None:
+    """Prepara a configuracao, roda os testes e limpa os dados no final."""
     orig = settings.bot_api_token
     try:
         await testar()

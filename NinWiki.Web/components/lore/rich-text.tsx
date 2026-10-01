@@ -41,7 +41,8 @@ import { Ficha } from '@/lib/tiptap-extensions/ficha';
 // estatico da extensao, nunca a parte interativa React (essa so'
 // existe do lado do editor, ver lib/tiptap-extensions/ficha-editable.ts).
 const extensions = [
-  StarterKit,
+  // link e underline do StarterKit desligados: sao adicionados abaixo (evita extensao duplicada).
+  StarterKit.configure({ link: false, underline: false }),
   TextStyle,
   Color,
   Underline,
@@ -55,6 +56,7 @@ const extensions = [
   Ficha,
 ];
 
+/** True se o texto e' um documento Tiptap (JSON) e nao texto simples antigo. */
 function isTiptapJson(value: string): boolean {
   const trimmed = value.trim();
   if (!trimmed.startsWith('{')) return false;
@@ -89,6 +91,7 @@ export function extractPlainText(content: string): string {
   }
 }
 
+/** Mostra um campo de texto rico: converte o JSON do Tiptap em HTML (ou mostra texto simples). */
 export function RichText({ content, className = 'prose-shinobi' }: { content: string; className?: string }) {
   if (!content) return null;
 

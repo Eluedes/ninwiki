@@ -6,21 +6,29 @@ Como rodar (na pasta NinWiki.Bot, com o venv DO BOT ativado):
 
 Pre-requisitos: ver README.md (criar o bot no Discord, .env, API rodando).
 """
+import copy
 import logging
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 import discord
 from discord import app_commands
+from discord.ext import tasks
 from pydantic import ValidationError
 
-from ninwiki_bot.api_client import NinWikiApi
+from ninwiki_bot.api_client import ApiError, NinWikiApi
 from ninwiki_bot.config import BotSettings
+from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, decide, format_error, query_since as errors_query_since, update_status
+from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
 from ninwiki_bot.staff_commands import StaffGroup
 
 log = logging.getLogger("ninwiki_bot")
 
 
 class NinWikiBot(discord.Client):
+    """O bot: comandos /equipe + (opcional) feed do log geral num canal do Discord."""
+
     def __init__(self, settings: BotSettings):
         # Intents PADRAO (sem nenhuma privilegiada): so' usamos comandos de barra,
         # nao precisamos ler mensagem nem lista de membros.
@@ -28,19 +36,117 @@ class NinWikiBot(discord.Client):
         self.settings = settings
         self.tree = app_commands.CommandTree(self)
         self.api = NinWikiApi(settings.ninwiki_api_url, settings.bot_api_token)
+        # Feed do log: estado (onde parou) guardado em arquivo ao lado do bot, para sobreviver a reinicio.
+        self.feed_store = LogFeedStore(Path(__file__).resolve().parent / "log_state.json")
+        self.feed_state = self.feed_store.load()
+        self._feed_failing = False  # so' avisa no terminal na PRIMEIRA falha de uma sequencia (sem spam)
+        self.log_loop = tasks.loop(seconds=settings.log_poll_seconds)(self._log_tick)
+        self.log_loop.before_loop(self.wait_until_ready)
+        # Feed de ERROS do wiki (+ vigia de API/banco/site): estado em arquivo, mesmo esquema do feed de log.
+        self.error_store = ErrorFeedStore(Path(__file__).resolve().parent / "error_state.json")
+        self.error_state = self.error_store.load()
+        self._errors_failing = False
+        self.error_loop = tasks.loop(seconds=settings.log_poll_seconds)(self._error_tick)
+        self.error_loop.before_loop(self.wait_until_ready)
+        self.statuses = {"API": ServiceStatus("API"), "Database": ServiceStatus("Database"), "Website": ServiceStatus("Website")}
+        self.health_loop = tasks.loop(seconds=settings.health_poll_seconds)(self._health_tick)
+        self.health_loop.before_loop(self.wait_until_ready)
 
         @self.tree.error
         async def on_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
+            """Erro inesperado em um comando: registra no terminal e responde algo generico (sem vazar detalhe)."""
             # Erro inesperado: registra no terminal e responde algo generico -
             # nunca despeja detalhe interno (stack trace, URL, token) no Discord.
             log.exception("Erro num comando", exc_info=error)
-            message = "❌ Algo deu errado. Tente de novo; se repetir, avise quem cuida do bot."
+            message = "❌ Something went wrong. Try again; if it keeps happening, tell whoever maintains the bot."
             if interaction.response.is_done():
                 await interaction.followup.send(message, ephemeral=True)
             else:
                 await interaction.response.send_message(message, ephemeral=True)
 
+    async def _log_tick(self) -> None:
+        """Uma volta do feed: busca acoes novas na API e posta no canal de log (embeds, ate' 10 por mensagem)."""
+        try:
+            channel = self.get_channel(self.settings.log_channel_id) or await self.fetch_channel(self.settings.log_channel_id)
+            entries = await self.api.audit_log_since(query_since(self.feed_state).isoformat())
+            # Trabalha numa COPIA do estado: so' "confirma" depois que o envio deu certo (senao tentaria de novo, sem perder nada).
+            new_state = copy.deepcopy(self.feed_state)
+            fresh = [e for e in pick_new(new_state, entries) if e["action"] not in self.settings.ignored_log_actions]
+            for i in range(0, len(fresh), 10):
+                embeds = []
+                for e in fresh[i : i + 10]:
+                    f = format_entry(e)
+                    embed = discord.Embed(title=f["title"], description=f["description"] or None, color=f["color"], timestamp=f["timestamp"])
+                    embed.set_footer(text=f["footer"])
+                    embeds.append(embed)
+                await channel.send(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+            self.feed_state = new_state
+            self.feed_store.save(self.feed_state)
+            self._feed_failing = False
+        except (ApiError, discord.DiscordException) as e:
+            if not self._feed_failing:
+                log.warning("Feed de log falhou (tento de novo no proximo ciclo): %s", e)
+            self._feed_failing = True
+
+    async def _errors_channel(self) -> discord.abc.Messageable:
+        """O canal de erros (ERROR_CHANNEL_ID, ou o de log se aquele estiver vazio)."""
+        channel_id = self.settings.errors_channel
+        return self.get_channel(channel_id) or await self.fetch_channel(channel_id)
+
+    async def _error_tick(self) -> None:
+        """Uma volta do feed de erros: busca problemas novos na API e posta os que merecem aviso (ver error_feed.decide)."""
+        try:
+            channel = await self._errors_channel()
+            entries = await self.api.errors_since(errors_query_since(self.error_state).isoformat())
+            new_state = copy.deepcopy(self.error_state)
+            to_post = decide(new_state, entries, datetime.now(timezone.utc))
+            for i in range(0, len(to_post), 10):
+                embeds = []
+                for entry, since_last in to_post[i : i + 10]:
+                    f = format_error(entry, since_last)
+                    embed = discord.Embed(title=f["title"], description=f["description"], color=f["color"], timestamp=f["timestamp"])
+                    for name, value in f["fields"]:
+                        embed.add_field(name=name, value=value, inline=True)
+                    embed.set_footer(text=f["footer"])
+                    embeds.append(embed)
+                await channel.send(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+            self.error_state = new_state
+            self.error_store.save(self.error_state)
+            self._errors_failing = False
+        except (ApiError, discord.DiscordException) as e:
+            if not self._errors_failing:
+                log.warning("Feed de erros falhou (tento de novo no proximo ciclo): %s", e)
+            self._errors_failing = True
+
+    async def _health_tick(self) -> None:
+        """Confere se API, banco e site estao no ar e avisa no canal SO' quando algum cai ou volta (ver error_feed.update_status)."""
+        api_up, db_up = await self.api.api_status()
+        results = {"API": api_up, "Database": db_up if api_up else True}  # API fora do ar: nao da' pra saber do banco
+        if self.settings.site_url:
+            results["Website"] = await self.api.site_ok(self.settings.site_url)
+        messages = []
+        for name, ok in results.items():
+            msg = update_status(self.statuses[name], ok, datetime.now(timezone.utc))
+            if msg:
+                messages.append(msg)
+        if not messages:
+            return
+        try:
+            channel = await self._errors_channel()
+            embeds = [discord.Embed(title=m["title"], description=m["description"], color=m["color"], timestamp=datetime.now(timezone.utc)) for m in messages]
+            await channel.send(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+        except discord.DiscordException as e:
+            log.warning("Nao consegui avisar no Discord sobre a mudanca de saude: %s", e)
+
     async def setup_hook(self) -> None:
+        """Registra os comandos, sincroniza com o Discord e liga o feed de log (se configurado)."""
+        if self.settings.errors_channel:
+            self.error_loop.start()
+            self.health_loop.start()
+            log.info("Feed de erros e vigia de saude ligados: canal %s", self.settings.errors_channel)
+        if self.settings.log_channel_id:
+            self.log_loop.start()
+            log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
         self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds))
         if self.settings.dev_guild_id:
             # Sincroniza so' no servidor de testes: aparece na hora (o global demora ate 1h).
@@ -53,14 +159,17 @@ class NinWikiBot(discord.Client):
             log.info("Comandos globais sincronizados (podem levar ate 1h pra aparecer)")
 
     async def on_ready(self) -> None:
+        """Avisa no terminal que o bot esta' online."""
         log.info("Bot online como %s", self.user)
 
     async def close(self) -> None:
+        """Fecha o cliente HTTP da API antes de desligar o bot."""
         await self.api.aclose()
         await super().close()
 
 
 def main() -> None:
+    """Le e valida o .env, depois liga o bot."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     try:
         settings = BotSettings()

@@ -1,15 +1,13 @@
 """
-Comandos de barra /equipe ... para gerenciar a equipe do painel pelo Discord.
+Slash commands /team ... to manage the panel staff from Discord (English: the team and the site are English-first).
 
-O bot NAO decide nada sozinho: em cada comando ele so' repassa pra' API QUEM
-digitou (o Discord garante esse ID) e o que a pessoa pediu. A API aplica as
-MESMAS regras do painel (precisa ser staff ativa, ter a permissao, respeitar a
-hierarquia: Adm so' mexe em Creator etc.) e responde com uma mensagem em
-portugues, que o bot mostra como veio. Nao ha regra de cargo duplicada aqui -
-se as regras mudarem na API, o bot acompanha sozinho.
+The bot decides NOTHING on its own: for every command it just forwards to the API WHO typed it (Discord guarantees
+that ID) and what they asked for. The API applies the SAME rules as the panel (must be an active staff member, have
+the permission, respect the hierarchy...) and answers with a message, which the bot shows as it came. There is no
+role logic duplicated here - if the rules change in the API, the bot follows by itself. Today only the S.Adm can
+manage the staff, so everyone else gets a clear refusal.
 
-Todas as respostas sao EFEMERAS (so' quem digitou enxerga) - a lista da equipe
-nao deve aparecer pro canal inteiro.
+All answers are EPHEMERAL (only the person who typed sees them) - the staff list must not show up for the whole channel.
 """
 from collections.abc import Awaitable, Callable
 
@@ -32,24 +30,27 @@ NO_MENTIONS = discord.AllowedMentions.none()
 
 
 def _name_of(user: discord.abc.User) -> str:
+    """Nome para mostrar de um usuario do Discord."""
     return getattr(user, "global_name", None) or user.name
 
 
 class StaffGroup(app_commands.Group):
+    """Command group /team (list, add, role, deactivate, reactivate)."""
     def __init__(self, api: NinWikiApi, allowed_guilds: set[int] | None = None):
         super().__init__(
-            name="equipe",
-            description="Gerencia a equipe do painel da NinWiki",
+            name="team",
+            description="Manage the NinWiki panel staff",
             guild_only=True,  # nao funciona em mensagem direta
         )
         self.api = api
         self.allowed_guilds = allowed_guilds or set()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """Before every command: only runs on allowed servers (ALLOWED_GUILD_IDS)."""
         # Defesa extra (a API ja' barra quem nao e' staff): so' nos servidores permitidos.
         if self.allowed_guilds and interaction.guild_id not in self.allowed_guilds:
             await interaction.response.send_message(
-                "Este comando não está disponível neste servidor.", ephemeral=True
+                "This command is not available on this server.", ephemeral=True
             )
             return False
         return True
@@ -60,6 +61,7 @@ class StaffGroup(app_commands.Group):
         action: Callable[[], Awaitable[object]],
         on_success: Callable[[object], str],
     ) -> None:
+        """Runs the action on the API and answers only the person who typed (success or error)."""
         # defer primeiro: a API pode demorar mais que os 3s que o Discord da' pra responder.
         await interaction.response.defer(ephemeral=True)
         try:
@@ -69,8 +71,9 @@ class StaffGroup(app_commands.Group):
             return
         await interaction.followup.send(on_success(result), ephemeral=True, allowed_mentions=NO_MENTIONS)
 
-    @app_commands.command(name="listar", description="Mostra quem está na equipe e o cargo de cada um")
-    async def listar(self, interaction: discord.Interaction) -> None:
+    @app_commands.command(name="list", description="Show who is on the staff and each person's role")
+    async def list_staff(self, interaction: discord.Interaction) -> None:
+        """Shows who is on the staff and each person's role."""
         await interaction.response.defer(ephemeral=True)
         try:
             staff = await self.api.list_staff(interaction.user.id)
@@ -81,60 +84,64 @@ class StaffGroup(app_commands.Group):
         staff.sort(key=lambda m: (-ROLE_RANK.get(m["role"], 0), m["username"].lower()))
         lines = []
         for m in staff:
-            status = "" if m["isActive"] else " · *desativado*"
-            owner = " · dono" if m.get("isOwner") else ""
+            status = "" if m["isActive"] else " · *deactivated*"
+            owner = " · owner" if m.get("isOwner") else ""
             lines.append(f"**{m['username']}** — {ROLE_LABEL.get(m['role'], m['role'])}{owner}{status} · <@{m['discordId']}>")
-        text = "\n".join(lines) or "Ninguém cadastrado."
+        text = "\n".join(lines) or "Nobody registered."
         if len(text) > 4000:  # limite de descricao de um embed
             text = text[:3990].rsplit("\n", 1)[0] + "\n…"
-        embed = discord.Embed(title=f"Equipe da NinWiki ({len(staff)})", description=text)
+        embed = discord.Embed(title=f"NinWiki staff ({len(staff)})", description=text)
         await interaction.followup.send(embed=embed, ephemeral=True, allowed_mentions=NO_MENTIONS)
 
-    @app_commands.command(name="adicionar", description="Cadastra alguém na equipe")
-    @app_commands.describe(usuario="Quem será cadastrado", cargo="Cargo que a pessoa terá")
-    @app_commands.choices(cargo=ROLE_CHOICES)
-    async def adicionar(
-        self, interaction: discord.Interaction, usuario: discord.User, cargo: app_commands.Choice[str]
+    @app_commands.command(name="add", description="Register someone on the staff")
+    @app_commands.describe(user="Who will be registered", role="Role the person will have")
+    @app_commands.choices(role=ROLE_CHOICES)
+    async def add(
+        self, interaction: discord.Interaction, user: discord.User, role: app_commands.Choice[str]
     ) -> None:
-        if usuario.bot:
-            await interaction.response.send_message("❌ Bots não podem entrar na equipe.", ephemeral=True)
+        """Registers someone on the staff with a role."""
+        if user.bot:
+            await interaction.response.send_message("❌ Bots cannot join the staff.", ephemeral=True)
             return
-        name = _name_of(usuario)
+        name = _name_of(user)
         await self._run(
             interaction,
-            lambda: self.api.add_staff(interaction.user.id, usuario.id, cargo.value, name),
-            lambda _: f"✅ **{name}** foi cadastrado como **{cargo.name}**. Já pode entrar no painel com o Discord.",
+            lambda: self.api.add_staff(interaction.user.id, user.id, role.value, name),
+            lambda _: f"✅ **{name}** was registered as **{role.name}**. They can now sign in to the panel with Discord.",
         )
 
-    @app_commands.command(name="cargo", description="Troca o cargo de alguém da equipe")
-    @app_commands.describe(usuario="Membro da equipe", cargo="Novo cargo")
-    @app_commands.choices(cargo=ROLE_CHOICES)
-    async def cargo(
-        self, interaction: discord.Interaction, usuario: discord.User, cargo: app_commands.Choice[str]
+    @app_commands.command(name="role", description="Change the role of a staff member")
+    @app_commands.describe(user="Staff member", role="New role")
+    @app_commands.choices(role=ROLE_CHOICES)
+    async def role(
+        self, interaction: discord.Interaction, user: discord.User, role: app_commands.Choice[str]
     ) -> None:
-        name = _name_of(usuario)
+        """Changes the role of a staff member."""
+        name = _name_of(user)
         await self._run(
             interaction,
-            lambda: self.api.change_role(interaction.user.id, usuario.id, cargo.value),
-            lambda _: f"✅ **{name}** agora é **{cargo.name}**. A sessão dele foi encerrada e ele entra de novo com o cargo novo.",
+            lambda: self.api.change_role(interaction.user.id, user.id, role.value),
+            lambda _: f"✅ **{name}** is now **{role.name}**. Their session was ended and they sign in again with the new role.",
         )
 
-    @app_commands.command(name="desativar", description="Tira o acesso de alguém (na hora)")
-    @app_commands.describe(usuario="Membro da equipe")
-    async def desativar(self, interaction: discord.Interaction, usuario: discord.User) -> None:
-        name = _name_of(usuario)
+    @app_commands.command(name="deactivate", description="Remove someone's access (immediately)")
+    @app_commands.describe(user="Staff member")
+    async def deactivate(self, interaction: discord.Interaction, user: discord.User) -> None:
+        """Removes someone's access immediately."""
+        name = _name_of(user)
         await self._run(
             interaction,
-            lambda: self.api.set_active(interaction.user.id, usuario.id, False),
-            lambda _: f"✅ **{name}** foi desativado e perdeu o acesso agora mesmo.",
+            lambda: self.api.set_active(interaction.user.id, user.id, False),
+            lambda _: f"✅ **{name}** was deactivated and lost access right away.",
         )
 
-    @app_commands.command(name="reativar", description="Devolve o acesso de alguém desativado")
-    @app_commands.describe(usuario="Membro da equipe")
-    async def reativar(self, interaction: discord.Interaction, usuario: discord.User) -> None:
-        name = _name_of(usuario)
+    @app_commands.command(name="reactivate", description="Give access back to someone deactivated")
+    @app_commands.describe(user="Staff member")
+    async def reactivate(self, interaction: discord.Interaction, user: discord.User) -> None:
+        """Gives access back to someone."""
+        name = _name_of(user)
         await self._run(
             interaction,
-            lambda: self.api.set_active(interaction.user.id, usuario.id, True),
-            lambda _: f"✅ **{name}** foi reativado. Precisa entrar no painel de novo.",
+            lambda: self.api.set_active(interaction.user.id, user.id, True),
+            lambda _: f"✅ **{name}** was reactivated. They need to sign in to the panel again.",
         )

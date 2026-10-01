@@ -27,15 +27,21 @@ from app.core.payloads import apply_scalar_fields
 from app.core.permissions import Permission, has_permission
 from app.models.enums import ContentStatus
 from app.models.posts import Post
+from app.core.translation import fill_missing_translations, retranslate_fields
 from app.models.users import User
 from app.schemas.posts import PostRead, PostSummary, PostWrite
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
+# Pares (campo EN, campo PT) que a DeepL traduz sozinha: o texto sem sufixo e' o INGLES.
+POST_TRANSLATABLE = [("title", "title_pt"), ("excerpt", "excerpt_pt"), ("content", "content_pt")]
+
 
 def _summary(post: Post) -> dict:
+    """Converte um Post no resumo da listagem (sem o conteudo)."""
     return {
         "id": post.id, "slug": post.slug, "title": post.title, "excerpt": post.excerpt,
+        "title_pt": post.title_pt, "excerpt_pt": post.excerpt_pt,
         "cover_image": post.cover_image, "status": post.status,
         "author_name": post.author.username if post.author else None,
         "created_at": post.created_at, "updated_at": post.updated_at,
@@ -43,34 +49,40 @@ def _summary(post: Post) -> dict:
 
 
 def _read(post: Post) -> PostRead:
-    return PostRead(**_summary(post), content=post.content)
+    """Converte um Post na ficha completa."""
+    return PostRead(**_summary(post), content=post.content, content_pt=post.content_pt)
 
 
 def _hide_draft_from_public(post: Post, user: User | None) -> None:
+    """Rascunho responde 404 para quem nao e' da equipe."""
     if user is None and post.status != ContentStatus.PUBLISHED:
-        raise HTTPException(status_code=404, detail="Post não encontrado")
+        raise HTTPException(status_code=404, detail="Post not found")
 
 
 def _guard_publish(staff: User, new_status: ContentStatus) -> None:
+    """Quem nao tem posts.publish nao pode colocar um post como publicado (403)."""
     if new_status == ContentStatus.PUBLISHED and not has_permission(staff.role, Permission.POST_PUBLISH):
-        raise HTTPException(status_code=403, detail="Só um Adm pode publicar. Salve como rascunho.")
+        raise HTTPException(status_code=403, detail="Only an Adm can publish. Save as a draft.")
 
 
 def _guard_edit(staff: User, post: Post, new_status: ContentStatus) -> None:
+    """Quem nao tem posts.publish nao mexe em post ja' publicado nem o publica (403)."""
     if not has_permission(staff.role, Permission.POST_PUBLISH) and post.status == ContentStatus.PUBLISHED:
-        raise HTTPException(status_code=403, detail="Este post já está publicado. Só um Adm pode alterá-lo.")
+        raise HTTPException(status_code=403, detail="This post is already published. Only an Adm can change it.")
     _guard_publish(staff, new_status)
 
 
 async def _load(db: AsyncSession, post_id: UUID) -> Post:
+    """Carrega um post (com o autor) ou responde 404."""
     stmt = select(Post).where(Post.id == post_id).options(selectinload(Post.author))
     post = (await db.execute(stmt)).scalar_one_or_none()
     if post is None:
-        raise HTTPException(status_code=404, detail="Post não encontrado")
+        raise HTTPException(status_code=404, detail="Post not found")
     return post
 
 
 async def _slug_taken(db: AsyncSession, slug: str, ignore_id: UUID | None = None) -> bool:
+    """True se ja' existe OUTRO post com este slug."""
     stmt = select(Post.id).where(Post.slug == slug)
     found = (await db.execute(stmt)).scalar_one_or_none()
     return found is not None and found != ignore_id
@@ -82,6 +94,7 @@ async def list_posts(
     user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Lista posts, mais recentes primeiro; o publico so' ve' os publicados."""
     stmt = select(Post).options(selectinload(Post.author)).order_by(Post.created_at.desc())
     if user is None:
         stmt = stmt.where(Post.status == ContentStatus.PUBLISHED)  # rascunho NUNCA aparece pro publico
@@ -92,16 +105,18 @@ async def list_posts(
 
 @router.get("/slug/{slug}", response_model=PostRead)
 async def get_post_by_slug(slug: str, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
+    """Ficha de um post pelo slug (URL legivel do site publico)."""
     stmt = select(Post).where(Post.slug == slug).options(selectinload(Post.author))
     post = (await db.execute(stmt)).scalar_one_or_none()
     if post is None:
-        raise HTTPException(status_code=404, detail="Post não encontrado")
+        raise HTTPException(status_code=404, detail="Post not found")
     _hide_draft_from_public(post, user)
     return _read(post)
 
 
 @router.get("/{post_id}", response_model=PostRead)
 async def get_post(post_id: UUID, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
+    """Ficha de um post pelo id (usado pelo painel)."""
     post = await _load(db, post_id)
     _hide_draft_from_public(post, user)
     return _read(post)
@@ -113,11 +128,13 @@ async def create_post(
     staff: User = Depends(require_permission(Permission.POST_CREATE)),
     db: AsyncSession = Depends(get_db),
 ):
+    """Cria um post (exige posts.create); Creator so' cria rascunho."""
     _guard_publish(staff, payload.status)
     if await _slug_taken(db, payload.slug):
-        raise HTTPException(status_code=409, detail=f"Já existe um post com o slug '{payload.slug}'")
+        raise HTTPException(status_code=409, detail=f"A post with the slug '{payload.slug}' already exists")
     post = Post(author_id=staff.id, **payload.model_dump())
     db.add(post)
+    await fill_missing_translations(post, POST_TRANSLATABLE)  # DeepL EN -> PT (so' o que veio vazio)
     await db.flush()
     await log_action(db, action="create", entity_type="post", entity_id=str(post.id),
                      diff={"name": post.title, "status": post.status.value}, actor=staff)
@@ -132,14 +149,31 @@ async def update_post(
     staff: User = Depends(require_permission(Permission.POST_EDIT)),
     db: AsyncSession = Depends(get_db),
 ):
+    """Edita um post respeitando as regras de publicar/editar publicado."""
     post = await _load(db, post_id)
     _guard_edit(staff, post, payload.status)
     if await _slug_taken(db, payload.slug, ignore_id=post.id):
-        raise HTTPException(status_code=409, detail=f"Já existe um post com o slug '{payload.slug}'")
+        raise HTTPException(status_code=409, detail=f"A post with the slug '{payload.slug}' already exists")
     before = {"name": post.title, "status": post.status.value}
     apply_scalar_fields(post, payload)
+    await fill_missing_translations(post, POST_TRANSLATABLE)  # DeepL EN -> PT (so' o que ficou vazio)
     await log_action(db, action="update", entity_type="post", entity_id=str(post.id),
                      diff={"before": before, "after": {"name": post.title, "status": post.status.value}}, actor=staff)
+    await db.commit()
+    db.expire_all()
+    return _read(await _load(db, post_id))
+
+
+@router.post("/{post_id}/retranslate", response_model=PostRead)
+async def retranslate_post(
+    post_id: UUID,
+    staff: User = Depends(require_permission(Permission.POST_EDIT, Permission.TRANSLATION_RETRANSLATE)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Forca a traducao nova (EN -> PT) de titulo, resumo e texto - para quando o ingles mudou e o portugues ficou velho."""
+    post = await _load(db, post_id)
+    _guard_edit(staff, post, post.status)
+    await retranslate_fields(post, POST_TRANSLATABLE)
     await db.commit()
     db.expire_all()
     return _read(await _load(db, post_id))
@@ -151,6 +185,7 @@ async def delete_post(
     staff: User = Depends(require_permission(Permission.POST_DELETE)),
     db: AsyncSession = Depends(get_db),
 ):
+    """Apaga um post (exige posts.delete)."""
     post = await _load(db, post_id)
     title = post.title
     await db.delete(post)

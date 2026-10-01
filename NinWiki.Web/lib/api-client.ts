@@ -178,6 +178,7 @@ export class ApiError extends Error {
   }
 }
 
+/** Chamada base a' API: manda o cookie de sessao, lê o JSON e transforma erros em ApiError com a mensagem da API. */
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -202,6 +203,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+/** Lista entries do catalogo (filtros opcionais: categoria, status e busca por nome). */
 export function listContentItems(
   category?: Category,
   status?: 'draft' | 'published',
@@ -215,6 +217,7 @@ export function listContentItems(
   return apiFetch(`/content-items${query ? `?${query}` : ''}`);
 }
 
+/** Ficha completa de uma entry pelo id. */
 export function getContentItem(id: string): Promise<ApiContentItem> {
   return apiFetch(`/content-items/${id}`);
 }
@@ -225,10 +228,12 @@ export function getContentItemBySlug(slug: string): Promise<ApiContentItem> {
   return apiFetch(`/content-items/slug/${slug}`);
 }
 
+/** Cria uma entry (painel; exige content.create). */
 export function createContentItem(payload: ContentItemInput): Promise<ApiContentItem> {
   return apiFetch('/content-items', { method: 'POST', body: JSON.stringify(payload) });
 }
 
+/** Edita uma entry (painel). */
 export function updateContentItem(id: string, payload: ContentItemInput): Promise<ApiContentItem> {
   return apiFetch(`/content-items/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
@@ -241,6 +246,7 @@ export function retranslateContentItem(id: string): Promise<ApiContentItem> {
   return apiFetch(`/content-items/${id}/retranslate`, { method: 'POST' });
 }
 
+/** Apaga uma entry (painel; exige content.delete). */
 export function deleteContentItem(id: string): Promise<void> {
   return apiFetch(`/content-items/${id}`, { method: 'DELETE' });
 }
@@ -281,6 +287,7 @@ export interface ApiAttribute {
   name: string;
   namePt: string | null;
   description: string;
+  descriptionPt?: string | null;
   icon: string;
 }
 
@@ -326,47 +333,58 @@ export interface ApiJutsu {
 // cria, nao gerado pelo servidor como em content_items).
 export type JutsuInput = ApiJutsu;
 
+/** Lista as masteries com seus caminhos. */
 export function listMasteries(): Promise<ApiMastery[]> {
   return apiFetch('/masteries');
 }
 
+/** Ficha de uma mastery pelo id. */
 export function getMastery(id: string): Promise<ApiMastery> {
   return apiFetch(`/masteries/${id}`);
 }
 
+/** Edita uma mastery (painel; as masteries sao fixas, nao se criam nem apagam). */
 export function updateMastery(id: string, payload: MasteryInput): Promise<ApiMastery> {
   return apiFetch(`/masteries/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
+/** Forca a retraducao automatica de uma mastery. */
 export function retranslateMastery(id: string): Promise<ApiMastery> {
   return apiFetch(`/masteries/${id}/retranslate`, { method: 'POST' });
 }
 
+/** Lista os atributos do jogo (Strength, Agility...). */
 export function listAttributes(): Promise<ApiAttribute[]> {
   return apiFetch('/attributes');
 }
 
+/** Lista jutsus, opcionalmente so' os de uma mastery. */
 export function listJutsus(masteryId?: string): Promise<ApiJutsu[]> {
   const query = masteryId ? `?masteryId=${masteryId}` : '';
   return apiFetch(`/jutsus${query}`);
 }
 
+/** Ficha de um jutsu pelo id. */
 export function getJutsu(id: string): Promise<ApiJutsu> {
   return apiFetch(`/jutsus/${id}`);
 }
 
+/** Cria um jutsu (painel; exige lore.edit). */
 export function createJutsu(payload: JutsuInput): Promise<ApiJutsu> {
   return apiFetch('/jutsus', { method: 'POST', body: JSON.stringify(payload) });
 }
 
+/** Edita um jutsu (painel). */
 export function updateJutsu(id: string, payload: JutsuInput): Promise<ApiJutsu> {
   return apiFetch(`/jutsus/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
+/** Forca a retraducao automatica de um jutsu. */
 export function retranslateJutsu(id: string): Promise<ApiJutsu> {
   return apiFetch(`/jutsus/${id}/retranslate`, { method: 'POST' });
 }
 
+/** Apaga um jutsu (painel; exige lore.delete). */
 export function deleteJutsu(id: string): Promise<void> {
   return apiFetch(`/jutsus/${id}`, { method: 'DELETE' });
 }
@@ -390,6 +408,7 @@ export interface ApiAuditLogEntry {
   ipAddress: string | null;
 }
 
+/** Ultimas acoes do log geral (o que cada cargo ve' e' decidido pela API). */
 export function listAuditLog(limit = 50, entityType?: string): Promise<ApiAuditLogEntry[]> {
   const params = new URLSearchParams({ limit: String(limit) });
   if (entityType) params.set('entityType', entityType);
@@ -403,6 +422,7 @@ export function listAuditLog(limit = 50, entityType?: string): Promise<ApiAuditL
 // Tipos de registro que tem historico por entry (o backend so' libera os de conteudo pra quem nao e' S.Adm).
 export type HistoryEntityType = 'content_item' | 'jutsu' | 'post';
 
+/** Historico de alteracoes de UMA entry (post, jutsu ou conteudo). */
 export function listEntryHistory(entityType: HistoryEntityType, entityId: string): Promise<ApiAuditLogEntry[]> {
   return apiFetch(`/audit-log?entityType=${entityType}&entityId=${encodeURIComponent(entityId)}&limit=50`);
 }
@@ -413,10 +433,12 @@ export function bulkUpdateContentStatus(ids: string[], status: 'draft' | 'publis
   return apiFetch('/content-items/bulk-status', { method: 'PATCH', body: JSON.stringify({ ids, status }) });
 }
 
+/** Apaga varias entries de uma vez. */
 export function bulkDeleteContentItems(ids: string[]): Promise<void> {
   return apiFetch('/content-items/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) });
 }
 
+/** Apaga varios jutsus de uma vez. */
 export function bulkDeleteJutsus(ids: string[]): Promise<void> {
   return apiFetch('/jutsus/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) });
 }
@@ -457,6 +479,7 @@ export interface BulkImportResult {
   skippedDuplicates: number;
 }
 
+/** Importa uma lista de nomes como entries em rascunho (importacao em massa). */
 export function bulkImportContentItems(entries: BulkImportEntry[]): Promise<BulkImportResult> {
   return apiFetch('/content-items/bulk-import', { method: 'POST', body: JSON.stringify({ entries }) });
 }
@@ -468,6 +491,9 @@ export interface ApiClan {
   name: string;
   villageId: string;
   description: string;
+  // Traducao EN -> PT (DeepL); `name`/`description` sao o ingles (principal)
+  namePt?: string | null;
+  descriptionPt?: string | null;
   // Imagem do cla' (logo + roupa que usam), enviada pelo painel
   image: string | null;
 }
@@ -476,6 +502,9 @@ export interface ApiOrganization {
   id: string;
   name: string;
   description: string;
+  // Traducao EN -> PT (DeepL); `name`/`description` sao o ingles (principal)
+  namePt?: string | null;
+  descriptionPt?: string | null;
 }
 
 export interface ApiVillage {
@@ -487,6 +516,11 @@ export interface ApiVillage {
   motto: string;
   description: string;
   longDescription: string;
+  // Traducoes EN -> PT (DeepL); os campos sem sufixo sao o ingles (principal)
+  mottoPt?: string | null;
+  descriptionPt?: string | null;
+  longDescriptionPt?: string | null;
+  climatePt?: string | null;
   emblem: string;
   image: string | null;
   accentColor: string;
@@ -498,10 +532,12 @@ export interface ApiVillage {
   organizations: ApiOrganization[];
 }
 
+/** Lista as vilas com cla's e organizacoes. */
 export function listVillages(): Promise<ApiVillage[]> {
   return apiFetch('/villages');
 }
 
+/** Ficha de uma vila pelo id. */
 export function getVillage(id: string): Promise<ApiVillage> {
   return apiFetch(`/villages/${id}`);
 }
@@ -512,6 +548,9 @@ export interface ClanInput {
   id: string;
   name: string;
   description: string;
+  // Vazio = a DeepL traduz EN -> PT ao salvar
+  namePt?: string | null;
+  descriptionPt?: string | null;
   image?: string | null;
 }
 
@@ -523,6 +562,11 @@ export interface VillageInput {
   motto: string;
   description: string;
   longDescription: string;
+  // Vazio = a DeepL traduz EN -> PT ao salvar
+  mottoPt?: string | null;
+  descriptionPt?: string | null;
+  longDescriptionPt?: string | null;
+  climatePt?: string | null;
   emblem: string;
   image: string | null;
   accentColor: string;
@@ -534,14 +578,17 @@ export interface VillageInput {
   clans: ClanInput[];
 }
 
+/** Cria uma vila com seus cla's (painel; exige lore.edit). */
 export function createVillage(payload: VillageInput): Promise<ApiVillage> {
   return apiFetch('/villages', { method: 'POST', body: JSON.stringify(payload) });
 }
 
+/** Edita uma vila; a lista de cla's enviada substitui a atual. */
 export function updateVillage(id: string, payload: VillageInput): Promise<ApiVillage> {
   return apiFetch(`/villages/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
+/** Apaga uma vila e seus cla's (painel; exige lore.delete). */
 export function deleteVillage(id: string): Promise<void> {
   return apiFetch(`/villages/${id}`, { method: 'DELETE' });
 }
@@ -555,21 +602,28 @@ export interface OrganizationInput {
   id: string;
   name: string;
   description: string;
+  // Vazio = a DeepL traduz EN -> PT ao salvar
+  namePt?: string | null;
+  descriptionPt?: string | null;
   villageIds: string[];
 }
 
+/** Lista as organizacoes e as vilas em que atuam. */
 export function listOrganizations(): Promise<ApiOrganizationAdmin[]> {
   return apiFetch('/organizations');
 }
 
+/** Cria uma organizacao (painel). */
 export function createOrganization(payload: OrganizationInput): Promise<ApiOrganizationAdmin> {
   return apiFetch('/organizations', { method: 'POST', body: JSON.stringify(payload) });
 }
 
+/** Edita uma organizacao e suas vilas. */
 export function updateOrganization(id: string, payload: OrganizationInput): Promise<ApiOrganizationAdmin> {
   return apiFetch(`/organizations/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
+/** Apaga uma organizacao. */
 export function deleteOrganization(id: string): Promise<void> {
   return apiFetch(`/organizations/${id}`, { method: 'DELETE' });
 }
@@ -583,6 +637,7 @@ export interface ApiProfession {
   namePt: string | null;
   group: 'gathering' | 'crafting';
   description: string;
+  descriptionPt?: string | null;
   icon: string;
 }
 
@@ -593,13 +648,16 @@ export interface ApiNinjaRank {
   namePt: string | null;
   order: number;
   description: string;
+  descriptionPt?: string | null;
 }
 
 export interface ApiStoryArc {
   id: string;
   name: string;
+  namePt?: string | null;
   levelRange: string;
   description: string;
+  descriptionPt?: string | null;
 }
 
 export interface ApiSummon {
@@ -608,23 +666,31 @@ export interface ApiSummon {
   // `name` e' o ingles (principal); `namePt` a traducao (ver lib/localized.ts)
   namePt: string | null;
   village: string;
+  villagePt?: string | null;
   stageYoung: string;
   stageTeen: string;
   stageAdult: string;
+  stageYoungPt?: string | null;
+  stageTeenPt?: string | null;
+  stageAdultPt?: string | null;
 }
 
+/** Lista as profissoes (aba do Guia). */
 export function listProfessions(): Promise<ApiProfession[]> {
   return apiFetch('/professions');
 }
 
+/** Lista os ranks ninja (aba do Guia). */
 export function listNinjaRanks(): Promise<ApiNinjaRank[]> {
   return apiFetch('/ninja-ranks');
 }
 
+/** Lista os arcos de historia (aba do Guia). */
 export function listStoryArcs(): Promise<ApiStoryArc[]> {
   return apiFetch('/story-arcs');
 }
 
+/** Lista os summons (aba do Guia). */
 export function listSummons(): Promise<ApiSummon[]> {
   return apiFetch('/summons');
 }
@@ -638,7 +704,7 @@ export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
-  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage'
+  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage'
   | 'audit.view' | 'audit.view_all';
 
@@ -675,34 +741,42 @@ export interface AuthConfig {
 // URL que inicia o login (a API redireciona pro Discord e depois de volta pro painel).
 export const DISCORD_LOGIN_URL = `${API_URL}/auth/discord/login`;
 
+/** Pergunta a' API se o login com Discord e o login de desenvolvimento estao ligados. */
 export function getAuthConfig(): Promise<AuthConfig> {
   return apiFetch('/auth/config');
 }
 
+/** Quem esta' logado (ou erro 401): cargo, permissoes e cargos que pode dar. */
 export function getMe(): Promise<ApiMe> {
   return apiFetch('/auth/me');
 }
 
+/** Login de desenvolvimento por Discord ID (so' funciona em ambiente local). */
 export function devLogin(discordId: string): Promise<ApiMe> {
   return apiFetch('/auth/dev-login', { method: 'POST', body: JSON.stringify({ discordId }) });
 }
 
+/** Encerra a sessao. */
 export function logout(): Promise<{ ok: boolean }> {
   return apiFetch('/auth/logout', { method: 'POST' });
 }
 
+/** Lista a equipe (so' S.Adm). */
 export function listStaff(): Promise<ApiStaff[]> {
   return apiFetch('/staff');
 }
 
+/** Cadastra alguem na equipe (so' S.Adm). */
 export function createStaff(payload: { discordId: string; role: StaffRole; username?: string }): Promise<ApiStaff> {
   return apiFetch('/staff', { method: 'POST', body: JSON.stringify(payload) });
 }
 
+/** Troca o cargo de alguem da equipe. */
 export function updateStaffRole(id: string, role: StaffRole): Promise<ApiStaff> {
   return apiFetch(`/staff/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) });
 }
 
+/** Ativa ou desativa alguem da equipe. */
 export function setStaffActive(id: string, active: boolean): Promise<ApiStaff> {
   return apiFetch(`/staff/${id}/${active ? 'activate' : 'deactivate'}`, { method: 'POST' });
 }
@@ -714,6 +788,9 @@ export interface ApiPostSummary {
   slug: string;
   title: string;
   excerpt: string;
+  // Traducao EN -> PT (DeepL); title/excerpt/content sao o ingles (principal)
+  titlePt?: string | null;
+  excerptPt?: string | null;
   coverImage: string | null;
   status: 'draft' | 'published';
   authorName: string | null;
@@ -724,6 +801,7 @@ export interface ApiPostSummary {
 export interface ApiPost extends ApiPostSummary {
   // Tiptap JSON (texto rico) ou texto simples - mesmo formato de Conteudo
   content: string;
+  contentPt?: string | null;
 }
 
 export interface PostInput {
@@ -731,30 +809,40 @@ export interface PostInput {
   title: string;
   excerpt: string;
   content: string;
+  // Vazio = a DeepL traduz EN -> PT ao salvar
+  titlePt?: string | null;
+  excerptPt?: string | null;
+  contentPt?: string | null;
   coverImage: string | null;
   status: 'draft' | 'published';
 }
 
+/** Lista posts do blog (o publico so' recebe os publicados). */
 export function listPosts(status?: 'draft' | 'published'): Promise<ApiPostSummary[]> {
   return apiFetch(`/posts${status ? `?status=${status}` : ''}`);
 }
 
+/** Ficha de um post pelo slug (pagina publica do blog). */
 export function getPostBySlug(slug: string): Promise<ApiPost> {
   return apiFetch(`/posts/slug/${encodeURIComponent(slug)}`);
 }
 
+/** Ficha de um post pelo id (painel). */
 export function getPost(id: string): Promise<ApiPost> {
   return apiFetch(`/posts/${id}`);
 }
 
+/** Cria um post (painel). */
 export function createPost(payload: PostInput): Promise<ApiPost> {
   return apiFetch('/posts', { method: 'POST', body: JSON.stringify(payload) });
 }
 
+/** Edita um post (painel). */
 export function updatePost(id: string, payload: PostInput): Promise<ApiPost> {
   return apiFetch(`/posts/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
+/** Apaga um post (painel). */
 export function deletePost(id: string): Promise<void> {
   return apiFetch(`/posts/${id}`, { method: 'DELETE' });
 }
@@ -782,14 +870,17 @@ export interface ApiRolesOverview {
   permissions: ApiPermissionInfo[];
 }
 
+/** Catalogo de permissoes + o que cada cargo tem hoje (so' S.Adm). */
 export function getRolesOverview(): Promise<ApiRolesOverview> {
   return apiFetch('/roles/permissions');
 }
 
+/** Define as permissoes de um cargo (Adm ou Creator). */
 export function setRolePermissions(role: StaffRole, permissions: PermissionName[]): Promise<ApiRolesOverview> {
   return apiFetch(`/roles/${role}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }) });
 }
 
+/** Volta as permissoes de um cargo ao padrao de fabrica. */
 export function resetRolePermissions(role: StaffRole): Promise<ApiRolesOverview> {
   return apiFetch(`/roles/${role}/permissions/reset`, { method: 'POST' });
 }
@@ -819,22 +910,27 @@ export interface NoticeInput {
   pinned: boolean;
 }
 
+/** Lista os avisos do quadro da equipe (fixados primeiro). */
 export function listNotices(): Promise<ApiNotice[]> {
   return apiFetch('/notices');
 }
 
+/** Posta um aviso no quadro da equipe. */
 export function createNotice(payload: NoticeInput): Promise<ApiNotice> {
   return apiFetch('/notices', { method: 'POST', body: JSON.stringify(payload) });
 }
 
+/** Edita um aviso. */
 export function updateNotice(id: string, payload: NoticeInput): Promise<ApiNotice> {
   return apiFetch(`/notices/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
+/** Apaga um aviso e seus arquivos. */
 export function deleteNotice(id: string): Promise<void> {
   return apiFetch(`/notices/${id}`, { method: 'DELETE' });
 }
 
+/** Anexa um arquivo a um aviso (multipart). */
 export async function uploadNoticeFile(noticeId: string, file: File): Promise<ApiNotice> {
   const formData = new FormData();
   formData.append('file', file);
@@ -848,6 +944,7 @@ export async function uploadNoticeFile(noticeId: string, file: File): Promise<Ap
   return res.json();
 }
 
+/** Remove um arquivo anexado de um aviso. */
 export function deleteNoticeFile(noticeId: string, fileId: string): Promise<ApiNotice> {
   return apiFetch(`/notices/${noticeId}/files/${fileId}`, { method: 'DELETE' });
 }
@@ -855,4 +952,66 @@ export function deleteNoticeFile(noticeId: string, fileId: string): Promise<ApiN
 // Link direto de download (o navegador manda o cookie de sessao; a API devolve como anexo).
 export function noticeFileUrl(fileId: string): string {
   return `${API_URL}/notices/files/${fileId}`;
+}
+
+// ---- Retraducao forcada (EN -> PT, DeepL) de vilas, organizacoes e posts ----
+
+/** Refaz a traducao em portugues dos textos da vila e dos cla's. */
+export function retranslateVillage(id: string): Promise<ApiVillage> {
+  return apiFetch(`/villages/${id}/retranslate`, { method: 'POST' });
+}
+
+/** Refaz a traducao em portugues de nome e descricao da organizacao. */
+export function retranslateOrganization(id: string): Promise<ApiOrganizationAdmin> {
+  return apiFetch(`/organizations/${id}/retranslate`, { method: 'POST' });
+}
+
+/** Refaz a traducao em portugues de titulo, resumo e texto do post. */
+export function retranslatePost(id: string): Promise<ApiPost> {
+  return apiFetch(`/posts/${id}/retranslate`, { method: 'POST' });
+}
+
+// ---- Registro de erros do wiki (so' S.Adm: permissao errors.view) ----
+
+export interface ApiErrorEvent {
+  id: string;
+  source: 'api' | 'web' | 'deepl' | 'security';
+  level: 'error' | 'warning';
+  title: string;
+  message: string;
+  location: string | null;
+  path: string | null;
+  method: string | null;
+  status: number | null;
+  // Traceback mascarado da ULTIMA ocorrencia e IP: so' o painel (S.Adm) recebe
+  trace: string | null;
+  ipAddress: string | null;
+  count: number;
+  firstSeen: string;
+  lastSeen: string;
+  resolved: boolean;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+}
+
+/** Lista os problemas registrados (abertos por padrao), o mais recente primeiro. */
+export function listErrors(status: 'open' | 'resolved' | 'all' = 'open', source?: string): Promise<ApiErrorEvent[]> {
+  const params = new URLSearchParams({ status });
+  if (source) params.set('source', source);
+  return apiFetch(`/errors?${params.toString()}`);
+}
+
+/** Marca um problema como resolvido (se voltar a acontecer, reabre sozinho). */
+export function resolveError(id: string): Promise<ApiErrorEvent> {
+  return apiFetch(`/errors/${id}/resolve`, { method: 'POST' });
+}
+
+/** Reabre um problema resolvido. */
+export function reopenError(id: string): Promise<ApiErrorEvent> {
+  return apiFetch(`/errors/${id}/reopen`, { method: 'POST' });
+}
+
+/** Apaga o registro de um problema. */
+export function deleteError(id: string): Promise<void> {
+  return apiFetch(`/errors/${id}`, { method: 'DELETE' });
 }

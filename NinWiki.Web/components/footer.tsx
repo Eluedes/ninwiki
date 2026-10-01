@@ -5,6 +5,7 @@
 import { useLanguage } from '@/components/providers/language-provider';
 import { NinLogo } from '@/components/icons/nin-logo';
 
+/** Rodape do site. */
 export function Footer() {
   const { dict } = useLanguage();
 

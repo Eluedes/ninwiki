@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { adminUsers } from '@/lib/data';
 import { Pencil, Trash2, Shield, ShieldCheck } from 'lucide-react';
 
+/** Tela antiga de usuarios (substituida pela de Equipe). */
 export default function UsersPage() {
   const { dict } = useLanguage();
 

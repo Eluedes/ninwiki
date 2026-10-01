@@ -4,10 +4,11 @@
 // consciente de idioma (ver comentario la' pro motivo completo de
 // precisar ser Client Component).
 
-import Link from 'next/link';
 import { getMastery, listJutsus, listAttributes, ApiError } from '@/lib/api-client';
+import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { MasteryPageClient } from '@/components/lore/mastery-page-client';
 
+/** Pagina publica de uma mastery (Server Component: busca na API). */
 export default async function MasteryPage({
   params,
 }: {
@@ -23,12 +24,7 @@ export default async function MasteryPage({
     mastery = await getMastery(id);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return (
-        <div className="mx-auto max-w-7xl px-4 py-16 text-center">
-          <p className="text-ink-300">Mastery não encontrada.</p>
-          <Link href="/masteries" className="btn-ghost mt-4">Voltar para Masteries</Link>
-        </div>
-      );
+      return <LoreNotFound kind="mastery" />;
     }
     throw err;
   }

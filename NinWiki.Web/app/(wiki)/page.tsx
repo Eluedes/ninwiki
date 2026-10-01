@@ -5,6 +5,7 @@
 import { listPosts, type ApiPostSummary } from '@/lib/api-client';
 import { HomeClient } from '@/components/wiki/home-client';
 
+/** Pagina inicial: busca os ultimos posts e entrega para o HomeClient. */
 export default async function HomePage() {
   let posts: ApiPostSummary[] = [];
   try {

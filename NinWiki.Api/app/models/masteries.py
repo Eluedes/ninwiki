@@ -34,10 +34,12 @@ class Attribute(Base):
     name: Mapped[str] = mapped_column(String(100))
     name_pt: Mapped[str | None] = mapped_column(String(100), nullable=True)
     description: Mapped[str] = mapped_column(Text)
+    description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)  # traducao (DeepL)
     icon: Mapped[str] = mapped_column(String(50))
 
 
 class Mastery(Base):
+    """Uma das masteries fixas do jogo (nome, tipo, cor, imagem, caminhos)."""
     __tablename__ = "masteries"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "fire"
@@ -118,6 +120,7 @@ class MasteryPathAttribute(Base):
 
 
 class Jutsu(Base):
+    """Um jutsu, ligado a uma mastery e a um caminho dela."""
     __tablename__ = "jutsus"
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)  # ex: "katon-goukakyuu"

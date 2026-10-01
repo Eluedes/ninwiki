@@ -10,8 +10,11 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useLanguage } from '@/components/providers/language-provider';
 
+/** GIF animado de um jutsu (some sozinho se o arquivo falhar). */
 export function JutsuGif({ src, alt }: { src: string; alt: string }) {
+  const { dict } = useLanguage();
   const [hasError, setHasError] = useState(false);
 
   // Se o arquivo nao existir (404) ou falhar ao carregar por qualquer
@@ -22,7 +25,7 @@ export function JutsuGif({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div className="dossier-panel p-4">
-      <h2 className="mb-3 font-display text-lg font-bold text-ink-100">Demonstração</h2>
+      <h2 className="mb-3 font-display text-lg font-bold text-ink-100">{dict.lore.demo}</h2>
       <div className="relative aspect-video overflow-hidden rounded-md border border-ink-700 bg-ink-950">
         <Image
           src={src}

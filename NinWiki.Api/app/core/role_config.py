@@ -23,6 +23,7 @@ _loaded_at: float = 0.0
 
 
 async def load_overrides(db: AsyncSession) -> None:
+    """Le os ajustes de permissao do banco e recalcula as permissoes efetivas em memoria."""
     global _loaded_at
     rows = (await db.execute(select(RolePermission))).scalars().all()
     overrides: dict[StaffRole, dict[str, bool]] = {}
@@ -33,6 +34,7 @@ async def load_overrides(db: AsyncSession) -> None:
 
 
 async def refresh_if_stale(db: AsyncSession) -> None:
+    """Recarrega os ajustes do banco se passaram mais de TTL_SECONDS desde a ultima leitura."""
     if time.monotonic() - _loaded_at >= TTL_SECONDS:
         await load_overrides(db)
 
@@ -49,7 +51,7 @@ async def save_role_permissions(db: AsyncSession, role: StaffRole, granted: set[
     padrao (assim, se o padrao mudar no codigo, o que nao foi tocado acompanha). Nao faz commit.
     """
     if role not in EDITABLE_ROLES:
-        raise ValueError("Esse cargo não pode ser editado")
+        raise ValueError("This role cannot be edited")
     allowed = set(grantable_permissions())
     granted = granted & allowed
     default = set(DEFAULT_ROLE_PERMISSIONS[role]) & allowed
@@ -60,6 +62,7 @@ async def save_role_permissions(db: AsyncSession, role: StaffRole, granted: set[
 
 
 async def reset_role(db: AsyncSession, role: StaffRole) -> None:
+    """Apaga os ajustes de um cargo (volta ao padrao). Nao faz commit."""
     if role not in EDITABLE_ROLES:
-        raise ValueError("Esse cargo não pode ser editado")
+        raise ValueError("This role cannot be edited")
     await db.execute(delete(RolePermission).where(RolePermission.role == role))

@@ -23,23 +23,27 @@ router = APIRouter(tags=["guide"])
 
 @router.get("/professions", response_model=list[ProfessionRead])
 async def list_professions(db: AsyncSession = Depends(get_db)):
+    """Lista as profissoes (aba do Guia)."""
     result = await db.execute(select(Profession).order_by(Profession.name))
     return result.scalars().all()
 
 
 @router.get("/ninja-ranks", response_model=list[NinjaRankRead])
 async def list_ninja_ranks(db: AsyncSession = Depends(get_db)):
+    """Lista os ranks ninja (aba do Guia)."""
     result = await db.execute(select(NinjaRank).order_by(NinjaRank.order))
     return result.scalars().all()
 
 
 @router.get("/story-arcs", response_model=list[StoryArcRead])
 async def list_story_arcs(db: AsyncSession = Depends(get_db)):
+    """Lista os arcos de historia (aba do Guia)."""
     result = await db.execute(select(StoryArc).order_by(StoryArc.name))
     return result.scalars().all()
 
 
 @router.get("/summons", response_model=list[SummonRead])
 async def list_summons(db: AsyncSession = Depends(get_db)):
+    """Lista as invocacoes/summons (aba do Guia)."""
     result = await db.execute(select(Summon).order_by(Summon.name))
     return result.scalars().all()

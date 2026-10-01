@@ -3,10 +3,11 @@
 // Server Component assincrono, busca da API real; o visual fica em
 // components/lore/village-page-client.tsx (precisa saber o idioma).
 
-import Link from 'next/link';
 import { getVillage, listVillages, ApiError } from '@/lib/api-client';
+import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { VillagePageClient } from '@/components/lore/village-page-client';
 
+/** Pagina publica de uma vila (Server Component: busca na API). */
 export default async function VillagePage({
   params,
 }: {
@@ -19,12 +20,7 @@ export default async function VillagePage({
     village = await getVillage(id);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return (
-        <div className="mx-auto max-w-7xl px-4 py-16 text-center">
-          <p className="text-ink-300">Vila não encontrada.</p>
-          <Link href="/village" className="btn-ghost mt-4">Voltar para Vilas</Link>
-        </div>
-      );
+      return <LoreNotFound kind="village" />;
     }
     throw err;
   }

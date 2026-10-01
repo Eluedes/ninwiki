@@ -65,6 +65,7 @@ async def _backfill_one(obj, label: str) -> bool:
 
 
 async def main() -> None:
+    """Preenche os nomes em ingles de masteries/jutsus que ficaram vazios (script de correcao unica)."""
     if not settings.deepl_api_key:
         print("DEEPL_API_KEY nao configurada no .env - nada a fazer (o script nao inventa traducao sozinho).")
         return

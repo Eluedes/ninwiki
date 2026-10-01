@@ -24,6 +24,7 @@ import {
 } from '@/lib/api-client';
 import { TanstackDataTable } from '@/components/admin/tanstack-data-table';
 
+/** Lista de jutsus no painel. */
 export default function JutsusListPage() {
   const { dict } = useLanguage();
   const t = dict.admin.jutsusList;

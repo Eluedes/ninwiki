@@ -1,3 +1,5 @@
+// Utilitarios compartilhados. `cn` junta nomes de classe CSS e resolve conflitos do Tailwind (a ultima classe vence).
+
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

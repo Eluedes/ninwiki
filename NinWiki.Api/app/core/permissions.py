@@ -24,6 +24,7 @@ from app.models.enums import StaffRole
 
 
 class Permission(str, Enum):
+    """Todas as permissoes que existem no sistema (nome = 'area.acao')."""
     # --- Conteudo (entries do catalogo: mobs, itens, armas, missoes, guias) ---
     CONTENT_CREATE = "content.create"
     CONTENT_EDIT = "content.edit"
@@ -58,6 +59,9 @@ class Permission(str, Enum):
     # --- Cargos e permissoes (so' S.Adm: edita o que cada cargo pode) ---
     ROLES_MANAGE = "roles.manage"
 
+    # --- Erros do wiki (traceback, IPs - so' o S.Adm) ---
+    ERRORS_VIEW = "errors.view"
+
     # --- Log ---
     AUDIT_VIEW = "audit.view"             # log de CONTEUDO
     AUDIT_VIEW_ALL = "audit.view_all"     # log COMPLETO (login, equipe, seguranca, IPs) - so' S.Adm
@@ -74,6 +78,7 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.STAFF_EDIT,
     Permission.STAFF_DEACTIVATE,
     Permission.ROLES_MANAGE,
+    Permission.ERRORS_VIEW,
 })
 
 _CREATOR: frozenset[Permission] = frozenset({
@@ -156,10 +161,12 @@ ROLE_LABEL: dict[StaffRole, str] = {
 
 
 def permissions_of(role: StaffRole) -> frozenset[Permission]:
+    """Permissoes efetivas de um cargo (padrao + ajustes feitos no painel)."""
     return ROLE_PERMISSIONS[role]
 
 
 def has_permission(role: StaffRole, permission: Permission) -> bool:
+    """True se o cargo tem a permissao (usa as permissoes efetivas)."""
     return permission in ROLE_PERMISSIONS[role]
 
 

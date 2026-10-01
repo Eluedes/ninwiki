@@ -9,6 +9,7 @@ from app.schemas.content import CamelModel
 
 
 class PermissionInfo(CamelModel):
+    """Uma permissao do catalogo, com o padrao de fabrica de cada cargo."""
     name: str
     group: str
     super_only: bool            # exclusiva do S.Adm: nao pode ser dada a outro cargo
@@ -16,6 +17,7 @@ class PermissionInfo(CamelModel):
 
 
 class RolePermissionsRead(CamelModel):
+    """Um cargo e as permissoes que ele tem hoje."""
     role: StaffRole
     label: str
     editable: bool
@@ -23,21 +25,25 @@ class RolePermissionsRead(CamelModel):
 
 
 class RolesOverview(CamelModel):
+    """Visao completa da tela de permissoes (cargos + catalogo)."""
     roles: list[RolePermissionsRead]
     permissions: list[PermissionInfo]
 
 
 class RolePermissionsWrite(CamelModel):
+    """Corpo de definir as permissoes de um cargo."""
     permissions: list[str]
 
 
 class NoticeFileRead(CamelModel):
+    """Arquivo anexado como a API devolve (id, nome e tamanho)."""
     id: uuid.UUID
     filename: str
     size: int
 
 
 class NoticeRead(CamelModel):
+    """Aviso do quadro como a API devolve."""
     id: uuid.UUID
     title: str
     body: str
@@ -49,6 +55,7 @@ class NoticeRead(CamelModel):
 
 
 class NoticeWrite(CamelModel):
+    """Corpo de criar/editar um aviso."""
     title: str = Field(min_length=1, max_length=150)
     body: str = Field(default="", max_length=5000)
     pinned: bool = False

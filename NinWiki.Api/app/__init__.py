@@ -1,3 +1,1 @@
-# Arquivo intencionalmente vazio.
-# A presenca deste arquivo e' o que diz ao Python "esta pasta e' um
-# pacote importavel" (ex: permite `from app.core.config import settings`).
+"""Pacote `app`: o codigo da API do NinWiki (FastAPI). Subpacotes: api (rotas), core (regras e seguranca), models (tabelas), schemas (formatos JSON)."""

@@ -1,5 +1,7 @@
 'use client';
 
+// Visual de uma mastery (icone/imagem com a cor dela) reutilizado nas paginas e cards de lore.
+
 import Image from 'next/image';
 import { useState } from 'react';
 import { MasteryIcon } from '@/components/lore/mastery-icon';

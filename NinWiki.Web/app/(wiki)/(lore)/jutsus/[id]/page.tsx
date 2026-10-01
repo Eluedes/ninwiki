@@ -4,10 +4,11 @@
 // idioma (mesmo padrao de app/(wiki)/(lore)/masteries/[id]/page.tsx -
 // useLanguage e' um hook de React, nao funciona aqui).
 
-import Link from 'next/link';
 import { getJutsu, getMastery, ApiError } from '@/lib/api-client';
+import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { JutsuPageClient } from '@/components/lore/jutsu-page-client';
 
+/** Pagina publica de um jutsu (Server Component: busca na API). */
 export default async function JutsuPage({
   params,
 }: {
@@ -20,12 +21,7 @@ export default async function JutsuPage({
     jutsu = await getJutsu(id);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return (
-        <div className="mx-auto max-w-7xl px-4 py-16 text-center">
-          <p className="text-ink-300">Jutsu não encontrado.</p>
-          <Link href="/masteries" className="btn-ghost mt-4">Voltar para Masteries</Link>
-        </div>
-      );
+      return <LoreNotFound kind="jutsu" />;
     }
     throw err;
   }

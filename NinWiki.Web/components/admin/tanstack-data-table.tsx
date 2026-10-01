@@ -43,6 +43,7 @@ interface TanstackDataTableProps<TData> {
   emptyMessage?: string;
 }
 
+/** Tabela do painel com ordenacao, paginacao e selecao em massa (TanStack Table). */
 export function TanstackDataTable<TData>({
   columns,
   data,

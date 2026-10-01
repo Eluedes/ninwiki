@@ -9,6 +9,7 @@ from app.models.base import Base
 
 
 class Village(Base):
+    """Vila do jogo, com seus cla's e as organizacoes que atuam nela."""
     __tablename__ = "villages"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "leaf"
@@ -20,6 +21,12 @@ class Village(Base):
     motto: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(Text)
     long_description: Mapped[str] = mapped_column(Text)
+    # Traducoes EN -> PT-BR (DeepL preenche sozinho se vier vazio; da' pra corrigir a mao no painel).
+    # Os campos acima (sem sufixo) sao o INGLES, o idioma principal do site.
+    motto_pt: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    long_description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    climate_pt: Mapped[str | None] = mapped_column(String(200), nullable=True)
     emblem: Mapped[str] = mapped_column(String(20))  # emoji
     image: Mapped[str | None] = mapped_column(String(500), nullable=True)
     accent_color: Mapped[str] = mapped_column(String(20))
@@ -42,6 +49,9 @@ class Clan(Base):
     name: Mapped[str] = mapped_column(String(100))
     village_id: Mapped[str] = mapped_column(ForeignKey("villages.id", ondelete="CASCADE"))
     description: Mapped[str] = mapped_column(Text)
+    # `name`/`description` = ingles (principal); os `_pt` sao a traducao (DeepL).
+    name_pt: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Imagem do cla' (logo + roupa que o cla' usa, tudo numa imagem so'), enviada
     # pelo painel via POST /uploads/image.
     image: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -60,6 +70,9 @@ class Organization(Base):
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "anbu"
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(Text)
+    # Traducao EN -> PT-BR (DeepL); `name`/`description` acima sao o ingles.
+    name_pt: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class OrganizationVillage(Base):

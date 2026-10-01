@@ -34,6 +34,7 @@ const ColorThemeContext = createContext<ColorThemeContextValue | undefined>(unde
 
 const listeners = new Set<() => void>();
 
+/** Assina mudancas do tema de cor (usado pelo useSyncExternalStore). */
 function subscribe(callback: () => void) {
   listeners.add(callback);
   window.addEventListener('storage', callback); // mudou em outra aba
@@ -43,6 +44,7 @@ function subscribe(callback: () => void) {
   };
 }
 
+/** Tema de cor atual no navegador. */
 function getSnapshot(): ColorTheme {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -52,10 +54,12 @@ function getSnapshot(): ColorTheme {
   }
 }
 
+/** Tema de cor padrao usado na renderizacao do servidor. */
 function getServerSnapshot(): ColorTheme {
   return 'blood';
 }
 
+/** Troca o tema de cor, grava a escolha e avisa quem esta' assinando. */
 function setColorTheme(theme: ColorTheme) {
   try {
     localStorage.setItem(STORAGE_KEY, theme);
@@ -65,6 +69,7 @@ function setColorTheme(theme: ColorTheme) {
   listeners.forEach((l) => l());
 }
 
+/** Provider do tema de cor (Blood, Canarinho, Ouro, Anil) para o site todo. */
 export function ColorThemeProvider({ children }: { children: ReactNode }) {
   const colorTheme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
@@ -76,6 +81,7 @@ export function ColorThemeProvider({ children }: { children: ReactNode }) {
   return <ColorThemeContext.Provider value={{ colorTheme, setColorTheme }}>{children}</ColorThemeContext.Provider>;
 }
 
+/** Hook: tema de cor atual e a funcao para troca-lo. */
 export function useColorTheme() {
   const ctx = useContext(ColorThemeContext);
   if (!ctx) throw new Error('useColorTheme must be used within ColorThemeProvider');

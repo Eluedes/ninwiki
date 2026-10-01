@@ -30,6 +30,7 @@ client_ip_var: ContextVar[str | None] = ContextVar("client_ip", default=None)
 
 
 def create_session_token(user: User) -> str:
+    """Gera o JWT da sessao (quem, versao da sessao e validade)."""
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user.id),
@@ -56,6 +57,7 @@ def read_session_token(token: str) -> dict | None:
 
 
 def set_session_cookie(response: Response, token: str) -> None:
+    """Grava o cookie de sessao: httpOnly, SameSite=Lax e Secure fora do local."""
     response.set_cookie(
         SESSION_COOKIE, token,
         max_age=settings.session_hours * 3600,
@@ -67,10 +69,12 @@ def set_session_cookie(response: Response, token: str) -> None:
 
 
 def clear_session_cookie(response: Response) -> None:
+    """Apaga o cookie de sessao (logout)."""
     response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, secure=settings.cookie_secure, samesite="lax")
 
 
 def set_state_cookie(response: Response, state: str) -> None:
+    """Grava o cookie do 'state' do login (anti-CSRF do OAuth), valido por 10 minutos."""
     response.set_cookie(
         STATE_COOKIE, state, max_age=600, httponly=True,
         secure=settings.cookie_secure, samesite="lax", path="/",
@@ -78,6 +82,7 @@ def set_state_cookie(response: Response, state: str) -> None:
 
 
 def clear_state_cookie(response: Response) -> None:
+    """Apaga o cookie do 'state' do login."""
     response.delete_cookie(STATE_COOKIE, path="/", httponly=True, secure=settings.cookie_secure, samesite="lax")
 
 
@@ -91,14 +96,25 @@ def ensure_same_origin(request: Request) -> None:
     """
     origin = request.headers.get("origin")
     if origin is not None and origin != settings.frontend_origin:
-        raise HTTPException(status_code=403, detail="Origem não permitida")
+        raise HTTPException(status_code=403, detail="Origin not allowed")
 
 
 def _resolve_client_ip(scope: dict) -> str | None:
+    """
+    IP de quem fez a requisicao. Com TRUST_PROXY_HEADERS=true (API atras de Cloudflare/SquareCloud) usa
+    CF-Connecting-IP e, se nao houver, o ULTIMO valor de X-Forwarded-For - esse e' o que o proxy mais
+    proximo anexou (o que vem antes pode ter sido forjado pelo cliente). Sem a flag, usa so' o IP da conexao.
+    """
     if settings.trust_proxy_headers:
-        for name, value in scope.get("headers", []):
-            if name == b"cf-connecting-ip":
-                return value.decode("latin-1")[:45]
+        headers = dict(scope.get("headers", []))
+        cf = headers.get(b"cf-connecting-ip")
+        if cf:
+            return cf.decode("latin-1").strip()[:45]
+        forwarded = headers.get(b"x-forwarded-for")
+        if forwarded:
+            last = forwarded.decode("latin-1").split(",")[-1].strip()
+            if last:
+                return last[:45]
     client = scope.get("client")
     return client[0][:45] if client else None
 

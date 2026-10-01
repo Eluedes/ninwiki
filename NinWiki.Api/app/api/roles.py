@@ -26,14 +26,16 @@ from app.schemas.roles import PermissionInfo, RolePermissionsRead, RolePermissio
 router = APIRouter(prefix="/roles", tags=["roles"])
 
 _GROUPS = {"content": "content", "posts": "posts", "lore": "lore", "uploads": "tools", "translation": "tools",
-           "notices": "notices", "staff": "staff", "roles": "staff", "audit": "audit"}
+           "notices": "notices", "staff": "staff", "roles": "staff", "audit": "audit", "errors": "audit"}
 
 
 def _group(p: Permission) -> str:
+    """Grupo (secao da tela) a que uma permissao pertence."""
     return _GROUPS.get(p.value.split(".")[0], "other")
 
 
 def _overview() -> RolesOverview:
+    """Monta a visao completa: catalogo de permissoes + o que cada cargo tem hoje."""
     return RolesOverview(
         roles=[
             RolePermissionsRead(
@@ -53,8 +55,9 @@ def _overview() -> RolesOverview:
 
 
 def _editable_role(role: StaffRole) -> StaffRole:
+    """Recusa (400) editar o cargo S.Adm - ele sempre tem tudo."""
     if role not in EDITABLE_ROLES:
-        raise HTTPException(status_code=400, detail="O cargo S.Adm sempre tem todas as permissões e não pode ser editado")
+        raise HTTPException(status_code=400, detail="The S.Adm role always has every permission and cannot be edited")
     return role
 
 
@@ -62,6 +65,7 @@ def _editable_role(role: StaffRole) -> StaffRole:
 async def get_overview(
     staff: User = Depends(require_permission(Permission.ROLES_MANAGE)), db: AsyncSession = Depends(get_db),
 ):
+    """Tela de permissoes: devolve catalogo e permissoes atuais de cada cargo (so' S.Adm)."""
     await role_config.load_overrides(db)
     return _overview()
 
@@ -71,15 +75,16 @@ async def set_permissions(
     role: StaffRole, payload: RolePermissionsWrite,
     staff: User = Depends(require_permission(Permission.ROLES_MANAGE)), db: AsyncSession = Depends(get_db),
 ):
+    """Define exatamente as permissoes de um cargo (Adm/Creator) e registra a mudanca no log."""
     _editable_role(role)
     by_name = {p.value: p for p in Permission}
     unknown = [n for n in payload.permissions if n not in by_name]
     if unknown:
-        raise HTTPException(status_code=422, detail=f"Permissão desconhecida: {unknown[0]}")
+        raise HTTPException(status_code=422, detail=f"Unknown permission: {unknown[0]}")
     wanted = {by_name[n] for n in payload.permissions}
     forbidden = wanted & SUPER_ONLY_PERMISSIONS
     if forbidden:
-        raise HTTPException(status_code=400, detail=f"A permissão '{sorted(p.value for p in forbidden)[0]}' é exclusiva do S.Adm")
+        raise HTTPException(status_code=400, detail=f"The permission '{sorted(p.value for p in forbidden)[0]}' is exclusive to S.Adm")
     await role_config.load_overrides(db)
     before = {p.value for p in ROLE_PERMISSIONS[role]}
     await role_config.save_role_permissions(db, role, wanted)
@@ -98,6 +103,7 @@ async def reset_permissions(
     role: StaffRole,
     staff: User = Depends(require_permission(Permission.ROLES_MANAGE)), db: AsyncSession = Depends(get_db),
 ):
+    """Volta as permissoes de um cargo ao padrao de fabrica."""
     _editable_role(role)
     await role_config.reset_role(db, role)
     await log_action(db, action="reset", entity_type="roles", entity_id=role.value, diff=None, actor=staff)

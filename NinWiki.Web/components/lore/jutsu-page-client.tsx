@@ -27,6 +27,7 @@ const tierColors: Record<number, string> = {
   5: '#fbbf24',
 };
 
+/** Pagina de um jutsu. */
 export function JutsuPageClient({
   jutsu,
   mastery,

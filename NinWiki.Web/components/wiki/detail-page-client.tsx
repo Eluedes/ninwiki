@@ -15,6 +15,7 @@ import { shouldShowLevel } from '@/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import type { ApiContentItem, ApiContentItemSummary } from '@/lib/api-client';
 
+/** Pagina de detalhe de uma entry (mob, item, arma...): ficha, drops, atributos. */
 export function DetailPageClient({ entry, related }: { entry: ApiContentItem; related: ApiContentItemSummary[] }) {
   const { dict, locale } = useLanguage();
 

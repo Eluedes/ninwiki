@@ -37,6 +37,7 @@ const FILTER_ENTITY_TYPE: Record<string, string | undefined> = {
   all: undefined, content: 'content_item', auth: 'auth', staff: 'staff', security: 'security',
 };
 
+/** Log geral do sistema (quem fez o que, quando e de onde). */
 export default function AuditLogPage() {
   const { dict, locale } = useLanguage();
   const t = dict.admin.auditLog;

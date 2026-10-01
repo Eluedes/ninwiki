@@ -11,6 +11,7 @@ import { MasteryCard } from '@/components/lore/mastery-card';
 import { PageHeader } from '@/components/lore/page-header';
 import type { ApiMastery } from '@/lib/api-client';
 
+/** Listagem das masteries (elementais e nao elementais). */
 export function MasteriesPageClient({ masteries }: { masteries: ApiMastery[] }) {
   const { dict } = useLanguage();
   const t = dict.masteryDetail;

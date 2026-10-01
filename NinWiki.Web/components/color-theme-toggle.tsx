@@ -33,6 +33,7 @@ const themeLabel: Record<ColorTheme, string> = {
   anil: 'Anil',
 };
 
+/** Botao que troca o tema de cor do site. */
 export function ColorThemeToggle() {
   const { colorTheme, setColorTheme } = useColorTheme();
 

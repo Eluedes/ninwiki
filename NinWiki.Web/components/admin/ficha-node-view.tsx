@@ -14,8 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import type { FichaRow } from '@/lib/tiptap-extensions/ficha';
 
+/** Visual editavel do bloco 'Ficha' dentro do editor. */
 export function FichaNodeView({ node, updateAttributes }: NodeViewProps) {
-  const title: string = node.attrs.title ?? 'Ficha';
+  const title: string = node.attrs.title ?? 'Sheet';
   const rows: FichaRow[] = node.attrs.rows ?? [];
 
   function setTitle(value: string) {
@@ -39,7 +40,7 @@ export function FichaNodeView({ node, updateAttributes }: NodeViewProps) {
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Título da Ficha"
+          placeholder="Sheet title"
           className="h-8 font-semibold"
         />
       </div>
@@ -49,13 +50,13 @@ export function FichaNodeView({ node, updateAttributes }: NodeViewProps) {
             <Input
               value={row.label}
               onChange={(e) => setRow(i, { label: e.target.value })}
-              placeholder="Rótulo (ex: Nível)"
+              placeholder="Label (e.g. Level)"
               className="h-8 text-xs"
             />
             <Input
               value={row.value}
               onChange={(e) => setRow(i, { value: e.target.value })}
-              placeholder="Valor (ex: 10)"
+              placeholder="Value (e.g. 10)"
               className="h-8 text-xs"
             />
             <button

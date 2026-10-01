@@ -1,1 +1,1 @@
-# Arquivo intencionalmente vazio - so' marca a pasta como pacote Python.
+"""Rotas HTTP da API: cada arquivo e' um router (conteudo, blog, vilas, equipe, avisos, login, bot...)."""

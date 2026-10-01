@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
+/** Tamanho de arquivo legivel (B, KB, MB). */
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -32,6 +33,7 @@ interface FormState {
   newFiles: File[];
 }
 
+/** Quadro de avisos da equipe: lista, formulario de postar/editar e anexos para baixar. */
 export function NoticeBoard() {
   const { dict, locale } = useLanguage();
   const { can } = useAuth();

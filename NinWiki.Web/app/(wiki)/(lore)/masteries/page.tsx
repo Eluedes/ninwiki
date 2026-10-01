@@ -7,6 +7,7 @@
 import { listMasteries } from '@/lib/api-client';
 import { MasteriesPageClient } from '@/components/lore/masteries-page-client';
 
+/** Listagem publica de masteries (Server Component: busca na API). */
 export default async function MasteriesPage() {
   const masteries = await listMasteries();
   return <MasteriesPageClient masteries={masteries} />;

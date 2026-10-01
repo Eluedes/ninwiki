@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 // Hierarquia so' pra decidir o que MOSTRAR (o backend e' quem manda de verdade).
 const RANK: Record<StaffRole, number> = { creator: 1, admin: 2, super_admin: 3 };
 
+/** Tela da equipe (so' S.Adm): cadastrar, trocar cargo, desativar/reativar. */
 export default function StaffPage() {
   const { dict, locale } = useLanguage();
   const t = dict.admin.auth;

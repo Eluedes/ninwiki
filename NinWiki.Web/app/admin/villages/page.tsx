@@ -12,6 +12,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { ApiError, deleteVillage, listVillages, type ApiVillage } from '@/lib/api-client';
 import { localizedName } from '@/lib/localized';
 
+/** Lista de vilas no painel. */
 export default function VillagesAdminPage() {
   const { dict, locale } = useLanguage();
   const t = dict.admin.villagesAdmin;

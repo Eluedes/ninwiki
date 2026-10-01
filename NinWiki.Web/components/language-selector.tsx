@@ -13,6 +13,7 @@ import {
 import { Globe } from 'lucide-react';
 import type { Locale } from '@/lib/types';
 
+/** Seletor de idioma (PT/EN). */
 export function LanguageSelector() {
   const { locale, setLocale } = useLanguage();
 

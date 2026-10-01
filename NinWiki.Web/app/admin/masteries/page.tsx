@@ -11,6 +11,7 @@ import { listMasteries, ApiError, type ApiMastery } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { Loader2, AlertTriangle, ExternalLink, Pencil } from 'lucide-react';
 
+/** Lista de masteries no painel. */
 export default function MasteriesAdminPage() {
   const { dict } = useLanguage();
   const t = dict.admin.masteries;

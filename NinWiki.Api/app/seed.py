@@ -62,16 +62,18 @@ async def clear_catalog_tables(session):
 
 
 async def seed_attributes(session, data: list[dict]) -> None:
+    """Insere os atributos (Strength, Agility...)."""
     for a in data:
         # name/englishName no JSON (nomes historicos, nunca mudam - o
         # export ainda usa o par antigo) mapeiam AO CONTRARIO pro
         # banco agora: englishName vira name (campo principal em
         # ingles), name (portugues no JSON) vira name_pt.
         session.add(Attribute(id=a["id"], name=a["englishName"], name_pt=a["name"],
-                               description=a["description"], icon=a["icon"]))
+                               description=a["description"], description_pt=a.get("descriptionPt"), icon=a["icon"]))
 
 
 async def seed_masteries(session, data: list[dict]) -> None:
+    """Insere as masteries e seus caminhos."""
     # Duas passadas, com um flush entre elas: a primeira grava
     # Mastery e MasteryPath (as "tabelas pai"); so' depois disso o
     # Postgres tem as linhas que as associacoes N:N (MasteryAttribute,
@@ -102,6 +104,7 @@ async def seed_masteries(session, data: list[dict]) -> None:
 
 
 async def seed_jutsus(session, data: list[dict]) -> None:
+    """Insere os jutsus."""
     for j in data:
         session.add(Jutsu(
             id=j["id"], name=j["englishName"], name_pt=j["name"],
@@ -114,26 +117,33 @@ async def seed_jutsus(session, data: list[dict]) -> None:
 
 
 async def seed_villages(session, data: list[dict]) -> None:
+    """Insere as vilas."""
     for v in data:
         session.add(Village(
             id=v["id"], name=v["englishName"], name_pt=v["name"],
             element=v["element"], motto=v["motto"], description=v["description"],
             long_description=v["longDescription"], emblem=v["emblem"], image=v.get("image"),
             accent_color=v["accentColor"], climate=v["climate"], leader=v["leader"],
+            # versao em portugues (os campos acima sao o ingles, o idioma principal)
+            motto_pt=v.get("mottoPt"), description_pt=v.get("descriptionPt"),
+            long_description_pt=v.get("longDescriptionPt"), climate_pt=v.get("climatePt"),
         ))
 
 
 async def seed_clans(session, data: list[dict]) -> None:
+    """Insere os cla's das vilas."""
     for c in data:
         session.add(Clan(
-            id=c["id"], name=c["name"], village_id=c["villageId"],
-            description=c["description"], image=c.get("image"),
+            id=c["id"], name=c["name"], name_pt=c.get("namePt"), village_id=c["villageId"],
+            description=c["description"], description_pt=c.get("descriptionPt"), image=c.get("image"),
         ))
 
 
 async def seed_organizations(session, data: list[dict]) -> None:
+    """Insere as organizacoes e a ligacao com as vilas."""
     for o in data:
-        session.add(Organization(id=o["id"], name=o["name"], description=o["description"]))
+        session.add(Organization(id=o["id"], name=o["name"], name_pt=o.get("namePt"),
+                                 description=o["description"], description_pt=o.get("descriptionPt")))
     await session.flush()
     for o in data:
         for village_id in o.get("villageIds", []):
@@ -141,37 +151,45 @@ async def seed_organizations(session, data: list[dict]) -> None:
 
 
 async def seed_professions(session, data: list[dict]) -> None:
+    """Insere as profissoes."""
     for p in data:
         session.add(Profession(
             id=p["id"], name=p["englishName"], name_pt=p["name"],
-            group=ProfessionGroup(p["group"]), description=p["description"], icon=p["icon"],
+            group=ProfessionGroup(p["group"]), description=p["description"],
+            description_pt=p.get("descriptionPt"), icon=p["icon"],
         ))
 
 
 async def seed_ninja_ranks(session, data: list[dict]) -> None:
+    """Insere os ranks ninja."""
     for r in data:
         session.add(NinjaRank(
             id=r["id"], name=r["englishName"], name_pt=r["name"],
-            order=r["order"], description=r["description"],
+            order=r["order"], description=r["description"], description_pt=r.get("descriptionPt"),
         ))
 
 
 async def seed_story_arcs(session, data: list[dict]) -> None:
+    """Insere os arcos de historia."""
     for a in data:
-        session.add(StoryArc(id=a["id"], name=a["name"], level_range=a["levelRange"],
-                              description=a["description"]))
+        session.add(StoryArc(id=a["id"], name=a["name"], name_pt=a.get("namePt"), level_range=a["levelRange"],
+                              description=a["description"], description_pt=a.get("descriptionPt")))
 
 
 async def seed_summons(session, data: list[dict]) -> None:
+    """Insere os summons."""
     for s in data:
-        stages = s["stages"]  # [Jovem, Adolescente, Adulta]
+        stages = s["stages"]  # ingles: [Young, Teen, Adult]
+        pt = s.get("stagesPt") or [None, None, None]  # portugues: [Jovem, Adolescente, Adulta]
         session.add(Summon(
-            id=s["id"], name=s["englishName"], name_pt=s["name"], village=s["village"],
+            id=s["id"], name=s["englishName"], name_pt=s["name"], village=s["village"], village_pt=s.get("villagePt"),
             stage_young=stages[0], stage_teen=stages[1], stage_adult=stages[2],
+            stage_young_pt=pt[0], stage_teen_pt=pt[1], stage_adult_pt=pt[2],
         ))
 
 
 async def seed_content_items(session, data: list[dict]) -> None:
+    """Insere as entries do catalogo (mobs, itens, armas, missoes, guias)."""
     for e in data:
         item = ContentItem(
             slug=e["id"], category=ContentCategory(e["category"]), name=e["name"],
@@ -192,6 +210,7 @@ async def seed_content_items(session, data: list[dict]) -> None:
 
 
 async def main() -> None:
+    """Le o seed_data.json, APAGA o catalogo atual e recarrega tudo (nunca rode em banco com conteudo real)."""
     if not SEED_FILE.exists():
         raise SystemExit(
             f"Nao achei {SEED_FILE}. Gere ele primeiro com:\n"

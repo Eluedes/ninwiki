@@ -30,6 +30,7 @@ from typing import Any
 
 import httpx
 
+from app.core import error_log
 from app.core.config import settings
 
 # Endpoint muda entre plano gratuito e pago da DeepL - free sempre
@@ -86,10 +87,18 @@ async def _deepl_translate_batch(texts: list[str], reverse: bool = False) -> lis
             response.raise_for_status()
             data = response.json()
             return [t["text"] for t in data["translations"]]
-    except (httpx.HTTPError, KeyError, json.JSONDecodeError):
-        # Log silencioso de proposito (nao trava o request) - se isso
-        # comecar a acontecer com frequencia, vale adicionar log de
-        # verdade aqui (ver app/core/audit.py como referencia de padrao).
+    except (httpx.HTTPError, KeyError, json.JSONDecodeError) as exc:
+        # A traducao e' um "extra" e nunca derruba a criacao/edicao - mas a equipe PRECISA saber que ela parou
+        # (chave recusada, cota do plano gratuito acabada...): registra em /admin/errors e no canal do bot.
+        status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
+        title = {
+            456: "DeepL quota exceeded", 403: "DeepL key rejected", 429: "DeepL rate limited",
+        }.get(status or 0, "DeepL request failed")
+        await error_log.record(
+            source="deepl", level="warning", title=title,
+            message=f"{type(exc).__name__}{f' (HTTP {status})' if status else ''}: {exc}",
+            status=status,
+        )
         return None
 
 
@@ -181,6 +190,18 @@ async def translate_field(value: str | None, reverse: bool = False) -> str | Non
     if _is_tiptap_json(value):
         return await _translate_tiptap_json(value, reverse=reverse)
     return None if (result := await _deepl_translate_batch([value], reverse=reverse)) is None else result[0]
+
+
+async def retranslate_fields(obj: object, field_pairs: list[tuple[str, str]]) -> None:
+    """
+    Como fill_missing_translations, mas SOBRESCREVE a traducao existente (botao "Retraduzir" do painel):
+    util quando o texto em ingles mudou e a versao em portugues ficou velha. So' troca o campo `_pt`
+    quando a DeepL realmente devolveu algo (sem chave ou com falha, o valor atual e' preservado).
+    """
+    for field_en, field_pt in field_pairs:
+        translated = await translate_field(getattr(obj, field_en))
+        if translated:
+            setattr(obj, field_pt, translated)
 
 
 async def fill_missing_translations(obj: object, field_pairs: list[tuple[str, str]]) -> None:

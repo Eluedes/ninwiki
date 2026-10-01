@@ -28,6 +28,7 @@ interface WikiImageProps {
   imageClassName?: string;
 }
 
+/** Imagem com icone de reserva quando nao ha' imagem ou ela falha ao carregar. */
 export function WikiImage({
   src,
   alt,

@@ -10,6 +10,7 @@ from app.models.base import Base, TimestampMixin
 
 
 class Notice(Base, TimestampMixin):
+    """Aviso do quadro da equipe (Visao Geral do painel)."""
     __tablename__ = "notices"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -28,6 +29,7 @@ class Notice(Base, TimestampMixin):
 
 
 class NoticeFile(Base):
+    """Arquivo anexado a um aviso (o arquivo em si fica em staff_files/, com nome aleatorio)."""
     __tablename__ = "notice_files"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

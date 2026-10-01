@@ -93,6 +93,7 @@ interface CatalogPageClientProps {
   summons?: ApiSummon[];
 }
 
+/** Listagem do catalogo de uma categoria, com busca e filtros. */
 export function CatalogPageClient({
   items,
   category,

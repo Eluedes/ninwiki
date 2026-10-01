@@ -30,6 +30,7 @@ interface CatalogCardProps {
   entry: ApiContentItemSummary;
 }
 
+/** Card de uma entry na listagem do catalogo. */
 export function CatalogCard({ entry }: CatalogCardProps) {
   const { dict, locale } = useLanguage();
   const name = locale === 'pt' ? (entry.namePt ?? entry.name) : entry.name;

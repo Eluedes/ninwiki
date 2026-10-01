@@ -94,6 +94,7 @@ class DropEntryRead(DropEntrySchema):
     @model_validator(mode="before")
     @classmethod
     def _compute_dropped_item_slug(cls, data):
+        """Preenche o slug do item ligado ao drop a partir da relacao carregada do banco."""
         if hasattr(data, "dropped_item") and not isinstance(data, dict):
             linked = data.dropped_item
             slug = linked.slug if (linked is not None and linked.status == ContentStatus.PUBLISHED) else None
@@ -191,6 +192,7 @@ class ContentItemRead(ContentItemBase):
     @model_validator(mode="before")
     @classmethod
     def _compute_cast_village_name(cls, data):
+        """Preenche o nome da vila do item Cast a partir da relacao carregada do banco."""
         if hasattr(data, "cast_village") and not isinstance(data, dict):
             village = data.cast_village
             return {
