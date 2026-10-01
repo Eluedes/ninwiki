@@ -1406,6 +1406,30 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     except FileNotFoundError:
         check("certificado inexistente erra alto (nunca conecta sem seguranca em silencio)", True)
 
+    secao("22) Editar o nome (nick) da equipe: so' S.Adm, e o login do Discord nao desfaz")
+    alvo = creator2
+    r = await c.patch(f"/staff/{alvo.id}/name", json={"username": "Nick Novo"}, headers=S)
+    check("S.Adm troca o nome de um membro", r.status_code == 200 and r.json()["username"] == "Nick Novo", r.text)
+    r = await c.patch(f"/staff/{sadm.id}/name", json={"username": "  Meu   Nome  S.Adm "}, headers=S)
+    check("S.Adm troca o PROPRIO nome (espacos extras limpos)", r.status_code == 200 and r.json()["username"] == "Meu Nome S.Adm", r.text)
+    check("/auth/me ja' mostra o nome novo", (await c.get("/auth/me", headers=S)).json()["username"] == "Meu Nome S.Adm")
+    check("nome vazio -> 422", (await c.patch(f"/staff/{alvo.id}/name", json={"username": "   "}, headers=S)).status_code == 422)
+    check("nome com mais de 100 caracteres -> 422", (await c.patch(f"/staff/{alvo.id}/name", json={"username": "a" * 101}, headers=S)).status_code == 422)
+    check("Adm nao troca nome (rota exclusiva do S.Adm = 404)", (await c.patch(f"/staff/{alvo.id}/name", json={"username": "x"}, headers=A)).status_code == 404)
+    check("Creator nao troca nome", (await c.patch(f"/staff/{alvo.id}/name", json={"username": "x"}, headers=C)).status_code == 404)
+    check("anonimo nao troca nome", (await c.patch(f"/staff/{alvo.id}/name", json={"username": "x"})).status_code == 401)
+    check("membro inexistente -> 404", (await c.patch("/staff/00000000-0000-0000-0000-000000000000/name", json={"username": "x"}, headers=S)).status_code == 404)
+    settings.discord_client_id, settings.discord_client_secret = "id-teste", "segredo-teste"
+    r = await c.get("/auth/discord/login")
+    st = r.headers["location"].split("state=")[1].split("&")[0]
+    perfil_novo = {"id": IDS["creator2"], "username": "Nome do Discord", "avatar_url": None}
+    with patch("app.core.discord.exchange_code", return_value="tok"), patch("app.core.discord.fetch_profile", return_value=perfil_novo):
+        await c.get(f"/auth/discord/callback?code=abc&state={st}", headers={"Cookie": f"{STATE_COOKIE}={st}"})
+    check("login do Discord NAO sobrescreve o nome editado a mao", (await recarregar(alvo)).username == "Nick Novo")
+    async with AsyncSessionLocal() as db:
+        ok = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "rename", AuditLogEntry.entity_id == str(IDS["creator2"])))).scalars().first()
+    check("a troca de nome fica no log de auditoria", ok is not None and ok.diff.get("after") == "Nick Novo")
+
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []
     total = 0

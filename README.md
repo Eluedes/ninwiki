@@ -91,6 +91,8 @@ pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bib
   `/admin/organizations` (liga cada organização às vilas em que atua).
 - **Quadro de avisos** (Visão Geral): toda a equipe lê e baixa os arquivos; **S.Adm e Adm** postam, fixam, editam, apagam e
   anexam arquivos (até 10 por aviso, `MAX_NOTICE_FILE_MB` MB cada; executáveis e HTML são recusados).
+- **Nome (nick) da equipe:** em `/admin/staff` (só S.Adm) o lápis ao lado do nome edita o nome de qualquer um, **inclusive o seu**. O nome editado
+  fica salvo: o login com o Discord não o sobrescreve mais.
 - **Permissões** (`/admin/permissions`, só S.Adm): liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora.
 - **Log geral:** `/admin/audit-log` (quem fez o quê; o IP só o S.Adm vê).
 - **Erros e problemas** (`/admin/errors`, só S.Adm): tudo que quebrou no wiki — erros da API, erros de tela do site, falhas da DeepL e

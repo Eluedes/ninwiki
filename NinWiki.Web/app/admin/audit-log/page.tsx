@@ -28,6 +28,7 @@ const ACTION_STYLE: Record<string, { icon: typeof Plus; className: string }> = {
   login_denied: { icon: ShieldAlert, className: 'bg-red-900/30 text-red-400' },
   permission_denied: { icon: ShieldAlert, className: 'bg-red-900/30 text-red-400' },
   role_change: { icon: UserCog, className: 'bg-amber-900/30 text-amber-400' },
+  rename: { icon: UserCog, className: 'bg-amber-900/30 text-amber-400' },
   activate: { icon: UserCog, className: 'bg-emerald-900/30 text-emerald-400' },
   deactivate: { icon: UserCog, className: 'bg-red-900/30 text-red-400' },
 };

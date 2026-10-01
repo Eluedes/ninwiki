@@ -18,6 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
+// Limite de tamanho por arquivo (igual ao MAX_NOTICE_FILE_MB padrao da API); a API confere de novo.
+const MAX_FILE_MB = 50;
+
 /** Tamanho de arquivo legivel (B, KB, MB). */
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -43,6 +46,7 @@ export function NoticeBoard() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null); // "nome.zip (45%)" enquanto um arquivo sobe
   const fileInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
@@ -61,27 +65,40 @@ export function NoticeBoard() {
     setForm({ id: n.id, title: n.title, body: n.body, pinned: n.pinned, newFiles: [] });
   }
 
+  /**
+   * Salva o aviso e envia os arquivos. O aviso aparece na lista ASSIM que e' salvo (antes dos arquivos subirem), cada arquivo
+   * mostra o progresso e qualquer falha vira mensagem - a tela nunca fica girando sem fim.
+   */
   async function submit() {
     if (!form || !form.title.trim()) return;
+    const tooBig = form.newFiles.find((f) => f.size > MAX_FILE_MB * 1024 * 1024);
+    if (tooBig) {
+      setError(t.fileTooBig.replace('{name}', tooBig.name).replace('{mb}', String(MAX_FILE_MB)));
+      return;
+    }
     setBusy(true);
     setError(null);
+    const failures: string[] = [];
     try {
       const payload = { title: form.title.trim(), body: form.body, pinned: form.pinned };
       const saved = form.id ? await updateNotice(form.id, payload) : await createNotice(payload);
-      // Os arquivos sobem um a um depois que o aviso existe; se algum falhar, o aviso ja' foi salvo.
+      load(); // o aviso ja' aparece na lista, mesmo que os anexos demorem
       for (const file of form.newFiles) {
+        setProgress(`${file.name} (0%)`);
         try {
-          await uploadNoticeFile(saved.id, file);
+          await uploadNoticeFile(saved.id, file, (pct) => setProgress(`${file.name} (${pct}%)`));
         } catch (err) {
-          setError(`${file.name}: ${err instanceof ApiError ? err.message : t.uploadError}`);
+          failures.push(`${file.name}: ${err instanceof ApiError ? err.message : t.uploadError}`);
         }
       }
       setForm(null);
-      load();
+      if (failures.length) setError(failures.join(' | '));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.saveError);
     } finally {
+      setProgress(null);
       setBusy(false);
+      load();
     }
   }
 
@@ -180,7 +197,7 @@ export function NoticeBoard() {
           <div className="flex gap-2">
             <Button size="sm" disabled={busy || !form.title.trim()} onClick={submit}>
               {busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              {busy ? t.saving : t.save}
+              {busy ? (progress ? `${t.uploading} ${progress}` : t.saving) : t.save}
             </Button>
             <Button size="sm" variant="outline" disabled={busy} onClick={() => setForm(null)}>{t.cancel}</Button>
           </div>

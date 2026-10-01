@@ -28,6 +28,8 @@ class User(Base, TimestampMixin):
     discord_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     username: Mapped[str] = mapped_column(String(100))
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # True = o nome foi escolhido a mao no painel (S.Adm): o login com o Discord NAO sobrescreve mais com o nome do Discord.
+    username_locked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     role: Mapped[StaffRole] = mapped_column(Enum(StaffRole, name="staff_role"), default=StaffRole.CREATOR)
 
     # Desativar = a pessoa perde o acesso NA HORA (a API confere isso a

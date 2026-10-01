@@ -8,14 +8,14 @@
 // e ele aparece aqui.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, AlertTriangle, UserPlus, Lock } from 'lucide-react';
+import { Loader2, AlertTriangle, UserPlus, Lock, Pencil, Check, X } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ApiError, createStaff, listStaff, setStaffActive, updateStaffRole,
+  ApiError, createStaff, listStaff, setStaffActive, updateStaffName, updateStaffRole,
   type ApiStaff, type StaffRole,
 } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ const RANK: Record<StaffRole, number> = { creator: 1, admin: 2, super_admin: 3 }
 export default function StaffPage() {
   const { dict, locale } = useLanguage();
   const t = dict.admin.auth;
-  const { me, can } = useAuth();
+  const { me, can, refresh } = useAuth();
 
   const [staff, setStaff] = useState<ApiStaff[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +39,8 @@ export default function StaffPage() {
   const [username, setUsername] = useState('');
   const [role, setRole] = useState<StaffRole>('creator');
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null); // linha com o nome em edicao
+  const [nameDraft, setNameDraft] = useState('');
 
   const roleLabel: Record<StaffRole, string> = {
     super_admin: t.roleSuperAdmin, admin: t.roleAdmin, creator: t.roleCreator,
@@ -77,6 +79,18 @@ export default function StaffPage() {
     } finally {
       setBusyId(null);
     }
+  }
+
+  /** Salva o novo nome; se for o proprio nome do S.Adm logado, atualiza tambem o cabecalho do painel. */
+  async function saveName(member: ApiStaff) {
+    const name = nameDraft.trim();
+    if (!name || name === member.username) {
+      setEditingId(null);
+      return;
+    }
+    await run(member.id, () => updateStaffName(member.id, name));
+    setEditingId(null);
+    if (member.id === me?.id) await refresh();
   }
 
   async function handleAdd(e: React.FormEvent) {
@@ -201,10 +215,36 @@ export default function StaffPage() {
                           </div>
                         )}
                         <div>
-                          <p className="font-semibold leading-tight">
-                            {m.username}
-                            {m.id === me?.id && <span className="ml-1 text-xs font-normal text-muted-foreground">({t.you})</span>}
-                          </p>
+                          {editingId === m.id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                autoFocus value={nameDraft} maxLength={100} className="h-8 w-48"
+                                onChange={(e) => setNameDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveName(m);
+                                  if (e.key === 'Escape') setEditingId(null);
+                                }}
+                              />
+                              <button type="button" title={t.saveName} disabled={busy} onClick={() => saveName(m)}
+                                className="rounded p-1.5 text-emerald-400 hover:bg-secondary">
+                                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                              </button>
+                              <button type="button" title={t.cancelName} onClick={() => setEditingId(null)}
+                                className="rounded p-1.5 text-muted-foreground hover:bg-secondary"><X className="h-4 w-4" /></button>
+                            </div>
+                          ) : (
+                            <p className="flex items-center gap-1 font-semibold leading-tight">
+                              {m.username}
+                              {m.id === me?.id && <span className="ml-1 text-xs font-normal text-muted-foreground">({t.you})</span>}
+                              {can('staff.edit') && (
+                                <button type="button" title={`${t.editName}. ${t.nameHint}`}
+                                  onClick={() => { setEditingId(m.id); setNameDraft(m.username); }}
+                                  className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-card-foreground">
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </p>
+                          )}
                           <p className="font-mono text-xs text-muted-foreground">{m.discordId}</p>
                         </div>
                         {m.isOwner && (
