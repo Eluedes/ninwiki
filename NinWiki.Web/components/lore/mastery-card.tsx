@@ -10,6 +10,7 @@ import type { ApiMastery } from '@/lib/api-client';
 import { MasteryVisual } from '@/components/lore/mastery-visual';
 import { extractPlainText } from '@/components/lore/rich-text';
 
+/** Card de uma mastery. */
 export function MasteryCard({ mastery }: { mastery: ApiMastery }) {
   const { dict, locale } = useLanguage();
   const isPt = locale === 'pt';

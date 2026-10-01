@@ -3,6 +3,7 @@
 // portugues, se ainda nao houver traducao, cai pro ingles (nunca fica vazio).
 import type { Locale } from '@/lib/types';
 
+/** Nome no idioma atual: usa o campo em portugues quando existe, senao o ingles. */
 export function localizedName(locale: Locale, name: string, namePt: string | null | undefined): string {
   return locale === 'pt' ? (namePt || name) : name;
 }

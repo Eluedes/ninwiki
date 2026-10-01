@@ -22,6 +22,7 @@ import { slugify } from '@/lib/utils';
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EMPTY: OrganizationInput = { id: '', name: '', description: '', villageIds: [] };
 
+/** Organizacoes no painel: lista e formulario (liga cada organizacao a vilas). */
 export default function OrganizationsAdminPage() {
   const { dict, locale } = useLanguage();
   const t = dict.admin.villagesAdmin;

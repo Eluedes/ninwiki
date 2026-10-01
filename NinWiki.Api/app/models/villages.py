@@ -9,6 +9,7 @@ from app.models.base import Base
 
 
 class Village(Base):
+    """Vila do jogo, com seus cla's e as organizacoes que atuam nela."""
     __tablename__ = "villages"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "leaf"

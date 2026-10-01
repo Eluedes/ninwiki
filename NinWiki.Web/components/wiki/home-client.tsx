@@ -11,6 +11,7 @@ import type { ApiPostSummary } from '@/lib/api-client';
 import Link from 'next/link';
 import { Slash, Newspaper } from 'lucide-react';
 
+/** Pagina inicial: boas-vindas, categorias e os ultimos posts do blog. */
 export function HomeClient({ posts }: { posts: ApiPostSummary[] }) {
   const { locale, dict } = useLanguage();
 

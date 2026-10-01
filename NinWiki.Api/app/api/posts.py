@@ -34,6 +34,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 
 def _summary(post: Post) -> dict:
+    """Converte um Post no resumo da listagem (sem o conteudo)."""
     return {
         "id": post.id, "slug": post.slug, "title": post.title, "excerpt": post.excerpt,
         "cover_image": post.cover_image, "status": post.status,
@@ -43,26 +44,31 @@ def _summary(post: Post) -> dict:
 
 
 def _read(post: Post) -> PostRead:
+    """Converte um Post na ficha completa."""
     return PostRead(**_summary(post), content=post.content)
 
 
 def _hide_draft_from_public(post: Post, user: User | None) -> None:
+    """Rascunho responde 404 para quem nao e' da equipe."""
     if user is None and post.status != ContentStatus.PUBLISHED:
         raise HTTPException(status_code=404, detail="Post não encontrado")
 
 
 def _guard_publish(staff: User, new_status: ContentStatus) -> None:
+    """Quem nao tem posts.publish nao pode colocar um post como publicado (403)."""
     if new_status == ContentStatus.PUBLISHED and not has_permission(staff.role, Permission.POST_PUBLISH):
         raise HTTPException(status_code=403, detail="Só um Adm pode publicar. Salve como rascunho.")
 
 
 def _guard_edit(staff: User, post: Post, new_status: ContentStatus) -> None:
+    """Quem nao tem posts.publish nao mexe em post ja' publicado nem o publica (403)."""
     if not has_permission(staff.role, Permission.POST_PUBLISH) and post.status == ContentStatus.PUBLISHED:
         raise HTTPException(status_code=403, detail="Este post já está publicado. Só um Adm pode alterá-lo.")
     _guard_publish(staff, new_status)
 
 
 async def _load(db: AsyncSession, post_id: UUID) -> Post:
+    """Carrega um post (com o autor) ou responde 404."""
     stmt = select(Post).where(Post.id == post_id).options(selectinload(Post.author))
     post = (await db.execute(stmt)).scalar_one_or_none()
     if post is None:
@@ -71,6 +77,7 @@ async def _load(db: AsyncSession, post_id: UUID) -> Post:
 
 
 async def _slug_taken(db: AsyncSession, slug: str, ignore_id: UUID | None = None) -> bool:
+    """True se ja' existe OUTRO post com este slug."""
     stmt = select(Post.id).where(Post.slug == slug)
     found = (await db.execute(stmt)).scalar_one_or_none()
     return found is not None and found != ignore_id
@@ -82,6 +89,7 @@ async def list_posts(
     user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Lista posts, mais recentes primeiro; o publico so' ve' os publicados."""
     stmt = select(Post).options(selectinload(Post.author)).order_by(Post.created_at.desc())
     if user is None:
         stmt = stmt.where(Post.status == ContentStatus.PUBLISHED)  # rascunho NUNCA aparece pro publico
@@ -92,6 +100,7 @@ async def list_posts(
 
 @router.get("/slug/{slug}", response_model=PostRead)
 async def get_post_by_slug(slug: str, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
+    """Ficha de um post pelo slug (URL legivel do site publico)."""
     stmt = select(Post).where(Post.slug == slug).options(selectinload(Post.author))
     post = (await db.execute(stmt)).scalar_one_or_none()
     if post is None:
@@ -102,6 +111,7 @@ async def get_post_by_slug(slug: str, user: User | None = Depends(get_optional_u
 
 @router.get("/{post_id}", response_model=PostRead)
 async def get_post(post_id: UUID, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
+    """Ficha de um post pelo id (usado pelo painel)."""
     post = await _load(db, post_id)
     _hide_draft_from_public(post, user)
     return _read(post)
@@ -113,6 +123,7 @@ async def create_post(
     staff: User = Depends(require_permission(Permission.POST_CREATE)),
     db: AsyncSession = Depends(get_db),
 ):
+    """Cria um post (exige posts.create); Creator so' cria rascunho."""
     _guard_publish(staff, payload.status)
     if await _slug_taken(db, payload.slug):
         raise HTTPException(status_code=409, detail=f"Já existe um post com o slug '{payload.slug}'")
@@ -132,6 +143,7 @@ async def update_post(
     staff: User = Depends(require_permission(Permission.POST_EDIT)),
     db: AsyncSession = Depends(get_db),
 ):
+    """Edita um post respeitando as regras de publicar/editar publicado."""
     post = await _load(db, post_id)
     _guard_edit(staff, post, payload.status)
     if await _slug_taken(db, payload.slug, ignore_id=post.id):
@@ -151,6 +163,7 @@ async def delete_post(
     staff: User = Depends(require_permission(Permission.POST_DELETE)),
     db: AsyncSession = Depends(get_db),
 ):
+    """Apaga um post (exige posts.delete)."""
     post = await _load(db, post_id)
     title = post.title
     await db.delete(post)

@@ -10,6 +10,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import type { ApiPostSummary } from '@/lib/api-client';
 
+/** Data do post no formato do idioma (pt-BR ou en-US). */
 export function formatPostDate(iso: string, locale: 'pt' | 'en'): string {
   return new Date(iso).toLocaleDateString(locale === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit',
@@ -18,6 +19,7 @@ export function formatPostDate(iso: string, locale: 'pt' | 'en'): string {
   });
 }
 
+/** Card de um post: capa, data, autor, titulo e resumo; clicavel para /blog/[slug]. */
 export function PostCard({ post }: { post: ApiPostSummary }) {
   const { locale, dict } = useLanguage();
 

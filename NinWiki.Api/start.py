@@ -16,6 +16,7 @@ PORT = os.getenv("PORT", "80")
 
 
 def main() -> None:
+    """Aplica as migrations e liga o Uvicorn (se a migration falhar, a API nao sobe)."""
     print("[start] aplicando migrations...", flush=True)
     result = subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"])
     if result.returncode != 0:
@@ -25,8 +26,10 @@ def main() -> None:
     print(f"[start] iniciando API na porta {PORT}...", flush=True)
     os.execv(
         sys.executable,
-        [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", PORT,
-         "--proxy-headers", "--forwarded-allow-ips", "*"],
+        # --no-server-header: nao anuncia "uvicorn" nas respostas (menos informacao pra quem faz varredura).
+        # Sem --proxy-headers de proposito: o IP real vem de app/core/security.py (CF-Connecting-IP ou o
+        # ultimo X-Forwarded-For) so' quando TRUST_PROXY_HEADERS=true - nunca de um cabecalho forjavel.
+        [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", PORT, "--no-server-header"],
     )
 
 

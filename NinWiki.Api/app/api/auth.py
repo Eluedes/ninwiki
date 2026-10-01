@@ -40,10 +40,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _dev_login_enabled() -> bool:
+    """True so' se o login de desenvolvimento esta' ligado E o ambiente e' development."""
     return settings.dev_login_enabled and settings.is_development
 
 
 def _me(user: User) -> MeRead:
+    """Monta a resposta de /auth/me: quem esta' logado, cargo, permissoes visiveis e cargos que pode dar."""
     return MeRead(
         id=user.id, discord_id=str(user.discord_id), username=user.username, avatar_url=user.avatar_url,
         role=user.role, role_label=ROLE_LABEL[user.role],
@@ -52,6 +54,7 @@ def _me(user: User) -> MeRead:
 
 
 def _login_redirect(reason: str) -> RedirectResponse:
+    """Redireciona de volta para a tela de login do site com o motivo do erro na URL."""
     resp = RedirectResponse(f"{settings.frontend_origin}/login?error={reason}", status_code=302)
     clear_state_cookie(resp)
     return resp
@@ -63,14 +66,17 @@ def _too_many_requests() -> int | None:
 
 
 def _fail_window() -> float:
+    """Janela (em segundos) em que as falhas de login sao contadas para o bloqueio."""
     return settings.login_fail_window_minutes * 60
 
 
 def _too_many_failures() -> int | None:
+    """Segundos de espera se este IP errou o login vezes demais, ou None se pode tentar."""
     return limiter.blocked(LOGIN_FAIL, client_key(), settings.login_fail_limit, _fail_window())
 
 
 def _register_failure() -> None:
+    """Registra uma falha de login (conta nao cadastrada, state invalido...) para este IP."""
     limiter.fail(LOGIN_FAIL, client_key(), _fail_window())
 
 
@@ -82,6 +88,7 @@ async def auth_config():
 
 @router.get("/discord/login")
 async def discord_login():
+    """Inicia o login: gera o state anti-CSRF e redireciona o navegador para o Discord."""
     if _too_many_requests() is not None:
         return _login_redirect("rate_limited")
     if not discord.is_configured():
@@ -97,6 +104,7 @@ async def discord_callback(
     request: Request, code: str | None = None, state: str | None = None,
     error: str | None = None, db: AsyncSession = Depends(get_db),
 ):
+    """Volta do Discord: confere o state, troca o code pelo perfil, valida se e' staff ativa e cria a sessao."""
     # Freio ANTES de qualquer trabalho (Discord, banco, log): quem ja' errou demais nem chega la'.
     if _too_many_requests() is not None or _too_many_failures() is not None:
         return _login_redirect("rate_limited")
@@ -170,6 +178,7 @@ async def dev_login(payload: DevLogin, request: Request, response: Response, db:
 
 @router.post("/logout")
 async def logout(response: Response, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
+    """Encerra a sessao: apaga o cookie e registra a saida no log."""
     if user is not None:
         await log_action(db, action="logout", entity_type="auth", entity_id=str(user.discord_id), actor=user, source="auth")
         await db.commit()
@@ -179,4 +188,5 @@ async def logout(response: Response, user: User | None = Depends(get_optional_us
 
 @router.get("/me", response_model=MeRead)
 async def me(user: User = Depends(get_current_user)):
+    """Quem esta' logado agora (usado pelo painel para montar menu e telas)."""
     return _me(user)

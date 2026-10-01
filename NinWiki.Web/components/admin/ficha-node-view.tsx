@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import type { FichaRow } from '@/lib/tiptap-extensions/ficha';
 
+/** Visual editavel do bloco 'Ficha' dentro do editor. */
 export function FichaNodeView({ node, updateAttributes }: NodeViewProps) {
   const title: string = node.attrs.title ?? 'Ficha';
   const rows: FichaRow[] = node.attrs.rows ?? [];

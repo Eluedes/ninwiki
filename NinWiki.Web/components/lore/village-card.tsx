@@ -10,6 +10,7 @@ import { MapPin } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { localizedName } from '@/lib/localized';
 
+/** Card de uma vila na listagem. */
 export function VillageCard({ village }: { village: ApiVillage }) {
   const { locale } = useLanguage();
   const name = localizedName(locale, village.name, village.namePt);

@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import { getContentItemBySlug, listContentItems, ApiError } from '@/lib/api-client';
 import { DetailPageClient } from '@/components/wiki/detail-page-client';
 
+/** Pagina publica de uma entry (Server Component: busca na API). */
 export default async function DetailPage({
   params,
 }: {

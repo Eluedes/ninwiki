@@ -64,6 +64,7 @@ export const professions: Profession[] = [
   },
 ];
 
+/** Profissoes de um grupo (dados estaticos do Guia). */
 export function professionsByGroup(group: ProfessionGroup): Profession[] {
   return professions.filter((p) => p.group === group);
 }
@@ -120,6 +121,7 @@ export const ninjaRanks: NinjaRank[] = [
   },
 ];
 
+/** Ranks ninja em ordem crescente. */
 export function ninjaRanksSorted(): NinjaRank[] {
   return [...ninjaRanks].sort((a, b) => a.order - b.order);
 }
@@ -150,6 +152,7 @@ export const storyArcs: StoryArc[] = [
   },
 ];
 
+/** Acha um arco de historia pelo id. */
 export function storyArcById(id: string): StoryArc | undefined {
   return storyArcs.find((a) => a.id === id);
 }
@@ -197,6 +200,7 @@ export const summons: Summon[] = [
   },
 ];
 
+/** Acha um summon pelo id. */
 export function summonById(id: string): Summon | undefined {
   return summons.find((s) => s.id === id);
 }

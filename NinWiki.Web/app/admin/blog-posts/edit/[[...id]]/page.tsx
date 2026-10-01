@@ -27,11 +27,13 @@ import { slugify } from '@/lib/utils';
 
 const emptyForm: PostFormValues = { title: '', slug: '', excerpt: '', content: '', coverImage: null };
 
+/** Mensagem de erro de um campo do formulario. */
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className="text-xs text-destructive">{message}</p>;
 }
 
+/** Editor de post do blog (criar/editar, publicar ou salvar rascunho). */
 export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: string[] }> }) {
   const router = useRouter();
   const { id } = use(params);

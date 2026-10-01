@@ -28,6 +28,7 @@ const iconMap: Record<string, LucideIcon> = {
   fist: Hand,
 };
 
+/** Icone de uma mastery com a cor dela. */
 export function MasteryIcon({
   icon,
   className,

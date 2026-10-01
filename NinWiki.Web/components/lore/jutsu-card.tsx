@@ -25,6 +25,7 @@ const tierColors: Record<number, string> = {
   5: 'text-gold-300 border-gold-400/50 bg-gold-400/10',
 };
 
+/** Card de um jutsu. */
 export function JutsuCard({ jutsu, mastery }: { jutsu: ApiJutsu; mastery?: ApiMastery }) {
   const { locale } = useLanguage();
   const isPt = locale === 'pt';

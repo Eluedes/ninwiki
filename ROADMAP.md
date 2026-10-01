@@ -4,7 +4,7 @@ Documento de controle do projeto, no mesmo espírito do roadmap do Guima:
 uma lista viva do que já foi feito e do que falta, organizada em fases.
 Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 
-**Última atualização:** 01/10/2026 (clãs com imagem, permissões editáveis, quadro de avisos)
+**Última atualização:** 01/10/2026 (Fase 6 concluída: endurecimento, log no Discord, auditoria de bugs)
 
 **Legenda:** ✅ feito e testado · 🔄 em andamento / parcial · ⬜ não iniciado
 
@@ -146,6 +146,8 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   e histórico da entry. A Visão Geral passou a contar posts e equipe de verdade. Coberto por
   `scripts/testar_permissoes.py`. A página pública do blog foi feita em 01/10 (ver abaixo). Tags/categorias
   ficam pra depois: `posts` não tem noção de tag, precisa de tabela `tags` + N:N + migração antes da UI
+- ✅ **Documentação no código (01/10)**: todo arquivo tem comentário-resumo e todas as funções/classes (Python) e funções/componentes
+  (TypeScript) têm uma linha dizendo o que fazem; README ganhou o "mapa do código"
 - ✅ **Página pública do Blog (01/10)**: `/blog` (lista dos posts **publicados**, mais recentes primeiro) e `/blog/[slug]`
   (conteúdo rico via `RichText`, capa, autor, data e "atualizado em"; rascunho/slug inexistente → 404). A Home agora mostra os
   3 últimos posts reais (link "Ver todas") no lugar das notícias de mentira (`newsItems` e `NewsCard` removidos); se a API
@@ -241,8 +243,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   os campos ganharam sufixo `_pt` (não `_en`), migração de RENAME de verdade (preserva dado)
   em vez de apagar+recriar. Também: Drops ganharam "Over/Below X%" (controle manual, não
   automático — a pessoa escolhe o rótulo por drop, igual a ficha do próprio jogo mostra "Over
-  10%"/"Below 1%"); `start.bat` novo na raiz do projeto, duplo clique sobe API+Web sem
-  PowerShell. Bugs reais achados testando: migração de enum novo sem `CREATE TYPE` antes do
+  10%"/"Below 1%"); `start.bat` (REMOVIDO do repositório em 01/10: arquivos .bat/.cmd não vão mais para o Git, ver Fase 6). Bugs reais achados testando: migração de enum novo sem `CREATE TYPE` antes do
   `ADD COLUMN` (Postgres não cria sozinho), e `psycopg==3.2.4` sem build pra Python 3.14 do
   Rafael (subiu pra `3.2.13`, mesma linha 3.2.x)
 - ✅ **Tradução do admin concluída + upload de imagem corrigido (25-26/09)**: as páginas que
@@ -395,18 +396,38 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   nunca sobrescreve correção manual, botão "Retraduzir") em Conteúdo, Masteries e Jutsus. Village,
   Profession, NinjaRank, Summon e Attribute seguem o mesmo padrão (`name` em inglês + `name_pt`)
 
-## Fase 6 — Hardening de segurança
+## Fase 6 — Hardening de segurança ✅ COMPLETA (01/10)
 - ✅ Sessão em cookie `httpOnly` / `SameSite=Lax` / `Secure` (fora do local); JWT com algoritmo fixo e
   `exp`/`sub`/`ver` obrigatórios (recusa token sem assinatura ou com outra chave)
 - ✅ CSRF nos endpoints de mutação: checagem de `Origin` + `SameSite=Lax` (testado com origem falsa)
-- ✅ A API **recusa iniciar** com `DEV_LOGIN_ENABLED=true` fora de development, ou com `JWT_SECRET_KEY`
-  fraca fora de development
+- ✅ A API **recusa iniciar** com `DEV_LOGIN_ENABLED=true` fora de development, ou com `JWT_SECRET_KEY` fraca
 - ✅ Documentação interativa da API (`/docs`) desligada fora de development
-- 🔄 CORS: já restrito ao `FRONTEND_ORIGIN` (nunca `*`) — falta só colocar o domínio real no deploy
+- ✅ CORS restrito ao `FRONTEND_ORIGIN` (nunca `*`); a URL é normalizada (sem `/` no fim, que quebrava CORS/CSRF)
 - ✅ Rate limit no login e na API do bot (ver Fase 2)
-- ⬜ Rate limit nas rotas públicas de busca/listagem
-- ⬜ Filtro no "colar" do editor Tiptap (evita HTML externo injetando estrutura fora do schema)
-- ⬜ Revisão final de `npm audit` / `pip audit` antes do deploy
+- ✅ **Rate limit geral por IP (01/10)**: API (`app/core/hardening.py`: leitura 1200/min, escrita 120/min, imagens 1500/min, `Retry-After`)
+  e site (`proxy.ts`: 300 páginas/min, prefetch em balde separado). Robôs de cópia conhecidos e requisições sem User-Agent
+  recebem 403 nas páginas; `robots.txt` bloqueia robôs de IA/cópia. Limites ajustáveis por `.env`. **Limite honesto**: conteúdo
+  público não dá para proteger 100% de um robô decidido — o objetivo é tornar a cópia lenta/cara e proteger o servidor
+- ✅ **Cabeçalhos de segurança (01/10)**: API (nosniff, anti-iframe, HSTS, CSP restritiva, `no-store` em rotas sensíveis, sem
+  `Server:` do uvicorn) e site (**CSP**, HSTS, COOP, sem `X-Powered-By`, `noindex`/`no-store` no painel). Testado no navegador
+  em 12 páginas: zero violações de CSP
+- ✅ **Corpo de requisição limitado (01/10)**: 413 antes de ler (512 KB; uploads e importação têm limite próprio); limite de pixels
+  nas imagens (anti "bomba de descompressão")
+- ✅ **Texto rico validado no servidor (01/10)**: só blocos/formatações do editor, links `javascript:`/`data:` recusados,
+  profundidade e tamanho máximos; **filtro no "colar"** do editor Tiptap (tags/atributos/links perigosos removidos)
+- ✅ **IP real sem brecha (01/10)**: `--proxy-headers "*"` removido; com `TRUST_PROXY_HEADERS=true` usa `CF-Connecting-IP` ou o
+  ÚLTIMO `X-Forwarded-For` (o do proxy), nunca o valor forjável do cliente
+- ✅ **`npm audit` / `pip audit` zerados (01/10)**: Next 16.3.5 → 16.3.8 (RCE crítico em `next/og`) e Pillow 11.3.0 → 12.3.0
+  (35 CVEs no processamento de imagens enviadas)
+- ✅ Busca com `%`/`_` digitados pela pessoa não casa mais com tudo (escape no `ILIKE`)
+- ✅ **Arquivos `.bat`/`.cmd` fora do repositório (01/10)**: `.gitignore` + workflow `no-bat.yml` que falha se algum entrar
+- ✅ **Log geral no Discord (01/10)**: o bot posta as ações do painel num canal (sem IP nem conteúdo), sobrevive a reinício
+  (`log_state.json`), `GET /bot/audit-log`; coberto por `testar_bot_integracao.py` (61 verificações)
+- ✅ **Bugs achados e corrigidos na auditoria (01/10)**: horário do log (`audit_log.created_at`) sem fuso — aparecia deslocado e
+  quebrava comparações (migração `b7d4e2f9a1c3`); editor de texto minúsculo (`min-h-64` não existe no Tailwind 3.3);
+  extensões `link`/`underline` duplicadas no Tiptap v3; comentário "sem autenticação" desatualizado; teste 14a do clã
+- ⬜ Rate limit com **Redis** se um dia houver mais de uma instância (hoje é por processo — exato com uma instância só)
+- ⬜ Cloudflare (WAF/proxy) na frente — recomendado, ver README 3.7
 
 ## Fase 7 — Deploy
 - ✅ **Preparação para a SquareCloud (01/10)**: `README.md` na raiz (rodar local, usar o painel, passo a passo do
@@ -422,6 +443,8 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 - ⬜ **Uploads em disco local**: um redeploy pode apagar `NinWiki.Api/uploads` — fazer backup ou migrar para storage
   externo (S3/R2)
 - ⬜ Cloudflare (WAF, proxy, DNS) — ao ligar, usar `TRUST_PROXY_HEADERS=true`
+- ✅ **Levar o banco do Docker para a SquareCloud (01/10)**: `NinWiki.Api/scripts/migrar_banco.py exportar|importar` (round-trip testado:
+  15 entries e a versão do Alembic preservadas); passo a passo no README 3.2
 - ⬜ Schema de banco separado por ambiente (`public` / `beta_ninwiki`, mesmo padrão do Guima)
 
 ---

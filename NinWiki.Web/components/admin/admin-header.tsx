@@ -10,6 +10,7 @@ import { LanguageSelector } from '@/components/language-selector';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
 
+/** Cabecalho do painel: idioma, tema e usuario logado com sair. */
 export function AdminHeader() {
   const { dict } = useLanguage();
   const { me, logout } = useAuth();

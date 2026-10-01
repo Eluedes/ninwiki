@@ -69,6 +69,7 @@ export const villages: Village[] = [
   },
 ];
 
+/** Acha uma vila pelo id nos dados estaticos. */
 export function villageById(id: string): Village | undefined {
   return villages.find((v) => v.id === id);
 }
@@ -125,6 +126,7 @@ export const clans: Clan[] = [
   },
 ];
 
+/** Cla's de uma vila. */
 export function clansByVillage(villageId: string): Clan[] {
   return clans.filter((c) => c.villageId === villageId);
 }
@@ -165,6 +167,7 @@ export const organizations: Organization[] = [
   },
 ];
 
+/** Organizacoes que atuam em uma vila. */
 export function organizationsByVillage(villageId: string): Organization[] {
   return organizations.filter((o) => o.villageIds.includes(villageId as VillageId));
 }

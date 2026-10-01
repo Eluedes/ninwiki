@@ -546,23 +546,28 @@ export function masteryById(id: string): Mastery | undefined {
   return masteries.find((m) => m.id === id);
 }
 
+/** Acha um atributo pelo id nos dados estaticos. */
 export function attributeById(id: string): Attribute | undefined {
   return attributes.find((a) => a.id === id);
 }
 
+/** Jutsus de uma mastery (dados estaticos usados pelo seed). */
 export function jutsusByMastery(masteryId: string): Jutsu[] {
   return jutsus.filter((j) => j.masteryId === masteryId);
 }
 
+/** Acha um caminho de mastery pelo id. */
 export function masteryPathById(masteryId: string, pathId?: MasteryPathId): MasteryPath | undefined {
   if (!pathId) return undefined;
   return masteryById(masteryId)?.paths?.find((path) => path.id === pathId);
 }
 
+/** Jutsus de um caminho de mastery. */
 export function jutsusByMasteryPath(masteryId: string, pathId: MasteryPathId): Jutsu[] {
   return jutsus.filter((j) => j.masteryId === masteryId && j.pathId === pathId);
 }
 
+/** Acha um jutsu pelo id. */
 export function jutsuById(id: string): Jutsu | undefined {
   return jutsus.find((j) => j.id === id);
 }

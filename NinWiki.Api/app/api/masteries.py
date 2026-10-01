@@ -38,6 +38,7 @@ router = APIRouter(tags=["masteries"])
 
 
 class JutsuBulkDelete(CamelModel):
+    """Corpo de apagar varios jutsus de uma vez (lista de ids)."""
     ids: list[str] = Field(min_length=1)
 
 
@@ -71,6 +72,7 @@ async def list_attributes(db: AsyncSession = Depends(get_db)):
 
 @router.get("/masteries", response_model=list[MasteryRead])
 async def list_masteries(db: AsyncSession = Depends(get_db)):
+    """Lista as masteries com seus caminhos (publico)."""
     stmt = select(Mastery).options(selectinload(Mastery.paths), selectinload(Mastery.attributes)).order_by(Mastery.name)
     result = await db.execute(stmt)
     return result.scalars().all()
@@ -78,6 +80,7 @@ async def list_masteries(db: AsyncSession = Depends(get_db)):
 
 @router.get("/masteries/{mastery_id}", response_model=MasteryRead)
 async def get_mastery(mastery_id: str, db: AsyncSession = Depends(get_db)):
+    """Ficha de UMA mastery (publico)."""
     stmt = (
         select(Mastery)
         .where(Mastery.id == mastery_id)
@@ -205,6 +208,7 @@ async def list_jutsus(
     mastery_id: str | None = Query(None, alias="masteryId", description="Filtra por mastery"),
     db: AsyncSession = Depends(get_db),
 ):
+    """Lista jutsus, opcionalmente so' os de uma mastery (publico)."""
     stmt = select(Jutsu).order_by(Jutsu.name)
     if mastery_id:
         stmt = stmt.where(Jutsu.mastery_id == mastery_id)
@@ -214,11 +218,13 @@ async def list_jutsus(
 
 @router.get("/jutsus/{jutsu_id}", response_model=JutsuRead)
 async def get_jutsu(jutsu_id: str, db: AsyncSession = Depends(get_db)):
+    """Ficha de UM jutsu (publico)."""
     return await _get_jutsu_or_404(jutsu_id, db)
 
 
 @router.post("/jutsus", response_model=JutsuRead, status_code=201)
 async def create_jutsu(payload: JutsuWrite, staff: User = Depends(require_permission(Permission.LORE_EDIT)), db: AsyncSession = Depends(get_db)):
+    """Cria um jutsu (exige lore.edit); valida mastery/caminho e registra no log."""
     existing = await db.get(Jutsu, payload.id)
     if existing:
         raise HTTPException(status_code=409, detail=f"Já existe um jutsu com o id '{payload.id}'")
@@ -237,6 +243,7 @@ async def create_jutsu(payload: JutsuWrite, staff: User = Depends(require_permis
 
 @router.put("/jutsus/{jutsu_id}", response_model=JutsuRead)
 async def update_jutsu(jutsu_id: str, payload: JutsuWrite, staff: User = Depends(require_permission(Permission.LORE_EDIT)), db: AsyncSession = Depends(get_db)):
+    """Edita um jutsu (exige lore.edit); copia os campos do payload e registra no log."""
     jutsu = await _get_jutsu_or_404(jutsu_id, db)
     if payload.id != jutsu_id:
         raise HTTPException(status_code=400, detail="Não é permitido mudar o id de um jutsu existente")
@@ -271,6 +278,7 @@ async def retranslate_jutsu(jutsu_id: str, staff: User = Depends(require_permiss
 
 @router.delete("/jutsus/{jutsu_id}", status_code=204)
 async def delete_jutsu(jutsu_id: str, staff: User = Depends(require_permission(Permission.LORE_DELETE)), db: AsyncSession = Depends(get_db)):
+    """Apaga um jutsu (exige lore.delete) e registra no log."""
     jutsu = await _get_jutsu_or_404(jutsu_id, db)
     deleted_name = jutsu.name
     await db.delete(jutsu)
@@ -279,6 +287,7 @@ async def delete_jutsu(jutsu_id: str, staff: User = Depends(require_permission(P
 
 
 async def _get_jutsu_or_404(jutsu_id: str, db: AsyncSession) -> Jutsu:
+    """Busca um jutsu pelo id ou responde 404."""
     jutsu = await db.get(Jutsu, jutsu_id)
     if jutsu is None:
         raise HTTPException(status_code=404, detail="Jutsu não encontrado")

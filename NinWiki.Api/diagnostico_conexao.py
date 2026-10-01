@@ -30,6 +30,7 @@ ASYNCPG_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
 
 
 async def main():
+    """Testa a conexao com o banco e mostra, em portugues, o que esta' errado se falhar."""
     import asyncpg
 
     print(f"Tentando conectar em: {ASYNCPG_URL.split('@')[-1]} (host/porta/banco, sem senha)")

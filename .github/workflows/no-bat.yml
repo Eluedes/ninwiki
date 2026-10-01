@@ -1,0 +1,23 @@
+name: Bloquear arquivos .bat/.cmd
+
+# Falha se algum script do Windows (.bat / .cmd) estiver no repositorio.
+# Eles ficam so' na maquina de quem usa (estao no .gitignore).
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  no-bat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Procurar .bat/.cmd versionados
+        run: |
+          found=$(git ls-files | grep -iE '\.(bat|cmd)$' || true)
+          if [ -n "$found" ]; then
+            echo "::error::Arquivos .bat/.cmd nao podem ir para o repositorio:"
+            echo "$found"
+            exit 1
+          fi
+          echo "Nenhum .bat/.cmd versionado."

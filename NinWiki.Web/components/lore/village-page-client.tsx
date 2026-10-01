@@ -15,6 +15,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { alternateName, localizedName } from '@/lib/localized';
 import { MapPin, Users, ShieldCheck } from 'lucide-react';
 
+/** Pagina de uma vila: descricao, cla's (com imagem) e organizacoes. */
 export function VillagePageClient({ village, allVillages }: { village: ApiVillage; allVillages: ApiVillage[] }) {
   const { locale } = useLanguage();
   const name = localizedName(locale, village.name, village.namePt);

@@ -17,6 +17,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { uploadImage, ApiError } from '@/lib/api-client';
 import { Upload, Loader2, X, ImageOff } from 'lucide-react';
 
+/** Campo de imagem: escolher arquivo (upload) ou colar uma URL, com previa. */
 export function ImageUploadField({
   value,
   onChange,

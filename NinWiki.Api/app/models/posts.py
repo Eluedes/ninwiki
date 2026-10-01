@@ -16,6 +16,7 @@ from app.models.enums import ContentStatus
 
 
 class Post(Base, TimestampMixin):
+    """Post do blog (noticia/atualizacao), separado das entries do catalogo."""
     __tablename__ = "posts"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

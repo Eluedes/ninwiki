@@ -24,6 +24,7 @@ from pydantic import BaseModel
 
 
 def apply_scalar_fields(obj: object, payload: BaseModel, exclude: Iterable[str] = ()) -> None:
+    """Copia os campos simples do payload para o modelo (falha alto se schema e modelo divergirem)."""
     columns = set(type(obj).__table__.columns.keys())  # type: ignore[attr-defined]
     for field, value in payload.model_dump(exclude=set(exclude)).items():
         if field not in columns:

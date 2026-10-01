@@ -36,6 +36,7 @@ type CarouselContextProps = {
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
 
+/** Hook que da' acesso ao carrossel mais proximo. */
 function useCarousel() {
   const context = React.useContext(CarouselContext);
 

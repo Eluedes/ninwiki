@@ -35,6 +35,7 @@ function InfoboxMedia({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+/** Caixa lateral de ficha (Mastery Sheet). */
 export function Infobox({
   title,
   icon,

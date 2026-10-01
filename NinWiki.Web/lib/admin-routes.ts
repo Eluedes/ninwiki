@@ -23,6 +23,7 @@ export const ROUTE_PERMISSIONS: { prefix: string; permission: PermissionName }[]
   { prefix: '/admin/organizations', permission: 'lore.edit' },
 ];
 
+/** Permissao exigida por uma pagina do painel (ou null se qualquer membro da equipe pode). */
 export function requiredPermissionFor(pathname: string): PermissionName | null {
   const match = ROUTE_PERMISSIONS.find(
     (r) => pathname === r.prefix || pathname.startsWith(r.prefix + '/')

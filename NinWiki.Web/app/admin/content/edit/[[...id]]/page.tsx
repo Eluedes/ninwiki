@@ -60,6 +60,7 @@ function getCategoryOptions(t: Dictionary['admin']['contentEditor']): { value: C
   ];
 }
 
+/** Opcoes do campo 'tipo de mob' no idioma atual. */
 function getMobTypeOptions(t: Dictionary['admin']['contentEditor']): { value: MobType; label: string }[] {
   return [
     { value: 'monster', label: t.mobMonster },
@@ -69,6 +70,7 @@ function getMobTypeOptions(t: Dictionary['admin']['contentEditor']): { value: Mo
   ];
 }
 
+/** Opcoes do campo 'tipo de item' no idioma atual. */
 function getItemTypeOptions(t: Dictionary['admin']['contentEditor']): { value: ItemType; label: string }[] {
   return [
     { value: 'general', label: t.itemGeneral },
@@ -135,6 +137,7 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-xs text-destructive">{message}</p>;
 }
 
+/** Editor de uma entry do catalogo (criar/editar), com campos que mudam conforme a categoria. */
 export default function ContentEditorPage({ params }: { params: Promise<{ id?: string[] }> }) {
   const router = useRouter();
   const { id } = use(params);

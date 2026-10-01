@@ -49,10 +49,12 @@ avisos = 0
 
 
 def ok(msg: str) -> None:
+    """Imprime uma verificacao que passou."""
     print(f"  [OK]    {msg}")
 
 
 def erro(msg: str, como_resolver: str = "") -> None:
+    """Imprime um erro e como resolver (conta para o resultado final)."""
     global problemas
     problemas += 1
     print(f"  [ERRO]  {msg}")
@@ -61,6 +63,7 @@ def erro(msg: str, como_resolver: str = "") -> None:
 
 
 def aviso(msg: str, como_resolver: str = "") -> None:
+    """Imprime um aviso (nao reprova o resultado)."""
     global avisos
     avisos += 1
     print(f"  [AVISO] {msg}")
@@ -81,10 +84,12 @@ def rodar(cmd: list[str], cwd: Path, timeout: int = 120) -> tuple[int, str]:
 
 
 def alembic(*args: str) -> tuple[int, str]:
+    """Roda um comando do Alembic e devolve a saida."""
     return rodar([sys.executable, "-m", "alembic", *args], API_DIR)
 
 
 def checar_dependencias() -> None:
+    """Confere se tudo do requirements.txt esta' instalado na versao certa."""
     print("\n0) Bibliotecas Python (requirements.txt)")
     req = API_DIR / "requirements.txt"
     if not req.exists():
@@ -118,6 +123,7 @@ def checar_dependencias() -> None:
 
 
 def checar_sintaxe() -> None:
+    """Compila todos os .py para achar erro de sintaxe."""
     print("\n1) Sintaxe dos arquivos Python")
     ignorar = {"venv", ".venv", "__pycache__", "node_modules", "uploads"}
     quebrados = []
@@ -175,6 +181,7 @@ def checar_migracoes() -> bool:
 
 
 def checar_models_vs_migracoes() -> None:
+    """Confere se os models Python batem com o que as migrations criam (alembic check)."""
     print("\n4) Models Python x migracoes")
     code, out = alembic("check")
     if code == 0:
@@ -188,6 +195,7 @@ def checar_models_vs_migracoes() -> None:
 
 
 def checar_lint(node: str) -> None:
+    """Roda um script do npm (typecheck/lint) e reporta o resultado."""
     eslint = WEB_DIR / "node_modules" / "eslint" / "bin" / "eslint.js"
     if not eslint.exists():
         aviso("ESLint nao encontrado no frontend (rode 'npm install' na pasta NinWiki.Web)")
@@ -204,6 +212,7 @@ def checar_lint(node: str) -> None:
 
 
 def checar_frontend() -> None:
+    """Confere TypeScript e lint do site."""
     print("\n5) Frontend (TypeScript e lint)")
     if not WEB_DIR.exists():
         aviso(f"Pasta do frontend nao encontrada em {WEB_DIR}")
@@ -230,6 +239,7 @@ def checar_frontend() -> None:
 
 
 def main() -> int:
+    """Roda todas as verificacoes e imprime o resultado final."""
     print("=" * 62)
     print(" Verificacao de saude do projeto NinWiki")
     print("=" * 62)

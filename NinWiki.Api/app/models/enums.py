@@ -72,11 +72,13 @@ class ContentStatus(str, enum.Enum):
 
 
 class MasteryType(str, enum.Enum):
+    """Tipo da mastery: elemental ou nao-elemental."""
     ELEMENTAL = "elemental"
     NON_ELEMENTAL = "non-elemental"
 
 
 class ProfessionGroup(str, enum.Enum):
+    """Grupo da profissao (coleta, producao...)."""
     GATHERING = "gathering"
     CRAFTING = "crafting"
 

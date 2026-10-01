@@ -12,6 +12,7 @@ SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 
 
 class CamelModel(BaseModel):
+    """Base dos schemas: converte nomes para camelCase no JSON, igual ao TypeScript do site."""
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
@@ -29,10 +30,12 @@ class PostSummary(CamelModel):
 
 
 class PostRead(PostSummary):
+    """Ficha completa de um post (resumo + conteudo)."""
     content: str
 
 
 class PostWrite(CamelModel):
+    """Corpo de criar/editar um post."""
     slug: str = Field(min_length=1, max_length=150, pattern=SLUG_PATTERN)
     title: str = Field(min_length=1, max_length=200)
     excerpt: str = ""
@@ -43,5 +46,6 @@ class PostWrite(CamelModel):
     @field_validator("content")
     @classmethod
     def _rich(cls, v: str) -> str:
+        """Valida o conteudo rico do post (documento Tiptap permitido)."""
         # mesma defesa dos outros textos ricos: so' aceita documento Tiptap valido ou texto simples sem <script
         return validate_rich_content(v) or ""

@@ -6,6 +6,7 @@
 
 import { cn } from '@/lib/utils';
 
+/** Bloco cinza animado usado enquanto algo carrega. */
 function Skeleton({
   className,
   ...props

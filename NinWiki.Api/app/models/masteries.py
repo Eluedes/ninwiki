@@ -38,6 +38,7 @@ class Attribute(Base):
 
 
 class Mastery(Base):
+    """Uma das masteries fixas do jogo (nome, tipo, cor, imagem, caminhos)."""
     __tablename__ = "masteries"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "fire"
@@ -118,6 +119,7 @@ class MasteryPathAttribute(Base):
 
 
 class Jutsu(Base):
+    """Um jutsu, ligado a uma mastery e a um caminho dela."""
     __tablename__ = "jutsus"
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)  # ex: "katon-goukakyuu"

@@ -33,6 +33,7 @@ export default function LoginPage() {
   );
 }
 
+/** Conteudo da tela de login (Entrar com Discord / login de desenvolvimento). */
 function LoginContent() {
   const { dict } = useLanguage();
   const t = dict.admin.auth;

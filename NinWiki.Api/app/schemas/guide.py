@@ -11,10 +11,12 @@ from app.models.enums import ProfessionGroup
 
 
 class CamelModel(BaseModel):
+    """Base dos schemas: converte nomes para camelCase no JSON, igual ao TypeScript do site."""
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
 class ProfessionRead(CamelModel):
+    """Profissao como a API devolve."""
     id: str
     name: str
     name_pt: str | None
@@ -24,6 +26,7 @@ class ProfessionRead(CamelModel):
 
 
 class NinjaRankRead(CamelModel):
+    """Rank ninja como a API devolve."""
     id: str
     name: str
     name_pt: str | None
@@ -32,6 +35,7 @@ class NinjaRankRead(CamelModel):
 
 
 class StoryArcRead(CamelModel):
+    """Arco de historia como a API devolve."""
     id: str
     name: str
     level_range: str
@@ -39,6 +43,7 @@ class StoryArcRead(CamelModel):
 
 
 class SummonRead(CamelModel):
+    """Summon como a API devolve."""
     id: str
     name: str
     name_pt: str | None

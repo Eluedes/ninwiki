@@ -57,6 +57,7 @@ def _safe_filename(name: str | None) -> str:
 
 
 async def _load(db: AsyncSession, notice_id: UUID) -> Notice:
+    """Carrega um aviso com seus arquivos ou responde 404."""
     stmt = select(Notice).where(Notice.id == notice_id).options(selectinload(Notice.files))
     notice = (await db.execute(stmt)).scalar_one_or_none()
     if notice is None:
@@ -65,6 +66,7 @@ async def _load(db: AsyncSession, notice_id: UUID) -> Notice:
 
 
 def _remove_from_disk(stored_names: list[str]) -> None:
+    """Apaga do disco os arquivos (pelo nome interno) - usado ao apagar aviso/anexo."""
     for name in stored_names:
         (FILES_DIR / name).unlink(missing_ok=True)
 
@@ -73,6 +75,7 @@ def _remove_from_disk(stored_names: list[str]) -> None:
 async def list_notices(
     staff: User = Depends(require_permission(Permission.NOTICE_VIEW)), db: AsyncSession = Depends(get_db),
 ):
+    """Lista os avisos (fixados primeiro) com os arquivos anexados."""
     stmt = select(Notice).options(selectinload(Notice.files)).order_by(Notice.pinned.desc(), Notice.created_at.desc())
     return (await db.execute(stmt)).scalars().all()
 
@@ -82,6 +85,7 @@ async def create_notice(
     payload: NoticeWrite,
     staff: User = Depends(require_permission(Permission.NOTICE_MANAGE)), db: AsyncSession = Depends(get_db),
 ):
+    """Posta um aviso novo (exige notices.manage)."""
     notice = Notice(title=payload.title.strip(), body=payload.body, pinned=payload.pinned,
                     author_id=staff.id, author_name=staff.username)
     db.add(notice)
@@ -97,6 +101,7 @@ async def update_notice(
     notice_id: UUID, payload: NoticeWrite,
     staff: User = Depends(require_permission(Permission.NOTICE_MANAGE)), db: AsyncSession = Depends(get_db),
 ):
+    """Edita titulo, mensagem e 'fixado' de um aviso."""
     notice = await _load(db, notice_id)
     notice.title, notice.body, notice.pinned = payload.title.strip(), payload.body, payload.pinned
     await log_action(db, action="update", entity_type="notice", entity_id=str(notice.id),
@@ -111,6 +116,7 @@ async def delete_notice(
     notice_id: UUID,
     staff: User = Depends(require_permission(Permission.NOTICE_MANAGE)), db: AsyncSession = Depends(get_db),
 ):
+    """Apaga o aviso e todos os arquivos dele (do banco e do disco)."""
     notice = await _load(db, notice_id)
     stored = [f.stored_name for f in notice.files]
     title = notice.title
@@ -126,6 +132,7 @@ async def add_file(
     notice_id: UUID, file: UploadFile,
     staff: User = Depends(require_permission(Permission.NOTICE_MANAGE)), db: AsyncSession = Depends(get_db),
 ):
+    """Anexa um arquivo ao aviso: valida tipo, tamanho e quantidade e grava com nome aleatorio."""
     notice = await _load(db, notice_id)
     if len(notice.files) >= MAX_FILES_PER_NOTICE:
         raise HTTPException(status_code=400, detail=f"Máximo de {MAX_FILES_PER_NOTICE} arquivos por aviso")
@@ -158,6 +165,7 @@ async def remove_file(
     notice_id: UUID, file_id: UUID,
     staff: User = Depends(require_permission(Permission.NOTICE_MANAGE)), db: AsyncSession = Depends(get_db),
 ):
+    """Remove um anexo do aviso (banco e disco)."""
     notice = await _load(db, notice_id)
     target = next((f for f in notice.files if f.id == file_id), None)
     if target is None:
@@ -177,6 +185,7 @@ async def download_file(
     file_id: UUID,
     staff: User = Depends(require_permission(Permission.NOTICE_VIEW)), db: AsyncSession = Depends(get_db),
 ):
+    """Baixa um anexo (exige login): sempre como download, nunca abre no navegador."""
     nf = await db.get(NoticeFile, file_id)
     path = FILES_DIR / nf.stored_name if nf else None
     if nf is None or not path.is_file():

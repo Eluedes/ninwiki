@@ -69,3 +69,13 @@ ninwiki_bot/api_client.py    fala com /bot/* da API (não importa discord.py)
 ninwiki_bot/staff_commands.py  os comandos /equipe
 ```
 Contrato completo das rotas: `NinWiki.Api/app/api/bot.py`.
+
+
+## Log geral no Discord (opcional)
+Com `LOG_CHANNEL_ID` preenchido no `.env`, o bot posta nesse canal tudo o que acontece no painel: quem criou/editou/apagou, logins,
+mudanças de equipe e de permissões, tentativas negadas, avisos postados. **Nunca** mostra IP nem o texto dos conteúdos.
+- O bot precisa de *Ver canal*, *Enviar mensagens* e *Inserir links* **nesse canal** (mantenha o canal visível só para a equipe).
+- Ele consulta a API a cada `LOG_POLL_SECONDS` (padrão 20, mínimo 10) e guarda onde parou em `log_state.json` (não repete nem
+  perde ações ao reiniciar; na primeira vez começa "de agora", sem despejar o histórico).
+- `LOG_IGNORE_ACTIONS=login,logout` esconde as ações citadas (menos ruído).
+- Código: `ninwiki_bot/log_feed.py` (o que postar e onde parou) e `main.py` (`_log_tick`). Rota da API: `GET /bot/audit-log`.

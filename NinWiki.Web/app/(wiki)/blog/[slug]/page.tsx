@@ -7,6 +7,7 @@ import { getPostBySlug, ApiError, type ApiPost } from '@/lib/api-client';
 import { PostPageClient } from '@/components/blog/post-page-client';
 import { RichText } from '@/components/lore/rich-text';
 
+/** Busca o post pelo slug; rascunho ou inexistente vira null (404). */
 async function fetchPost(slug: string): Promise<ApiPost | null> {
   try {
     const post = await getPostBySlug(slug);
@@ -17,6 +18,7 @@ async function fetchPost(slug: string): Promise<ApiPost | null> {
   }
 }
 
+/** Titulo e descricao da pagina (SEO) a partir do post. */
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   try {
@@ -28,6 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {};
 }
 
+/** Pagina publica de um post do blog. */
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await fetchPost(slug);

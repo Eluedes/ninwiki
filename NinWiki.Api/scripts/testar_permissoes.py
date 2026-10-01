@@ -12,6 +12,7 @@ permissoes, cargos ou login - foi feito pra' pegar exatamente o tipo de
 erro que da' brecha de seguranca sem ninguem perceber.
 """
 import asyncio
+import json
 import random
 import sys
 import time
@@ -39,6 +40,7 @@ FALHAS: list[str] = []
 
 
 def check(nome: str, condicao: bool, detalhe: str = "") -> None:
+    """Registra e imprime o resultado de uma verificacao."""
     global PASS, FAIL
     if condicao:
         PASS += 1
@@ -50,6 +52,7 @@ def check(nome: str, condicao: bool, detalhe: str = "") -> None:
 
 
 def secao(titulo: str) -> None:
+    """Imprime o titulo de uma secao e zera o limite de tentativas."""
     limiter.reset()  # cada secao comeca com o limite de tentativas zerado
     print(f"\n== {titulo}")
 
@@ -61,10 +64,12 @@ SLUG = f"teste-perm-{BASE % 100000}"
 
 
 def cookie(user: User, token: str | None = None) -> dict:
+    """Cabecalho Cookie de sessao valida (ou do token informado) para o usuario."""
     return {"Cookie": f"{SESSION_COOKIE}={token or create_session_token(user)}"}
 
 
 async def criar_user(chave: str, role: StaffRole, ativo: bool = True) -> User:
+    """Cria um usuario de teste com o cargo informado."""
     async with AsyncSessionLocal() as db:
         u = User(discord_id=IDS[chave], username=f"TESTE_{chave}", role=role, is_active=ativo)
         db.add(u)
@@ -74,11 +79,13 @@ async def criar_user(chave: str, role: StaffRole, ativo: bool = True) -> User:
 
 
 async def recarregar(u: User) -> User:
+    """Recarrega o usuario do banco (para pegar a nova versao de sessao)."""
     async with AsyncSessionLocal() as db:
         return await db.get(User, u.id)
 
 
 def novo_conteudo(sufixo: str, status: str = "draft") -> dict:
+    """Corpo valido para criar uma entry de teste."""
     return {"slug": f"{SLUG}-{sufixo}", "category": "guides", "name": f"TESTE {sufixo}", "level": 1,
             "icon": "📘", "rarity": "common", "description": "texto de teste", "status": status}
 
@@ -112,6 +119,7 @@ def todas_as_rotas(rotas=None):
 
 
 def _chamadas_da_rota(dependant) -> list:
+    """Percorre as dependencias de uma rota (para achar a checagem de login)."""
     achadas = []
     for dep in dependant.dependencies:
         achadas.append(dep.call)
@@ -120,6 +128,7 @@ def _chamadas_da_rota(dependant) -> list:
 
 
 def rota_exige_login(route: APIRoute) -> bool:
+    """True se a rota exige login ou token do bot."""
     for call in _chamadas_da_rota(route.dependant):
         nome = getattr(call, "__qualname__", "")
         if call is get_current_user or nome.startswith("require_permission") or nome == "require_bot":
@@ -128,6 +137,7 @@ def rota_exige_login(route: APIRoute) -> bool:
 
 
 async def main() -> None:
+    """Roda todos os testes de permissao e apaga os dados de teste no final."""
     orig = {k: getattr(settings, k) for k in
             ("super_admin_discord_ids", "bot_api_token", "dev_login_enabled", "discord_client_id", "discord_client_secret")}
     inicio = datetime.now(timezone.utc)
@@ -144,6 +154,7 @@ async def main() -> None:
 
 
 async def limpar(inicio: datetime) -> None:
+    """Apaga do banco tudo que o teste criou."""
     async with AsyncSessionLocal() as db:
         await db.execute(text("DELETE FROM content_items WHERE slug LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM jutsus WHERE id LIKE :p"), {"p": f"{SLUG}%"})
@@ -164,6 +175,7 @@ async def limpar(inicio: datetime) -> None:
 
 
 async def rodar_testes(c: httpx.AsyncClient) -> None:
+    """Todas as secoes de teste: login, cargos, permissoes, blog, vilas, avisos, endurecimento..."""
     sadm = await criar_user("sadm", StaffRole.SUPER_ADMIN)
     adm = await criar_user("adm", StaffRole.ADMIN)
     adm2 = await criar_user("adm2", StaffRole.ADMIN)
@@ -482,6 +494,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     c.cookies.clear()  # o cliente guarda cookies das secoes anteriores (login dev/Discord) - aqui o 'anonimo' precisa ser anonimo de verdade
     vid = f"{SLUG}-vila"
     def vila(**extra) -> dict:
+        """Corpo valido para criar uma vila de teste (com dois cla's)."""
         base = {"id": vid, "name": "TESTE Village", "namePt": "TESTE Vila", "element": "Fire", "motto": "lema", "description": "d",
                 "longDescription": "texto", "emblem": "🔥", "image": None, "accentColor": "#112233", "climate": "quente",
                 "leader": "Alguem", "mapX": 10, "mapY": 20,
@@ -558,6 +571,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     secao("14b) Blog (posts): mesma regra de Conteudo")
     c.cookies.clear()
     def post(**extra) -> dict:
+        """Corpo valido para criar um post de teste."""
         return {"slug": f"{SLUG}-post", "title": "TESTE post", "excerpt": "resumo", "content": "texto do post", "coverImage": None,
                 "status": "draft"} | extra
     r = await c.post("/posts", json=post())
@@ -611,6 +625,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
 
     secao("15) Limite de tentativas (rate limit)")
     class Relogio:
+        """Relogio falso para testar janelas de tempo sem esperar."""
         def __init__(self) -> None:
             self.t = 1000.0
         def __call__(self) -> float:
@@ -633,9 +648,11 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         limiter.reset()
 
         def cliente(ip: str) -> httpx.AsyncClient:
+            """Cliente HTTP que chega a' API como se viesse de um IP especifico."""
             return httpx.AsyncClient(transport=httpx.ASGITransport(app=app, client=(ip, 1234)), base_url="http://test")
 
         async def denied_rows() -> int:
+            """Quantas linhas de 'login negado' existem para o ID de teste."""
             async with AsyncSessionLocal() as db:
                 return (await db.execute(text("SELECT count(*) FROM audit_log WHERE action='login_denied' AND entity_id = :i"), {"i": str(BASE + 24)})).scalar_one()
 
@@ -856,6 +873,67 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("cla' nao tem mais nivel nem preco", all("levelRequirement" not in x and "priceRyo" not in x for x in cl.values()))
     check("cla' sem imagem fica com image = null", cl.get(f"{SLUG}-cla-sem", {}).get("image") is None)
     await c.delete(f"/villages/{vid16}", headers=A)
+
+    secao("17) Endurecimento: cabecalhos, limite de corpo, rate limit geral, conteudo rico e IP real")
+    from app.core.security import _resolve_client_ip
+    from app.schemas.validators import validate_rich_content
+    r = await c.get("/health")
+    check("resposta traz nosniff + anti-iframe + sem referrer",
+          r.headers.get("x-content-type-options") == "nosniff" and r.headers.get("x-frame-options") == "DENY"
+          and r.headers.get("referrer-policy") == "no-referrer")
+    r = await c.get("/auth/me", headers=S)
+    check("rotas sensiveis nunca ficam em cache (no-store)", r.headers.get("cache-control") == "no-store")
+    grande = {"slug": f"{SLUG}-gigante", "name": "x" * 600_000}
+    r = await c.post("/content-items", content=json.dumps(grande), headers={**S, "Content-Type": "application/json"})
+    check("corpo JSON gigante e' recusado (413) antes de processar", r.status_code == 413, f"{r.status_code}")
+    r = await c.post("/content-items", content=b"{}", headers={**S, "Content-Type": "application/json", "Content-Length": "900000"})
+    check("Content-Length declarado gigante tambem (413)", r.status_code == 413)
+
+    antigo_limite = settings.public_requests_per_minute
+    settings.public_requests_per_minute = 5
+    limiter.reset()
+    try:
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, client=("198.51.100.77", 1)), base_url="http://test") as x:
+            codigos = [(await x.get("/villages")).status_code for _ in range(7)]
+            check("flood de leitura: depois do limite vem 429", codigos[:5] == [200] * 5 and codigos[5:] == [429, 429], str(codigos))
+            r = await x.get("/villages")
+            check("429 traz Retry-After e mensagem em portugues", r.status_code == 429 and int(r.headers.get("retry-after", 0)) >= 1 and "Muitas tentativas" in r.json()["detail"])
+            check("/health nunca e' limitado (monitoramento)", (await x.get("/health")).status_code == 200)
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, client=("198.51.100.78", 1)), base_url="http://test") as y:
+            check("outro IP nao e' afetado", (await y.get("/villages")).status_code == 200)
+    finally:
+        settings.public_requests_per_minute = antigo_limite
+        limiter.reset()
+
+    ok_doc = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"oi","marks":[{"type":"link","attrs":{"href":"https://x.com"}},{"type":"bold"}]}]}]}'
+    check("documento Tiptap legitimo passa", validate_rich_content(ok_doc) == ok_doc)
+    def recusa(doc: str) -> bool:
+        """True se o validador de conteudo rico recusou o documento."""
+        try:
+            validate_rich_content(doc)
+            return False
+        except ValueError:
+            return True
+    check("link javascript: e' recusado", recusa(ok_doc.replace("https://x.com", "javascript:alert(1)")))
+    check("link data: e' recusado", recusa(ok_doc.replace("https://x.com", "data:text/html,<b>")))
+    check("link com maiusculas disfarcadas (JaVaScRiPt:) e' recusado", recusa(ok_doc.replace("https://x.com", "JaVaScRiPt:alert(1)")))
+    check("tipo de bloco desconhecido e' recusado", recusa('{"type":"doc","content":[{"type":"iframe"}]}'))
+    check("marca desconhecida e' recusada", recusa('{"type":"doc","content":[{"type":"text","text":"a","marks":[{"type":"evil"}]}]}'))
+    fundo = '{"type":"paragraph"}'
+    for _ in range(60):
+        fundo = '{"type":"blockquote","content":[' + fundo + ']}'
+    check("aninhamento profundo demais e' recusado", recusa('{"type":"doc","content":[' + fundo + ']}'))
+    check("campo rico gigante e' recusado", recusa('{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"' + "a" * 400_000 + '"}]}]}'))
+
+    antigo_trust = settings.trust_proxy_headers
+    escopo = {"headers": [(b"x-forwarded-for", b"6.6.6.6, 203.0.113.50"), (b"cf-connecting-ip", b"")], "client": ("10.0.0.1", 1)}
+    settings.trust_proxy_headers = False
+    check("sem TRUST_PROXY_HEADERS o X-Forwarded-For forjado e' ignorado", _resolve_client_ip(escopo) == "10.0.0.1")
+    settings.trust_proxy_headers = True
+    check("com TRUST_PROXY_HEADERS usa o ULTIMO X-Forwarded-For (o do proxy), nao o forjado", _resolve_client_ip(escopo) == "203.0.113.50")
+    check("CF-Connecting-IP tem prioridade", _resolve_client_ip({"headers": [(b"cf-connecting-ip", b"198.51.100.9")], "client": ("10.0.0.1", 1)}) == "198.51.100.9")
+    settings.trust_proxy_headers = antigo_trust
+    check("FRONTEND_ORIGIN com '/' no fim e' normalizado", Settings(database_url="x", jwt_secret_key="x", frontend_origin="https://a.com/").frontend_origin == "https://a.com")
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []

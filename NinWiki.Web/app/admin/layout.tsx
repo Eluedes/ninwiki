@@ -21,6 +21,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { Button } from '@/components/ui/button';
 import { requiredPermissionFor } from '@/lib/admin-routes';
 
+/** Casca do painel: guarda de login/permissao + menu lateral + cabecalho. */
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { status, can, refresh } = useAuth();
   const { dict } = useLanguage();
@@ -80,6 +81,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Layout de todas as paginas /admin (envolve com o provider de sessao). */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>

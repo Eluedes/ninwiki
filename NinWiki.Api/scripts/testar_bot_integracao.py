@@ -51,6 +51,7 @@ TODOS = [str(BASE + n) for n in range(1, 30)]
 
 
 def check(nome: str, cond: bool, detalhe: str = "") -> None:
+    """Registra e imprime o resultado de uma verificacao."""
     global PASS, FAIL
     if cond:
         PASS += 1
@@ -62,21 +63,25 @@ def check(nome: str, cond: bool, detalhe: str = "") -> None:
 
 
 def secao(t: str) -> None:
+    """Imprime o titulo de uma secao de testes."""
     print(f"\n== {t}")
 
 
 async def criar(chave: str, role: StaffRole) -> None:
+    """Cria um usuario de teste com o cargo informado."""
     async with AsyncSessionLocal() as db:
         db.add(User(discord_id=IDS[chave], username=f"TESTE_{chave}", role=role))
         await db.commit()
 
 
 async def buscar(discord_id: int) -> User | None:
+    """Le um usuario de teste do banco pelo Discord ID."""
     async with AsyncSessionLocal() as db:
         return (await db.execute(select(User).where(User.discord_id == discord_id))).scalar_one_or_none()
 
 
 async def limpar() -> None:
+    """Apaga do banco tudo que o teste criou (usuarios e linhas de log)."""
     async with AsyncSessionLocal() as db:
         await db.execute(delete(AuditLogEntry).where(
             AuditLogEntry.actor_name.like("TESTE_%") | AuditLogEntry.entity_id.in_(TODOS)))
@@ -86,6 +91,7 @@ async def limpar() -> None:
 
 
 def interacao(user_id: int, guild_id: int = 1) -> MagicMock:
+    """Simula uma interacao do Discord (quem digitou, em qual servidor)."""
     i = MagicMock()
     i.user.id = user_id
     i.guild_id = guild_id
@@ -96,6 +102,7 @@ def interacao(user_id: int, guild_id: int = 1) -> MagicMock:
 
 
 def fake_user(chave: str, bot: bool = False) -> MagicMock:
+    """Simula o usuario escolhido no comando (alvo), podendo ser um bot."""
     u = MagicMock()
     u.id = IDS[chave]
     u.name = f"TESTE_{chave}"
@@ -119,11 +126,13 @@ def texto_enviado(i: MagicMock) -> str:
 
 
 def todas_efemeras(i: MagicMock) -> bool:
+    """True se todas as respostas do comando foram so' para quem digitou."""
     chamadas = list(i.followup.send.call_args_list) + list(i.response.send_message.call_args_list)
     return bool(chamadas) and all(c.kwargs.get("ephemeral") is True for c in chamadas)
 
 
 async def testar() -> None:
+    """Roda todas as secoes de teste do bot contra a API real."""
     limiter.reset()
     await criar("sadm", StaffRole.SUPER_ADMIN)
     await criar("adm", StaffRole.ADMIN)
@@ -303,10 +312,64 @@ async def testar() -> None:
     check("servidor permitido: comando liberado", await restrito.interaction_check(i) is True)
     check("sem lista: qualquer servidor", await grupo.interaction_check(interacao(IDS["sadm"], guild_id=42)) is True)
 
+    # ------------------------------------------------------------------
+    secao("5) Feed do log geral no Discord")
+    import tempfile
+    from datetime import datetime, timedelta, timezone
+    from ninwiki_bot.log_feed import FeedState, LogFeedStore, format_entry, pick_new, query_since
+    desde = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+    linhas = await api.audit_log_since(desde)
+    check("API devolve as acoes recentes (lista)", isinstance(linhas, list) and len(linhas) >= 1)
+    check("SEM IP nem dados sensiveis nas linhas", all("ipAddress" not in l and "ip_address" not in l for l in linhas))
+    check("ordem cronologica (mais antiga primeiro)", [l["createdAt"] for l in linhas] == sorted(l["createdAt"] for l in linhas))
+    futuro = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
+    check("nada novo depois de um instante futuro", await api.audit_log_since(futuro) == [])
+    try:
+        await NinWikiApi("http://test", "token-errado-1234567890", client=http).audit_log_since(desde)
+        check("feed com token errado e' barrado", False)
+    except ApiError as e:
+        check("feed com token errado e' barrado (401)", e.status_code == 401)
+
+    exemplo = {"id": "a1", "createdAt": "2026-10-01T12:00:00Z", "action": "update", "entityType": "post", "entityId": "x",
+               "diff": {"before": {"name": "Velho"}, "after": {"name": "Novo"}, "content": "TEXTO SECRETO LONGO", "ip": "1.2.3.4"},
+               "actorName": "Rafa", "actorRole": "admin", "source": "panel"}
+    f = format_entry(exemplo)
+    check("embed: titulo diz quem fez o que", "Rafa (Adm) editou um post" in f["title"], f["title"])
+    check("embed: mostra o que mudou (nome antigo -> novo)", "Velho" in f["description"] and "Novo" in f["description"])
+    check("embed NUNCA mostra conteudo de texto nem IP", "SECRETO" not in f["description"] and "1.2.3.4" not in f["description"])
+    check("acao desconhecida nao quebra", format_entry({**exemplo, "action": "xyz", "entityType": "abc", "diff": None})["title"].startswith("Rafa"))
+    check("login nao cita alvo", format_entry({**exemplo, "action": "login"})["title"].endswith("entrou no painel"))
+    texto_longo = format_entry({**exemplo, "diff": {"name": "n" * 5000}})["description"]
+    check("texto enorme e' cortado", len(texto_longo) <= 700)
+
+    estado = FeedState(since=datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc))
+    novos = pick_new(estado, [exemplo, {**exemplo, "id": "a2", "createdAt": "2026-10-01T12:01:00Z"}])
+    check("pick_new devolve as 2 e avanca o 'since'", len(novos) == 2 and estado.since.minute == 1)
+    check("repetir as mesmas acoes nao posta de novo (dedup)", pick_new(estado, [exemplo, {**exemplo, "id": "a2"}]) == [])
+    check("consulta volta alguns minutos (sobreposicao)", query_since(estado) < estado.since)
+    with tempfile.TemporaryDirectory() as tmp:
+        loja = LogFeedStore(Path(tmp) / "estado.json")
+        check("sem arquivo: comeca de agora (nao despeja historico)", abs((loja.load().since - datetime.now(timezone.utc)).total_seconds()) < 5)
+        loja.save(estado)
+        carregado = loja.load()
+        check("estado salvo e relido (sobrevive a reinicio)", carregado.since == estado.since and carregado.seen == estado.seen)
+        (Path(tmp) / "estado.json").write_text("{lixo", encoding="utf-8")
+        check("arquivo corrompido nao derruba o bot", abs((loja.load().since - datetime.now(timezone.utc)).total_seconds()) < 5)
+    ok_cfg = {"discord_bot_token": "abc", "bot_api_token": "x" * 20}
+    check("LOG_CHANNEL_ID vazio = recurso desligado", BotSettings(**ok_cfg, log_channel_id="").log_channel_id is None)
+    check("LOG_CHANNEL_ID numerico e' lido", BotSettings(**ok_cfg, log_channel_id="123456789").log_channel_id == 123456789)
+    try:
+        BotSettings(**ok_cfg, log_poll_seconds=2)
+        check("LOG_POLL_SECONDS < 10 e' recusado", False)
+    except ValueError:
+        check("LOG_POLL_SECONDS < 10 e' recusado", True)
+    check("LOG_IGNORE_ACTIONS vira conjunto", BotSettings(**ok_cfg, log_ignore_actions="login, logout").ignored_log_actions == {"login", "logout"})
+
     await http.aclose()
 
 
 async def main() -> None:
+    """Prepara a configuracao, roda os testes e limpa os dados no final."""
     orig = settings.bot_api_token
     try:
         await testar()

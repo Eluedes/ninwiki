@@ -26,6 +26,7 @@ interface DataTableProps {
   editHref: string; // prefixo da rota de edicao (ex: "/admin/wiki-pages/edit")
 }
 
+/** Tabela simples (antiga) das listas do painel. */
 export function DataTable({ items, editHref }: DataTableProps) {
   const { dict } = useLanguage();
 

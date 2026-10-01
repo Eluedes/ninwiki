@@ -19,10 +19,12 @@ class DiscordError(Exception):
 
 
 def is_configured() -> bool:
+    """True se CLIENT_ID e CLIENT_SECRET do Discord estao preenchidos."""
     return bool(settings.discord_client_id and settings.discord_client_secret)
 
 
 def build_authorize_url(state: str) -> str:
+    """Monta o link para o qual mandamos a pessoa autorizar o login no Discord."""
     from urllib.parse import urlencode
     return AUTHORIZE_URL + "?" + urlencode({
         "client_id": settings.discord_client_id,

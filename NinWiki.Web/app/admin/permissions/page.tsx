@@ -21,6 +21,7 @@ const GROUP_ORDER = ['content', 'posts', 'lore', 'tools', 'notices', 'audit', 's
 
 type Draft = Record<string, Set<PermissionName>>;
 
+/** Transforma a visao da API em rascunho editavel: cargo -> conjunto de permissoes marcadas. */
 function toDraft(o: ApiRolesOverview): Draft {
   const d: Draft = {};
   for (const r of o.roles) d[r.role] = new Set(r.permissions);
@@ -30,6 +31,7 @@ function toDraft(o: ApiRolesOverview): Draft {
 type Rows = ApiRolesOverview['permissions'];
 type T = ReturnType<typeof useLanguage>['dict']['admin']['rolesPage'];
 
+/** Linhas de um grupo de permissoes: nome, cadeado se for exclusiva do S.Adm e uma caixa por cargo. */
 function GroupRows({ title, items, draft, toggle, labels, busy, t }: {
   title: string; items: Rows; draft: Draft; toggle: (r: StaffRole, p: PermissionName) => void;
   labels: Record<string, string>; busy: boolean; t: T;
@@ -68,6 +70,7 @@ function GroupRows({ title, items, draft, toggle, labels, busy, t }: {
   );
 }
 
+/** Tela de permissoes por cargo (so' S.Adm): matriz permissao x cargo, salvar e restaurar padrao. */
 export default function PermissionsPage() {
   const { dict } = useLanguage();
   const { refresh } = useAuth();

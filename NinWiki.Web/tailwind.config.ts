@@ -1,3 +1,5 @@
+// Configuracao do Tailwind CSS: onde procurar classes, cores do tema (incluindo as paletas do 'dossie shinobi'), fontes e animacoes.
+
 import type { Config } from 'tailwindcss';
 
 const config: Config = {

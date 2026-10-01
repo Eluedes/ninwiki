@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/lore/page-header';
 import { PostCard } from '@/components/blog/post-card';
 import type { ApiPostSummary } from '@/lib/api-client';
 
+/** Listagem publica do blog. */
 export function BlogPageClient({ posts, failed }: { posts: ApiPostSummary[]; failed: boolean }) {
   const { dict } = useLanguage();
 

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { getVillage, listVillages, ApiError } from '@/lib/api-client';
 import { VillagePageClient } from '@/components/lore/village-page-client';
 
+/** Pagina publica de uma vila (Server Component: busca na API). */
 export default async function VillagePage({
   params,
 }: {

@@ -7,6 +7,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
+/** Botao claro/escuro. */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 

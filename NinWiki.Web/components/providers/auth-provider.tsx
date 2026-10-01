@@ -33,6 +33,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** Provider da sessao: pergunta a' API quem esta' logado e expoe can(permissao), logout e refresh. */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [me, setMe] = useState<ApiMe | null>(null);
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/** Hook: usuario logado, permissoes (can) e acoes de sessao. */
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth precisa estar dentro de <AuthProvider>');

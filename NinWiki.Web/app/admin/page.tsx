@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 // virar cedo/tarde demais na pratica.
 const STALE_DAYS = 30;
 
+/** Visao Geral do painel: quadro de avisos, estatisticas e atividade recente. */
 export default function AdminOverviewPage() {
   const { dict } = useLanguage();
   const { can } = useAuth();

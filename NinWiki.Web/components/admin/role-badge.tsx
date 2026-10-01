@@ -14,6 +14,7 @@ const STYLE: Record<StaffRole, { className: string; icon: typeof Crown }> = {
   creator: { className: 'bg-emerald-900/30 text-emerald-400', icon: PenLine },
 };
 
+/** Selo colorido do cargo (S.Adm, Adm, Creator). */
 export function RoleBadge({ role, className }: { role: string; className?: string }) {
   const { dict } = useLanguage();
   const known = role in STYLE;

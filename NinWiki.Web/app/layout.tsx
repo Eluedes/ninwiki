@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   description: 'The definitive encyclopedia of the Nin Online MMORPG — mobs, items, weapons, masteries, guides and missions.',
 };
 
+/** Layout raiz de todas as paginas: fonte, tema, idioma e avisos. */
 export default function RootLayout({
   children,
 }: {

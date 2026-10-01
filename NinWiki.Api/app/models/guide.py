@@ -11,6 +11,7 @@ from app.models.enums import ProfessionGroup
 
 
 class Profession(Base):
+    """Profissao do jogo (aba do Guia)."""
     __tablename__ = "professions"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "mining"
@@ -24,6 +25,7 @@ class Profession(Base):
 
 
 class NinjaRank(Base):
+    """Rank ninja (Genin ate' Kage) - aba do Guia."""
     __tablename__ = "ninja_ranks"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "genin"
@@ -36,6 +38,7 @@ class NinjaRank(Base):
 
 
 class StoryArc(Base):
+    """Arco de historia do jogo - aba do Guia."""
     __tablename__ = "story_arcs"
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
@@ -45,6 +48,7 @@ class StoryArc(Base):
 
 
 class Summon(Base):
+    """Invocacao (summon) do jogo - aba do Guia."""
     __tablename__ = "summons"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "toad"

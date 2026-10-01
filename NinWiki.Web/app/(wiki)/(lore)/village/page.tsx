@@ -5,6 +5,7 @@ import { listVillages } from '@/lib/api-client';
 import { VillageCard } from '@/components/lore/village-card';
 import { PageHeader } from '@/components/lore/page-header';
 
+/** Listagem publica de vilas (Server Component: busca na API). */
 export default async function VillagesPage() {
   const villages = await listVillages();
 

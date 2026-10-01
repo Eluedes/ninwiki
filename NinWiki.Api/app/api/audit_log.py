@@ -36,6 +36,7 @@ CONTENT_ENTITY_TYPES = {"content_item", "jutsu", "mastery", "upload", "village",
 
 
 class AuditLogEntryRead(BaseModel):
+    """Uma linha do log geral como a API devolve ao painel (o IP so' vai pro S.Adm)."""
     id: UUID
     user_id: UUID | None
     action: str

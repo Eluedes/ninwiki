@@ -63,6 +63,7 @@ const officialLinks = [
   },
 ];
 
+/** Cabecalho do site: logo, menu (Inicio, Blog, Vilas, Mapa), Steam/Discord, idioma e tema. */
 export function Header() {
   const { dict } = useLanguage();
   // Controla se o painel do menu mobile esta aberto. Precisamos deste

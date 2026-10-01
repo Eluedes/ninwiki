@@ -18,6 +18,7 @@ import { RichText } from '@/components/lore/rich-text';
 import { Zap, Brain } from 'lucide-react';
 import type { ApiMastery, ApiJutsu, ApiAttribute } from '@/lib/api-client';
 
+/** Pagina de uma mastery: caminhos, jutsus e ficha. */
 export function MasteryPageClient({
   mastery,
   masteryJutsus,

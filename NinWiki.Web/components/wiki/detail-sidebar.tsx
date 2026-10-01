@@ -40,6 +40,7 @@ function WeaponRow({ label, value }: StatRow) {
   );
 }
 
+/** Barra lateral da pagina de detalhe (ficha resumida da entry). */
 export function DetailSidebar({ entry }: DetailSidebarProps) {
   const { dict, locale } = useLanguage();
   const isPt = locale === 'pt';

@@ -60,6 +60,7 @@ function validateEntries(raw: unknown, t: Dictionary['admin']['import']): { entr
   return { entries: entries as BulkImportEntry[] };
 }
 
+/** Importacao de JSON em massa. */
 export default function BulkImportPage() {
   const { dict } = useLanguage();
   const t = dict.admin.import;

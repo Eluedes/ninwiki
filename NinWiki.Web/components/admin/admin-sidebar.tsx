@@ -29,6 +29,7 @@ const navItems = [
   { key: 'permissions', href: '/admin/permissions', icon: ShieldCheck },
 ] as const;
 
+/** Menu lateral do painel, filtrado pelas permissoes do cargo. */
 export function AdminSidebar() {
   const { dict } = useLanguage();
   const pathname = usePathname();

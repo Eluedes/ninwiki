@@ -32,10 +32,12 @@ NO_MENTIONS = discord.AllowedMentions.none()
 
 
 def _name_of(user: discord.abc.User) -> str:
+    """Nome para mostrar de um usuario do Discord."""
     return getattr(user, "global_name", None) or user.name
 
 
 class StaffGroup(app_commands.Group):
+    """Grupo de comandos /equipe (listar, adicionar, cargo, desativar, reativar)."""
     def __init__(self, api: NinWikiApi, allowed_guilds: set[int] | None = None):
         super().__init__(
             name="equipe",
@@ -46,6 +48,7 @@ class StaffGroup(app_commands.Group):
         self.allowed_guilds = allowed_guilds or set()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """Antes de cada comando: so' roda em servidor permitido (ALLOWED_GUILD_IDS)."""
         # Defesa extra (a API ja' barra quem nao e' staff): so' nos servidores permitidos.
         if self.allowed_guilds and interaction.guild_id not in self.allowed_guilds:
             await interaction.response.send_message(
@@ -60,6 +63,7 @@ class StaffGroup(app_commands.Group):
         action: Callable[[], Awaitable[object]],
         on_success: Callable[[object], str],
     ) -> None:
+        """Executa a acao na API e responde so' para quem digitou (sucesso ou erro em portugues)."""
         # defer primeiro: a API pode demorar mais que os 3s que o Discord da' pra responder.
         await interaction.response.defer(ephemeral=True)
         try:
@@ -71,6 +75,7 @@ class StaffGroup(app_commands.Group):
 
     @app_commands.command(name="listar", description="Mostra quem está na equipe e o cargo de cada um")
     async def listar(self, interaction: discord.Interaction) -> None:
+        """Mostra quem esta' na equipe e o cargo de cada um."""
         await interaction.response.defer(ephemeral=True)
         try:
             staff = await self.api.list_staff(interaction.user.id)
@@ -96,6 +101,7 @@ class StaffGroup(app_commands.Group):
     async def adicionar(
         self, interaction: discord.Interaction, usuario: discord.User, cargo: app_commands.Choice[str]
     ) -> None:
+        """Cadastra alguem na equipe com um cargo."""
         if usuario.bot:
             await interaction.response.send_message("❌ Bots não podem entrar na equipe.", ephemeral=True)
             return
@@ -112,6 +118,7 @@ class StaffGroup(app_commands.Group):
     async def cargo(
         self, interaction: discord.Interaction, usuario: discord.User, cargo: app_commands.Choice[str]
     ) -> None:
+        """Troca o cargo de alguem da equipe."""
         name = _name_of(usuario)
         await self._run(
             interaction,
@@ -122,6 +129,7 @@ class StaffGroup(app_commands.Group):
     @app_commands.command(name="desativar", description="Tira o acesso de alguém (na hora)")
     @app_commands.describe(usuario="Membro da equipe")
     async def desativar(self, interaction: discord.Interaction, usuario: discord.User) -> None:
+        """Tira o acesso de alguem na hora."""
         name = _name_of(usuario)
         await self._run(
             interaction,
@@ -132,6 +140,7 @@ class StaffGroup(app_commands.Group):
     @app_commands.command(name="reativar", description="Devolve o acesso de alguém desativado")
     @app_commands.describe(usuario="Membro da equipe")
     async def reativar(self, interaction: discord.Interaction, usuario: discord.User) -> None:
+        """Devolve o acesso de alguem."""
         name = _name_of(usuario)
         await self._run(
             interaction,

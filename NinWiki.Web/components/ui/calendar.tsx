@@ -13,6 +13,7 @@ import { buttonVariants } from '@/components/ui/button';
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
+/** Calendario de selecao de data. */
 function Calendar({
   className,
   classNames,

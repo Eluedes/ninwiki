@@ -5,6 +5,39 @@ editado pelo Tiptap). Extraido pra' arquivo proprio pra' nao duplicar a
 mesma logica de seguranca em cada schema - um lugar so' pra manter.
 """
 import json
+from typing import Any
+
+# Tipos de no' e de marca que o editor Tiptap (e o StarterKit) realmente gera. Qualquer outro tipo
+# num documento enviado direto pela API e' recusado: assim ninguem injeta estrutura que o site
+# nao saiba renderizar (nem tente esconder algo estranho dentro do JSON).
+ALLOWED_NODE_TYPES = frozenset({
+    "doc", "paragraph", "text", "heading", "bulletList", "orderedList", "listItem", "blockquote",
+    "codeBlock", "hardBreak", "horizontalRule", "table", "tableRow", "tableCell", "tableHeader", "ficha",
+})
+ALLOWED_MARK_TYPES = frozenset({"bold", "italic", "underline", "strike", "code", "link", "textStyle"})
+# Esquemas de link aceitos (links relativos "/..." e ancoras "#..." tambem). Bloqueia javascript:, data:, vbscript:...
+ALLOWED_LINK_SCHEMES = ("http://", "https://", "mailto:", "/", "#")
+MAX_RICH_BYTES = 300_000   # tamanho maximo de UM campo rico (impede encher o banco / travar o render)
+MAX_RICH_DEPTH = 40        # profundidade maxima de aninhamento (impede "bomba" de listas dentro de listas...)
+
+
+def _check_node(node: Any, depth: int) -> None:
+    """Percorre o documento Tiptap conferindo tipos permitidos, profundidade e links. Levanta ValueError se algo for suspeito."""
+    if depth > MAX_RICH_DEPTH:
+        raise ValueError("Conteúdo rico inválido: aninhamento profundo demais")
+    if not isinstance(node, dict):
+        raise ValueError("Conteúdo rico inválido: nó malformado")
+    if node.get("type") not in ALLOWED_NODE_TYPES:
+        raise ValueError(f"Conteúdo rico inválido: tipo de bloco não permitido ({str(node.get('type'))[:30]})")
+    for mark in node.get("marks") or []:
+        if not isinstance(mark, dict) or mark.get("type") not in ALLOWED_MARK_TYPES:
+            raise ValueError("Conteúdo rico inválido: formatação não permitida")
+        if mark.get("type") == "link":
+            href = str((mark.get("attrs") or {}).get("href", "")).strip().lower()
+            if not href.startswith(ALLOWED_LINK_SCHEMES):
+                raise ValueError("Conteúdo rico inválido: link com endereço não permitido")
+    for child in node.get("content") or []:
+        _check_node(child, depth + 1)
 
 
 def validate_rich_content(value: str | None) -> str | None:
@@ -34,6 +67,9 @@ def validate_rich_content(value: str | None) -> str | None:
             raise ValueError("Conteúdo rico inválido: não é um JSON válido")
         if not isinstance(parsed, dict) or parsed.get("type") != "doc":
             raise ValueError("Conteúdo rico inválido: esperado um documento Tiptap (\"type\": \"doc\")")
+        if len(stripped.encode("utf-8")) > MAX_RICH_BYTES:
+            raise ValueError("Conteúdo rico grande demais")
+        _check_node(parsed, 0)
         return value
     if "<script" in stripped.lower():
         raise ValueError("Conteúdo não pode conter tags <script>")

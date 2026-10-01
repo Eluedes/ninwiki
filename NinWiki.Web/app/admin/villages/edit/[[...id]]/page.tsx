@@ -38,11 +38,13 @@ const emptyForm: VillageFormValues = {
   clans: [],
 };
 
+/** Mensagem de erro de um campo do formulario. */
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className="text-xs text-destructive">{message}</p>;
 }
 
+/** Editor de vila (criar/editar) com os cla's dentro, incluindo a imagem de cada cla'. */
 export default function VillageEditorPage({ params }: { params: Promise<{ id?: string[] }> }) {
   const router = useRouter();
   const { id } = use(params);

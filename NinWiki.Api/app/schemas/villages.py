@@ -13,12 +13,14 @@ SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 
 
 class CamelModel(BaseModel):
+    """Base dos schemas: converte nomes para camelCase no JSON, igual ao TypeScript do site."""
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
 # ---------------- leitura ----------------
 
 class ClanRead(CamelModel):
+    """Cla' como a API devolve (com imagem)."""
     id: str
     name: str
     village_id: str
@@ -27,6 +29,7 @@ class ClanRead(CamelModel):
 
 
 class OrganizationRead(CamelModel):
+    """Organizacao como a API devolve."""
     id: str
     name: str
     description: str
@@ -38,6 +41,7 @@ class OrganizationAdminRead(OrganizationRead):
 
 
 class VillageRead(CamelModel):
+    """Vila como a API devolve, com cla's e organizacoes."""
     id: str
     name: str
     name_pt: str | None
@@ -59,6 +63,7 @@ class VillageRead(CamelModel):
 # ---------------- escrita ----------------
 
 class ClanWrite(CamelModel):
+    """Cla' dentro do corpo de criar/editar vila."""
     id: str = Field(min_length=1, max_length=50, pattern=SLUG_PATTERN, description="Slug unico, ex: yagyu")
     name: str = Field(min_length=1, max_length=100)
     description: str = ""
@@ -87,11 +92,13 @@ class VillageWrite(CamelModel):
     @field_validator("long_description")
     @classmethod
     def _rich(cls, v: str) -> str:
+        """Valida a descricao longa (documento Tiptap permitido)."""
         return validate_rich_content(v) or ""
 
     @field_validator("clans")
     @classmethod
     def _unique_clans(cls, v: list[ClanWrite]) -> list[ClanWrite]:
+        """Recusa dois cla's com o mesmo id na mesma vila."""
         ids = [c.id for c in v]
         if len(ids) != len(set(ids)):
             raise ValueError("Dois clãs com o mesmo id na mesma vila")
@@ -99,6 +106,7 @@ class VillageWrite(CamelModel):
 
 
 class OrganizationWrite(CamelModel):
+    """Corpo de criar/editar uma organizacao."""
     id: str = Field(min_length=1, max_length=50, pattern=SLUG_PATTERN, description="Slug unico, ex: anbu")
     name: str = Field(min_length=1, max_length=100)
     description: str = ""
@@ -107,4 +115,5 @@ class OrganizationWrite(CamelModel):
     @field_validator("village_ids")
     @classmethod
     def _unique_villages(cls, v: list[str]) -> list[str]:
+        """Remove vilas repetidas da lista mantendo a ordem."""
         return list(dict.fromkeys(v))

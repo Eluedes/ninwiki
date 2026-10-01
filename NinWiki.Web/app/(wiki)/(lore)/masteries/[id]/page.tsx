@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { getMastery, listJutsus, listAttributes, ApiError } from '@/lib/api-client';
 import { MasteryPageClient } from '@/components/lore/mastery-page-client';
 
+/** Pagina publica de uma mastery (Server Component: busca na API). */
 export default async function MasteryPage({
   params,
 }: {

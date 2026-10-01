@@ -20,6 +20,7 @@ const validCategories: Category[] = [
   'missions',
 ];
 
+/** Catalogo publico de uma categoria (Server Component: busca na API). */
 export default async function CatalogPage({
   params,
 }: {

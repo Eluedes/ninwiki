@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { getJutsu, getMastery, ApiError } from '@/lib/api-client';
 import { JutsuPageClient } from '@/components/lore/jutsu-page-client';
 
+/** Pagina publica de um jutsu (Server Component: busca na API). */
 export default async function JutsuPage({
   params,
 }: {

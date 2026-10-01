@@ -24,6 +24,7 @@ from app.models.enums import StaffRole
 
 
 class Permission(str, Enum):
+    """Todas as permissoes que existem no sistema (nome = 'area.acao')."""
     # --- Conteudo (entries do catalogo: mobs, itens, armas, missoes, guias) ---
     CONTENT_CREATE = "content.create"
     CONTENT_EDIT = "content.edit"
@@ -156,10 +157,12 @@ ROLE_LABEL: dict[StaffRole, str] = {
 
 
 def permissions_of(role: StaffRole) -> frozenset[Permission]:
+    """Permissoes efetivas de um cargo (padrao + ajustes feitos no painel)."""
     return ROLE_PERMISSIONS[role]
 
 
 def has_permission(role: StaffRole, permission: Permission) -> bool:
+    """True se o cargo tem a permissao (usa as permissoes efetivas)."""
     return permission in ROLE_PERMISSIONS[role]
 
 

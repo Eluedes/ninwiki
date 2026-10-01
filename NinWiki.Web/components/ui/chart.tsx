@@ -29,6 +29,7 @@ type ChartContextProps = {
 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
+/** Hook que da' acesso a' configuracao do grafico mais proximo. */
 function useChart() {
   const context = React.useContext(ChartContext);
 

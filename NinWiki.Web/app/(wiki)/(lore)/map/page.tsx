@@ -55,6 +55,7 @@ const routeNodes = [
   [610, 269, '#22c55e'],
 ] as const;
 
+/** Mapa do jogo (ainda com marcadores de exemplo). */
 export default function MapPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 animate-fade-in">

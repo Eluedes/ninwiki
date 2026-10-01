@@ -41,20 +41,24 @@ def is_owner(user: User) -> bool:
 
 
 async def get_by_discord_id(db: AsyncSession, discord_id: int) -> User | None:
+    """Acha um membro da equipe pelo Discord ID."""
     return (await db.execute(select(User).where(User.discord_id == discord_id))).scalar_one_or_none()
 
 
 async def _count_active_super_admins(db: AsyncSession) -> int:
+    """Quantos S.Adm ativos existem (nunca pode chegar a zero)."""
     stmt = select(func.count()).select_from(User).where(User.role == StaffRole.SUPER_ADMIN, User.is_active.is_(True))
     return (await db.execute(stmt)).scalar_one()
 
 
 def _require(actor: User, permission: Permission) -> None:
+    """Exige que quem age tenha a permissao (senao StaffError 403)."""
     if not has_permission(actor.role, permission):
         raise StaffError(403, "Você não tem permissão para fazer isso")
 
 
 def _check_target_manageable(actor: User, target: User) -> None:
+    """Confere a hierarquia: dono nao e' alterado, ninguem altera a si mesmo, so' mexe em quem esta' abaixo."""
     if target.id == actor.id:
         raise StaffError(400, "Você não pode alterar o seu próprio cargo ou status")
     if is_owner(target):
@@ -67,6 +71,7 @@ async def add_staff(
     db: AsyncSession, actor: User, discord_id: int, role: StaffRole,
     username: str | None = None, source: str = "panel",
 ) -> User:
+    """Cadastra alguem na equipe (ou reativa) respeitando permissao e hierarquia; registra no log."""
     _require(actor, Permission.STAFF_CREATE)
     if role not in assignable_roles(actor.role):
         raise StaffError(403, "Você não pode cadastrar alguém com esse cargo")
@@ -89,6 +94,7 @@ async def add_staff(
 
 
 async def change_role(db: AsyncSession, actor: User, target: User, new_role: StaffRole, source: str = "panel") -> User:
+    """Troca o cargo de alguem, derruba a sessao dele e registra no log."""
     _require(actor, Permission.STAFF_EDIT)
     _check_target_manageable(actor, target)
     if new_role not in assignable_roles(actor.role):
@@ -109,6 +115,7 @@ async def change_role(db: AsyncSession, actor: User, target: User, new_role: Sta
 
 
 async def set_active(db: AsyncSession, actor: User, target: User, active: bool, source: str = "panel") -> User:
+    """Ativa/desativa alguem (derruba a sessao) e registra no log."""
     _require(actor, Permission.STAFF_DEACTIVATE)
     _check_target_manageable(actor, target)
     if target.is_active == active:

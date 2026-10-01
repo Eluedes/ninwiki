@@ -23,6 +23,7 @@ interface GuideExtrasProps {
   summons: ApiSummon[];
 }
 
+/** Abas extras do Guia: atributos, profissoes, ranks, arcos e summons. */
 export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, summons }: GuideExtrasProps) {
   const { locale } = useLanguage();
   const gathering = professions.filter((p) => p.group === 'gathering');

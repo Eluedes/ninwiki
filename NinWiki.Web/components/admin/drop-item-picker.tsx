@@ -19,6 +19,7 @@ interface DropItemPickerProps {
   onUnlink: () => void;
 }
 
+/** Busca uma entry do catalogo para ligar a um drop de mob. */
 export function DropItemPicker({ linkedId, onLink, onUnlink }: DropItemPickerProps) {
   const { dict } = useLanguage();
   const t = dict.admin.dropPicker;

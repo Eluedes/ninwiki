@@ -10,6 +10,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { formatPostDate } from '@/components/blog/post-card';
 import type { ApiPost } from '@/lib/api-client';
 
+/** Pagina de um post: titulo, capa, autor, datas e o conteudo rico. */
 export function PostPageClient({ post, children }: { post: ApiPost; children: ReactNode }) {
   const { locale, dict } = useLanguage();
   const edited = post.updatedAt.slice(0, 10) !== post.createdAt.slice(0, 10);

@@ -11,11 +11,8 @@ Rotas (todas sob o prefixo /content-items, definido no main.py):
   POST   /content-items/bulk-delete  apaga VARIAS entries de uma vez
   POST   /content-items/bulk-import  cria VARIAS entries em rascunho a partir de uma lista de nomes
 
-ATENCAO - SEM AUTENTICACAO AINDA: qualquer um que acesse estas rotas
-consegue criar/editar/apagar conteudo. Isso e' aceitavel enquanto o
-projeto roda so' localmente (Fase 1/desenvolvimento), mas as rotas de
-escrita (POST/PUT/DELETE) precisam ganhar um Depends() de autenticacao
-antes de qualquer exposicao publica (Fase 2 do roadmap).
+PERMISSOES: toda rota de escrita exige login + a permissao certa (content.create/edit/publish/delete/import -
+ver app/core/permissions.py). Rascunho so' aparece para a equipe; o publico so' ve' entries PUBLICADAS.
 """
 import re
 from uuid import UUID
@@ -41,11 +38,13 @@ router = APIRouter(prefix="/content-items", tags=["content-items"])
 
 
 class BulkStatusUpdate(CamelModel):
+    """Corpo de mudar o status (rascunho/publicado) de varias entries de uma vez."""
     ids: list[UUID] = Field(min_length=1)
     status: ContentStatus
 
 
 class BulkDelete(CamelModel):
+    """Corpo de apagar varias entries de uma vez (lista de ids)."""
     ids: list[UUID] = Field(min_length=1)
 
 
@@ -130,6 +129,7 @@ def _slugify(name: str) -> str:
 
 
 class BulkImportEntry(CamelModel):
+    """Uma entry da importacao em massa: so' nome e categoria."""
     name: str = Field(min_length=1, max_length=200)
     category: ContentCategory
     mob_type: MobType | None = None
@@ -137,10 +137,12 @@ class BulkImportEntry(CamelModel):
 
 
 class BulkImportRequest(CamelModel):
+    """Corpo da importacao em massa: lista de entries a criar como rascunho."""
     entries: list[BulkImportEntry] = Field(min_length=1, max_length=5000)
 
 
 class BulkImportResult(CamelModel):
+    """Resultado da importacao em massa: quantas foram criadas e quantas puladas por duplicata."""
     created: int
     skipped_duplicates: int
 
@@ -236,7 +238,9 @@ async def list_content_items(
     if user is None:
         stmt = stmt.where(ContentItem.status == ContentStatus.PUBLISHED)
     if search:
-        stmt = stmt.where(ContentItem.name.ilike(f"%{search}%")).limit(20)
+        # Escapa % e _ digitados pela pessoa: sem isso "%" casaria com tudo (e "_" com qualquer letra).
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        stmt = stmt.where(ContentItem.name.ilike(f"%{escaped}%", escape="\\")).limit(20)
     result = await db.execute(stmt)
     return result.scalars().all()
 

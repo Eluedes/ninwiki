@@ -91,6 +91,7 @@ function parseStoredContent(value: string) {
   }
 }
 
+/** Botao da barra de ferramentas do editor (negrito, italico, lista...). */
 function ToolbarButton({
   onClick,
   active,
@@ -121,6 +122,7 @@ function ToolbarButton({
   );
 }
 
+/** Barra de ferramentas do editor: formatacao, titulos, listas, alinhamento, link, ficha e tabela. */
 function Toolbar({ editor }: { editor: Editor }) {
   const { dict } = useLanguage();
   const t = dict.admin.richText;
@@ -256,6 +258,25 @@ function Toolbar({ editor }: { editor: Editor }) {
   );
 }
 
+// Limpa o HTML COLADO de fora (site, Word...) antes do editor interpretar. O ProseMirror ja' descarta o que
+// o schema nao conhece, mas aqui cortamos na raiz: tags perigosas/inuteis somem, todo atributo some
+// (style, class, on*=...) exceto o href de links, e links com esquema perigoso (javascript:, data:) perdem o href.
+const BLOCKED_PASTE_TAGS = 'script,style,iframe,object,embed,img,svg,form,input,button,link,meta,video,audio,canvas,base';
+const SAFE_LINK = /^(https?:|mailto:|\/|#)/i;
+
+/** Limpa o HTML colado de fora: remove tags perigosas e atributos, e links com esquema perigoso. */
+export function sanitizePastedHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.body.querySelectorAll(BLOCKED_PASTE_TAGS).forEach((el) => el.remove());
+  doc.body.querySelectorAll('*').forEach((el) => {
+    const href = el.tagName === 'A' ? el.getAttribute('href') : null;
+    for (const attr of Array.from(el.attributes)) el.removeAttribute(attr.name);
+    if (href && SAFE_LINK.test(href.trim())) el.setAttribute('href', href.trim());
+  });
+  return doc.body.innerHTML;
+}
+
+/** Editor de texto rico (Tiptap). Recebe/devolve o documento como JSON em string. */
 export function RichTextEditor({
   value,
   onChange,
@@ -267,7 +288,8 @@ export function RichTextEditor({
 }) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      // link e underline ja' vem no StarterKit (Tiptap v3): desligados aqui porque sao adicionados abaixo com a nossa configuracao (evita extensao duplicada).
+      StarterKit.configure({ link: false, underline: false }),
       TextStyle,
       Color,
       Underline,
@@ -294,14 +316,16 @@ export function RichTextEditor({
       onChange(JSON.stringify(editor.getJSON()));
     },
     editorProps: {
+      // Filtro do "colar": ver sanitizePastedHtml acima (Fase 6 - hardening).
+      transformPastedHTML: sanitizePastedHtml,
       attributes: {
-        // min-h-32 (128px) era baixo demais - dobrei pra min-h-64
+        // min-h-32 (128px) era baixo demais - dobrei pra min-h-[16rem] (min-h-64 nao existe no Tailwind 3.3: a classe era ignorada e o editor ficava minusculo)
         // (256px), e resize-y deixa a pessoa arrastar o canto pra
         // fazer ainda maior quando precisar (util pra' textos longos
         // tipo a "Descrição completa"). overflow-y-auto garante que o
         // texto rola dentro da caixa em vez de vazar quando ela nao
         // foi redimensionada mas o conteudo passou do tamanho visivel.
-        class: 'prose prose-sm dark:prose-invert max-w-none min-h-64 resize-y overflow-y-auto px-3 py-2 focus:outline-none',
+        class: 'prose prose-sm dark:prose-invert max-w-none min-h-[16rem] resize-y overflow-y-auto px-3 py-2 focus:outline-none',
       },
     },
   });

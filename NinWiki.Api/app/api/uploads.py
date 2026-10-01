@@ -38,6 +38,11 @@ from app.models.users import User
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
+# Limite de pixels de UMA imagem (largura x altura). Sem isso, um PNG pequeno em bytes mas com
+# dezenas de milhares de pixels por lado ("bomba de descompressao") esgotaria a memoria ao ser aberto.
+# Acima do limite o Pillow levanta erro e o upload vira um 400 limpo.
+Image.MAX_IMAGE_PIXELS = 25_000_000
+
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
@@ -55,6 +60,7 @@ MAGIC_NUMBERS: dict[bytes, str] = {
 
 
 class UploadResponse(BaseModel):
+    """Resposta do upload: a URL publica da imagem salva."""
     url: str
 
 
@@ -120,6 +126,7 @@ async def upload_image(
     staff: User = Depends(require_permission(Permission.UPLOAD_CREATE)),
     db: AsyncSession = Depends(get_db),
 ):
+    """Recebe uma imagem, confere o tipo pelos bytes e o tamanho, redimensiona e salva com nome aleatorio."""
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
 
     # le' o arquivo INTEIRO na memoria de uma vez - aceitavel pro limite

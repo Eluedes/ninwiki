@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 
+/** GIF animado de um jutsu (some sozinho se o arquivo falhar). */
 export function JutsuGif({ src, alt }: { src: string; alt: string }) {
   const [hasError, setHasError] = useState(false);
 

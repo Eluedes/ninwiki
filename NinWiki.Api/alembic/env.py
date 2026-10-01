@@ -52,6 +52,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
+    """Modo offline do Alembic: gera o SQL das migrations sem abrir conexao com o banco."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -65,6 +66,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    """Modo online do Alembic: conecta no banco (driver sincrono psycopg) e aplica as migrations."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

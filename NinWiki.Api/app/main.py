@@ -46,6 +46,7 @@ from app.api.staff import router as staff_router
 from app.api.uploads import router as uploads_router
 from app.api.villages import organizations_router, router as villages_router
 from app.core.config import settings
+from app.core.hardening import BodyLimitMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware
 from app.core.security import ClientIPMiddleware
 from app.core.staff_service import StaffError
 
@@ -70,6 +71,13 @@ app = FastAPI(
 # um site (ex: localhost:3000) de chamar uma API em outro endereco
 # (ex: localhost:8000), a nao ser que a API diga explicitamente que
 # permite. Esse middleware e' o que autoriza o front-end a nos chamar.
+# ORDEM DAS CAMADAS (a ultima adicionada e' a mais externa; a requisicao entra de fora pra dentro):
+#   ClientIP -> CORS -> SecurityHeaders -> RateLimit -> BodyLimit -> rotas.
+# O CORS fica por fora do limite de taxa para o navegador conseguir ler tambem as respostas 429/413.
+app.add_middleware(BodyLimitMiddleware)       # corpo gigante -> 413
+app.add_middleware(RateLimitMiddleware)       # flood / scraping -> 429
+app.add_middleware(SecurityHeadersMiddleware) # cabecalhos de seguranca em toda resposta
+
 app.add_middleware(
     CORSMiddleware,
     # so' aceita requisicoes vindas exatamente desta origem (nunca "*"
