@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import log_action
 from app.core.database import AsyncSessionLocal, get_db
+from app.core import role_config
 from app.core.permissions import SUPER_ONLY_PERMISSIONS, Permission, has_permission
 from app.core.security import SESSION_COOKIE, ensure_same_origin, read_session_token
 from app.models.users import User
@@ -44,6 +45,8 @@ async def get_optional_user(request: Request, db: AsyncSession = Depends(get_db)
     user = await db.get(User, user_id)
     if user is None or not user.is_active or user.token_version != data.get("ver"):
         return None
+    # Ajustes de permissao por cargo feitos no painel (relê o banco a cada ~15s no maximo).
+    await role_config.refresh_if_stale(db)
     if request.method in _UNSAFE_METHODS:
         ensure_same_origin(request)
     return user

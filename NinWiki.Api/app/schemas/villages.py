@@ -22,9 +22,8 @@ class ClanRead(CamelModel):
     id: str
     name: str
     village_id: str
-    level_requirement: int
-    price_ryo: int
     description: str
+    image: str | None = None
 
 
 class OrganizationRead(CamelModel):
@@ -62,9 +61,8 @@ class VillageRead(CamelModel):
 class ClanWrite(CamelModel):
     id: str = Field(min_length=1, max_length=50, pattern=SLUG_PATTERN, description="Slug unico, ex: yagyu")
     name: str = Field(min_length=1, max_length=100)
-    level_requirement: int = Field(ge=0, le=10000)
-    price_ryo: int = Field(ge=0, le=100_000_000)
     description: str = ""
+    image: str | None = Field(default=None, max_length=500)
 
 
 class VillageWrite(CamelModel):

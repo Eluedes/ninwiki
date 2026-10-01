@@ -155,11 +155,11 @@ async def testar() -> None:
     # ------------------------------------------------------------------
     secao("2) Cliente HTTP do bot x API real")
     settings.bot_api_token = TOKEN
-    lista = await api.list_staff(IDS["adm"])
-    check("Adm lista a equipe pelo cliente do bot", any(m["discordId"] == str(IDS["adm"]) for m in lista))
+    lista = await api.list_staff(IDS["sadm"])
+    check("S.Adm lista a equipe pelo cliente do bot", any(m["discordId"] == str(IDS["sadm"]) for m in lista))
     check("Discord ID chega como TEXTO", all(isinstance(m["discordId"], str) for m in lista))
-    novo = await api.add_staff(IDS["adm"], IDS["alvo"], "creator", "TESTE_alvo")
-    check("Adm cadastra Creator", novo["role"] == "creator" and novo["discordId"] == str(IDS["alvo"]))
+    novo = await api.add_staff(IDS["sadm"], IDS["alvo"], "creator", "TESTE_alvo")
+    check("S.Adm cadastra Creator", novo["role"] == "creator" and novo["discordId"] == str(IDS["alvo"]))
     try:
         await api.add_staff(IDS["adm"], IDS["alvo2"], "admin", "x")
         check("Adm cadastrar Adm e' barrado", False)
@@ -176,7 +176,7 @@ async def testar() -> None:
     except ApiError as e:
         check("Creator listar e' barrado (403)", e.status_code == 403)
     try:
-        await api.add_staff(IDS["adm"], IDS["alvo"], "creator", "x")
+        await api.add_staff(IDS["sadm"], IDS["alvo"], "creator", "x")
         check("cadastro repetido e' barrado", False)
     except ApiError as e:
         check("cadastro repetido (409)", e.status_code == 409, e.detail)
@@ -189,13 +189,13 @@ async def testar() -> None:
 
     errado = NinWikiApi("http://test", "token-errado-1234567890", client=http)
     try:
-        await errado.list_staff(IDS["adm"])
+        await errado.list_staff(IDS["sadm"])
         check("token do bot errado e' barrado", False)
     except ApiError as e:
         check("token do bot errado (401) com mensagem clara", e.status_code == 401 and "BOT_API_TOKEN" in e.detail, e.detail)
     settings.bot_api_token = ""
     try:
-        await api.list_staff(IDS["adm"])
+        await api.list_staff(IDS["sadm"])
         check("API com bot desligado", False)
     except ApiError as e:
         check("API com bot desligado (404) explica o motivo", e.status_code == 404 and "BOT_API_TOKEN" in e.detail, e.detail)
@@ -203,18 +203,18 @@ async def testar() -> None:
     limiter.reset()
     for i in range(10):
         try:
-            await NinWikiApi("http://test", f"chute-numero-{i}-xxxxxxxxxx", client=http).list_staff(IDS["adm"])
+            await NinWikiApi("http://test", f"chute-numero-{i}-xxxxxxxxxx", client=http).list_staff(IDS["sadm"])
         except ApiError:
             pass
     try:
-        await api.list_staff(IDS["adm"])
+        await api.list_staff(IDS["sadm"])
         check("bloqueio por forca bruta", False)
     except ApiError as e:
         check("apos muitos tokens errados a API bloqueia e o bot mostra a mensagem (429)", e.status_code == 429 and "Muitas tentativas" in e.detail, e.detail)
     limiter.reset()
     fora = NinWikiApi("http://127.0.0.1:9", TOKEN)
     try:
-        await fora.list_staff(IDS["adm"])
+        await fora.list_staff(IDS["sadm"])
         check("API fora do ar", False)
     except ApiError as e:
         check("API fora do ar vira mensagem amigavel (503)", e.status_code == 503 and "API" in e.detail, e.detail)
@@ -235,7 +235,7 @@ async def testar() -> None:
     adm_cargo_creator = app_commands.Choice(name="Creator", value="creator")
     adm_cargo_admin = app_commands.Choice(name="Adm", value="admin")
 
-    i = interacao(IDS["adm"])
+    i = interacao(IDS["sadm"])
     await cmd["listar"].callback(grupo, i)
     check("/equipe listar mostra a equipe (embed)", "TESTE_adm" in texto_enviado(i) and "Adm" in texto_enviado(i))
     check("resposta e' efemera (so' quem digitou ve)", todas_efemeras(i))
@@ -244,7 +244,7 @@ async def testar() -> None:
     await cmd["listar"].callback(grupo, i)
     check("Creator em /equipe listar recebe recusa clara", texto_enviado(i).startswith("❌") and "permiss" in texto_enviado(i).lower(), texto_enviado(i))
 
-    i = interacao(IDS["adm"])
+    i = interacao(IDS["sadm"])
     await cmd["adicionar"].callback(grupo, i, fake_user("alvo2"), adm_cargo_creator)
     u = await buscar(IDS["alvo2"])
     check("/equipe adicionar cria a pessoa no banco como Creator", u is not None and u.role == StaffRole.CREATOR and u.created_by_id is not None)
@@ -254,7 +254,7 @@ async def testar() -> None:
     await cmd["adicionar"].callback(grupo, i, fake_user("estranho"), adm_cargo_admin)
     check("Adm tentando cadastrar Adm: ❌ e NADA foi criado", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
 
-    i = interacao(IDS["adm"])
+    i = interacao(IDS["sadm"])
     await cmd["adicionar"].callback(grupo, i, fake_user("estranho", bot=True), adm_cargo_creator)
     check("cadastrar um BOT e' recusado antes de chamar a API", "Bots" in texto_enviado(i) and await buscar(IDS["estranho"]) is None)
 
@@ -285,9 +285,9 @@ async def testar() -> None:
     await cmd["desativar"].callback(grupo, i, fake_user("sadm"))
     check("Adm NAO desativa S.Adm (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["sadm"])).is_active)
 
-    i = interacao(IDS["adm"])
-    await cmd["desativar"].callback(grupo, i, fake_user("adm"))
-    check("ninguem se desativa a si mesmo (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["adm"])).is_active, texto_enviado(i))
+    i = interacao(IDS["sadm"])
+    await cmd["desativar"].callback(grupo, i, fake_user("sadm"))
+    check("ninguem se desativa a si mesmo (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["sadm"])).is_active, texto_enviado(i))
 
     # o invoker enviado a' API e' SEMPRE quem digitou o comando (interaction.user), nunca o "alvo"
     async with AsyncSessionLocal() as db:
@@ -297,11 +297,11 @@ async def testar() -> None:
 
     secao("4) Restricao por servidor (ALLOWED_GUILD_IDS)")
     restrito = StaffGroup(api, allowed_guilds={555})
-    i = interacao(IDS["adm"], guild_id=999)
+    i = interacao(IDS["sadm"], guild_id=999)
     check("servidor nao permitido: comando recusado", await restrito.interaction_check(i) is False and "não está disponível" in texto_enviado(i))
-    i = interacao(IDS["adm"], guild_id=555)
+    i = interacao(IDS["sadm"], guild_id=555)
     check("servidor permitido: comando liberado", await restrito.interaction_check(i) is True)
-    check("sem lista: qualquer servidor", await grupo.interaction_check(interacao(IDS["adm"], guild_id=42)) is True)
+    check("sem lista: qualquer servidor", await grupo.interaction_check(interacao(IDS["sadm"], guild_id=42)) is True)
 
     await http.aclose()
 

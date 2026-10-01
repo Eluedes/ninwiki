@@ -2,7 +2,7 @@
 
 Bot do Discord (discord.py, a mesma stack do Guima.Bot) para **gerenciar a equipe do painel pelo Discord**.
 Ele não decide nada sozinho: em cada comando só repassa à API **quem digitou** e o que pediu. A API aplica
-as **mesmas regras do painel** (Adm só mexe em Creator, dono não é rebaixado, ninguém se altera...) e o bot
+as **mesmas regras do painel** (só o S.Adm gerencia a equipe, dono não é rebaixado, ninguém se altera...) e o bot
 mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 
 ## Comandos (só funcionam em servidor, respostas só você vê)
@@ -14,8 +14,7 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 | `/equipe desativar usuario` | tira o acesso na hora |
 | `/equipe reativar usuario` | devolve o acesso |
 
-Quem pode o quê é decidido pela API (`NinWiki.Api/app/core/permissions.py`): Creator não gerencia ninguém,
-Adm gerencia só Creators, S.Adm gerencia todos. Quem não é da equipe recebe uma recusa.
+Quem pode o quê é decidido pela API (`NinWiki.Api/app/core/permissions.py`): só o S.Adm gerencia a equipe (Adm e Creator recebem uma recusa). Quem não é da equipe recebe uma recusa.
 
 ## Configurar (uma vez)
 1. **Bot no Discord:** https://discord.com/developers/applications → sua aplicação (pode ser a mesma do login

@@ -32,7 +32,7 @@ router = APIRouter(prefix="/audit-log", tags=["audit-log"])
 
 # Tipos de registro que sao "trabalho de conteudo" - o que o Adm pode ver.
 # Todo o resto (auth, staff, security...) e' log completo, so' do S.Adm.
-CONTENT_ENTITY_TYPES = {"content_item", "jutsu", "mastery", "upload", "village", "organization", "post"}
+CONTENT_ENTITY_TYPES = {"content_item", "jutsu", "mastery", "upload", "village", "organization", "post", "notice"}
 
 
 class AuditLogEntryRead(BaseModel):

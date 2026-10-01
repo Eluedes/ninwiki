@@ -4,7 +4,7 @@ Documento de controle do projeto, no mesmo espírito do roadmap do Guima:
 uma lista viva do que já foi feito e do que falta, organizada em fases.
 Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 
-**Última atualização:** 01/10/2026 (página pública do Blog)
+**Última atualização:** 01/10/2026 (clãs com imagem, permissões editáveis, quadro de avisos)
 
 **Legenda:** ✅ feito e testado · 🔄 em andamento / parcial · ⬜ não iniciado
 
@@ -151,6 +151,20 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   3 últimos posts reais (link "Ver todas") no lugar das notícias de mentira (`newsItems` e `NewsCard` removidos); se a API
   cair, Home e Blog abrem mesmo assim. Item "Blog" no menu, textos PT/EN. Testado de ponta a ponta contra uma API simulada
   (lista, post com negrito, 404); `tsc`, `eslint` e `next build` limpos. Ainda sem tags/categorias nem paginação
+- ✅ **Clãs com imagem (01/10)**: saíram *Nível mínimo* e *Preço (Ryo)*; cada clã ganhou **imagem** (logo + roupa), enviada no
+  editor da vila (`/admin/villages`) e mostrada na página pública da vila. Migração `a91c3e5d7b20` (remove as 2 colunas e
+  adiciona `image`; testada nos dois sentidos). **Organizações** têm menu próprio no painel (`/admin/organizations`)
+- ✅ **Permissões por cargo editáveis pelo painel (01/10)**: tela `/admin/permissions` (só S.Adm) com a matriz permissão ×
+  cargo (Adm/Creator); salva na hora, "Restaurar padrão", tudo no log (`roles`). Guarda só as diferenças do padrão em
+  `role_permissions` (relê o banco a cada ~15 s, funciona com mais de uma instância). O S.Adm não é editável e permissão
+  exclusiva dele não pode ser dada a ninguém
+- ✅ **Equipe só para o S.Adm (01/10)**: `staff.*` e `roles.manage` viraram permissões exclusivas do S.Adm (Adm/Creator
+  recebem 404 e o menu some). Consequência: o bot `/equipe` também só funciona para o S.Adm
+- ✅ **Quadro de avisos na Visão Geral (01/10)**: S.Adm/Adm postam (título, mensagem, fixar), editam, apagam e anexam arquivos
+  (até 10, `MAX_NOTICE_FILE_MB`); toda a equipe lê e baixa. Arquivos privados em `staff_files/` (nunca na pasta pública),
+  entregues só como download (`attachment`, `nosniff`), nome em disco aleatório, executáveis/HTML/SVG recusados. Permissões
+  `notices.view` (todos) e `notices.manage` (Adm), ajustáveis na tela de Permissões. `testar_permissoes.py`: 262
+  verificações (eram 202) e `testar_bot_integracao.py`: 40, ambos contra Postgres real; testado também no navegador
 - ✅ **Usuários → Equipe**: resolvido na Fase 2 (`/admin/staff` + API `/staff`)
 - ✅ **Vilas, Clãs e Organizações: edição no painel (28/09)**: `/admin/villages` (lista + editor com os **clãs dentro**
   — a lista salva substitui a atual — e o nome em português na seção de tradução) e `/admin/organizations` (liga cada

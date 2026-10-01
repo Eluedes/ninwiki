@@ -2,7 +2,7 @@
 Tabelas de Vilas, Clas e Organizacoes. Espelha lib/village-data.ts.
 Mesmo padrao de id=texto explicado em models/masteries.py.
 """
-from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -41,9 +41,10 @@ class Clan(Base):
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "yagyu"
     name: Mapped[str] = mapped_column(String(100))
     village_id: Mapped[str] = mapped_column(ForeignKey("villages.id", ondelete="CASCADE"))
-    level_requirement: Mapped[int] = mapped_column(Integer)
-    price_ryo: Mapped[int] = mapped_column(Integer)
     description: Mapped[str] = mapped_column(Text)
+    # Imagem do cla' (logo + roupa que o cla' usa, tudo numa imagem so'), enviada
+    # pelo painel via POST /uploads/image.
+    image: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     village: Mapped["Village"] = relationship(back_populates="clans")
 

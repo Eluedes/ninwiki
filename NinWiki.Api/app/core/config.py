@@ -101,6 +101,9 @@ class Settings(BaseSettings):
     # Tamanho maximo aceito num upload de imagem, em megabytes.
     max_upload_size_mb: int = 5
 
+    # Tamanho maximo de um arquivo anexado a um aviso do quadro da equipe, em MB.
+    max_notice_file_mb: int = 20
+
     # Chave da API da DeepL, usada pra traduzir conteudo automaticamente
     # PT->EN ao criar/editar uma entry (ver app/core/translation.py).
     # Vazio por padrao: sem chave, a traducao automatica simplesmente

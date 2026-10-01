@@ -13,6 +13,7 @@ import type { PermissionName } from '@/lib/api-client';
 
 export const ROUTE_PERMISSIONS: { prefix: string; permission: PermissionName }[] = [
   { prefix: '/admin/staff', permission: 'staff.view' },
+  { prefix: '/admin/permissions', permission: 'roles.manage' },
   { prefix: '/admin/audit-log', permission: 'audit.view' },
   { prefix: '/admin/blog-posts', permission: 'posts.create' },
   { prefix: '/admin/import', permission: 'content.import' },

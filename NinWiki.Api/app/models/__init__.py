@@ -16,3 +16,5 @@ from app.models.villages import Clan, Organization, OrganizationVillage, Village
 from app.models.guide import NinjaRank, Profession, StoryArc, Summon  # noqa: F401
 from app.models.users import AuditLogEntry, User  # noqa: F401
 from app.models.posts import Post  # noqa: F401
+from app.models.roles import RolePermission  # noqa: F401
+from app.models.notices import Notice, NoticeFile  # noqa: F401

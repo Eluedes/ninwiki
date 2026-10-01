@@ -75,12 +75,14 @@ export interface Dictionary {
       idSlug: string; idSlugLocked: string; idHint: string;
       name: string; emblem: string; element: string; accentColor: string; leader: string; climate: string; motto: string; image: string;
       mapX: string; mapY: string; mapHint: string; shortDescription: string; longDescription: string;
-      clansTitle: string; addClan: string; clanName: string; clanId: string; clanLevel: string; clanPrice: string; clanDescription: string;
+      clansTitle: string; addClan: string; clanName: string; clanId: string; clanImage: string; clanImageHint: string; clanDescription: string;
       removeClan: string; noClans: string;
       orgsTitle: string; orgsSubtitle: string; newOrg: string; orgName: string; orgDescription: string; orgVillages: string;
       orgConfirmDelete: string; orgEmpty: string; orgSave: string; orgCancel: string; orgEditTitle: string; backToVillages: string; noVillagesYet: string;
     };
-    sidebar: { overview: string; blogPosts: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; villages: string; backToSite: string };
+    sidebar: { overview: string; blogPosts: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; villages: string; organizations: string; backToSite: string };
+    noticeBoard: { title: string; subtitle: string; empty: string; newNotice: string; titleLabel: string; bodyLabel: string; pin: string; pinned: string; save: string; saving: string; cancel: string; edit: string; delete: string; confirmDelete: string; attachFiles: string; files: string; download: string; removeFile: string; uploading: string; by: string; loadError: string; saveError: string; uploadError: string; maxInfo: string };
+    rolesPage: { title: string; subtitle: string; permission: string; locked: string; lockedHint: string; save: string; saving: string; saved: string; reset: string; confirmReset: string; loadError: string; saveError: string; unsavedChanges: string; alwaysAll: string; groups: Record<string, string>; names: Record<string, string> };
     header: { role: { admin: string; mod: string } };
     overview: {
       title: string; totalPosts: string; totalPages: string; totalUsers: string; recentActivity: string;
@@ -347,8 +349,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
         devButton: 'Entrar (dev)',
         devError: 'Esse Discord ID não está cadastrado na equipe (ou está desativado).',
         roleSuperAdmin: 'S.Adm', roleAdmin: 'Adm', roleCreator: 'Creator',
-        roleDescSuperAdmin: 'Dono do sistema: acesso total e recursos exclusivos.',
-        roleDescAdmin: 'Publica, apaga, edita Lore e gerencia Creators.',
+        roleDescSuperAdmin: 'Dono do sistema: acesso total, Equipe e Permissões (só ele).',
+        roleDescAdmin: 'Publica, apaga, edita Lore e posta avisos (ajustável em Permissões).',
         roleDescCreator: 'Cria e edita rascunhos. Não publica nem apaga.',
         staffTitle: 'Equipe',
         staffSubtitle: 'Quem pode entrar no painel e o que cada cargo faz.',
@@ -375,11 +377,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'bulk-status': 'mudou o status de', 'bulk-delete': 'apagou em massa', 'bulk-import': 'importou',
           login: 'entrou', logout: 'saiu', login_denied: 'teve o login negado', role_change: 'mudou o cargo de',
           activate: 'reativou', deactivate: 'desativou', bootstrap: 'foi criado como dono', bootstrap_restore: 'teve o cargo de dono restaurado',
-          permission_denied: 'tentou algo sem permissão em',
+          permission_denied: 'tentou algo sem permissão em', reset: 'restaurou o padrão de', delete_file: 'removeu um arquivo de',
         },
         logEntities: {
           content_item: 'entry', jutsu: 'jutsu', mastery: 'mastery', upload: 'arquivo',
-          auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post',
+          auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post', roles: 'permissões do cargo', notice: 'aviso',
         },
         logSources: { panel: 'Painel', bot: 'Bot', auth: 'Login', system: 'Sistema' },
       },
@@ -407,7 +409,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         name: 'Nome', emblem: 'Emblema (emoji)', element: 'Elemento', accentColor: 'Cor de destaque', leader: 'Líder', climate: 'Clima', motto: 'Lema', image: 'Imagem',
         mapX: 'Mapa X (0-100)', mapY: 'Mapa Y (0-100)', mapHint: 'Posição no mapa, em % da imagem.',
         shortDescription: 'Descrição curta (aparece no cartão)', longDescription: 'Descrição completa',
-        clansTitle: 'Clãs', addClan: 'Adicionar clã', clanName: 'Nome', clanId: 'ID', clanLevel: 'Nível mín.', clanPrice: 'Preço (Ryo)', clanDescription: 'Descrição',
+        clansTitle: 'Clãs', addClan: 'Adicionar clã', clanName: 'Nome', clanId: 'ID', clanImage: 'Imagem do clã', clanImageHint: 'Envie uma imagem com a logo e a roupa que o clã usa.', clanDescription: 'Descrição',
         removeClan: 'Remover clã', noClans: 'Nenhum clã. Clique em "Adicionar clã".',
         orgsTitle: 'Organizações', orgsSubtitle: 'Corpos especializados (ANBU, Hunter Nin...) que podem existir em mais de uma vila.',
         newOrg: 'Nova organização', orgName: 'Nome', orgDescription: 'Descrição', orgVillages: 'Atua nas vilas',
@@ -424,8 +426,36 @@ export const dictionaries: Record<Locale, Dictionary> = {
         auditLog: 'Log de Auditoria',
         users: 'Usuários',
         staff: 'Equipe',
+        permissions: 'Permissões',
         villages: 'Vilas',
+        organizations: 'Organizações',
         backToSite: 'Voltar ao site',
+      },
+      noticeBoard: {
+        title: 'Quadro de avisos', subtitle: 'Recados e arquivos para a equipe.', empty: 'Nenhum aviso por enquanto.',
+        newNotice: 'Novo aviso', titleLabel: 'Título', bodyLabel: 'Mensagem', pin: 'Fixar no topo', pinned: 'Fixado',
+        save: 'Publicar', saving: 'Salvando...', cancel: 'Cancelar', edit: 'Editar', delete: 'Apagar',
+        confirmDelete: 'Apagar o aviso "{title}" e os arquivos anexados?', attachFiles: 'Anexar arquivo', files: 'Arquivos',
+        download: 'Baixar', removeFile: 'Remover arquivo', uploading: 'Enviando...', by: 'por',
+        loadError: 'Não foi possível carregar os avisos.', saveError: 'Não foi possível salvar o aviso.',
+        uploadError: 'Não foi possível enviar o arquivo.', maxInfo: 'Até 10 arquivos por aviso.',
+      },
+      rolesPage: {
+        title: 'Permissões por cargo', subtitle: 'Defina o que cada cargo pode fazer no painel. As alterações valem na hora.',
+        permission: 'Permissão', locked: 'Só S.Adm', lockedHint: 'Exclusiva do S.Adm: não pode ser dada a outros cargos.',
+        save: 'Salvar', saving: 'Salvando...', saved: 'Salvo!', reset: 'Restaurar padrão',
+        confirmReset: 'Voltar as permissões de {role} ao padrão?', loadError: 'Não foi possível carregar as permissões.',
+        saveError: 'Não foi possível salvar.', unsavedChanges: 'Alterações não salvas', alwaysAll: 'O S.Adm sempre tem todas as permissões.',
+        groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log' },
+        names: {
+          'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
+          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts',
+          'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
+          'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
+          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos',
+          'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'roles.manage': 'Editar permissões dos cargos',
+          'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)',
+        },
       },
       header: {
         role: { admin: 'Admin', mod: 'Mod' },
@@ -868,8 +898,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
         devButton: 'Sign in (dev)',
         devError: 'This Discord ID is not registered on the staff (or is deactivated).',
         roleSuperAdmin: 'S.Adm', roleAdmin: 'Adm', roleCreator: 'Creator',
-        roleDescSuperAdmin: 'System owner: full access and exclusive features.',
-        roleDescAdmin: 'Publishes, deletes, edits Lore and manages Creators.',
+        roleDescSuperAdmin: 'System owner: full access, Staff and Permissions (only them).',
+        roleDescAdmin: 'Publishes, deletes, edits Lore and posts notices (adjustable in Permissions).',
         roleDescCreator: 'Creates and edits drafts. Cannot publish or delete.',
         staffTitle: 'Staff',
         staffSubtitle: 'Who can sign in to the panel and what each role does.',
@@ -896,11 +926,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'bulk-status': 'changed the status of', 'bulk-delete': 'bulk-deleted', 'bulk-import': 'imported',
           login: 'signed in', logout: 'signed out', login_denied: 'had a login denied', role_change: 'changed the role of',
           activate: 'reactivated', deactivate: 'deactivated', bootstrap: 'was created as owner', bootstrap_restore: 'had the owner role restored',
-          permission_denied: 'tried something without permission on',
+          permission_denied: 'tried something without permission on', reset: 'restored the defaults of', delete_file: 'removed a file from',
         },
         logEntities: {
           content_item: 'entry', jutsu: 'jutsu', mastery: 'mastery', upload: 'file',
-          auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post',
+          auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post', roles: 'role permissions', notice: 'notice',
         },
         logSources: { panel: 'Panel', bot: 'Bot', auth: 'Login', system: 'System' },
       },
@@ -928,7 +958,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         name: 'Name', emblem: 'Emblem (emoji)', element: 'Element', accentColor: 'Accent color', leader: 'Leader', climate: 'Climate', motto: 'Motto', image: 'Image',
         mapX: 'Map X (0-100)', mapY: 'Map Y (0-100)', mapHint: 'Position on the map, as % of the image.',
         shortDescription: 'Short description (shown on the card)', longDescription: 'Full description',
-        clansTitle: 'Clans', addClan: 'Add clan', clanName: 'Name', clanId: 'ID', clanLevel: 'Min. level', clanPrice: 'Price (Ryo)', clanDescription: 'Description',
+        clansTitle: 'Clans', addClan: 'Add clan', clanName: 'Name', clanId: 'ID', clanImage: 'Clan image', clanImageHint: 'Upload one image with the clan logo and the outfit its members wear.', clanDescription: 'Description',
         removeClan: 'Remove clan', noClans: 'No clans. Click "Add clan".',
         orgsTitle: 'Organizations', orgsSubtitle: 'Specialized corps (ANBU, Hunter Nin...) that can exist in more than one village.',
         newOrg: 'New organization', orgName: 'Name', orgDescription: 'Description', orgVillages: 'Operates in villages',
@@ -945,8 +975,36 @@ export const dictionaries: Record<Locale, Dictionary> = {
         auditLog: 'Audit Log',
         users: 'Users',
         staff: 'Staff',
+        permissions: 'Permissions',
         villages: 'Villages',
+        organizations: 'Organizations',
         backToSite: 'Back to site',
+      },
+      noticeBoard: {
+        title: 'Notice board', subtitle: 'Announcements and files for the team.', empty: 'No notices yet.',
+        newNotice: 'New notice', titleLabel: 'Title', bodyLabel: 'Message', pin: 'Pin to top', pinned: 'Pinned',
+        save: 'Post', saving: 'Saving...', cancel: 'Cancel', edit: 'Edit', delete: 'Delete',
+        confirmDelete: 'Delete the notice "{title}" and its attached files?', attachFiles: 'Attach file', files: 'Files',
+        download: 'Download', removeFile: 'Remove file', uploading: 'Uploading...', by: 'by',
+        loadError: 'Could not load the notices.', saveError: 'Could not save the notice.',
+        uploadError: 'Could not upload the file.', maxInfo: 'Up to 10 files per notice.',
+      },
+      rolesPage: {
+        title: 'Role permissions', subtitle: 'Choose what each role can do in the panel. Changes apply immediately.',
+        permission: 'Permission', locked: 'S.Adm only', lockedHint: 'S.Adm exclusive: cannot be given to other roles.',
+        save: 'Save', saving: 'Saving...', saved: 'Saved!', reset: 'Restore defaults',
+        confirmReset: 'Reset the permissions of {role} to the defaults?', loadError: 'Could not load the permissions.',
+        saveError: 'Could not save.', unsavedChanges: 'Unsaved changes', alwaysAll: 'S.Adm always has every permission.',
+        groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log' },
+        names: {
+          'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
+          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts',
+          'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
+          'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
+          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices',
+          'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'roles.manage': 'Edit role permissions',
+          'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)',
+        },
       },
       header: {
         role: { admin: 'Admin', mod: 'Mod' },

@@ -81,9 +81,8 @@ export interface Clan {
   id: string;
   name: string;
   villageId: VillageId;
-  levelRequirement: number;
-  priceRyo: number;
   description: string;
+  image?: string | null;
 }
 
 export const clans: Clan[] = [
@@ -91,8 +90,6 @@ export const clans: Clan[] = [
     id: 'yagyu',
     name: 'Clã Yagyu',
     villageId: 'mist',
-    levelRequirement: 10,
-    priceRyo: 1000,
     description:
       'Começou como sobreviventes de guerra e se tornou uma família de senhores feudais, com riqueza suficiente para treinar shinobis poderosos rapidamente.',
   },
@@ -100,40 +97,30 @@ export const clans: Clan[] = [
     id: 'sasayaki',
     name: 'Clã Sasayaki',
     villageId: 'leaf',
-    levelRequirement: 10,
-    priceRyo: 2000,
     description: 'Um dos clãs oferecidos na criação de personagem da Vila da Folha.',
   },
   {
     id: 'muteki',
     name: 'Clã Muteki',
     villageId: 'leaf',
-    levelRequirement: 10,
-    priceRyo: 2000,
     description: 'Um dos clãs oferecidos na criação de personagem da Vila da Folha.',
   },
   {
     id: 'suwa',
     name: 'Clã Suwa',
     villageId: 'leaf',
-    levelRequirement: 10,
-    priceRyo: 2000,
     description: 'Um dos clãs oferecidos na criação de personagem da Vila da Folha.',
   },
   {
     id: 'ukiyo',
     name: 'Clã Ukiyo',
     villageId: 'leaf',
-    levelRequirement: 10,
-    priceRyo: 2000,
     description: 'Um dos clãs oferecidos na criação de personagem da Vila da Folha.',
   },
   {
     id: 'hayashi',
     name: 'Clã Hayashi',
     villageId: 'sand',
-    levelRequirement: 10,
-    priceRyo: 1000,
     description: 'Um dos clãs oferecidos na criação de personagem da Vila da Areia.',
   },
 ];

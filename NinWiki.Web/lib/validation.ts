@@ -105,9 +105,8 @@ const slugMessage = 'Use só letras minúsculas, números e hífen (ex: leaf-vil
 export const clanSchema = z.object({
   id: z.string().min(1, 'O id do clã é obrigatório.').max(50).regex(slugRegex, slugMessage),
   name: z.string().min(1, 'O nome do clã é obrigatório.').max(100),
-  levelRequirement: z.coerce.number().int().min(0, 'Nível não pode ser negativo.'),
-  priceRyo: z.coerce.number().int().min(0, 'Preço não pode ser negativo.'),
   description: z.string(),
+  image: z.string().max(500).nullable().optional(),
 });
 
 export const villageSchema = z

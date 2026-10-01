@@ -12,7 +12,8 @@ COMO EVOLUIR "COM O TEMPO":
     SUPER_ONLY_PERMISSIONS. Quem nao e' S.Adm nem descobre que o endpoint
     existe (recebe 404, nao 403) e a permissao nunca aparece pra ele em
     /auth/me - o front nao mostra o botao, e a API nega mesmo assim.
-  - Mudar o que um cargo pode: e' so' mexer na tabela ROLE_PERMISSIONS.
+  - Mudar o que um cargo pode: o S.Adm edita pelo painel (/admin/permissions); o padrao
+    "de fabrica" fica em DEFAULT_ROLE_PERMISSIONS e os ajustes no banco (role_permissions).
 
 REGRAS DE CARGO (hierarquia) ficam abaixo e em app/core/staff_service.py:
 quem esta' embaixo nunca mexe em quem esta' em cima.
@@ -50,6 +51,13 @@ class Permission(str, Enum):
     STAFF_EDIT = "staff.edit"             # trocar cargo
     STAFF_DEACTIVATE = "staff.deactivate"  # desativar/reativar
 
+    # --- Quadro de avisos (Visao Geral do painel) ---
+    NOTICE_VIEW = "notices.view"          # ler avisos e baixar os arquivos anexados
+    NOTICE_MANAGE = "notices.manage"      # postar/editar/apagar avisos e anexar arquivos
+
+    # --- Cargos e permissoes (so' S.Adm: edita o que cada cargo pode) ---
+    ROLES_MANAGE = "roles.manage"
+
     # --- Log ---
     AUDIT_VIEW = "audit.view"             # log de CONTEUDO
     AUDIT_VIEW_ALL = "audit.view_all"     # log COMPLETO (login, equipe, seguranca, IPs) - so' S.Adm
@@ -60,6 +68,12 @@ class Permission(str, Enum):
 # crescendo com o tempo, conforme o S.Adm ganhar poderes exclusivos.
 SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.AUDIT_VIEW_ALL,
+    # A parte "Equipe" do painel e' so' do S.Adm.
+    Permission.STAFF_VIEW,
+    Permission.STAFF_CREATE,
+    Permission.STAFF_EDIT,
+    Permission.STAFF_DEACTIVATE,
+    Permission.ROLES_MANAGE,
 })
 
 _CREATOR: frozenset[Permission] = frozenset({
@@ -69,6 +83,7 @@ _CREATOR: frozenset[Permission] = frozenset({
     Permission.POST_EDIT,             # so' em RASCUNHO
     Permission.UPLOAD_CREATE,
     Permission.TRANSLATION_RETRANSLATE,
+    Permission.NOTICE_VIEW,
 })
 
 _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
@@ -79,10 +94,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.POST_DELETE,
     Permission.LORE_EDIT,
     Permission.LORE_DELETE,
-    Permission.STAFF_VIEW,
-    Permission.STAFF_CREATE,          # so' cargos abaixo do dele (Creator)
-    Permission.STAFF_EDIT,
-    Permission.STAFF_DEACTIVATE,
+    Permission.NOTICE_MANAGE,
     Permission.AUDIT_VIEW,
 })
 
@@ -90,11 +102,43 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
 # adicionado depois - nao precisa lembrar de atualizar esta linha).
 _SUPER_ADMIN: frozenset[Permission] = frozenset(Permission)
 
-ROLE_PERMISSIONS: dict[StaffRole, frozenset[Permission]] = {
+# Padrao "de fabrica" de cada cargo (o que vale quando ninguem editou nada).
+DEFAULT_ROLE_PERMISSIONS: dict[StaffRole, frozenset[Permission]] = {
     StaffRole.CREATOR: _CREATOR,
     StaffRole.ADMIN: _ADMIN,
     StaffRole.SUPER_ADMIN: _SUPER_ADMIN,
 }
+
+# Permissoes EFETIVAS = padrao + ajustes que o S.Adm fez pelo painel (tabela
+# role_permissions, carregada por app/core/role_config.py). E' este dict que
+# has_permission() consulta. O S.Adm nunca e' ajustavel: sempre tem tudo.
+ROLE_PERMISSIONS: dict[StaffRole, frozenset[Permission]] = dict(DEFAULT_ROLE_PERMISSIONS)
+
+# Cargos cujas permissoes o S.Adm pode editar.
+EDITABLE_ROLES: tuple[StaffRole, ...] = (StaffRole.ADMIN, StaffRole.CREATOR)
+
+
+def grantable_permissions() -> list[Permission]:
+    """Permissoes que podem ser dadas a Adm/Creator (as exclusivas do S.Adm ficam de fora)."""
+    return [p for p in Permission if p not in SUPER_ONLY_PERMISSIONS]
+
+
+def apply_overrides(overrides: dict[StaffRole, dict[str, bool]]) -> None:
+    """
+    Recalcula ROLE_PERMISSIONS a partir do padrao + ajustes ({cargo: {permissao: liberada?}}).
+    Ignora, por seguranca: cargo nao editavel, permissao desconhecida e permissao exclusiva do S.Adm.
+    """
+    valid = {p.value: p for p in grantable_permissions()}
+    new = dict(DEFAULT_ROLE_PERMISSIONS)
+    for role in EDITABLE_ROLES:
+        perms = set(DEFAULT_ROLE_PERMISSIONS[role])
+        for name, granted in overrides.get(role, {}).items():
+            perm = valid.get(name)
+            if perm is None:
+                continue
+            (perms.add if granted else perms.discard)(perm)
+        new[role] = frozenset(perms - SUPER_ONLY_PERMISSIONS)
+    ROLE_PERMISSIONS.update(new)
 
 # Hierarquia: numero maior = cargo mais alto.
 ROLE_RANK: dict[StaffRole, int] = {

@@ -68,7 +68,13 @@ cd NinWiki.Web && npm run typecheck && npm run lint && npm run build
 - **Conteúdo:** menu lateral do `/admin` → Conteúdo, Blog, Jutsus, Masteries, Vilas, Organizações. Cada item tem
   rascunho/publicado, imagem (upload até `MAX_UPLOAD_SIZE_MB`), histórico de edições e tradução automática PT→EN
   (se `DEEPL_API_KEY` estiver preenchida).
-- **Equipe:** `/admin/staff` ou pelo bot (`/equipe listar|adicionar|cargo|desativar|reativar`).
+- **Quadro de avisos** (Visão Geral): todos da equipe leem e baixam os arquivos; **S.Adm e Adm** postam, fixam, editam, apagam e
+  anexam arquivos (até 10 por aviso, `MAX_NOTICE_FILE_MB` MB cada; executáveis e HTML são recusados). Os arquivos ficam em
+  `NinWiki.Api/staff_files/` (privados: só baixam logados) — faça backup dessa pasta junto com `uploads/`.
+- **Vilas, Clãs e Organizações:** `/admin/villages` (cada clã tem nome, descrição e **imagem** com a logo e a roupa) e
+  `/admin/organizations` (menu lateral → *Organizations*; liga cada organização às vilas em que atua).
+- **Equipe** (`/admin/staff`, ou pelo bot `/equipe ...`) e **Permissões** (`/admin/permissions`): **só o S.Adm** enxerga.
+  Em *Permissões* o S.Adm liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora, com "Restaurar padrão".
 - **Log geral:** `/admin/audit-log` mostra quem fez o quê, de onde (painel ou bot) e o IP.
 
 ---
@@ -87,7 +93,7 @@ e 1 banco PostgreSQL.
 2. **Banco:** crie um PostgreSQL (painel da SquareCloud → *Databases*) ou use um externo (Neon, Supabase). Pegue a URL
    de conexão e converta para o formato da API: `postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/BANCO`
    (se o provedor exigir SSL, acrescente `?ssl=require`).
-3. **Uploads de imagem** ficam em disco local (`NinWiki.Api/uploads`). Fazer um novo deploy do app pode **apagar essa pasta**.
+3. **Uploads de imagem** (`NinWiki.Api/uploads`) e **arquivos do quadro de avisos** (`NinWiki.Api/staff_files`) ficam em disco local. Fazer um novo deploy do app pode **apagar essas pastas**.
    Faça backup antes de redeployar (baixe os arquivos pelo painel) ou, no futuro, migre para um armazenamento externo (S3/R2).
 4. Segredos ficam no arquivo `.env` **dentro do zip enviado** — nunca no Git.
 
