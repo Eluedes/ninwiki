@@ -77,7 +77,7 @@ def set_session_cookie(response: Response, token: str) -> None:
         max_age=settings.session_hours * 3600,
         httponly=True,                 # JavaScript nao le' esse cookie
         secure=settings.cookie_secure,  # so' HTTPS fora do ambiente local
-        samesite="lax",                # nao vai em POST vindo de outro site (defesa CSRF)
+        samesite=settings.session_samesite,                # nao vai em POST vindo de outro site (defesa CSRF)
         path="/",
     )
 
@@ -86,13 +86,13 @@ def set_reader_cookie(response: Response, token: str) -> None:
     """Grava o cookie de sessao do leitor (httpOnly, SameSite=Lax, Secure fora do local)."""
     response.set_cookie(
         READER_COOKIE, token, max_age=READER_SESSION_DAYS * 86400,
-        httponly=True, secure=settings.cookie_secure, samesite="lax", path="/",
+        httponly=True, secure=settings.cookie_secure, samesite=settings.session_samesite, path="/",
     )
 
 
 def clear_reader_cookie(response: Response) -> None:
     """Apaga o cookie de sessao do leitor (sair)."""
-    response.delete_cookie(READER_COOKIE, path="/", httponly=True, secure=settings.cookie_secure, samesite="lax")
+    response.delete_cookie(READER_COOKIE, path="/", httponly=True, secure=settings.cookie_secure, samesite=settings.session_samesite)
 
 
 def set_return_cookie(response: Response, value: str) -> None:
@@ -114,7 +114,7 @@ def safe_return_path(path: str | None) -> str:
 
 def clear_session_cookie(response: Response) -> None:
     """Apaga o cookie de sessao (logout)."""
-    response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, secure=settings.cookie_secure, samesite="lax")
+    response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, secure=settings.cookie_secure, samesite=settings.session_samesite)
 
 
 def set_state_cookie(response: Response, state: str) -> None:

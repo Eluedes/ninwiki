@@ -82,6 +82,12 @@ class Settings(BaseSettings):
     # log. Ligado sem proxy, qualquer um forjaria o IP que aparece no log.
     trust_proxy_headers: bool = False
 
+    # SameSite do cookie de SESSAO (equipe e leitor). "lax" (padrao, o mais seguro) exige site e API no MESMO site
+    # (ex: wiki.dominio.com + api.dominio.com). Com enderecos *.squareweb.app (sites diferentes) o login so' persiste com
+    # "none" (exige HTTPS; navegadores que bloqueiam cookie de terceiros, como o Safari, continuam sem funcionar).
+    # Solucao de verdade: dominio proprio + "lax". "none" so' vale fora de development.
+    cookie_samesite: str = "lax"
+
     # Limite de tentativas (ver app/core/rate_limit.py). Por IP.
     login_requests_per_minute: int = 30   # chamadas de login por minuto
     login_fail_limit: int = 5             # logins negados tolerados...
@@ -159,6 +165,11 @@ class Settings(BaseSettings):
         return self.environment == "development"
 
     @property
+    def session_samesite(self) -> str:
+        """Valor do SameSite do cookie de sessao ("lax" ou "none")."""
+        return self.cookie_samesite.strip().lower()
+
+    @property
     def cookie_secure(self) -> bool:
         """Cookie so' trafega por HTTPS fora do ambiente local."""
         return not self.is_development
@@ -190,6 +201,10 @@ class Settings(BaseSettings):
                 )
             if len(self.jwt_secret_key) < 32 or self.jwt_secret_key.startswith("troque"):
                 raise ValueError("JWT_SECRET_KEY precisa ter 32+ caracteres aleatorios fora de development.")
+        if self.session_samesite not in ("lax", "none"):
+            raise ValueError("COOKIE_SAMESITE precisa ser 'lax' ou 'none'.")
+        if self.session_samesite == "none" and self.is_development:
+            raise ValueError("COOKIE_SAMESITE=none exige HTTPS: use so' fora de development.")
         self.super_admin_ids  # valida o formato dos IDs ja' na inicializacao
         return self
 

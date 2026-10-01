@@ -13,6 +13,25 @@ for v in SQUARE_API_KEY APP_ID APP_ENV; do
   fi
 done
 
+# Secrets colados no GitHub costumam trazer espaço/quebra de linha no fim: no cabeçalho HTTP isso invalida a chave.
+SQUARE_API_KEY="$(printf '%s' "$SQUARE_API_KEY" | tr -d '[:space:]')"
+APP_ID="$(printf '%s' "$APP_ID" | tr -d '[:space:]')"
+# O ID do app é só letras e números (32 caracteres). Se veio outra coisa (URL inteira, "id: ...", aspas), a URL do envio quebra.
+if ! [[ "$APP_ID" =~ ^[A-Za-z0-9]+$ ]]; then
+  echo "::error::O Secret do ID do app está inválido (deve ser só o ID, ex.: 3f9a...; sem URL, aspas, espaços ou o nome do campo). Valor recebido tem ${#APP_ID} caracteres."
+  exit 1
+fi
+echo "Chave: ${#SQUARE_API_KEY} caracteres | ID do app: ${APP_ID}"
+
+# Diagnóstico (só informa, não bloqueia): a SquareCloud reconhece a chave e esse ID de app?
+CHECK=$(curl -sS -o /dev/null -w '%{http_code}' "https://api.squarecloud.app/v2/apps/${APP_ID}" -H "Authorization: ${SQUARE_API_KEY}" || echo "000")
+case "$CHECK" in
+  200) echo "Conferência: chave e ID do app reconhecidos (HTTP 200)." ;;
+  401|403) echo "::warning::A SquareCloud recusou a chave (HTTP $CHECK). Gere uma nova em 'perfil > API Key' e atualize o Secret SQUARE_API_KEY." ;;
+  404) echo "::warning::App '${APP_ID}' não encontrado para esta chave (HTTP 404). Confira o Secret SQUARE_APP_ID_* e se o app é da mesma conta da chave." ;;
+  *) echo "::warning::Conferência inconclusiva (HTTP $CHECK) - seguindo para o envio." ;;
+esac
+
 # Grava o .env só aqui dentro do runner (nunca vai pro Git).
 # (tr -d '\r': um Secret colado do Windows vem com quebra de linha CRLF - o "\r" ficaria grudado no fim de cada valor.)
 printf '%s\n' "$APP_ENV" | tr -d '\r' > "$DIR/.env"
@@ -28,15 +47,23 @@ if [ -n "${DB_SSL_CA:-}${DB_SSL_CERT:-}${DB_SSL_KEY:-}" ]; then
 fi
 
 rm -f "$ZIP"
-( cd "$DIR" && zip -qr "$ZIP" . \
-    -x "node_modules/*" ".next/*" "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" \
-       "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" ".git/*" )
+# PREBUILT=true: a pasta ja' e' o pacote final (site compilado: node_modules e .next sao justamente o que deve ir).
+if [ "${PREBUILT:-false}" = "true" ]; then
+  ( cd "$DIR" && zip -qr "$ZIP" . -x ".git/*" )
+else
+  ( cd "$DIR" && zip -qr "$ZIP" . \
+      -x "node_modules/*" ".next/*" "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" \
+         "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" ".git/*" )
+fi
 
 [ -f "$DIR/squarecloud.app" ] || { echo "::error::squarecloud.app não encontrado em $DIR"; exit 1; }
 
+echo "Conteúdo do pacote (arquivos na raiz do zip):"
+unzip -l "$ZIP" | awk 'NR>3 {print $4}' | grep -v '/' | grep -v '^$' | sort | head -40 || true
 echo "Enviando $(du -h "$ZIP" | cut -f1) para o app ${APP_ID}..."
 RESTART_FLAG="false"; [ "${RESTART:-true}" = "true" ] && RESTART_FLAG="true"
 
+RESP=resp.json
 HTTP=$(curl -sS -o resp.json -w '%{http_code}' -X POST \
   "https://api.squarecloud.app/v2/apps/${APP_ID}/commit?restart=${RESTART_FLAG}" \
   -H "Authorization: ${SQUARE_API_KEY}" \
@@ -45,7 +72,10 @@ HTTP=$(curl -sS -o resp.json -w '%{http_code}' -X POST \
 echo "HTTP ${HTTP}"
 # Mostra a resposta mas nunca o .env.
 cat resp.json; echo
-rm -rf resp.json "$ZIP" "$DIR/.env" "$DIR/certs"
+cp resp.json /tmp/square-resp.json; rm -rf resp.json "$ZIP" "$DIR/.env" "$DIR/certs"
+RESP=/tmp/square-resp.json
 
-[ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || { echo "::error::Deploy falhou (HTTP $HTTP)"; exit 1; }
+[ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || { echo "::error::Deploy falhou (HTTP $HTTP). Veja a resposta da SquareCloud acima."; exit 1; }
+# A SquareCloud pode responder 200 com {"status":"error",...}: nesse caso também é falha.
+if grep -q '"status"[[:space:]]*:[[:space:]]*"error"' "$RESP" 2>/dev/null; then echo "::error::A SquareCloud respondeu com erro (corpo acima)."; exit 1; fi
 echo "Deploy enviado."

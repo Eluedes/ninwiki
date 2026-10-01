@@ -30,6 +30,12 @@ const nextConfig = {
   // confiáveis no servidor até existir uma política de upload completa.
   images: { unoptimized: true },
 
+  // Build "standalone" (so' no deploy automatico: o workflow define STANDALONE_BUILD=true). O site e' COMPILADO no GitHub
+  // (que tem memoria de sobra) e a SquareCloud so' RODA o resultado (`node server.js`, ~200 MB) - compilar la' estoura a RAM
+  // e o processo morre com "Killed". Localmente (npm run dev / build / start) nada muda.
+  // outputFileTracingRoot fixa a raiz do rastreio nesta pasta (senao um package-lock.json em outra pasta muda a estrutura gerada).
+  ...(process.env.STANDALONE_BUILD === 'true' ? { output: 'standalone', outputFileTracingRoot: __dirname } : {}),
+
   // Nao anuncia "X-Powered-By: Next.js" (menos informacao para quem faz varredura de versoes vulneraveis).
   poweredByHeader: false,
 
