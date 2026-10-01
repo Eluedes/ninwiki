@@ -39,6 +39,14 @@ FILES_DIR = Path(__file__).resolve().parent.parent.parent / "staff_files"
 FILES_DIR.mkdir(exist_ok=True)
 
 MAX_FILES_PER_NOTICE = 10
+# Compactados aceitos de proposito (a equipe troca pacotes de arquivos): .zip, .rar e .7z. Para esses, a ASSINATURA
+# dos primeiros bytes tem que bater com a extensao - um .exe renomeado para .zip e' recusado. O download e' sempre
+# como anexo (nunca abre/executa no navegador); o conteudo de dentro e' responsabilidade de quem baixa (antivirus!).
+ARCHIVE_SIGNATURES: dict[str, tuple[bytes, ...]] = {
+    ".zip": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
+    ".rar": (b"Rar!\x1a\x07\x00", b"Rar!\x1a\x07\x01\x00"),
+    ".7z": (b"7z\xbc\xaf\x27\x1c",),
+}
 # Tipos que executam codigo ou renderizam HTML/script - nunca aceitos como anexo.
 BLOCKED_EXTENSIONS = {
     ".exe", ".bat", ".cmd", ".com", ".scr", ".msi", ".dll", ".js", ".mjs", ".vbs", ".ps1", ".sh",
@@ -142,9 +150,12 @@ async def add_file(
     max_bytes = settings.max_notice_file_mb * 1024 * 1024
     content = await file.read(max_bytes + 1)
     if len(content) > max_bytes:
-        raise HTTPException(status_code=413, detail=f"Arquivo maior que {settings.max_notice_file_mb}MB")
+        raise HTTPException(status_code=413, detail=f"File larger than {settings.max_notice_file_mb}MB")
     if not content:
-        raise HTTPException(status_code=400, detail="Arquivo vazio")
+        raise HTTPException(status_code=400, detail="Empty file")
+    signatures = ARCHIVE_SIGNATURES.get(Path(filename).suffix.lower())
+    if signatures and not content.startswith(signatures):
+        raise HTTPException(status_code=415, detail="This file is not a valid archive (the content does not match its extension)")
 
     stored = secrets.token_hex(16)
     (FILES_DIR / stored).write_bytes(content)

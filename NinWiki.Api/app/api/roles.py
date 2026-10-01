@@ -26,7 +26,7 @@ from app.schemas.roles import PermissionInfo, RolePermissionsRead, RolePermissio
 router = APIRouter(prefix="/roles", tags=["roles"])
 
 _GROUPS = {"content": "content", "posts": "posts", "lore": "lore", "uploads": "tools", "translation": "tools",
-           "notices": "notices", "staff": "staff", "roles": "staff", "audit": "audit", "errors": "audit"}
+           "notices": "notices", "staff": "staff", "roles": "staff", "audit": "audit", "errors": "audit", "comments": "posts"}
 
 
 def _group(p: Permission) -> str:

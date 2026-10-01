@@ -30,7 +30,11 @@ import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
+import Image from '@tiptap/extension-image';
 import { Ficha } from '@/lib/tiptap-extensions/ficha';
+import {
+  BlogMention, HeadingWithId, PublicDetails, PublicDetailsContent, PublicDetailsSummary, Video,
+} from '@/lib/tiptap-extensions/blog';
 
 // MESMAS extensoes do editor (components/admin/rich-text-editor.tsx) -
 // tem que bater exatamente, senao uma marca (cor, alinhamento...) que
@@ -41,8 +45,9 @@ import { Ficha } from '@/lib/tiptap-extensions/ficha';
 // estatico da extensao, nunca a parte interativa React (essa so'
 // existe do lado do editor, ver lib/tiptap-extensions/ficha-editable.ts).
 const extensions = [
-  // link e underline do StarterKit desligados: sao adicionados abaixo (evita extensao duplicada).
-  StarterKit.configure({ link: false, underline: false }),
+  // link, underline e heading do StarterKit desligados: sao adicionados abaixo (evita extensao duplicada).
+  StarterKit.configure({ link: false, underline: false, heading: false }),
+  HeadingWithId, // titulo com `id` (ancora do indice do post)
   TextStyle,
   Color,
   Underline,
@@ -54,6 +59,13 @@ const extensions = [
   TableHeader,
   TableCell,
   Ficha,
+  // Blocos do blog (imagem, video, mencao, spoiler): inofensivos nos outros campos, que simplesmente nao os usam.
+  Image.configure({ HTMLAttributes: { loading: 'lazy', class: 'post-image' } }),
+  Video,
+  BlogMention,
+  PublicDetails,
+  PublicDetailsSummary,
+  PublicDetailsContent,
 ];
 
 /** True se o texto e' um documento Tiptap (JSON) e nao texto simples antigo. */

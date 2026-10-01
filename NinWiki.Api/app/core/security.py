@@ -22,6 +22,9 @@ from app.core.config import settings
 from app.models.users import User
 
 SESSION_COOKIE = "ninwiki_session"
+READER_COOKIE = "ninwiki_reader"      # sessao do LEITOR do site (comenta/curte) - separada da sessao da equipe
+RETURN_COOKIE = "ninwiki_return"      # pagina para onde o leitor volta depois do login com o Discord
+READER_SESSION_DAYS = 14
 STATE_COOKIE = "ninwiki_oauth_state"  # guarda o "state" do OAuth2 (anti-CSRF do login)
 
 # IP de quem esta' chamando, visivel pra' qualquer codigo dentro da mesma
@@ -41,10 +44,20 @@ def create_session_token(user: User) -> str:
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
-def read_session_token(token: str) -> dict | None:
-    """Devolve os dados do token, ou None se for invalido/expirado/forjado (nunca lanca)."""
+def create_reader_token(reader_id: str) -> str:
+    """JWT da sessao de um LEITOR (typ="reader"): nao serve como sessao da equipe e vice-versa."""
+    now = datetime.now(timezone.utc)
+    payload = {"sub": reader_id, "typ": "reader", "ver": 0, "iat": now, "exp": now + timedelta(days=READER_SESSION_DAYS)}
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+def read_session_token(token: str, typ: str | None = None) -> dict | None:
+    """
+    Devolve os dados do token, ou None se for invalido/expirado/forjado (nunca lanca). `typ` e' o TIPO esperado:
+    None = sessao da equipe (token de leitor e' recusado aqui) e "reader" = sessao de leitor (token da equipe e' recusado).
+    """
     try:
-        return jwt.decode(
+        data = jwt.decode(
             token,
             settings.jwt_secret_key,
             # SEMPRE fixar a lista de algoritmos: aceitar o que o proprio
@@ -54,6 +67,7 @@ def read_session_token(token: str) -> dict | None:
         )
     except jwt.PyJWTError:
         return None
+    return data if data.get("typ") == typ else None
 
 
 def set_session_cookie(response: Response, token: str) -> None:
@@ -66,6 +80,36 @@ def set_session_cookie(response: Response, token: str) -> None:
         samesite="lax",                # nao vai em POST vindo de outro site (defesa CSRF)
         path="/",
     )
+
+
+def set_reader_cookie(response: Response, token: str) -> None:
+    """Grava o cookie de sessao do leitor (httpOnly, SameSite=Lax, Secure fora do local)."""
+    response.set_cookie(
+        READER_COOKIE, token, max_age=READER_SESSION_DAYS * 86400,
+        httponly=True, secure=settings.cookie_secure, samesite="lax", path="/",
+    )
+
+
+def clear_reader_cookie(response: Response) -> None:
+    """Apaga o cookie de sessao do leitor (sair)."""
+    response.delete_cookie(READER_COOKIE, path="/", httponly=True, secure=settings.cookie_secure, samesite="lax")
+
+
+def set_return_cookie(response: Response, value: str) -> None:
+    """Guarda por 10 min "reader|/pagina" (login de leitor e a pagina de volta) durante o vai-e-volta com o Discord."""
+    response.set_cookie(RETURN_COOKIE, value, max_age=600, httponly=True, secure=settings.cookie_secure, samesite="lax", path="/")
+
+
+def clear_return_cookie(response: Response) -> None:
+    """Apaga o cookie de retorno do login."""
+    response.delete_cookie(RETURN_COOKIE, path="/", httponly=True, secure=settings.cookie_secure, samesite="lax")
+
+
+def safe_return_path(path: str | None) -> str:
+    """So' aceita caminho interno do site ("/blog/x"); qualquer outra coisa (URL externa, "//", "\\") vira "/blog" - evita open redirect."""
+    if not path or not path.startswith("/") or path.startswith("//") or "\\" in path or len(path) > 200 or any(ord(c) < 32 for c in path):
+        return "/blog"
+    return path
 
 
 def clear_session_cookie(response: Response) -> None:

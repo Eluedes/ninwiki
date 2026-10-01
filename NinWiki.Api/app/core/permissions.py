@@ -59,6 +59,9 @@ class Permission(str, Enum):
     # --- Cargos e permissoes (so' S.Adm: edita o que cada cargo pode) ---
     ROLES_MANAGE = "roles.manage"
 
+    # --- Comentarios dos leitores no blog (esconder/apagar comentario, banir leitor) ---
+    COMMENTS_MODERATE = "comments.moderate"
+
     # --- Erros do wiki (traceback, IPs - so' o S.Adm) ---
     ERRORS_VIEW = "errors.view"
 
@@ -100,6 +103,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.LORE_EDIT,
     Permission.LORE_DELETE,
     Permission.NOTICE_MANAGE,
+    Permission.COMMENTS_MODERATE,
     Permission.AUDIT_VIEW,
 })
 

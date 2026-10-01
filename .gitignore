@@ -97,3 +97,9 @@ NinWiki.Api/backups/
 *.dump
 NinWiki.Bot/error_state.json
 NinWiki.Bot/error_state.tmp
+
+# Certificados e chaves do banco (TLS da SquareCloud) - SECRETOS, nunca vao pro Git.
+NinWiki.Api/certs/
+*.pem
+*.key
+NinWiki.Api/**/client.*

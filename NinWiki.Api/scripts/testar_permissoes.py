@@ -101,6 +101,12 @@ ROTAS_PUBLICAS = {
     ("GET", "/jutsus"), ("GET", "/jutsus/{jutsu_id}"),
     ("GET", "/villages"), ("GET", "/villages/{village_id}"), ("GET", "/organizations"),
     ("GET", "/posts"), ("GET", "/posts/{post_id}"), ("GET", "/posts/slug/{slug}"),
+    ("GET", "/tags"),
+    # engajamento: leitura publica; escrita exige LEITOR logado (cookie proprio, ver reader_auth.py)
+    ("GET", "/posts/{slug}/engagement"), ("GET", "/posts/{slug}/comments"),
+    ("PUT", "/posts/{slug}/like"), ("DELETE", "/posts/{slug}/like"),
+    ("POST", "/posts/{slug}/comments"), ("DELETE", "/posts/{slug}/comments/{comment_id}"),
+    ("GET", "/auth/reader/me"), ("POST", "/auth/reader/logout"), ("POST", "/auth/reader/dev-login"),
     ("GET", "/professions"), ("GET", "/ninja-ranks"), ("GET", "/story-arcs"), ("GET", "/summons"),
     # escrita "publica" de proposito: cada uma tem a sua propria protecao
     ("POST", "/auth/dev-login"),   # so' funciona em development + confere a origem
@@ -160,6 +166,8 @@ async def limpar(inicio: datetime) -> None:
         await db.execute(text("DELETE FROM content_items WHERE slug LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM jutsus WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM posts WHERE slug LIKE :p"), {"p": f"{SLUG}%"})
+        await db.execute(text("DELETE FROM tags WHERE id LIKE :p"), {"p": f"{SLUG}%"})
+        await db.execute(text("DELETE FROM readers WHERE discord_id BETWEEN :a AND :b"), {"a": BASE + 30, "b": BASE + 40})
         await db.execute(text("DELETE FROM organizations WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM villages WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM notices WHERE title LIKE :p"), {"p": f"{SLUG}%"})
@@ -824,6 +832,15 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.post(f"/notices/{nid}/files", files={"file": ("../../etc/passwd.txt", b"abc", "text/plain")}, headers=A)
     nomes = [f["filename"] for f in r.json().get("files", [])]
     check("nome com ../ vira so' o nome do arquivo", "passwd.txt" in nomes and not any("/" in n for n in nomes), str(nomes))
+    # compactados: .zip/.rar/.7z aceitos se a assinatura bater com a extensao
+    for nome, conteudo in (("pacote.zip", b"PK\x03\x04" + b"\x00" * 30), ("pacote.rar", b"Rar!\x1a\x07\x00" + b"\x00" * 30),
+                           ("pacote.rar", b"Rar!\x1a\x07\x01\x00" + b"\x00" * 30), ("pacote.7z", b"7z\xbc\xaf\x27\x1c" + b"\x00" * 30)):
+        r = await c.post(f"/notices/{nid}/files", files={"file": (nome, conteudo, "application/octet-stream")}, headers=A)
+        check(f"anexo compactado {nome} valido e' aceito (201)", r.status_code == 201, f"{r.status_code} {r.text[:80]}")
+    r = await c.post(f"/notices/{nid}/files", files={"file": ("falso.zip", b"MZ\x90\x00 isto e' um exe", "application/zip")}, headers=A)
+    check(".zip falso (conteudo nao e' zip) e' recusado (415)", r.status_code == 415)
+    r = await c.post(f"/notices/{nid}/files", files={"file": ("falso.rar", b"PK\x03\x04 zip com nome de rar", "application/x-rar")}, headers=A)
+    check(".rar com conteudo de zip tambem e' recusado (415)", r.status_code == 415)
     for ruim in ("virus.exe", "pagina.html", "x.svg", "run.sh"):
         r = await c.post(f"/notices/{nid}/files", files={"file": (ruim, b"abc", "text/plain")}, headers=A)
         check(f"anexo {ruim} e' recusado (415)", r.status_code == 415)
@@ -1172,6 +1189,215 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         r = await c.get("/health/ready")
     check("/health/ready com banco fora do ar responde 503", r.status_code == 503 and r.json()["status"] == "down")
     error_log.reset_throttle()
+
+    secao("20) Blog: tags, agendamento, midia no texto, leitores, curtidas, comentarios e moderacao")
+    from app.core.security import READER_COOKIE, safe_return_path
+    from app.api.engagement import clean_comment
+    from app.schemas.validators import validate_rich_content
+
+    # --- tags ---
+    r = await c.get("/tags")
+    check("GET /tags e' publico e traz as tags iniciais", r.status_code == 200 and any(t["id"] == "update" for t in r.json()))
+    tag_nome = f"{SLUG} tag"
+    r = await c.post("/tags", json={"name": tag_nome}, headers=C)
+    check("Creator cria uma tag (posts.create)", r.status_code == 201 and r.json()["id"] == f"{SLUG}-tag", r.text)
+    check("tag repetida -> 409", (await c.post("/tags", json={"name": tag_nome}, headers=C)).status_code == 409)
+    check("anonimo nao cria tag", (await c.post("/tags", json={"name": "abc def"})).status_code == 401)
+    check("Creator nao apaga tag (posts.delete)", (await c.delete(f"/tags/{SLUG}-tag", headers=C)).status_code == 403)
+
+    def corpo_post(sufixo, **extra):
+        """Corpo valido de post de teste."""
+        return {"slug": f"{SLUG}-b{sufixo}", "title": f"TESTE blog {sufixo}", "excerpt": "resumo", "content": "texto simples", **extra}
+
+    r = await c.post("/posts", json=corpo_post("1", status="published", tags=[f"{SLUG}-tag", "update"]), headers=A)
+    check("Adm cria post publicado com 2 tags", r.status_code == 201 and len(r.json()["tags"]) == 2 and r.json()["publishedAt"], r.text)
+    check("post sem data: publishedAt nasce ao publicar", r.json()["isScheduled"] is False)
+    r = await c.get(f"/posts?tag={SLUG}-tag")
+    check("filtro ?tag= lista so' posts da tag", r.status_code == 200 and [p["slug"] for p in r.json()] == [f"{SLUG}-b1"], r.text)
+    r = await c.get("/tags")
+    check("contagem da tag so' conta posts no ar", next(t for t in r.json() if t["id"] == f"{SLUG}-tag")["postCount"] == 1)
+    check("tag inexistente num post -> 422", (await c.post("/posts", json=corpo_post("x", tags=["nao-existe-xyz"]), headers=A)).status_code == 422)
+    check("slug de tag invalido -> 422", (await c.post("/posts", json=corpo_post("y", tags=["Tag Ruim!"]), headers=A)).status_code == 422)
+    check("mais de 8 tags -> 422", (await c.post("/posts", json=corpo_post("z", tags=[f"t{i}" for i in range(9)]), headers=A)).status_code == 422)
+
+    # --- agendamento ---
+    futuro = (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()
+    r = await c.post("/posts", json=corpo_post("2", status="published", publishedAt=futuro), headers=A)
+    check("Adm agenda um post para o futuro", r.status_code == 201 and r.json()["isScheduled"] is True, r.text)
+    check("post agendado: anonimo recebe 404 por slug", (await c.get(f"/posts/slug/{SLUG}-b2")).status_code == 404)
+    check("post agendado: nao aparece na lista publica", all(p["slug"] != f"{SLUG}-b2" for p in (await c.get("/posts")).json()))
+    r = await c.get(f"/posts/slug/{SLUG}-b2", headers=A)
+    check("post agendado: a equipe ve (isScheduled)", r.status_code == 200 and r.json()["isScheduled"] is True)
+    r = await c.post("/posts", json=corpo_post("3", status="published", publishedAt=futuro), headers=C)
+    check("Creator nao agenda/publica (403)", r.status_code == 403)
+
+    # --- conteudo rico novo ---
+    def doc(*nodes):
+        """Documento Tiptap com os nos informados."""
+        return json.dumps({"type": "doc", "content": list(nodes)})
+    ok_nodes = [
+        {"type": "image", "attrs": {"src": "http://localhost:8000/uploads/a.png", "alt": "x"}},
+        {"type": "video", "attrs": {"src": "https://www.youtube-nocookie.com/embed/abc123"}},
+        {"type": "video", "attrs": {"src": "https://player.twitch.tv/?video=1&parent=x"}},
+        {"type": "paragraph", "content": [{"type": "mention", "attrs": {"id": "item:x", "label": "Kunai"}}]},
+        {"type": "details", "content": [{"type": "detailsSummary", "content": [{"type": "text", "text": "Spoiler"}]},
+                                        {"type": "detailsContent", "content": [{"type": "paragraph"}]}]},
+        {"type": "blockquote", "content": [{"type": "paragraph"}]},
+        {"type": "codeBlock", "content": [{"type": "text", "text": "x = 1"}]},
+    ]
+    r = await c.post("/posts", json=corpo_post("4", content=doc(*ok_nodes)), headers=C)
+    check("imagem, video, mencao, spoiler, citacao e codigo sao aceitos", r.status_code == 201, r.text)
+    for rotulo, no in [("imagem javascript:", {"type": "image", "attrs": {"src": "javascript:alert(1)"}}),
+                       ("imagem data:", {"type": "image", "attrs": {"src": "data:image/svg+xml,<svg/>"}}),
+                       ("video de site qualquer", {"type": "video", "attrs": {"src": "https://evil.example/x"}}),
+                       ("video youtube comum (fora do nocookie)", {"type": "video", "attrs": {"src": "https://www.youtube.com/embed/x"}})]:
+        r = await c.post("/posts", json=corpo_post("5", content=doc(no)), headers=C)
+        check(f"conteudo recusado: {rotulo}", r.status_code == 422, str(r.status_code))
+    for rotulo, attrs in [("mencao gigante", {"id": "x" * 200, "label": "a"}),
+                          ("mencao com link javascript:", {"id": "a", "label": "a", "href": "javascript:alert(1)"}),
+                          ("mencao com link para outro site", {"id": "a", "label": "a", "href": "//evil.example"})]:
+        try:
+            validate_rich_content(doc({"type": "mention", "attrs": attrs}))
+            check(f"{rotulo} recusada", False)
+        except ValueError:
+            check(f"{rotulo} recusada", True)
+
+    # --- SEO ---
+    r = await c.post("/posts", json=corpo_post("6", metaTitle="  Meu   titulo  ", metaDescription="d" * 201), headers=C)
+    check("meta description > 200 -> 422", r.status_code == 422)
+    r = await c.post("/posts", json=corpo_post("6", metaTitle="  Meu   titulo  ", metaDescription="curta"), headers=C)
+    check("campos de SEO sao salvos e limpos", r.status_code == 201 and r.json()["metaTitle"] == "Meu titulo" and r.json()["metaDescription"] == "curta", r.text)
+
+    # --- leitores: sessao separada da equipe ---
+    settings.dev_login_enabled = True
+    leitor_a, leitor_b = str(BASE + 30), str(BASE + 31)
+    r = await c.post("/auth/reader/dev-login", json={"discordId": leitor_a})
+    check("login de leitor (dev) funciona e grava cookie proprio", r.status_code == 200 and READER_COOKIE in r.headers.get("set-cookie", ""), r.text)
+    RA = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
+    c.cookies.clear()
+    r = await c.post("/auth/reader/dev-login", json={"discordId": leitor_b})
+    RB = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
+    c.cookies.clear()
+    r = await c.get("/auth/reader/me", headers=RA)
+    check("/auth/reader/me devolve o leitor (sem Discord ID)", r.status_code == 200 and r.json()["username"].startswith("Reader") and "discordId" not in r.json())
+    check("sem cookie /auth/reader/me devolve null", (await c.get("/auth/reader/me")).json() is None)
+    tok_leitor = RA["Cookie"].split("=", 1)[1]
+    check("token de LEITOR nao vale como sessao da equipe", (await c.get("/auth/me", headers={"Cookie": f"{SESSION_COOKIE}={tok_leitor}"})).status_code == 401)
+    check("token da EQUIPE nao vale como leitor", (await c.get("/auth/reader/me", headers={"Cookie": f"{READER_COOKIE}={create_session_token(adm)}"})).json() is None)
+    check("leitor nao acessa o painel", (await c.get("/staff", headers=RA)).status_code == 401)
+    settings.dev_login_enabled = False
+    check("dev-login de leitor desligado -> 404", (await c.post("/auth/reader/dev-login", json={"discordId": leitor_a})).status_code == 404)
+    settings.dev_login_enabled = True
+    check("safe_return_path barra open redirect",
+          safe_return_path("//evil.com") == "/blog" and safe_return_path("https://evil.com") == "/blog"
+          and safe_return_path("/\\evil.com") == "/blog" and safe_return_path("/blog/abc") == "/blog/abc")
+
+    # --- curtidas ---
+    post_slug = f"{SLUG}-b1"
+    check("curtir sem login -> 401", (await c.put(f"/posts/{post_slug}/like")).status_code == 401)
+    r = await c.put(f"/posts/{post_slug}/like", headers=RA)
+    check("leitor curte", r.status_code == 200 and r.json()["likeCount"] == 1 and r.json()["likedByMe"] is True, r.text)
+    r = await c.put(f"/posts/{post_slug}/like", headers=RA)
+    check("curtir de novo nao duplica", r.json()["likeCount"] == 1)
+    r = await c.put(f"/posts/{post_slug}/like", headers=RB)
+    check("outro leitor soma", r.json()["likeCount"] == 2)
+    r = await c.get(f"/posts/{post_slug}/engagement")
+    check("anonimo ve a contagem mas likedByMe=false", r.json()["likeCount"] == 2 and r.json()["likedByMe"] is False)
+    r = await c.delete(f"/posts/{post_slug}/like", headers=RB)
+    check("descurtir", r.json()["likeCount"] == 1 and r.json()["likedByMe"] is False)
+    check("curtir post agendado -> 404", (await c.put(f"/posts/{SLUG}-b2/like", headers=RA)).status_code == 404)
+    check("curtir com Origin de outro site -> 403", (await c.put(f"/posts/{post_slug}/like", headers={**RA, "Origin": "https://evil.example"})).status_code == 403)
+
+    # --- comentarios ---
+    check("comentar sem login -> 401", (await c.post(f"/posts/{post_slug}/comments", json={"body": "oi"})).status_code == 401)
+    r = await c.post(f"/posts/{post_slug}/comments", json={"body": "  Muito   bom!  "}, headers=RA)
+    check("leitor comenta (texto limpo)", r.status_code == 201 and r.json()["body"] == "Muito bom!" and r.json()["mine"] is True, r.text)
+    cid = r.json()["id"]
+    r = await c.post(f"/posts/{post_slug}/comments", json={"body": "<script>alert(1)</script>"}, headers=RB)
+    check("HTML vira texto puro (guardado como veio, o site escapa)", r.status_code == 201 and "<script>" in r.json()["body"])
+    cid_b = r.json()["id"]
+    r = await c.get(f"/posts/{post_slug}/comments", headers=RA)
+    check("lista de comentarios: 2, 'mine' so' do proprio leitor", len(r.json()) == 2 and [x["mine"] for x in r.json()] == [True, False], r.text)
+    check("comentario nao expoe o Discord ID", all(set(x["author"]) == {"username", "avatarUrl"} for x in r.json()))
+    check("comentario vazio -> 422", (await c.post(f"/posts/{post_slug}/comments", json={"body": "   "}, headers=RA)).status_code == 422)
+    check("comentario enorme -> 422", (await c.post(f"/posts/{post_slug}/comments", json={"body": "a" * 1500}, headers=RA)).status_code == 422)
+    check("muitos links -> 422", (await c.post(f"/posts/{post_slug}/comments", json={"body": "http://a.com http://b.com http://c.com"}, headers=RA)).status_code == 422)
+    check("clean_comment tira caracteres de controle", clean_comment("a\x00b\x07c") == "abc")
+    check("comentar em post agendado -> 404", (await c.post(f"/posts/{SLUG}-b2/comments", json={"body": "oi"}, headers=RA)).status_code == 404)
+    check("nao apaga comentario de outro (404)", (await c.delete(f"/posts/{post_slug}/comments/{cid_b}", headers=RA)).status_code == 404)
+
+    # --- moderacao ---
+    check("moderacao: anonimo 401", (await c.get("/comments/moderation")).status_code == 401)
+    check("moderacao: Creator 403", (await c.get("/comments/moderation", headers=C)).status_code == 403)
+    check("moderacao: leitor nao entra (401)", (await c.get("/comments/moderation", headers=RA)).status_code == 401)
+    r2 = await c.get("/comments/moderation", headers=A)
+    check("moderacao: Adm lista (com post e autor)", r2.status_code == 200 and any(x["id"] == cid_b and x["postSlug"] == post_slug for x in r2.json()), r2.text[:200])
+    r = await c.patch(f"/comments/moderation/{cid_b}", json={"hidden": True}, headers=A)
+    check("Adm esconde comentario", r.status_code == 200)
+    r = await c.get(f"/posts/{post_slug}/comments")
+    check("comentario escondido some do publico e do contador",
+          len(r.json()) == 1 and (await c.get(f"/posts/{post_slug}/engagement")).json()["commentCount"] == 1)
+    check("lista de posts traz likeCount/commentCount",
+          next(p for p in (await c.get("/posts")).json() if p["slug"] == post_slug)["commentCount"] == 1)
+    r = await c.get("/comments/moderation?only_hidden=true", headers=A)
+    check("filtro de escondidos", all(x["hidden"] for x in r.json()) and any(x["id"] == cid_b for x in r.json()))
+    check("Adm mostra de volta", (await c.patch(f"/comments/moderation/{cid_b}", json={"hidden": False}, headers=A)).status_code == 200)
+    check("leitor apaga o proprio comentario", (await c.delete(f"/posts/{post_slug}/comments/{cid}", headers=RA)).status_code == 204)
+    check("Adm apaga comentario", (await c.delete(f"/comments/moderation/{cid_b}", headers=A)).status_code == 204)
+
+    # --- ban ---
+    async with AsyncSessionLocal() as db:
+        from app.models.readers import Reader
+        rid = (await db.execute(select(Reader.id).where(Reader.discord_id == int(leitor_a)))).scalar_one()
+    check("Creator nao bane (403)", (await c.patch(f"/comments/moderation/readers/{rid}", json={"banned": True}, headers=C)).status_code == 403)
+    check("Adm bane leitor", (await c.patch(f"/comments/moderation/readers/{rid}", json={"banned": True}, headers=A)).status_code == 200)
+    check("banido perde a sessao na hora", (await c.get("/auth/reader/me", headers=RA)).json() is None)
+    check("banido nao comenta nem curte", (await c.post(f"/posts/{post_slug}/comments", json={"body": "oi"}, headers=RA)).status_code == 401
+          and (await c.put(f"/posts/{post_slug}/like", headers=RA)).status_code == 401)
+    check("banido nao consegue entrar de novo", (await c.post("/auth/reader/dev-login", json={"discordId": leitor_a})).status_code == 403)
+    check("Adm desbane", (await c.patch(f"/comments/moderation/readers/{rid}", json={"banned": False}, headers=A)).status_code == 200)
+    check("desbanido volta", (await c.get("/auth/reader/me", headers=RA)).json() is not None)
+
+    # --- limite de comentarios ---
+    limiter.reset()
+    codigos = [(await c.post(f"/posts/{post_slug}/comments", json={"body": f"spam {i}"}, headers=RB)).status_code for i in range(7)]
+    check("spam de comentarios: 5 passam, o resto 429", codigos[:5] == [201] * 5 and codigos[5:] == [429, 429], str(codigos))
+
+    # --- mencoes ---
+    check("busca de mencoes: anonimo 401", (await c.get("/search/mentions?q=a")).status_code == 401)
+    r = await c.get("/search/mentions?q=%25_%25", headers=C)
+    check("busca de mencoes: curinga LIKE e' escapado (nada encontrado)", r.status_code == 200 and r.json() == [], r.text)
+    check("busca de mencoes: texto vazio -> lista vazia", (await c.get("/search/mentions?q=", headers=C)).json() == [])
+    check("busca de mencoes: Creator pode buscar", (await c.get("/search/mentions?q=a", headers=C)).status_code == 200)
+
+    # --- apagar tag desfaz as ligacoes ---
+    check("Adm apaga a tag", (await c.delete(f"/tags/{SLUG}-tag", headers=A)).status_code == 204)
+    r = await c.get(f"/posts/slug/{post_slug}")
+    check("post continua, sem a tag apagada", r.status_code == 200 and [t["id"] for t in r.json()["tags"]] == ["update"])
+
+    secao("21) Conexao segura com o banco (certificados do SquareCloud): app/core/db_ssl.py")
+    from app.core import db_ssl
+    check("sem certificados configurados o SSL fica desligado", db_ssl.is_enabled("", "", "") is False)
+    check("com os 3 caminhos o SSL liga", db_ssl.is_enabled("certs/ca.crt", "certs/client.pem", "certs/client.key") is True)
+    check("configuracao PARCIAL tambem liga o SSL (a falta de arquivo erra alto em vez de conectar sem seguranca)", db_ssl.is_enabled("certs/ca.crt", "", "") is True)
+    import tempfile
+    from pathlib import Path as _P
+    with tempfile.TemporaryDirectory() as tmp:  # arquivos de mentira so' para o caminho existir
+        paths = []
+        for nome in ("ca.crt", "client.pem", "client.key"):
+            f = _P(tmp) / nome
+            f.write_text("x")
+            paths.append(str(f))
+        args = db_ssl.libpq_args(*paths, verify_hostname=False)
+        check("libpq: verify-ca por padrao e caminhos absolutos",
+              args["sslmode"] == "verify-ca" and all(args[k].startswith("/") for k in ("sslrootcert", "sslcert", "sslkey")), str(args))
+        check("libpq: verify-full quando pedir verificacao do nome do servidor",
+              db_ssl.libpq_args(*paths, verify_hostname=True)["sslmode"] == "verify-full")
+    try:
+        db_ssl.libpq_args("nao/existe.crt", "nao/existe.pem", "nao/existe.key")
+        check("certificado inexistente erra alto", False)
+    except FileNotFoundError:
+        check("certificado inexistente erra alto (nunca conecta sem seguranca em silencio)", True)
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []

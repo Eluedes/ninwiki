@@ -113,16 +113,19 @@ export default function BlogPostsPage() {
                   <td className="px-4 py-3">
                     <p className="font-semibold leading-tight">{p.title}</p>
                     <p className="font-mono text-xs text-muted-foreground">{p.slug}</p>
+                    {p.isScheduled && p.publishedAt && (
+                      <p className="text-xs text-sky-400">{new Date(p.publishedAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}</p>
+                    )}
                   </td>
                   <td className="px-4 py-3">{p.authorName ?? '—'}</td>
                   <td className="px-4 py-3">
                     <span
                       className={cn(
                         'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold',
-                        p.status === 'published' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-amber-900/30 text-amber-400'
+                        p.isScheduled ? 'bg-sky-900/30 text-sky-400' : p.status === 'published' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-amber-900/30 text-amber-400'
                       )}
                     >
-                      {p.status === 'published' ? t.published : t.draft}
+                      {p.isScheduled ? dict.blogx.post.scheduledBadge : p.status === 'published' ? t.published : t.draft}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">

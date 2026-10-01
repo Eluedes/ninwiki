@@ -291,3 +291,103 @@
 [data-color-theme='anil'] .nin-logo-img-anil {
   display: block;
 }
+
+/* ============================================================================
+   BLOG: imagem, video, citacao, codigo, spoiler, mencao e indice (TOC)
+   ============================================================================
+   Compartilhado entre o editor (.ProseMirror) e o site (.prose-shinobi), como a Ficha e a Tabela acima.
+   ============================================================================ */
+.ProseMirror img.post-image,
+.prose-shinobi img.post-image {
+  @apply my-4 h-auto max-w-full rounded-lg border border-border;
+}
+.ProseMirror .video-embed,
+.prose-shinobi .video-embed {
+  @apply my-4 aspect-video w-full overflow-hidden rounded-lg border border-border bg-black;
+}
+.ProseMirror .video-embed iframe,
+.prose-shinobi .video-embed iframe {
+  @apply h-full w-full border-0;
+}
+.ProseMirror blockquote,
+.prose-shinobi blockquote {
+  @apply my-3 border-l-4 border-primary/50 pl-4 italic text-muted-foreground;
+}
+.ProseMirror pre,
+.prose-shinobi pre {
+  @apply my-3 overflow-x-auto rounded-lg border border-border bg-secondary/60 p-3 font-mono text-sm text-card-foreground;
+}
+.ProseMirror pre code,
+.prose-shinobi pre code {
+  @apply bg-transparent p-0;
+}
+.prose-shinobi details.spoiler,
+.ProseMirror [data-type='details'] {
+  @apply my-3 rounded-lg border border-border bg-secondary/30 px-3 py-2;
+}
+.prose-shinobi details.spoiler summary,
+.ProseMirror [data-type='details'] summary {
+  @apply cursor-pointer font-semibold text-card-foreground;
+}
+.ProseMirror [data-type='details'] {
+  @apply flex gap-2;
+}
+.ProseMirror [data-type='details'] > button {
+  @apply h-6 w-6 shrink-0 rounded text-muted-foreground hover:bg-secondary;
+}
+.ProseMirror [data-type='details'] > button::before {
+  content: '▸';
+}
+.ProseMirror [data-type='details'].is-open > button::before {
+  content: '▾';
+}
+.ProseMirror [data-type='details'] > div {
+  @apply flex-1;
+}
+.ProseMirror [data-type='details'] > div > [data-type='detailsContent'] {
+  display: none;
+}
+.ProseMirror [data-type='details'].is-open > div > [data-type='detailsContent'] {
+  display: block;
+}
+.ProseMirror a.mention,
+.prose-shinobi a.mention {
+  @apply rounded bg-primary/10 px-1 font-medium text-primary no-underline hover:bg-primary/20;
+}
+.prose-shinobi h2,
+.prose-shinobi h3 {
+  scroll-margin-top: 5rem;
+}
+.mention-popup {
+  @apply fixed z-50 hidden max-h-64 w-60 overflow-y-auto rounded-lg border border-border bg-card p-1 shadow-lg;
+}
+.mention-row {
+  @apply flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm text-card-foreground;
+}
+.mention-row.is-selected,
+.mention-row:hover {
+  @apply bg-secondary;
+}
+.mention-kind {
+  @apply text-xs text-muted-foreground;
+}
+
+/* Titulos e listas do texto publico (o reset do Tailwind zera os estilos padrao do navegador). */
+.prose-shinobi h1 {
+  @apply mb-3 mt-6 text-3xl font-bold tracking-tight text-card-foreground;
+}
+.prose-shinobi h2 {
+  @apply mb-2 mt-6 text-2xl font-bold tracking-tight text-card-foreground;
+}
+.prose-shinobi h3 {
+  @apply mb-2 mt-5 text-xl font-semibold tracking-tight text-card-foreground;
+}
+.prose-shinobi p {
+  @apply my-2;
+}
+.prose-shinobi ul {
+  @apply my-2 list-disc pl-6;
+}
+.prose-shinobi ol {
+  @apply my-2 list-decimal pl-6;
+}

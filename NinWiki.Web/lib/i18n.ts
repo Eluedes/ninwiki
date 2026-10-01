@@ -14,6 +14,34 @@ import type { Locale } from './types';
 // tem que existir OBRIGATORIAMENTE nos dois idiomas abaixo (pt e en).
 // O TypeScript acusa erro de compilacao se faltar uma chave em algum
 // dos dois - e' a garantia de que nao existe texto traduzido so' num idioma.
+/** Textos das novidades do blog: editor, pagina do post, leitores (curtir/comentar) e moderacao. */
+export interface BlogxDict {
+  editor: {
+    image: string; imageAlt: string; imageError: string; quote: string; codeBlock: string; video: string;
+    videoPrompt: string; videoInvalid: string; spoiler: string; words: string; characters: string;
+  };
+  post: {
+    tagsLabel: string; tagsHint: string; newTagPlaceholder: string; addTag: string; tagError: string; tagsMax: string;
+    seoTitle: string; seoHint: string; metaTitleLabel: string; metaDescLabel: string; metaTitleHint: string; metaDescHint: string;
+    scheduleLabel: string; scheduleHint: string; scheduleClear: string; schedule: string; scheduledBadge: string; scheduledPast: string;
+    preview: string; previewTitle: string; previewNote: string; close: string; unsavedWarning: string;
+    createdTagOk: string;
+  };
+  public: {
+    allPosts: string; filterByTag: string; minRead: string; contents: string; published: string;
+    like: string; unlike: string; likes: string; comments: string; noComments: string; writeComment: string;
+    commentPlaceholder: string; send: string; sending: string; loginToComment: string; loginToLike: string; loginDiscord: string;
+    logout: string; signedInAs: string; deleteComment: string; confirmDeleteComment: string; commentError: string; likeError: string;
+    charsLeft: string; errBanned: string; errRateLimited: string; errGeneric: string; loadCommentsError: string;
+    commentsRules: string; spoilerNote: string; scheduledNote: string;
+  };
+  moderation: {
+    title: string; subtitle: string; search: string; onlyHidden: string; empty: string; hide: string; show: string;
+    delete: string; confirmDelete: string; ban: string; unban: string; confirmBan: string; hiddenBy: string; hiddenBadge: string;
+    bannedBadge: string; onPost: string; loadError: string; actionError: string; refresh: string; discordId: string;
+  };
+}
+
 export interface Dictionary {
   siteName: string;
   siteTagline: string;
@@ -31,6 +59,7 @@ export interface Dictionary {
     guideGathering: string; guideCrafting: string;
   };
   siteError: { title: string; text: string; retry: string; home: string };
+  blogx: BlogxDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterSpecial: string };
   detail: { attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string };
@@ -92,7 +121,7 @@ export interface Dictionary {
       orgConfirmDelete: string; orgEmpty: string; orgSave: string; orgCancel: string; orgEditTitle: string; backToVillages: string; noVillagesYet: string;
       orgNameRequired: string; orgIdInvalid: string; orgTranslationNote: string; clanTranslationNote: string;
     };
-    sidebar: { overview: string; blogPosts: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
+    sidebar: { overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
     errorsPage: {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
       occurrences: string; firstSeen: string; lastSeen: string; where: string; route: string; status: string; resolve: string; reopen: string; delete: string;
@@ -353,6 +382,42 @@ export const dictionaries: Record<Locale, Dictionary> = {
       disclaimer: 'Este é um projeto de fã não oficial. Nin Online é propriedade de seus respectivos criadores.',
       madeWith: 'Feito pela comunidade',
     },
+    blogx: {
+      editor: {
+        image: 'Inserir imagem (envio)', imageAlt: 'Texto alternativo da imagem (descreva o que aparece; ajuda quem usa leitor de tela):',
+        imageError: 'Não foi possível enviar a imagem.', quote: 'Citação', codeBlock: 'Bloco de código', video: 'Vídeo do YouTube ou Twitch',
+        videoPrompt: 'Cole o link do vídeo (YouTube ou Twitch):', videoInvalid: 'Link não reconhecido. Use um link do YouTube ou da Twitch.',
+        spoiler: 'Spoiler (bloco que abre e fecha)', words: 'palavras', characters: 'caracteres',
+      },
+      post: {
+        tagsLabel: 'Tags / categorias', tagsHint: 'Até 8. Ajudam o leitor a filtrar o blog.', newTagPlaceholder: 'Nova tag (em inglês)...', addTag: 'Criar tag',
+        tagError: 'Não foi possível criar a tag.', tagsMax: 'Máximo de 8 tags.',
+        seoTitle: 'SEO (Google e redes sociais)', seoHint: 'Opcional. Se ficar vazio, usamos o título e o resumo do post.',
+        metaTitleLabel: 'Título para o Google', metaDescLabel: 'Descrição para o Google', metaTitleHint: 'Até 70 caracteres.', metaDescHint: 'Até 200 caracteres.',
+        scheduleLabel: 'Data de publicação', scheduleHint: 'Deixe vazio para publicar agora. Uma data no futuro agenda o post: ele só aparece para os leitores quando o horário chegar.',
+        scheduleClear: 'Limpar data', schedule: 'Agendar', scheduledBadge: 'Agendado', scheduledPast: 'Escolha uma data no futuro para agendar.',
+        preview: 'Pré-visualizar', previewTitle: 'Pré-visualização', previewNote: 'É assim que o post aparece para os leitores (com o texto ainda não salvo).', close: 'Fechar',
+        unsavedWarning: 'Há alterações não salvas. Sair mesmo assim?', createdTagOk: 'Tag criada.',
+      },
+      public: {
+        allPosts: 'Todos', filterByTag: 'Filtrar por tag', minRead: 'min de leitura', contents: 'Neste post', published: 'Publicado em',
+        like: 'Curtir', unlike: 'Descurtir', likes: 'curtidas', comments: 'Comentários', noComments: 'Ninguém comentou ainda. Seja o primeiro!',
+        writeComment: 'Escreva um comentário', commentPlaceholder: 'O que você achou?', send: 'Comentar', sending: 'Enviando...',
+        loginToComment: 'Entre com o Discord para comentar.', loginToLike: 'Entre com o Discord para curtir.', loginDiscord: 'Entrar com o Discord',
+        logout: 'Sair', signedInAs: 'Você está como', deleteComment: 'Apagar', confirmDeleteComment: 'Apagar o seu comentário?',
+        commentError: 'Não foi possível enviar o comentário.', likeError: 'Não foi possível registrar a curtida.',
+        charsLeft: 'caracteres restantes', errBanned: 'Sua conta não pode mais comentar neste site.', errRateLimited: 'Muitas tentativas. Espere um pouco e tente de novo.',
+        errGeneric: 'Não foi possível entrar com o Discord. Tente de novo.', loadCommentsError: 'Não foi possível carregar os comentários.',
+        commentsRules: 'Seja respeitoso. A equipe pode esconder comentários e bloquear contas.', spoilerNote: 'Spoiler — clique para abrir', scheduledNote: 'Este post está agendado e ainda não está visível para os leitores.',
+      },
+      moderation: {
+        title: 'Comentários', subtitle: 'Modere os comentários dos leitores nos posts do blog.', search: 'Buscar no texto ou no nome...', onlyHidden: 'Só escondidos',
+        empty: 'Nenhum comentário.', hide: 'Esconder', show: 'Mostrar', delete: 'Apagar', confirmDelete: 'Apagar este comentário de vez?',
+        ban: 'Banir leitor', unban: 'Desbanir', confirmBan: 'Banir "{name}"? A pessoa perde o acesso para comentar e curtir na hora.',
+        hiddenBy: 'escondido por', hiddenBadge: 'Escondido', bannedBadge: 'Banido', onPost: 'no post', loadError: 'Erro ao carregar os comentários.',
+        actionError: 'Não foi possível concluir a ação.', refresh: 'Atualizar', discordId: 'ID do Discord',
+      },
+    },
     admin: {
       login: {
         welcome: 'Bem-vindo de volta',
@@ -455,6 +520,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       sidebar: {
         overview: 'Visão Geral',
         blogPosts: 'Postagens do Blog',
+        comments: 'Comentários',
         content: 'Conteúdo',
         masteries: 'Masteries',
         jutsus: 'Jutsus',
@@ -485,7 +551,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         confirmDelete: 'Apagar o aviso "{title}" e os arquivos anexados?', attachFiles: 'Anexar arquivo', files: 'Arquivos',
         download: 'Baixar', removeFile: 'Remover arquivo', uploading: 'Enviando...', by: 'por',
         loadError: 'Não foi possível carregar os avisos.', saveError: 'Não foi possível salvar o aviso.',
-        uploadError: 'Não foi possível enviar o arquivo.', maxInfo: 'Até 10 arquivos por aviso.',
+        uploadError: 'Não foi possível enviar o arquivo.', maxInfo: 'Até 10 arquivos por aviso — aceita .zip, .rar, .7z, PDF, imagens e outros (máx. 50 MB cada).',
       },
       rolesPage: {
         title: 'Permissões por cargo', subtitle: 'Defina o que cada cargo pode fazer no painel. As alterações valem na hora.',
@@ -496,7 +562,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log' },
         names: {
           'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
-          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts',
+          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
           'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos',
@@ -932,6 +998,42 @@ export const dictionaries: Record<Locale, Dictionary> = {
       disclaimer: 'This is an unofficial fan project. Nin Online is property of its respective creators.',
       madeWith: 'Made by the community',
     },
+    blogx: {
+      editor: {
+        image: 'Insert image (upload)', imageAlt: 'Image alt text (describe what it shows; helps screen reader users):',
+        imageError: 'Could not upload the image.', quote: 'Quote', codeBlock: 'Code block', video: 'YouTube or Twitch video',
+        videoPrompt: 'Paste the video link (YouTube or Twitch):', videoInvalid: 'Link not recognized. Use a YouTube or Twitch link.',
+        spoiler: 'Spoiler (block that opens and closes)', words: 'words', characters: 'characters',
+      },
+      post: {
+        tagsLabel: 'Tags / categories', tagsHint: 'Up to 8. They help readers filter the blog.', newTagPlaceholder: 'New tag (in English)...', addTag: 'Create tag',
+        tagError: 'Could not create the tag.', tagsMax: 'Maximum of 8 tags.',
+        seoTitle: 'SEO (Google and social media)', seoHint: 'Optional. If left empty, the post title and excerpt are used.',
+        metaTitleLabel: 'Title for Google', metaDescLabel: 'Description for Google', metaTitleHint: 'Up to 70 characters.', metaDescHint: 'Up to 200 characters.',
+        scheduleLabel: 'Publish date', scheduleHint: 'Leave empty to publish now. A future date schedules the post: readers only see it once the time arrives.',
+        scheduleClear: 'Clear date', schedule: 'Schedule', scheduledBadge: 'Scheduled', scheduledPast: 'Pick a date in the future to schedule.',
+        preview: 'Preview', previewTitle: 'Preview', previewNote: 'This is how the post looks to readers (with the text you have not saved yet).', close: 'Close',
+        unsavedWarning: 'You have unsaved changes. Leave anyway?', createdTagOk: 'Tag created.',
+      },
+      public: {
+        allPosts: 'All', filterByTag: 'Filter by tag', minRead: 'min read', contents: 'In this post', published: 'Published on',
+        like: 'Like', unlike: 'Unlike', likes: 'likes', comments: 'Comments', noComments: 'No comments yet. Be the first!',
+        writeComment: 'Write a comment', commentPlaceholder: 'What did you think?', send: 'Comment', sending: 'Sending...',
+        loginToComment: 'Sign in with Discord to comment.', loginToLike: 'Sign in with Discord to like.', loginDiscord: 'Sign in with Discord',
+        logout: 'Sign out', signedInAs: 'You are signed in as', deleteComment: 'Delete', confirmDeleteComment: 'Delete your comment?',
+        commentError: 'Could not send the comment.', likeError: 'Could not register the like.',
+        charsLeft: 'characters left', errBanned: 'Your account can no longer comment on this site.', errRateLimited: 'Too many attempts. Wait a moment and try again.',
+        errGeneric: 'Could not sign in with Discord. Try again.', loadCommentsError: 'Could not load the comments.',
+        commentsRules: 'Be respectful. The team can hide comments and block accounts.', spoilerNote: 'Spoiler — click to open', scheduledNote: 'This post is scheduled and not yet visible to readers.',
+      },
+      moderation: {
+        title: 'Comments', subtitle: 'Moderate readers\' comments on blog posts.', search: 'Search text or name...', onlyHidden: 'Hidden only',
+        empty: 'No comments.', hide: 'Hide', show: 'Show', delete: 'Delete', confirmDelete: 'Delete this comment for good?',
+        ban: 'Ban reader', unban: 'Unban', confirmBan: 'Ban "{name}"? They lose the ability to comment and like immediately.',
+        hiddenBy: 'hidden by', hiddenBadge: 'Hidden', bannedBadge: 'Banned', onPost: 'on post', loadError: 'Error loading comments.',
+        actionError: 'Could not complete the action.', refresh: 'Refresh', discordId: 'Discord ID',
+      },
+    },
     admin: {
       login: {
         welcome: 'Welcome back',
@@ -1034,6 +1136,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       sidebar: {
         overview: 'Overview',
         blogPosts: 'Blog Posts',
+        comments: 'Comments',
         content: 'Content',
         masteries: 'Masteries',
         jutsus: 'Jutsus',
@@ -1064,7 +1167,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         confirmDelete: 'Delete the notice "{title}" and its attached files?', attachFiles: 'Attach file', files: 'Files',
         download: 'Download', removeFile: 'Remove file', uploading: 'Uploading...', by: 'by',
         loadError: 'Could not load the notices.', saveError: 'Could not save the notice.',
-        uploadError: 'Could not upload the file.', maxInfo: 'Up to 10 files per notice.',
+        uploadError: 'Could not upload the file.', maxInfo: 'Up to 10 files per notice — accepts .zip, .rar, .7z, PDF, images and more (max 50 MB each).',
       },
       rolesPage: {
         title: 'Role permissions', subtitle: 'Choose what each role can do in the panel. Changes apply immediately.',
@@ -1075,7 +1178,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log' },
         names: {
           'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
-          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts',
+          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
           'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices',

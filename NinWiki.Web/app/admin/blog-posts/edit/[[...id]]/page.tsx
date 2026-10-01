@@ -7,10 +7,10 @@
 // mexer nele). Quem nao pode publicar (Creator) so' salva RASCUNHO, e nao
 // consegue alterar um post que ja' esta' publicado - a API tambem recusa isso.
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useMemo, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,14 +18,35 @@ import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
 import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { EntryHistory } from '@/components/admin/entry-history';
+import { TagPicker } from '@/components/admin/tag-picker';
+import { PostPreviewDialog } from '@/components/blog/post-preview-dialog';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
-import { ArrowLeft, Save, Send, Loader2, AlertTriangle, Info, Languages } from 'lucide-react';
-import { ApiError, createPost, getPost, retranslatePost, updatePost, type ApiPost, type PostInput } from '@/lib/api-client';
+import { ArrowLeft, Save, Send, Loader2, AlertTriangle, Info, Languages, Eye, CalendarClock } from 'lucide-react';
+import { ApiError, createPost, getPost, listTags, retranslatePost, updatePost, type ApiPost, type ApiTag, type PostInput } from '@/lib/api-client';
 import { postSchema, type PostFormValues } from '@/lib/validation';
 import { slugify } from '@/lib/utils';
 
-const emptyForm: PostFormValues = { title: '', slug: '', excerpt: '', content: '', titlePt: '', excerptPt: '', contentPt: '', coverImage: null };
+const emptyForm: PostFormValues = {
+  title: '', slug: '', excerpt: '', content: '', titlePt: '', excerptPt: '', contentPt: '', coverImage: null,
+  tags: [], metaTitle: '', metaDescription: '', publishedAt: null,
+};
+
+/** ISO (UTC) -> valor do <input type="datetime-local"> no fuso do navegador ("2026-10-05T14:30"). */
+function toLocalInput(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Valor do <input type="datetime-local"> -> ISO (UTC), ou null se vazio/invalido. */
+function fromLocalInput(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
 
 /** Texto vazio vira null (a API entende "vazio" como "a DeepL traduz"). */
 const emptyToNull = (v: string | null | undefined) => (v && v.trim() ? v : null);
@@ -35,6 +56,7 @@ function toFormValues(p: ApiPost): PostFormValues {
   return {
     title: p.title, slug: p.slug, excerpt: p.excerpt, content: p.content, coverImage: p.coverImage,
     titlePt: p.titlePt ?? '', excerptPt: p.excerptPt ?? '', contentPt: p.contentPt ?? '',
+    tags: p.tags.map((t) => t.id), metaTitle: p.metaTitle ?? '', metaDescription: p.metaDescription ?? '', publishedAt: p.publishedAt,
   };
 }
 
@@ -60,6 +82,10 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
   const [apiError, setApiError] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<'draft' | 'published'>('draft');
   const [slugTouched, setSlugTouched] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [openedAt] = useState(() => Date.now()); // "agora" de quando a pagina abriu (para saber se a data escolhida e' futura)
+  const [allTags, setAllTags] = useState<ApiTag[]>([]);
+  const [saved, setSaved] = useState(false); // depois de salvar, sair da pagina nao pede confirmacao
 
   const {
     register,
@@ -67,7 +93,7 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
     handleSubmit,
     reset,
     setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<PostFormValues>({ resolver: zodResolver(postSchema), defaultValues: emptyForm });
 
   useEffect(() => {
@@ -90,6 +116,27 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
       cancelled = true;
     };
   }, [isEdit, rawId, reset, t.loadError]);
+
+  // Aviso do navegador ao fechar a aba/recarregar com alteracoes nao salvas.
+  useEffect(() => {
+    if (!isDirty || saved) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty, saved]);
+
+  // Tags para a pre-visualizacao (o seletor carrega a propria lista; aqui so' precisamos dos nomes).
+  useEffect(() => {
+    listTags().then(setAllTags).catch(() => setAllTags([]));
+  }, []);
+
+  // useWatch (e nao watch) para o compilador do React poder otimizar este componente
+  const watched = useWatch({ control }) as PostFormValues;
+  const previewTags = useMemo(() => allTags.filter((t) => (watched.tags ?? []).includes(t.id)), [allTags, watched.tags]);
+  const scheduledInFuture = Boolean(watched.publishedAt && new Date(watched.publishedAt).getTime() > openedAt);
 
   // Quem nao pode publicar nao mexe em post publicado (a API tambem barra).
   const locked = currentStatus === 'published' && !can('posts.publish');
@@ -118,6 +165,9 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
         excerptPt: emptyToNull(values.excerptPt),
         contentPt: emptyToNull(values.contentPt),
         coverImage: values.coverImage || null,
+        metaTitle: emptyToNull(values.metaTitle),
+        metaDescription: emptyToNull(values.metaDescription),
+        publishedAt: values.publishedAt || null,
         status,
       };
       if (isEdit && rawId) {
@@ -125,6 +175,7 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
       } else {
         await createPost(payload);
       }
+      setSaved(true);
       router.push('/admin/blog-posts');
     } catch (err) {
       setApiError(err instanceof ApiError ? err.message : t.saveError);
@@ -146,7 +197,12 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <Link href="/admin/blog-posts" className="mb-1 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
+        <Link
+          href="/admin/blog-posts"
+          onClick={(e) => {
+            if (isDirty && !saved && !window.confirm(dict.blogx.post.unsavedWarning)) e.preventDefault();
+          }}
+          className="mb-1 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> {t.back}
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">{isEdit ? t.editTitle : t.newTitle}</h1>
@@ -204,12 +260,69 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
           </div>
 
           <div className="space-y-2">
+            <label className={label}>{dict.blogx.post.tagsLabel}</label>
+            <Controller
+              control={control}
+              name="tags"
+              render={({ field }) => <TagPicker value={field.value} onChange={field.onChange} disabled={locked} />}
+            />
+            <FieldError message={errors.tags?.message} />
+          </div>
+
+          <div className="space-y-2">
             <label className={label}>{t.contentLabel}</label>
             <Controller
               control={control}
               name="content"
-              render={({ field }) => <RichTextEditor value={field.value} onChange={field.onChange} placeholder={t.contentPlaceholder} />}
+              render={({ field }) => <RichTextEditor variant="blog" value={field.value} onChange={field.onChange} placeholder={t.contentPlaceholder} />}
             />
+          </div>
+        </fieldset>
+
+        {/* Publicacao (agendamento) e SEO */}
+        <fieldset disabled={locked} className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="space-y-2">
+            <label className={`${label} flex items-center gap-2`}>
+              <CalendarClock className="h-4 w-4" /> {dict.blogx.post.scheduleLabel}
+              {scheduledInFuture && (
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">{dict.blogx.post.scheduledBadge}</span>
+              )}
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Controller
+                control={control}
+                name="publishedAt"
+                render={({ field }) => (
+                  <>
+                    <Input
+                      type="datetime-local"
+                      className="max-w-xs"
+                      value={toLocalInput(field.value)}
+                      onChange={(e) => field.onChange(fromLocalInput(e.target.value))}
+                    />
+                    {field.value && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => field.onChange(null)}>
+                        {dict.blogx.post.scheduleClear}
+                      </Button>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">{dict.blogx.post.scheduleHint}</p>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-card-foreground">{dict.blogx.post.seoTitle}</h2>
+            <p className="text-xs text-muted-foreground">{dict.blogx.post.seoHint}</p>
+            <label className={label}>{dict.blogx.post.metaTitleLabel}</label>
+            <Input maxLength={70} {...register('metaTitle')} />
+            <p className="text-xs text-muted-foreground">{dict.blogx.post.metaTitleHint} ({(watched.metaTitle ?? '').length}/70)</p>
+            <FieldError message={errors.metaTitle?.message} />
+            <label className={label}>{dict.blogx.post.metaDescLabel}</label>
+            <Textarea rows={2} maxLength={200} {...register('metaDescription')} />
+            <p className="text-xs text-muted-foreground">{dict.blogx.post.metaDescHint} ({(watched.metaDescription ?? '').length}/200)</p>
+            <FieldError message={errors.metaDescription?.message} />
           </div>
         </fieldset>
 
@@ -255,6 +368,10 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
         {currentStatus === 'published' && !locked && <p className="text-xs text-muted-foreground">{t.unpublishNote}</p>}
 
         <div className="flex items-center justify-end gap-3">
+          <Button type="button" variant="ghost" onClick={() => setPreviewOpen(true)}>
+            <Eye className="mr-1.5 h-4 w-4" />
+            {dict.blogx.post.preview}
+          </Button>
           <Button type="button" variant="outline" disabled={saving || locked} onClick={handleSubmit((v) => save(v, 'draft'))}>
             {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
             {saving ? t.saving : t.saveDraft}
@@ -262,11 +379,22 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
           {can('posts.publish') && (
             <Button type="button" disabled={saving} onClick={handleSubmit((v) => save(v, 'published'))}>
               {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />}
-              {t.publish}
+              {scheduledInFuture ? dict.blogx.post.schedule : t.publish}
             </Button>
           )}
         </div>
       </form>
+
+      <PostPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        title={watched.title}
+        titlePt={watched.titlePt}
+        content={watched.content}
+        contentPt={watched.contentPt}
+        coverImage={watched.coverImage}
+        tags={previewTags}
+      />
     </div>
   );
 }

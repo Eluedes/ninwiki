@@ -83,6 +83,8 @@ limiter = RateLimiter()
 AUTH = "auth"            # requisicoes de login por minuto
 LOGIN_FAIL = "login_fail"  # logins negados / estado invalido
 BOT_FAIL = "bot_fail"    # token de bot errado
+COMMENT = "comment"      # comentarios por leitor (anti-spam)
+LIKE = "like"            # curtidas por leitor
 
 
 def client_key() -> str:

@@ -24,7 +24,8 @@
 // para JSONB de verdade, se um dia precisarmos FILTRAR/BUSCAR dentro
 // do conteudo formatado (hoje nao precisamos).
 
-import { useEditor, EditorContent, type Editor } from '@tiptap/react';
+import { useRef, useState } from 'react';
+import { useEditor, useEditorState, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
@@ -37,7 +38,13 @@ import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
+import Image from '@tiptap/extension-image';
+import CharacterCount from '@tiptap/extension-character-count';
+import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details';
 import { FichaEditable } from '@/lib/tiptap-extensions/ficha-editable';
+import { BlogMention, Video, parseVideoUrl } from '@/lib/tiptap-extensions/blog';
+import { mentionSuggestion } from '@/lib/tiptap-extensions/mention-suggestion';
+import { uploadImage } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/components/providers/language-provider';
 import {
@@ -55,6 +62,12 @@ import {
   Redo,
   LayoutGrid,
   Table2,
+  ImagePlus,
+  Quote,
+  Code2,
+  Video as VideoIcon,
+  EyeOff,
+  Loader2,
 } from 'lucide-react';
 
 // Paleta curta de cores de texto - suficiente pra destacar uma palavra
@@ -122,8 +135,70 @@ function ToolbarButton({
   );
 }
 
-/** Barra de ferramentas do editor: formatacao, titulos, listas, alinhamento, link, ficha e tabela. */
-function Toolbar({ editor }: { editor: Editor }) {
+/** Grupo de botoes extra do BLOG: imagem (upload), citacao, bloco de codigo, video e spoiler. */
+function BlogTools({ editor }: { editor: Editor }) {
+  const { dict } = useLanguage();
+  const bx = dict.blogx.editor;
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  /** Envia a imagem escolhida para a API e a insere no texto (pede o texto alternativo, para acessibilidade). */
+  async function handleImage(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      const alt = window.prompt(bx.imageAlt, '') ?? '';
+      editor.chain().focus().setImage({ src: url, alt: alt.trim() }).run();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : bx.imageError);
+    } finally {
+      setUploading(false);
+      if (fileInput.current) fileInput.current.value = '';
+    }
+  }
+
+  /** Pede um link do YouTube/Twitch e insere o player. */
+  function handleVideo() {
+    const input = window.prompt(bx.videoPrompt, '');
+    if (!input) return;
+    const src = parseVideoUrl(input);
+    if (!src) {
+      window.alert(bx.videoInvalid);
+      return;
+    }
+    editor.chain().focus().setVideo(src).run();
+  }
+
+  return (
+    <>
+      <div className="mx-1 h-5 w-px bg-border" />
+      <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => handleImage(e.target.files?.[0])} />
+      <ToolbarButton title={bx.image} disabled={uploading} onClick={() => fileInput.current?.click()}>
+        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+      </ToolbarButton>
+      <ToolbarButton title={bx.quote} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+        <Quote className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton title={bx.codeBlock} active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
+        <Code2 className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton title={bx.video} onClick={handleVideo}>
+        <VideoIcon className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        title={bx.spoiler}
+        active={editor.isActive('details')}
+        onClick={() => (editor.isActive('details') ? editor.chain().focus().unsetDetails().run() : editor.chain().focus().setDetails().run())}
+      >
+        <EyeOff className="h-4 w-4" />
+      </ToolbarButton>
+    </>
+  );
+}
+
+/** Barra de ferramentas do editor: formatacao, titulos, listas, alinhamento, link, ficha e tabela (+ extras do blog). */
+function Toolbar({ editor, blog }: { editor: Editor; blog: boolean }) {
   const { dict } = useLanguage();
   const t = dict.admin.richText;
   return (
@@ -246,6 +321,8 @@ function Toolbar({ editor }: { editor: Editor }) {
         <Table2 className="h-4 w-4" />
       </ToolbarButton>
 
+      {blog && <BlogTools editor={editor} />}
+
       <div className="mx-1 h-5 w-px bg-border" />
 
       <ToolbarButton title={t.undo} onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
@@ -276,16 +353,34 @@ export function sanitizePastedHtml(html: string): string {
   return doc.body.innerHTML;
 }
 
+/** Rodape do editor do blog: quantos caracteres e palavras o texto tem agora. */
+function EditorCounter({ editor }: { editor: Editor }) {
+  const { dict } = useLanguage();
+  const counts = useEditorState({
+    editor,
+    selector: ({ editor: e }) => ({ chars: e.storage.characterCount.characters(), words: e.storage.characterCount.words() }),
+  });
+  return (
+    <div className="border-t border-border bg-secondary/30 px-3 py-1 text-right text-xs text-muted-foreground">
+      {counts.words} {dict.blogx.editor.words} · {counts.chars} {dict.blogx.editor.characters}
+    </div>
+  );
+}
+
 /** Editor de texto rico (Tiptap). Recebe/devolve o documento como JSON em string. */
 export function RichTextEditor({
   value,
   onChange,
   placeholder,
+  variant = 'default',
 }: {
   value: string;
   onChange: (jsonValue: string) => void;
   placeholder?: string;
+  /** 'blog' liga imagem, citacao, codigo, video, @mencao, spoiler e o contador de caracteres/palavras. */
+  variant?: 'default' | 'blog';
 }) {
+  const blog = variant === 'blog';
   const editor = useEditor({
     extensions: [
       // link e underline ja' vem no StarterKit (Tiptap v3): desligados aqui porque sao adicionados abaixo com a nossa configuracao (evita extensao duplicada).
@@ -307,6 +402,17 @@ export function RichTextEditor({
       TableHeader,
       TableCell,
       FichaEditable,
+      ...(blog
+        ? [
+            Image.configure({ HTMLAttributes: { class: 'post-image' } }),
+            Video,
+            BlogMention.configure({ suggestion: mentionSuggestion }),
+            Details.configure({ persist: true }),
+            DetailsSummary,
+            DetailsContent,
+            CharacterCount,
+          ]
+        : []),
     ],
     content: parseStoredContent(value),
     // Evita o aviso de "SSR mismatch" do Tiptap no Next.js - o editor
@@ -334,8 +440,9 @@ export function RichTextEditor({
 
   return (
     <div className="overflow-hidden rounded-md border border-input bg-background">
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} blog={blog} />
       <EditorContent editor={editor} />
+      {blog && <EditorCounter editor={editor} />}
     </div>
   );
 }

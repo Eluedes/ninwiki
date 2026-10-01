@@ -396,6 +396,16 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   nunca sobrescreve correção manual, botão "Retraduzir") em Conteúdo, Masteries e Jutsus. Village,
   Profession, NinjaRank, Summon e Attribute seguem o mesmo padrão (`name` em inglês + `name_pt`)
 
+## Blog 2.0 ✅ (01/10)
+- ✅ Tags/categorias (N:N, seed update/guide/lore/event/patch-notes), filtro `/blog?tag=`, contagem por tag
+- ✅ Editor: imagem (upload), citação, código, vídeo YouTube(nocookie)/Twitch, @menção (busca na API), spoiler, contador, Preview,
+  SEO (meta title/description, Open Graph, canonical), agendamento (`published_at`), aviso de alterações não salvas
+- ✅ Página do post: índice automático (H2/H3), tempo de leitura, sitemap.xml, RSS `/feed.xml`, CSP `frame-src` só YouTube/Twitch
+- ✅ Leitores (Discord, sessão separada, JWT `typ=reader`), curtidas, comentários (texto simples, limites, ban) e moderação
+  `/admin/comments` (permissão `comments.moderate`); validador do JSON rico confere URLs de imagem/vídeo/menção
+- ⬜ Ideias: notificação no Discord de comentário novo; resposta (thread) a comentários; denúncia de comentário pelo leitor;
+  busca no blog; posts relacionados; mais um provedor de login de leitor
+
 ## Fase 6 — Hardening de segurança ✅ COMPLETA (01/10)
 - ✅ Sessão em cookie `httpOnly` / `SameSite=Lax` / `Secure` (fora do local); JWT com algoritmo fixo e
   `exp`/`sub`/`ver` obrigatórios (recusa token sem assinatura ou com outra chave)
@@ -459,6 +469,10 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 - ⬜ Cloudflare (WAF, proxy, DNS) — ao ligar, usar `TRUST_PROXY_HEADERS=true`
 - ✅ **Levar o banco do Docker para a SquareCloud (01/10)**: `NinWiki.Api/scripts/migrar_banco.py exportar|importar` (round-trip testado:
   15 entries e a versão do Alembic preservadas); passo a passo no README 3.2
+- ✅ **Banco da SquareCloud com certificados TLS de cliente (01/10)**: `DATABASE_SSL_CA/CERT/KEY` (asyncpg + Alembic), `scripts/migrar_banco.py`
+  com `--ssl-*` (importar e exportar remoto), Secrets `DB_SSL_*` no deploy da API; testado ponta a ponta com uma CA local e
+  Postgres `hostssl ... cert`. Tutorial no README 3.2
+- ✅ **Correção do build da SquareCloud (01/10)**: `unrs-resolver install scripts blocked` → `allowScripts` no `package.json` do site
 - ⬜ Schema de banco separado por ambiente (`public` / `beta_ninwiki`, mesmo padrão do Guima)
 
 ---
