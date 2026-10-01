@@ -170,9 +170,11 @@ na SquareCloud, que reinicia. A API, ao iniciar, aplica sozinha as migrações d
 **Ordem do passo a passo:** 3.1 contas e segredos → 3.2 Discord → 3.3 banco → 3.4 (opcional) levar seu conteúdo local →
 3.5 criar os apps na SquareCloud → 3.6 GitHub Secrets → 3.7 rodar os workflows → 3.8 domínios → 3.9 conferir → depois, 3.10 no dia a dia.
 
-> ⚠️ **Domínio próprio é obrigatório.** O login usa cookie `SameSite=Lax`: o site e a API precisam estar no **mesmo site**
-> (`wiki.seudominio.com` + `api.seudominio.com`). Com os endereços gratuitos `*.squareweb.app` o navegador trata os dois
-> como sites diferentes e **o login não funciona**. O recurso de domínio personalizado pode depender do plano da SquareCloud — confira no painel.
+> ⚠️ **Domínio próprio é o recomendado.** O login usa cookie `SameSite=Lax`: o site e a API precisam estar no **mesmo site**
+> (`wiki.seudominio.com` + `api.seudominio.com`). Com os endereços `*.squareweb.app` (ex.: `ninwiki.squareweb.app` + `ninwiki-api.squareweb.app`)
+> o navegador pode tratá-los como sites diferentes e **o login não persiste**. Para **testar sem domínio**, ponha `COOKIE_SAMESITE=none` no `API_ENV`
+> (funciona em Chrome/Edge/Firefox; o Safari e navegadores que bloqueiam cookies de terceiros continuam sem funcionar). Com domínio próprio, deixe o padrão (`lax`).
+> O domínio personalizado pode depender do plano da SquareCloud — confira no painel.
 
 ### 3.1 Antes de começar: contas e segredos
 Você vai precisar de:
@@ -270,7 +272,8 @@ Para colar um certificado: abra o arquivo no Bloco de Notas, selecione **tudo** 
 **Modelo do `API_ENV`** (troque tudo que está em MAIÚSCULAS/`seudominio`):
 ```env
 ENVIRONMENT=production
-DATABASE_URL=postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/BANCO
+# ATENÇÃO: começa com postgresql+asyncpg:// (com o +asyncpg) e TERMINA com /NOME_DO_BANCO (o nome do banco do painel; costuma ser igual ao usuário)
+DATABASE_URL=postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/NOME_DO_BANCO
 DATABASE_SSL_CA=certs/ca.crt
 DATABASE_SSL_CERT=certs/client.pem
 DATABASE_SSL_KEY=certs/client.key
@@ -283,6 +286,7 @@ DISCORD_REDIRECT_URI=https://api.seudominio.com/auth/discord/callback
 SUPER_ADMIN_DISCORD_IDS=SEU_DISCORD_ID
 DEV_LOGIN_ENABLED=false
 TRUST_PROXY_HEADERS=true
+# COOKIE_SAMESITE=none   # só se usar os endereços *.squareweb.app em vez de domínio próprio (ver aviso da 3.0)
 BOT_API_TOKEN=COLE_O_SEGUNDO_SEGREDO_GERADO
 DEEPL_API_KEY=
 ```
@@ -358,6 +362,8 @@ Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o 
 | Workflow verde, mas o app não funciona | olhe os **Logs do app** na SquareCloud — o erro real aparece lá |
 | API não inicia: `JWT_SECRET_KEY` / `DEV_LOGIN_ENABLED` | `.env` inseguro com `ENVIRONMENT=production` — corrija o `API_ENV` |
 | API: `Arquivo de certificado do banco nao encontrado` | Secrets `DB_SSL_CA/CERT/KEY` não criados (ou o `API_ENV` aponta para outro caminho) |
+| API: `Can't load plugin: sqlalchemy.dialects:driver` ou `DATABASE_URL nao esta definida` | o `API_ENV` não tem a linha `DATABASE_URL` (ou o Secret está vazio/em *Environment secrets*) |
+| API: `Can't load plugin ... postgresql`, `No module named psycopg2` ou banco não encontrado | `DATABASE_URL` sem `+asyncpg` ou sem `/NOME_DO_BANCO` no final — use `postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/NOME_DO_BANCO` |
 | API: `SSL error`, `certificate verify failed`, `connection refused` | `DATABASE_URL`/porta errada, certificado trocado ou colado incompleto (precisa do `BEGIN`/`END`) |
 | API: `private key file ... has group or world access` | já tratado automaticamente; se aparecer, atualize para a versão mais recente do repositório |
 | API 500 em `/posts` ou `/auth/me` logo após atualizar | migração não aplicada: veja nos Logs se `aplicando migrations` terminou; reinicie o app |
