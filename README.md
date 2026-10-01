@@ -147,6 +147,28 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"   # rode 2x: JWT_SE
 2. `cd NinWiki.Bot && zip -r ../ninwiki-bot.zip . -x "venv/*" "__pycache__/*" "*/__pycache__/*"` e envie como app.
    Não precisa de subdomínio nem de porta.
 
+### 3.4b Deploy automático pelo GitHub Actions (alternativa ao zip manual)
+
+O workflow `.github/workflows/deploy-squarecloud.yml` envia o app para a SquareCloud **só quando você clicar em
+Actions → "Deploy na SquareCloud (manual)" → Run workflow**, escolhendo `api`, `web`, `bot` ou `todos`.
+O `.env` fica guardado nos **Secrets** do GitHub (criptografados) — nunca no código.
+
+1. Faça o primeiro envio de cada app pelo painel da SquareCloud (passos 3.2–3.4) para o app existir e ter um ID.
+2. GitHub → repositório → **Settings → Secrets and variables → Actions → New repository secret**, crie:
+
+| Secret | Valor |
+|---|---|
+| `SQUARE_API_KEY` | chave da API (SquareCloud → perfil → API) |
+| `SQUARE_APP_ID_API` / `SQUARE_APP_ID_WEB` / `SQUARE_APP_ID_BOT` | ID de cada app (painel → app → configurações) |
+| `API_ENV` | o conteúdo **inteiro** do `.env` da API (cole o arquivo todo) |
+| `WEB_ENV` | o `.env` do site (`NEXT_PUBLIC_API_URL=...`) |
+| `BOT_ENV` | o `.env` do bot (opcional) |
+
+3. Para mudar uma configuração, edite o Secret e rode o workflow de novo (no site, isso também refaz o build).
+
+⚠️ O workflow usa o endpoint `POST /v2/apps/{id}/commit` da API da SquareCloud. Se ela mudar, ajuste
+`.github/scripts/deploy-squarecloud.sh`. Lembrete: o redeploy pode apagar `uploads/` da API (ver 3.0, item 3).
+
 ### 3.5 Primeiro acesso
 1. Abra `https://wiki.seudominio.com/login` e entre com o Discord de um ID listado em `SUPER_ADMIN_DISCORD_IDS`.
 2. Cadastre o resto da equipe em `/admin/staff`.

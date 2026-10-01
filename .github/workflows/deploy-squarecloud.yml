@@ -1,0 +1,75 @@
+name: Deploy na SquareCloud (manual)
+
+# Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
+# O .env de cada app NÃO fica no repositório: vem dos Secrets do GitHub
+# (Settings > Secrets and variables > Actions), e é gravado só dentro do zip enviado.
+#
+# Secrets necessários:
+#   SQUARE_API_KEY      chave da API da SquareCloud (painel > Perfil > API)
+#   SQUARE_APP_ID_API   ID do app da API   (painel > app > Configurações)
+#   SQUARE_APP_ID_WEB   ID do app do site
+#   SQUARE_APP_ID_BOT   ID do app do bot (opcional)
+#   API_ENV             conteúdo COMPLETO do .env da NinWiki.Api
+#   WEB_ENV             conteúdo COMPLETO do .env da NinWiki.Web (NEXT_PUBLIC_API_URL=...)
+#   BOT_ENV             conteúdo COMPLETO do .env da NinWiki.Bot (opcional)
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Qual app enviar'
+        type: choice
+        required: true
+        default: api
+        options: [api, web, bot, todos]
+      restart:
+        description: 'Reiniciar o app depois do envio'
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-squarecloud-${{ inputs.app }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    if: inputs.app == 'api' || inputs.app == 'todos'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enviar NinWiki.Api
+        env:
+          SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
+          APP_ID: ${{ secrets.SQUARE_APP_ID_API }}
+          APP_ENV: ${{ secrets.API_ENV }}
+          RESTART: ${{ inputs.restart }}
+        run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Api ninwiki-api.zip
+
+  web:
+    if: inputs.app == 'web' || inputs.app == 'todos'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enviar NinWiki.Web
+        env:
+          SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
+          APP_ID: ${{ secrets.SQUARE_APP_ID_WEB }}
+          APP_ENV: ${{ secrets.WEB_ENV }}
+          RESTART: ${{ inputs.restart }}
+        run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Web ninwiki-web.zip
+
+  bot:
+    if: inputs.app == 'bot' || inputs.app == 'todos'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enviar NinWiki.Bot
+        env:
+          SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
+          APP_ID: ${{ secrets.SQUARE_APP_ID_BOT }}
+          APP_ENV: ${{ secrets.BOT_ENV }}
+          RESTART: ${{ inputs.restart }}
+        run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Bot ninwiki-bot.zip
