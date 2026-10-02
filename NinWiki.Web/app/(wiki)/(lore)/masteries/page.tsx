@@ -6,6 +6,10 @@
 
 import { listMasteries } from '@/lib/api-client';
 import { MasteriesPageClient } from '@/components/lore/masteries-page-client';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Masteries' };
+
 
 /** Listagem publica de masteries (Server Component: busca na API). */
 export default async function MasteriesPage() {

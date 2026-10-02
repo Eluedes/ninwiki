@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm, useWatch, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { EntryHistory } from '@/components/admin/entry-history';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ArrowLeft, Save, Loader2, Languages, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Languages } from 'lucide-react';
 import {
   getJutsu,
   createJutsu,
@@ -56,7 +56,6 @@ const emptyForm: JutsuFormValues = {
   castType: '',
   jutsuClass: '',
   debuff: '',
-  battleExtra: [],
 };
 
 /** Valores por nivel: corta no nivel maximo; se todos estiverem vazios, devolve lista vazia. */
@@ -101,7 +100,6 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
 
   const masteryId = useWatch({ control, name: 'masteryId' });
   const maxLevel = Math.min(10, Math.max(1, Number(useWatch({ control, name: 'maxLevel' })) || 1));
-  const extraRows = useFieldArray({ control, name: 'battleExtra' });
   const jf = dict.jutsuInfo;
 
   // Mensagem de "erro ao carregar" guardada numa ref: assim o efeito de carga NAO precisa depender de
@@ -118,7 +116,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
     Promise.all([loadMasteries, loadJutsu])
       .then(([m, j]) => {
         setMasteries(m);
-        if (j) reset({ ...emptyForm, ...j, damageByLevel: j.damageByLevel ?? [], cooldownByLevel: j.cooldownByLevel ?? [], battleExtra: j.battleExtra ?? [] });
+        if (j) reset({ ...emptyForm, ...j, damageByLevel: j.damageByLevel ?? [], cooldownByLevel: j.cooldownByLevel ?? [] });
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : loadErrorRef.current))
       .finally(() => setLoading(false));
@@ -360,23 +358,6 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">{jf.battleExtra}</label>
-            {extraRows.fields.map((field, i) => (
-              <div key={field.id} className="flex items-center gap-2">
-                <Input {...register(`battleExtra.${i}.label` as const)} placeholder={jf.rowLabel} maxLength={60} />
-                <Input {...register(`battleExtra.${i}.value` as const)} placeholder={jf.rowValue} maxLength={150} />
-                <button type="button" title={jf.removeRow} onClick={() => extraRows.remove(i)}
-                  className="rounded p-2 text-muted-foreground hover:bg-secondary hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
-              </div>
-            ))}
-            {extraRows.fields.length < 10 && (
-              <Button type="button" variant="outline" size="sm" onClick={() => extraRows.append({ label: '', value: '' })}>
-                <Plus className="mr-1.5 h-4 w-4" />{jf.addRow}
-              </Button>
-            )}
           </div>
         </div>
 

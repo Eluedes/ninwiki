@@ -21,6 +21,11 @@ const STALE_DAYS = 30;
 
 /** Visao Geral do painel: quadro de avisos, estatisticas e atividade recente. */
 export default function AdminOverviewPage() {
+  // Titulo da aba (esta pagina e' Client Component, entao nao exporta metadata).
+  useEffect(() => {
+    document.title = 'Overview - Admin · Nin Online Wiki';
+  }, []);
+
   const { dict } = useLanguage();
   const { can } = useAuth();
   const t = dict.admin.overview;

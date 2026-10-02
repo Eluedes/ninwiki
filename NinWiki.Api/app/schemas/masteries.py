@@ -167,7 +167,6 @@ class JutsuRead(CamelModel):
     cast_type: str = ""
     jutsu_class: str = ""
     debuff: str = ""
-    battle_extra: list[dict[str, str]] = []
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
@@ -202,7 +201,6 @@ class JutsuWrite(CamelModel):
     cast_type: str = Field(default="", max_length=100)
     jutsu_class: str = Field(default="", max_length=100)
     debuff: str = Field(default="", max_length=150)
-    battle_extra: list[dict[str, str]] = Field(default_factory=list, max_length=10)
 
     @field_validator("effect", "range", "cast_time", "cooldown", "required_level", "required_stat", "scroll_type", "shop",
                      "cast_type", "jutsu_class", "debuff")
@@ -219,19 +217,6 @@ class JutsuWrite(CamelModel):
         if any(len(v) > 40 for v in out):
             raise ValueError("Each level value can have at most 40 characters")
         return out
-
-    @field_validator("battle_extra")
-    @classmethod
-    def _clean_extra(cls, value: list[dict[str, str]]) -> list[dict[str, str]]:
-        """Linhas extras de Battle Data: so' {label, value}, textos curtos; linha sem rotulo e' descartada."""
-        rows = []
-        for row in value:
-            label, val = " ".join(str(row.get("label", "")).split()), " ".join(str(row.get("value", "")).split())
-            if len(label) > 60 or len(val) > 150:
-                raise ValueError("Extra battle row too long (label up to 60, value up to 150 characters)")
-            if label:
-                rows.append({"label": label, "value": val})
-        return rows
 
     @field_validator("description", "long_description")
     @classmethod

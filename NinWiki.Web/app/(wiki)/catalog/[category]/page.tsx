@@ -6,6 +6,18 @@
 import { listContentItems, listAttributes, listProfessions, listNinjaRanks, listStoryArcs, listSummons } from '@/lib/api-client';
 import { CatalogPageClient } from '@/components/wiki/catalog-page-client';
 import type { Category } from '@/lib/types';
+import type { Metadata } from 'next';
+
+const CATEGORY_TITLES: Record<string, string> = {
+  mobs: 'Mobs', items: 'Items', weapons: 'Weapons', missions: 'Missions', guides: 'Guides',
+};
+
+/** Titulo da aba: o nome da categoria. */
+export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
+  const { category } = await params;
+  return { title: CATEGORY_TITLES[category] ?? 'Catalog' };
+}
+
 
 // Lista de categorias aceitas nesta rota - usada para validar o
 // parametro de URL antes de usa-la. "masteries" NAO entra aqui -

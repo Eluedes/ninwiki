@@ -153,7 +153,6 @@ class Jutsu(Base):
     cast_type: Mapped[str] = mapped_column(String(100), default="", server_default="")         # "Walk cast"
     jutsu_class: Mapped[str] = mapped_column(String(100), default="", server_default="")       # "Trap"
     debuff: Mapped[str] = mapped_column(String(150), default="", server_default="")            # "Burn III"
-    battle_extra: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")       # [{"label": "Duration", "value": "5s"}]
     icon: Mapped[str] = mapped_column(String(50))
     # Demonstracao em GIF, opcional - ver components/lore/jutsu-gif.tsx
     # no front, que ja trata o caso desse arquivo nao existir ainda.

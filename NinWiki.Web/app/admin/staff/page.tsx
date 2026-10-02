@@ -237,10 +237,10 @@ export default function StaffPage() {
                               {m.username}
                               {m.id === me?.id && <span className="ml-1 text-xs font-normal text-muted-foreground">({t.you})</span>}
                               {can('staff.edit') && (
-                                <button type="button" title={`${t.editName}. ${t.nameHint}`}
+                                <button type="button" title={t.nameHint}
                                   onClick={() => { setEditingId(m.id); setNameDraft(m.username); }}
-                                  className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-card-foreground">
-                                  <Pencil className="h-3.5 w-3.5" />
+                                  className="ml-1 inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground hover:border-primary/50 hover:text-card-foreground">
+                                  <Pencil className="h-3 w-3" />{t.editName}
                                 </button>
                               )}
                             </p>

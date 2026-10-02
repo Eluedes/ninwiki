@@ -1440,14 +1440,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     ficha = {**base_j, "tier": 4, "requiredLevel": "20+", "requiredStat": "35 Intellect", "scrollType": "Sealable Scroll",
              "shop": "Any", "maxLevel": 3, "damageByLevel": ["6", "6", "8"], "cooldownByLevel": ["16s", "14s", "14s"],
              "castTime": "1 Second", "castType": "Walk cast", "effect": "Burn", "jutsuClass": "Trap",
-             "range": "3 Tiles in front of caster", "debuff": "Burn III",
-             "battleExtra": [{"label": "  Duration ", "value": "5s"}, {"label": "", "value": "sem rotulo some"}]}
+             "range": "3 Tiles in front of caster", "debuff": "Burn III"}
     r = await c.post("/jutsus", json=ficha, headers=A)
     check("Adm cria jutsu com a ficha completa (tier 4)", r.status_code == 201, r.text[:160])
     j = r.json()
     check("campos da ficha voltam certinhos", j["requiredLevel"] == "20+" and j["maxLevel"] == 3 and j["damageByLevel"] == ["6", "6", "8"]
           and j["cooldownByLevel"] == ["16s", "14s", "14s"] and j["jutsuClass"] == "Trap" and j["debuff"] == "Burn III", str(j)[:200])
-    check("linha extra: espacos limpos e linha sem rotulo descartada", j["battleExtra"] == [{"label": "Duration", "value": "5s"}])
     r = await c.get(f"/jutsus/{SLUG}-jf")
     check("a ficha tambem vem na leitura publica", r.status_code == 200 and r.json()["castType"] == "Walk cast")
     r = await c.post("/jutsus", json={**base_j, "id": f"{SLUG}-jg"}, headers=A)
