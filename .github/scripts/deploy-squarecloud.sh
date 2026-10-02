@@ -72,7 +72,7 @@ if [ "${PREBUILT:-false}" = "true" ]; then
 else
   ( cd "$DIR" && zip -qr "$ZIP" . \
       -x "node_modules/*" ".next/*" "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" \
-         "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" ".git/*" \
+         "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" "status_state.json" ".git/*" \
          `# so' desenvolvimento/documentacao - nao e' necessario para rodar na SquareCloud:` \
          "*.md" "*.example" "docker-compose*.yml" "scripts/*" "diagnostico_conexao.py" ".squarecloudignore" )
 fi

@@ -43,11 +43,16 @@ import {
 // NodeView) e' suficiente aqui - generateHTML so' usa o renderHTML()
 // estatico da extensao, nunca a parte interativa React (essa so'
 // existe do lado do editor, ver lib/tiptap-extensions/ficha-editable.ts).
+// TextStyle (cor, fundo, fonte, tamanho) com prioridade MENOR que a do negrito: assim o <span style="color:..."> fica por DENTRO do
+// <strong>. Antes ficava por fora e o `.prose-shinobi strong` (azul do tema) vencia a cor escolhida no editor: o texto em negrito
+// saia sempre azul, mesmo escolhendo vermelho.
+const TextStyleInner = TextStyle.extend({ priority: 50 });
+
 const extensions = [
   // link, underline e heading do StarterKit desligados: sao adicionados abaixo (evita extensao duplicada).
   StarterKit.configure({ link: false, underline: false, heading: false }),
   HeadingWithId, // titulo com `id` (ancora do indice do post)
-  TextStyle,
+  TextStyleInner,
   Color,
   BackgroundColor,
   FontSize,

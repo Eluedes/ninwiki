@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 // Limite de tamanho por arquivo (igual ao MAX_NOTICE_FILE_MB padrao da API); a API confere de novo.
-const MAX_FILE_MB = 50;
+const MAX_FILE_MB = 200;
 
 /** Tamanho de arquivo legivel (B, KB, MB). */
 function formatSize(bytes: number): string {

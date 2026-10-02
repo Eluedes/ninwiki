@@ -13,6 +13,7 @@ Os arquivos NAO ficam na pasta publica uploads/: ficam em staff_files/ e so' sae
 endpoint, que exige login. Sao sempre entregues como DOWNLOAD (nunca abertos no navegador),
 com o nome gravado em disco aleatorio - o nome original so' aparece no download.
 """
+import asyncio
 import re
 import secrets
 from pathlib import Path
@@ -148,20 +149,31 @@ async def add_file(
     if Path(filename).suffix.lower() in BLOCKED_EXTENSIONS:
         raise HTTPException(status_code=415, detail="This file type is not allowed as an attachment")
     max_bytes = settings.max_notice_file_mb * 1024 * 1024
-    content = await file.read(max_bytes + 1)
-    if len(content) > max_bytes:
-        raise HTTPException(status_code=413, detail=f"File larger than {settings.max_notice_file_mb}MB")
-    if not content:
-        raise HTTPException(status_code=400, detail="Empty file")
+    # Confere o tipo pelo INICIO do arquivo e grava aos pedacos (1 MB por vez): arquivos grandes (centenas de MB) nunca ficam inteiros na memoria.
+    head = await file.read(64)
     signatures = ARCHIVE_SIGNATURES.get(Path(filename).suffix.lower())
-    if signatures and not content.startswith(signatures):
+    if head and signatures and not head.startswith(signatures):
         raise HTTPException(status_code=415, detail="This file is not a valid archive (the content does not match its extension)")
-
     stored = secrets.token_hex(16)
-    (FILES_DIR / stored).write_bytes(content)
-    notice.files.append(NoticeFile(filename=filename, stored_name=stored, size=len(content)))
+    target_path = FILES_DIR / stored
+    size = 0
+    try:
+        with target_path.open("wb") as out:
+            chunk = head
+            while chunk:
+                size += len(chunk)
+                if size > max_bytes:
+                    raise HTTPException(status_code=413, detail=f"File larger than {settings.max_notice_file_mb}MB")
+                await asyncio.to_thread(out.write, chunk)
+                chunk = await file.read(1024 * 1024)
+        if size == 0:
+            raise HTTPException(status_code=400, detail="Empty file")
+    except BaseException:
+        target_path.unlink(missing_ok=True)
+        raise
+    notice.files.append(NoticeFile(filename=filename, stored_name=stored, size=size))
     await log_action(db, action="upload", entity_type="notice", entity_id=str(notice.id),
-                     diff={"file": filename, "bytes": len(content)}, actor=staff)
+                     diff={"file": filename, "bytes": size}, actor=staff)
     try:
         await db.commit()
     except Exception:

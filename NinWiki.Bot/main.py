@@ -9,6 +9,7 @@ Pre-requisitos: ver README.md (criar o bot no Discord, .env, API rodando).
 import copy
 import logging
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,8 +20,9 @@ from pydantic import ValidationError
 
 from ninwiki_bot.api_client import ApiError, NinWikiApi
 from ninwiki_bot.config import BotSettings
-from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, decide, format_error, query_since as errors_query_since, update_status
+from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_status_panel, query_since as errors_query_since, record_check, update_status
 from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
+from ninwiki_bot.public_commands import register_public_commands
 from ninwiki_bot.staff_commands import StaffGroup
 
 log = logging.getLogger("ninwiki_bot")
@@ -50,6 +52,7 @@ class NinWikiBot(discord.Client):
         self.error_loop = tasks.loop(seconds=settings.log_poll_seconds)(self._error_tick)
         self.error_loop.before_loop(self.wait_until_ready)
         self.statuses = {"API": ServiceStatus("API"), "Database": ServiceStatus("Database"), "Website": ServiceStatus("Website")}
+        self.status_store = StatusMessageStore(Path(__file__).resolve().parent / "status_state.json")
         self.health_loop = tasks.loop(seconds=settings.health_poll_seconds)(self._health_tick)
         self.health_loop.before_loop(self.wait_until_ready)
 
@@ -58,6 +61,9 @@ class NinWikiBot(discord.Client):
             """Erro inesperado em um comando: registra no terminal e responde algo generico (sem vazar detalhe)."""
             # Erro inesperado: registra no terminal e responde algo generico -
             # nunca despeja detalhe interno (stack trace, URL, token) no Discord.
+            if isinstance(error, app_commands.CommandOnCooldown):
+                # Freio por pessoa nos comandos publicos (/status, /search): resposta simples, sem registrar como erro.
+                return await interaction.response.send_message(f"⏳ Slow down - try again in {error.retry_after:.0f}s.", ephemeral=True)
             log.exception("Erro num comando", exc_info=error)
             message = "❌ Something went wrong. Try again; if it keeps happening, tell whoever maintains the bot."
             if interaction.response.is_done():
@@ -126,31 +132,71 @@ class NinWikiBot(discord.Client):
                 log.warning("Feed de erros falhou (tento de novo no proximo ciclo): %s", e)
             self._errors_failing = True
 
-    async def _health_tick(self) -> None:
-        """Confere se API, banco e site estao no ar e avisa no canal SO' quando algum cai ou volta (ver error_feed.update_status)."""
+    async def _update_status_panel(self, channel: discord.abc.Messageable, embed: discord.Embed) -> None:
+        """Edita a mensagem do painel ao vivo; se ela foi apagada (ou ainda nao existe) cria outra e lembra o id."""
+        saved = self.status_store.load()
+        if saved and saved[0] == getattr(channel, "id", None):
+            try:
+                await channel.get_partial_message(saved[1]).edit(embed=embed)
+                return
+            except discord.NotFound:
+                pass  # alguem apagou a mensagem: cria outra abaixo
+        msg = await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
+        self.status_store.save(channel.id, msg.id)
+
+    async def _check_services(self) -> tuple[dict[str, bool | None], dict[str, int | None]]:
+        """Pergunta agora se API, banco e site respondem (e em quantos ms). None = nao da' pra saber (banco com a API fora)."""
+        t0 = time.monotonic()
         api_up, db_up = await self.api.api_status()
-        results = {"API": api_up, "Database": db_up if api_up else True}  # API fora do ar: nao da' pra saber do banco
+        api_ms = int((time.monotonic() - t0) * 1000)
+        # None = "nao da' pra saber": com a API fora do ar nao existe resposta do banco (antes aparecia como online por engano).
+        results: dict[str, bool | None] = {"API": api_up, "Database": db_up if api_up else None}
+        timings: dict[str, int | None] = {"API": api_ms, "Database": api_ms if api_up else None}
         if self.settings.site_url:
+            t0 = time.monotonic()
             results["Website"] = await self.api.site_ok(self.settings.site_url)
+            timings["Website"] = int((time.monotonic() - t0) * 1000)
+        return results, timings
+
+    async def check_now(self) -> list[ServiceStatus]:
+        """Para o /status: confere agora e devolve o estado de cada servico (a historia de uptime continua a mesma)."""
+        results, timings = await self._check_services()
+        for name, ok in results.items():
+            record_check(self.statuses[name], ok, timings[name])
+        return [self.statuses[n] for n in results]
+
+    async def _health_tick(self) -> None:
+        """Confere se API, banco e site estao no ar; avisa quando algum cai ou volta e mantem o painel ao vivo atualizado."""
+        now = datetime.now(timezone.utc)
+        results, timings = await self._check_services()
         messages = []
         for name, ok in results.items():
-            msg = update_status(self.statuses[name], ok, datetime.now(timezone.utc))
+            record_check(self.statuses[name], ok, timings[name])
+            if ok is None:
+                continue
+            msg = update_status(self.statuses[name], ok, now)
             if msg:
                 messages.append(msg)
+        panel = self.settings.status_panel
         if not self._health_announced:
-            # Primeira volta depois que o bot ligou: diz como as coisas estao AGORA (para a equipe saber que o monitor esta' vivo).
             self._health_announced = True
-            lines = [f"{'🟢' if ok else '🔴'} **{name}** — {'online' if ok else 'OFFLINE'}" for name, ok in results.items()]
-            if not self.settings.site_url:
-                lines.append("⚪ **Website** — not monitored (set SITE_URL in the bot .env)")
-            messages.insert(0, {"title": "🤖 NinWiki monitor started", "description": "\n".join(lines),
-                                "color": 0x2ECC71 if all(results.values()) else 0xE74C3C})
-        if not messages:
+            if not panel:
+                # Sem painel ao vivo: diz como as coisas estao AGORA (para a equipe saber que o monitor esta' vivo).
+                lines = [f"{'⚪' if ok is None else '🟢' if ok else '🔴'} **{name}** — {'unknown' if ok is None else 'online' if ok else 'OFFLINE'}" for name, ok in results.items()]
+                if not self.settings.site_url:
+                    lines.append("⚪ **Website** — not monitored (set SITE_URL in the bot .env)")
+                messages.insert(0, {"title": "🤖 NinWiki monitor started", "description": "\n".join(lines),
+                                    "color": 0x2ECC71 if all(ok for ok in results.values() if ok is not None) else 0xE74C3C})
+        if not messages and not panel:
             return
         try:
             channel = await self._errors_channel()
-            embeds = [discord.Embed(title=m["title"], description=m["description"], color=m["color"], timestamp=datetime.now(timezone.utc)) for m in messages]
-            await channel.send(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+            if messages:
+                embeds = [discord.Embed(title=m["title"], description=m["description"], color=m["color"], timestamp=now) for m in messages]
+                await channel.send(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+            if panel:
+                f = format_status_panel([self.statuses[n] for n in results], now, self.settings.health_poll_seconds, bool(self.settings.site_url))
+                await self._update_status_panel(channel, discord.Embed(title=f["title"], description=f["description"], color=f["color"], timestamp=now))
         except discord.DiscordException as e:
             log.warning("Nao consegui avisar no Discord sobre a mudanca de saude: %s", e)
 
@@ -165,6 +211,7 @@ class NinWikiBot(discord.Client):
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
+        register_public_commands(self.tree, self.api, self.settings.allowed_guilds, self.settings.site_url, self.check_now, bool(self.settings.site_url))
         self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds, self.settings.site_url, self._log_channel))
         if self.settings.dev_guild_id:
             # Sincroniza so' no servidor de testes: aparece na hora (o global demora ate 1h).

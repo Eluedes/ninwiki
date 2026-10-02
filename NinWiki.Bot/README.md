@@ -8,10 +8,14 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 ## Comandos (só funcionam em servidor, respostas só você vê)
 | Comando | Faz |
 |---|---|
+| `/status` | **qualquer pessoa**: API, banco e site no ar agora (tempo de resposta e uptime), em cartão Components V2 |
+| `/search term` | **qualquer pessoa**: procura no wiki (itens, mobs, armas, guias, missões, masteries, jutsus e posts publicados) e responde com cartões e botão *Open* |
 | `/team list` | mostra a equipe e o cargo de cada um |
 | `/team manage [user]` | abre um **formulário (modal)** que faz tudo: **adicionar**, **trocar cargo**, **renomear**, **desativar** (tira o acesso na hora) e **reativar**. Campos: ação (lista), pessoa (seletor de usuário), cargo (lista, opcional) e nome (texto, opcional). Cada ação usa só o que precisa; `user` é opcional e já deixa a pessoa selecionada |
 | `/team clearlog where [older_than_days]` | **limpa o log antigo** (só S.Adm, com confirmação): o log do painel, as mensagens do canal de log do Discord, ou os dois. Sem `older_than_days` apaga tudo; com ele, só o mais antigo. O bot apaga só as **próprias** mensagens do canal (não precisa de permissão extra), até 1000 por vez. A limpeza fica registrada como a primeira linha do log novo |
 | `/team status` | mostra agora se a **API**, o **banco** e o **site** estão no ar |
+
+**Comandos públicos (Components V2):** `/status` (API, banco e site agora) e `/search <termo>` (busca no wiki, cartões com botão *Open*). Qualquer pessoa usa; 1 uso a cada 5–10 s por pessoa.
 
 **Avisos automáticos de queda:** com `ERROR_CHANNEL_ID` (ou `LOG_CHANNEL_ID`) e `SITE_URL` preenchidos, o bot confere API, banco e site a cada `HEALTH_POLL_SECONDS`
 e avisa no canal **🔴 ... is DOWN** quando algum cai e **🟢 ... is back online** quando volta (com o tempo fora do ar). Sempre que o bot liga, ele também posta
@@ -87,6 +91,6 @@ mudanças de equipe e de permissões, tentativas negadas, avisos postados. **Nun
 ## Erros e alertas no Discord (opcional)
 Com `ERROR_CHANNEL_ID` (ou só `LOG_CHANNEL_ID`) preenchido, o bot também posta **erros e problemas do wiki** e vigia se a **API, o banco e o site**
 estão no ar. Mensagens em inglês; um problema que se repete só gera novo aviso a cada 10 min. Detalhes no README da raiz (seção 2.2).
-- `ERROR_CHANNEL_ID`: canal dos erros/alertas (vazio = usa o canal de log). `SITE_URL`: endereço do site para vigiar. `HEALTH_POLL_SECONDS` (mín. 30).
+- `ERROR_CHANNEL_ID`: canal dos erros/alertas (vazio = usa o canal de log). `SITE_URL`: endereço do site para vigiar. `HEALTH_POLL_SECONDS` (mín. 30). `STATUS_PANEL=true` (padrão) mantém uma mensagem **📡 NinWiki status** no canal, editada a cada checagem (online/offline, tempo de resposta, uptime desde que o bot ligou); `false` = só avisa quando cai/volta.
 - Código: `ninwiki_bot/error_feed.py` (o que postar, anti-spam, estado dos serviços) e `main.py` (`_error_tick`, `_health_tick`). Rotas da API: `GET /bot/errors` e `GET /health/ready`.
 - Os comandos agora são `/team ...` (antes `/equipe ...`): `/team list`, `/team add user role`, `/team role user role`, `/team deactivate user`, `/team reactivate user`.
