@@ -9,7 +9,7 @@ export interface EditorFont { label: string; value: string }
 export const EDITOR_FONTS: EditorFont[] = [
   { label: 'Inter', value: 'var(--font-inter), sans-serif' },
   { label: 'Cinzel', value: 'var(--font-cinzel), serif' },
-  { label: 'Merriweather', value: 'var(--font-merriweather), serif' },
+  { label: 'Playfair Display', value: 'var(--font-playfair), serif' },
   { label: 'Lora', value: 'var(--font-lora), serif' },
   { label: 'Oswald', value: 'var(--font-oswald), sans-serif' },
   { label: 'Bebas Neue', value: 'var(--font-bebas), sans-serif' },
@@ -52,4 +52,4 @@ export const THEME_COLOR_ROWS: string[][] = LIGHTNESS.map((l) => HUES.map(([h, s
 export const STANDARD_COLORS = ['#c00000', '#ff0000', '#ffc000', '#ffff00', '#92d050', '#00b050', '#00b0f0', '#0070c0', '#002060', '#7030a0'];
 
 /** Ids das variaveis CSS das fontes carregadas pelo next/font (ver app/layout.tsx). */
-export const FONT_VARIABLES = ['--font-inter', '--font-cinzel', '--font-merriweather', '--font-lora', '--font-oswald', '--font-bebas', '--font-caveat', '--font-fira'];
+export const FONT_VARIABLES = ['--font-inter', '--font-cinzel', '--font-playfair', '--font-lora', '--font-oswald', '--font-bebas', '--font-caveat', '--font-fira'];

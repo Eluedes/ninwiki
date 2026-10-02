@@ -4,7 +4,7 @@
 
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter, Cinzel, Merriweather, Lora, Oswald, Bebas_Neue, Caveat, Fira_Code } from 'next/font/google';
+import { Inter, Cinzel, Playfair_Display, Lora, Oswald, Bebas_Neue, Caveat, Fira_Code } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { LanguageProvider } from '@/components/providers/language-provider';
 import { ColorThemeProvider } from '@/components/providers/color-theme-provider';
@@ -16,13 +16,13 @@ import { ErrorReporter } from '@/components/error-reporter';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 // Fontes extras oferecidas no editor de texto (cada uma vira uma variavel CSS usada pelo texto publico).
 const cinzel = Cinzel({ subsets: ['latin'], variable: '--font-cinzel', display: 'swap' });
-const merriweather = Merriweather({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-merriweather', display: 'swap' });
+const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair', display: 'swap' });
 const lora = Lora({ subsets: ['latin'], variable: '--font-lora', display: 'swap' });
 const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald', display: 'swap' });
 const bebas = Bebas_Neue({ subsets: ['latin'], weight: '400', variable: '--font-bebas', display: 'swap' });
 const caveat = Caveat({ subsets: ['latin'], variable: '--font-caveat', display: 'swap' });
 const fira = Fira_Code({ subsets: ['latin'], variable: '--font-fira', display: 'swap' });
-const fontVars = [inter, cinzel, merriweather, lora, oswald, bebas, caveat, fira].map((f) => f.variable).join(' ');
+const fontVars = [inter, cinzel, playfair, lora, oswald, bebas, caveat, fira].map((f) => f.variable).join(' ');
 
 // Metadata usada pelo Next.js para gerar as tags <title> e <meta description>
 // automaticamente - importante para SEO e para o preview ao compartilhar o link.
