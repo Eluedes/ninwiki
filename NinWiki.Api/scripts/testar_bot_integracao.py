@@ -469,7 +469,8 @@ async def testar() -> None:
     # ------------------------------------------------------------------
     secao("6) Feed de ERROS e vigia de saude (API, banco, site)")
     from ninwiki_bot.error_feed import (
-        COOLDOWN, DOWN_AFTER, ErrorFeedState, ErrorFeedStore, ServiceStatus, decide, format_error, update_status,
+        COOLDOWN, DOWN_AFTER, ErrorFeedState, ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_status_panel,
+        record_check, update_status, uptime_pct,
     )
     from ninwiki_bot.error_feed import query_since as err_query_since
     agora = datetime(2026, 10, 2, 12, 0, tzinfo=timezone.utc)
@@ -507,6 +508,27 @@ async def testar() -> None:
     back = update_status(st, True, agora + timedelta(minutes=5))
     check("quando volta, avisa uma vez com o tempo fora", back and "back online" in back["title"] and "4 min" in back["description"], str(back))
     check("estando ok nada acontece", update_status(st, True, agora + timedelta(minutes=6)) is None)
+    # painel ao vivo
+    pa, pd, pw = ServiceStatus("API"), ServiceStatus("Database"), ServiceStatus("Website")
+    for ok in (True, True, True, False):
+        record_check(pa, ok, 120)
+    check("uptime = % de checagens OK", uptime_pct(pa) == 75.0 and uptime_pct(pw) is None)
+    record_check(pd, None)
+    record_check(pw, True, 340)
+    painel = format_status_panel([pa, pd, pw], agora, 60, True)
+    check("painel: servico fora do ar em vermelho, desconhecido em cinza (nao diz 'online' por engano)",
+          "🔴 **API** — OFFLINE" in painel["description"] and "⚪ **Database** — unknown" in painel["description"] and painel["color"] != 0x2ECC71, painel["description"])
+    check("painel mostra tempo de resposta e carimbo relativo do Discord", "340 ms" in painel["description"] and f"<t:{int(agora.timestamp())}:R>" in painel["description"])
+    record_check(pa, True, 90)
+    ok_panel = format_status_panel([pa, pw], agora, 60, False)
+    check("tudo online: painel verde; sem SITE_URL avisa que o site nao e' vigiado", ok_panel["color"] == 0x2ECC71 and "not monitored" in ok_panel["description"])
+    import tempfile
+    from pathlib import Path as _P
+    with tempfile.TemporaryDirectory() as _d:
+        store = StatusMessageStore(_P(_d) / "status_state.json")
+        check("sem arquivo: nenhum painel salvo", store.load() is None)
+        store.save(1234567890123456789, 987654321987654321)
+        check("ids do painel sobrevivem a reinicio (sem perder precisao)", store.load() == (1234567890123456789, 987654321987654321))
     st2 = ServiceStatus("Website")
     update_status(st2, False, agora); update_status(st2, True, agora)
     check("uma falha seguida de sucesso zera a contagem (rede oscilando)", st2.failures == 0 and not st2.down)

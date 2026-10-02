@@ -15,6 +15,7 @@ Privacidade: a API nao manda traceback nem IP para o bot; aqui so' mostramos tit
 API), local no codigo, rota e contador.
 """
 import json
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -23,6 +24,7 @@ COOLDOWN = timedelta(minutes=10)    # intervalo minimo entre dois avisos do MESM
 OVERLAP = timedelta(minutes=3)      # quanto "voltamos no tempo" a cada consulta (a deduplicacao e' pelo estado abaixo)
 MAX_TRACKED = 500                   # quantos problemas lembrar
 MAX_TEXT = 350
+UPTIME_WINDOW = 1440                # checagens lembradas por servico para o % de disponibilidade (1 dia a cada 60s)
 DOWN_AFTER = 3                      # falhas seguidas ate' considerar um servico fora do ar
 
 SOURCE_LABEL = {"api": "API", "web": "Website", "deepl": "DeepL translation", "security": "Security"}
@@ -114,6 +116,66 @@ class ServiceStatus:
     failures: int = 0
     down: bool = False
     down_since: datetime | None = None
+    last_ok: bool | None = None          # resultado da ultima checagem (None = ainda nao checou ou nao da' pra saber)
+    last_ms: int | None = None           # tempo de resposta da ultima checagem, em milissegundos
+    history: deque = field(default_factory=lambda: deque(maxlen=UPTIME_WINDOW))  # True/False de cada checagem (so' em memoria)
+
+
+def record_check(status: ServiceStatus, ok: bool | None, ms: int | None = None) -> None:
+    """Anota o resultado da checagem para o painel ao vivo. ok=None = nao deu para saber (ex.: banco com a API fora do ar)."""
+    status.last_ok, status.last_ms = ok, ms
+    if ok is not None:
+        status.history.append(ok)
+
+
+def uptime_pct(status: ServiceStatus) -> float | None:
+    """% de checagens OK desde que o bot ligou (ate' UPTIME_WINDOW delas); None se ainda nao ha' nenhuma."""
+    if not status.history:
+        return None
+    return 100.0 * sum(status.history) / len(status.history)
+
+
+def format_status_panel(statuses: list[ServiceStatus], checked_at: datetime, interval_seconds: int, site_monitored: bool) -> dict:
+    """Texto do painel ao vivo (uma mensagem so', editada a cada checagem). O 'ha' X segundos' e' do Discord e atualiza sozinho na tela."""
+    lines = []
+    for st in statuses:
+        if st.last_ok is None:
+            lines.append(f"⚪ **{st.name}** — unknown (waiting for the API)")
+            continue
+        icon, word = ("🟢", "online") if st.last_ok else ("🔴", "OFFLINE")
+        extra = []
+        if st.last_ok and st.last_ms is not None:
+            extra.append(f"{st.last_ms} ms")
+        pct = uptime_pct(st)
+        if pct is not None:
+            extra.append(f"{pct:.1f}% uptime")
+        lines.append(f"{icon} **{st.name}** — {word}" + (f" · {' · '.join(extra)}" if extra else ""))
+    if not site_monitored:
+        lines.append("⚪ **Website** — not monitored (set SITE_URL in the bot .env)")
+    lines.append(f"\nLast check <t:{int(checked_at.timestamp())}:R> · every {interval_seconds}s · uptime counts since the bot started")
+    known = [st.last_ok for st in statuses if st.last_ok is not None]
+    return {"title": "📡 NinWiki status", "description": "\n".join(lines), "color": COLORS["recovered"] if known and all(known) else COLORS["down"]}
+
+
+class StatusMessageStore:
+    """Guarda qual mensagem do Discord e' o painel ao vivo (para editar a mesma depois de reiniciar o bot)."""
+
+    def __init__(self, path: Path):
+        self.path = path
+
+    def load(self) -> tuple[int, int] | None:
+        """(id do canal, id da mensagem) salvos, ou None."""
+        try:
+            raw = json.loads(self.path.read_text(encoding="utf-8"))
+            return int(raw["channel_id"]), int(raw["message_id"])
+        except (OSError, ValueError, KeyError, TypeError):
+            return None
+
+    def save(self, channel_id: int, message_id: int) -> None:
+        """Grava os ids (escrita atomica)."""
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"channel_id": str(channel_id), "message_id": str(message_id)}), encoding="utf-8")
+        tmp.replace(self.path)
 
 
 def update_status(status: ServiceStatus, ok: bool, now: datetime) -> dict | None:

@@ -87,6 +87,6 @@ mudanças de equipe e de permissões, tentativas negadas, avisos postados. **Nun
 ## Erros e alertas no Discord (opcional)
 Com `ERROR_CHANNEL_ID` (ou só `LOG_CHANNEL_ID`) preenchido, o bot também posta **erros e problemas do wiki** e vigia se a **API, o banco e o site**
 estão no ar. Mensagens em inglês; um problema que se repete só gera novo aviso a cada 10 min. Detalhes no README da raiz (seção 2.2).
-- `ERROR_CHANNEL_ID`: canal dos erros/alertas (vazio = usa o canal de log). `SITE_URL`: endereço do site para vigiar. `HEALTH_POLL_SECONDS` (mín. 30).
+- `ERROR_CHANNEL_ID`: canal dos erros/alertas (vazio = usa o canal de log). `SITE_URL`: endereço do site para vigiar. `HEALTH_POLL_SECONDS` (mín. 30). `STATUS_PANEL=true` (padrão) mantém uma mensagem **📡 NinWiki status** no canal, editada a cada checagem (online/offline, tempo de resposta, uptime desde que o bot ligou); `false` = só avisa quando cai/volta.
 - Código: `ninwiki_bot/error_feed.py` (o que postar, anti-spam, estado dos serviços) e `main.py` (`_error_tick`, `_health_tick`). Rotas da API: `GET /bot/errors` e `GET /health/ready`.
 - Os comandos agora são `/team ...` (antes `/equipe ...`): `/team list`, `/team add user role`, `/team role user role`, `/team deactivate user`, `/team reactivate user`.

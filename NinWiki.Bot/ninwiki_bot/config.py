@@ -16,6 +16,8 @@ class BotSettings(BaseSettings):
     error_channel_id: int | None = None
     # Endereco publico do site (ex: https://wiki.seudominio.com): o bot confere se esta' no ar. Vazio = nao vigia o site.
     site_url: str = ""
+    # Mantem UMA mensagem 'NinWiki status' no canal de erros, editada a cada checagem (estado ao vivo, tempo de resposta, uptime). false = so' avisa quando cai/volta.
+    status_panel: bool = True
     # De quantos em quantos segundos conferir API/banco/site (minimo 30).
     health_poll_seconds: int = 60
     # De quantos em quantos segundos o bot confere se ha' acao nova (minimo 10 para nao martelar a API).
