@@ -331,6 +331,9 @@ TRUST_PROXY_HEADERS=true
 # COOKIE_SAMESITE=none   # só se usar os endereços *.squareweb.app em vez de domínio próprio (ver aviso da 3.0)
 BOT_API_TOKEN=COLE_O_SEGUNDO_SEGREDO_GERADO
 DEEPL_API_KEY=
+# ---- opcionais (valores padrão entre parênteses; descrição na seção 4) ----
+# MAX_NOTICE_FILE_MB=200
+# MAX_UPLOAD_SIZE_MB=5
 ```
 - Os 3 `DATABASE_SSL_*` apontam para os arquivos que o workflow cria a partir dos Secrets `DB_SSL_*` (não mude os caminhos). Sem
   certificado de cliente: apague essas 3 linhas e use `?ssl=require` no fim da `DATABASE_URL`.
@@ -355,6 +358,12 @@ ALLOWED_GUILD_IDS=ID_DO_SEU_SERVIDOR
 LOG_CHANNEL_ID=ID_DO_CANAL_DE_LOG
 ERROR_CHANNEL_ID=ID_DO_CANAL_DE_ALERTAS
 SITE_URL=https://wiki.seudominio.com
+# ---- opcionais (valores padrão entre parênteses; descrição na seção 4) ----
+# STATUS_PANEL=true
+# LOG_SHOW_IP=true
+# HEALTH_POLL_SECONDS=60
+# LOG_POLL_SECONDS=20
+# LOG_IGNORE_ACTIONS=login,logout
 ```
 
 ### 3.7 Rodar os workflows (nesta ordem)
@@ -428,8 +437,60 @@ Se preferir não usar os workflows: crie o `.env` dentro da pasta do app, zipe o
 
 ## 4. Variáveis de ambiente (referência)
 
-API — todas em `NinWiki.Api/.env.example`, comentadas. Web — `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_SITE_URL` (endereço público do site: sitemap, RSS, links e domínio dos vídeos
-da Twitch; ambos entram no build) (+ `WEB_RATE_LIMIT_PER_MINUTE`, `BLOCK_SCRAPER_UAS`). Bot — `NinWiki.Bot/.env.example`.
+Cada app tem o seu `.env` (local) — em produção o conteúdo vai **inteiro** num Secret do GitHub (`API_ENV`, `WEB_ENV`, `BOT_ENV`, ver 3.6). **Não existe nenhum Secret
+novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses três Secrets**. Mudou uma linha → edite o Secret e rode o workflow do app de novo
+(o site precisa rodar de novo até para as `NEXT_PUBLIC_*`, que entram no build). Modelos comentados: `NinWiki.Api/.env.example`, `NinWiki.Web/.env.local.example`, `NinWiki.Bot/.env.example`.
+
+### 4.1 API (`API_ENV`)
+| Variável | Padrão | Para quê |
+|---|---|---|
+| `ENVIRONMENT` | `development` | `production` liga cookie `Secure`/HSTS, desliga `/docs` e recusa segredos fracos |
+| `DATABASE_URL` | — (obrigatória) | `postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/BANCO` |
+| `DATABASE_SSL_CA` / `_CERT` / `_KEY` | vazio | caminhos dos certificados do banco (`certs/...`, criados pelo workflow a partir de `DB_SSL_*`) |
+| `DATABASE_SSL_VERIFY_HOSTNAME` | `false` | confere também o nome do host do certificado |
+| `JWT_SECRET_KEY` | — (obrigatória) | segredo longo e aleatório da sessão (em produção a API recusa um fraco) |
+| `JWT_ALGORITHM` / `ACCESS_TOKEN_EXPIRE_MINUTES` / `SESSION_HOURS` | `HS256` / `15` / `12` | duração do login |
+| `SUPER_ADMIN_DISCORD_IDS` | vazio | Discord IDs (vírgula) que viram **S.Adm** no 1º login |
+| `DEV_LOGIN_ENABLED` | `false` | login de desenvolvimento — **nunca** `true` em produção |
+| `BOT_API_TOKEN` | vazio | senha entre bot e API (o **mesmo** valor no `BOT_ENV`); vazio = rotas `/bot` desligadas (inclui `/status` e `/search` do bot) |
+| `TRUST_PROXY_HEADERS` | `false` | `true` atrás de SquareCloud/Cloudflare: usa o IP real e o país (`CF-IPCountry`) do **gráfico de acessos** |
+| `COOKIE_SAMESITE` | `lax` | `none` só se usar `*.squareweb.app` em vez de domínio próprio |
+| `DISCORD_CLIENT_ID` / `_SECRET` / `DISCORD_REDIRECT_URI` | vazio | login com Discord |
+| `FRONTEND_ORIGIN` / `API_BASE_URL` | localhost | endereços públicos do site e da API (CORS, CSRF, links de arquivos) |
+| `DEEPL_API_KEY` | vazio | tradução EN→PT (chaves grátis terminam em `:fx`) |
+| `MAX_UPLOAD_SIZE_MB` | `5` | imagem enviada pelo editor/painel |
+| `MAX_NOTICE_FILE_MB` | **`200`** | anexo do Quadro de avisos (gravado aos pedaços; a Cloudflare grátis corta acima de 100 MB) |
+| `MAX_JSON_BODY_KB` | `512` | corpo máximo das requisições comuns |
+| `PUBLIC_REQUESTS_PER_MINUTE` / `UPLOAD_REQUESTS_PER_MINUTE` / `WRITE_REQUESTS_PER_MINUTE` | `1200` / `1500` / `120` | limite por IP (leituras, imagens, escritas) |
+| `LOGIN_REQUESTS_PER_MINUTE` / `LOGIN_FAIL_LIMIT` / `LOGIN_FAIL_WINDOW_MINUTES` / `BOT_FAIL_LIMIT` | `30` / `5` / `15` / `10` | freios do login e do token do bot |
+
+Sem variável nova para os acessos ao site: o país vem da Cloudflare (`TRUST_PROXY_HEADERS=true`) **ou** do arquivo `geoip/country.mmdb`, que o workflow da API baixa
+sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem só ao Docker do banco).
+
+### 4.2 Site (`WEB_ENV` / `.env.local`)
+| Variável | Padrão | Para quê |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | endereço da API (entra no build) |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | endereço público do site: sitemap, RSS, links, vídeos da Twitch (entra no build) |
+| `WEB_RATE_LIMIT_PER_MINUTE` | `300` | páginas por minuto por IP (`proxy.ts`) |
+| `BLOCK_SCRAPER_UAS` | `true` | bloqueia robôs de cópia conhecidos |
+
+### 4.3 Bot (`BOT_ENV`)
+| Variável | Padrão | Para quê |
+|---|---|---|
+| `DISCORD_BOT_TOKEN` | — (obrigatória) | token do bot |
+| `NINWIKI_API_URL` | `http://localhost:8000` | endereço da API |
+| `BOT_API_TOKEN` | — (obrigatória) | o **mesmo** da API |
+| `ALLOWED_GUILD_IDS` | vazio | servidores onde os comandos funcionam (vírgula); vazio = qualquer |
+| `DEV_GUILD_ID` | vazio | servidor de testes: comandos aparecem na hora (o global leva até 1 h) |
+| `LOG_CHANNEL_ID` | vazio | canal do log geral (só equipe!) |
+| `ERROR_CHANNEL_ID` | vazio | canal de erros e do painel de status (vazio = usa o de log) |
+| `SITE_URL` | vazio | site público: vigiado pelo bot **e** usado nos botões *Open* do `/search` |
+| `STATUS_PANEL` | `true` | mensagem **📡 NinWiki status** editada a cada checagem; `false` = só avisa queda/volta |
+| `LOG_SHOW_IP` | `true` | mostra o IP de quem agiu no canal de log (canal só da equipe); `false` = não mostra |
+| `HEALTH_POLL_SECONDS` | `60` | intervalo da checagem de API/banco/site (mín. 30) |
+| `LOG_POLL_SECONDS` | `20` | intervalo do feed do log (mín. 10) |
+| `LOG_IGNORE_ACTIONS` | vazio | ações fora do canal (ex.: `login,logout`) |
 
 ## 5. Mapa do código (onde cada coisa mora)
 
