@@ -62,7 +62,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminHeader />
-        <div className="flex-1 p-6">
+        <div className="min-w-0 flex-1 p-3 sm:p-6">
           {blocked ? (
             <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-20 text-center">
               <ShieldAlert className="h-10 w-10 text-muted-foreground" />

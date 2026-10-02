@@ -138,7 +138,7 @@ export default function AdminOverviewPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Atividade recente - puxa do log de auditoria de verdade
             agora que ele existe, em vez de um feed mockado. */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-lg font-bold">
               <History className="h-5 w-5 text-primary" />
@@ -175,7 +175,7 @@ export default function AdminOverviewPage() {
 
         {/* Detalhamento por categoria - outra coisa comum em dashboard:
             nao so' "quantas entries", mas "quantas de cada tipo". */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 text-lg font-bold">{t.contentByCategory}</h2>
           <div className="space-y-2">
             {Object.entries(categoryBreakdown).map(([category, count]) => (
@@ -194,7 +194,7 @@ export default function AdminOverviewPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Publicado vs rascunho - dado que ja existia (status), so'
             nunca tinha sido resumido num lugar so'. */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
             <Send className="h-4 w-4 text-primary" /> {t.publishedVsDraft}
           </h2>
@@ -232,7 +232,7 @@ export default function AdminOverviewPage() {
         {/* Paginas desatualizadas - publicadas ha' mais de STALE_DAYS
             dias sem edicao nenhuma. So' um alerta pra revisar, nao
             significa que o conteudo esta' errado. */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
             <Clock className="h-4 w-4 text-primary" /> {t.stalePages}
           </h2>

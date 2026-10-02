@@ -9,6 +9,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { LanguageSelector } from '@/components/language-selector';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
+import { AdminMobileNav } from '@/components/admin/admin-sidebar';
 import { ApiError, updateStaffName } from '@/lib/api-client';
 
 /** Cabecalho do painel: idioma, tema e usuario logado com sair. */
@@ -36,12 +37,12 @@ export function AdminHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-card/80 px-6 backdrop-blur-md">
-      {/* div vazia: reserva o espaco a esquerda - bom lugar futuro para um
-          breadcrumb ou titulo da pagina atual. */}
-      <div />
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-2 border-b border-border bg-card/80 px-3 backdrop-blur-md sm:px-6">
+      {/* Celular/tablet: botao que abre o menu (a barra lateral fixa so' existe em telas grandes). */}
+      <AdminMobileNav />
+      <div className="hidden lg:block" />
 
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         <LanguageSelector />
         {me && (
           <>

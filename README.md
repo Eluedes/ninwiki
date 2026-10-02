@@ -185,6 +185,13 @@ O português antigo vai para o campo `_pt` e a tradução em inglês vira o camp
   `WEB_RATE_LIMIT_PER_MINUTE`, `BLOCK_SCRAPER_UAS=false` (site).
 - Cabeçalhos de segurança + **CSP** + HSTS no site e na API; corpo de requisição limitado (413); uploads com limite de pixels.
 - Texto rico validado no servidor (só blocos/formatações permitidos, links `javascript:` recusados) e filtro no "colar" do editor.
+- **Nada de documentação em produção:** o deploy não envia `*.md`, `*.example`, `scripts/`, dumps nem mapas de código para a SquareCloud, e **para** (falha em vermelho)
+  se algum desses arquivos entrar no pacote por engano. Quem extrair o pacote não acha o README, o ROADMAP nem os testes.
+  Para isso valer de verdade, mantenha o **repositório do GitHub privado** (se for público, os `.md` ficam à vista lá).
+- **Bibliotecas:** o workflow *Segurança* (toda segunda e a cada push na `main`) roda `pip-audit` e `npm audit` e fica vermelho se houver falha conhecida;
+  o *Dependabot* abre pull requests com as atualizações. Última checagem feita: 0 vulnerabilidades (API, bot e site).
+- Texto rico: cor, fundo, fonte e tamanho só em formato conhecido (sem injeção de CSS). Bot: `/team` só para o S.Adm do wiki, conferido na API.
+- **O que só você pode fazer:** 2FA no Discord, GitHub e SquareCloud; Cloudflare na frente; backup do banco com restauração testada; não colar segredos em chat/print.
 - Honestidade: conteúdo **público** precisa ser legível por qualquer visitante, então ninguém impede 100% a cópia por um robô
   decidido — o que se faz é torná-la lenta e cara, e proteger o servidor. Com a **Cloudflare** na frente (ver 3.8) fica bem melhor.
 

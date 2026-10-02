@@ -5,3 +5,8 @@ venv
 .venv
 node_modules
 .next
+*.md
+*.example
+scripts
+docker-compose*.yml
+diagnostico_conexao.py
