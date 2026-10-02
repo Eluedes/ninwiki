@@ -68,6 +68,11 @@ class BotRoleUpdate(BotInvoker):
     role: StaffRole
 
 
+class BotRename(BotInvoker):
+    """Corpo de trocar o nome (nick) de alguem pelo bot."""
+    username: str
+
+
 async def _invoker(db: AsyncSession, raw_id: str) -> User:
     """Acha quem digitou o comando e exige que seja staff ativa (senao 403)."""
     try:
@@ -121,6 +126,16 @@ async def bot_change_role(discord_id: str, payload: BotRoleUpdate, db: AsyncSess
     invoker = await _invoker(db, payload.invoker_discord_id)
     target = await _target(db, discord_id)
     await staff_service.change_role(db, invoker, target, payload.role, source="bot")
+    await db.commit()
+    return to_read(target)
+
+
+@router.patch("/staff/{discord_id}/name", response_model=StaffRead)
+async def bot_rename(discord_id: str, payload: BotRename, db: AsyncSession = Depends(get_db)):
+    """Troca o nome (nick) de alguem da equipe (/team manage > Rename) aplicando as regras do invoker (so' S.Adm)."""
+    invoker = await _invoker(db, payload.invoker_discord_id)
+    target = await _target(db, discord_id)
+    await staff_service.rename(db, invoker, target, payload.username, source="bot")
     await db.commit()
     return to_read(target)
 

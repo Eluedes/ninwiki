@@ -39,6 +39,7 @@ class NinWikiBot(discord.Client):
         # Feed do log: estado (onde parou) guardado em arquivo ao lado do bot, para sobreviver a reinicio.
         self.feed_store = LogFeedStore(Path(__file__).resolve().parent / "log_state.json")
         self.feed_state = self.feed_store.load()
+        self._health_announced = False  # o aviso "monitor ligado" sai uma vez por inicializacao do bot
         self._feed_failing = False  # so' avisa no terminal na PRIMEIRA falha de uma sequencia (sem spam)
         self.log_loop = tasks.loop(seconds=settings.log_poll_seconds)(self._log_tick)
         self.log_loop.before_loop(self.wait_until_ready)
@@ -129,6 +130,14 @@ class NinWikiBot(discord.Client):
             msg = update_status(self.statuses[name], ok, datetime.now(timezone.utc))
             if msg:
                 messages.append(msg)
+        if not self._health_announced:
+            # Primeira volta depois que o bot ligou: diz como as coisas estao AGORA (para a equipe saber que o monitor esta' vivo).
+            self._health_announced = True
+            lines = [f"{'🟢' if ok else '🔴'} **{name}** — {'online' if ok else 'OFFLINE'}" for name, ok in results.items()]
+            if not self.settings.site_url:
+                lines.append("⚪ **Website** — not monitored (set SITE_URL in the bot .env)")
+            messages.insert(0, {"title": "🤖 NinWiki monitor started", "description": "\n".join(lines),
+                                "color": 0x2ECC71 if all(results.values()) else 0xE74C3C})
         if not messages:
             return
         try:
@@ -140,6 +149,8 @@ class NinWikiBot(discord.Client):
 
     async def setup_hook(self) -> None:
         """Registra os comandos, sincroniza com o Discord e liga o feed de log (se configurado)."""
+        if not self.settings.errors_channel:
+            log.warning("ERROR_CHANNEL_ID e LOG_CHANNEL_ID vazios: os avisos de 'site/API/banco caiu' e 'voltou' estao DESLIGADOS")
         if self.settings.errors_channel:
             self.error_loop.start()
             self.health_loop.start()
@@ -147,7 +158,7 @@ class NinWikiBot(discord.Client):
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
-        self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds))
+        self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds, self.settings.site_url))
         if self.settings.dev_guild_id:
             # Sincroniza so' no servidor de testes: aparece na hora (o global demora ate 1h).
             guild = discord.Object(id=self.settings.dev_guild_id)

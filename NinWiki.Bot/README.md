@@ -9,10 +9,12 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 | Comando | Faz |
 |---|---|
 | `/team list` | mostra a equipe e o cargo de cada um |
-| `/team add user role` | cadastra alguém (o nome vem do Discord) |
-| `/team role user role` | troca o cargo (derruba a sessão da pessoa) |
-| `/team deactivate user` | tira o acesso na hora |
-| `/team reactivate user` | devolve o acesso |
+| `/team manage [user]` | abre um **formulário (modal)** que faz tudo: **adicionar**, **trocar cargo**, **renomear**, **desativar** (tira o acesso na hora) e **reativar**. Campos: ação (lista), pessoa (seletor de usuário), cargo (lista, opcional) e nome (texto, opcional). Cada ação usa só o que precisa; `user` é opcional e já deixa a pessoa selecionada |
+| `/team status` | mostra agora se a **API**, o **banco** e o **site** estão no ar |
+
+**Avisos automáticos de queda:** com `ERROR_CHANNEL_ID` (ou `LOG_CHANNEL_ID`) e `SITE_URL` preenchidos, o bot confere API, banco e site a cada `HEALTH_POLL_SECONDS`
+e avisa no canal **🔴 ... is DOWN** quando algum cai e **🟢 ... is back online** quando volta (com o tempo fora do ar). Sempre que o bot liga, ele também posta
+**🤖 NinWiki monitor started** com o estado atual de cada um. Sem `SITE_URL` o site não é monitorado.
 
 Quem pode o quê é decidido pela API (`NinWiki.Api/app/core/permissions.py`): só o S.Adm gerencia a equipe (Adm e Creator recebem uma recusa). Quem não é da equipe recebe uma recusa.
 

@@ -73,6 +73,12 @@ class NinWikiApi:
             "invokerDiscordId": str(invoker_id), "role": role,
         })
 
+    async def rename_staff(self, invoker_id: int, target_id: int, username: str) -> dict:
+        """Troca o nome (nick) de alguem em nome de quem digitou o comando (so' S.Adm)."""
+        return await self._request("PATCH", f"/bot/staff/{target_id}/name", json={
+            "invokerDiscordId": str(invoker_id), "username": username,
+        })
+
     async def set_active(self, invoker_id: int, target_id: int, active: bool) -> dict:
         """Ativa ou desativa alguem em nome de quem digitou o comando."""
         action = "activate" if active else "deactivate"
