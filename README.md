@@ -108,7 +108,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
 - **Vilas, Clãs e Organizações:** `/admin/villages` (cada clã tem nome, descrição e **imagem** com a logo e a roupa) e
   `/admin/organizations` (liga cada organização às vilas em que atua).
 - **Quadro de avisos** (Visão Geral): toda a equipe lê e baixa os arquivos; **S.Adm e Adm** postam, fixam, editam, apagam e
-  anexam arquivos (até 10 por aviso, `MAX_NOTICE_FILE_MB` MB cada; executáveis e HTML são recusados).
+  anexam arquivos (até 10 por aviso, `MAX_NOTICE_FILE_MB` MB cada, padrão **200 MB** — o envio é gravado aos pedaços, sem encher a memória; se o site estiver atrás da Cloudflare grátis, ela corta uploads acima de 100 MB; executáveis e HTML são recusados).
 - **Nome (nick) da equipe:** em `/admin/staff` (só S.Adm) o lápis ao lado do nome edita o nome de qualquer um, **inclusive o seu**. O nome editado
   fica salvo: o login com o Discord não o sobrescreve mais.
 - **Permissões** (`/admin/permissions`, só S.Adm): liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora.

@@ -584,7 +584,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         confirmDelete: 'Apagar o aviso "{title}" e os arquivos anexados?', attachFiles: 'Anexar arquivo', files: 'Arquivos',
         download: 'Baixar', removeFile: 'Remover arquivo', uploading: 'Enviando...', by: 'por',
         loadError: 'Não foi possível carregar os avisos.', saveError: 'Não foi possível salvar o aviso.',
-        uploadError: 'Não foi possível enviar o arquivo.', maxInfo: 'Até 10 arquivos por aviso — aceita .zip, .rar, .7z, PDF, imagens e outros (máx. 50 MB cada).', fileTooBig: 'O arquivo "{name}" passa de {mb} MB.',
+        uploadError: 'Não foi possível enviar o arquivo.', maxInfo: 'Até 10 arquivos por aviso — aceita .zip, .rar, .7z, PDF, imagens e outros (máx. 200 MB cada).', fileTooBig: 'O arquivo "{name}" passa de {mb} MB.',
       },
       rolesPage: {
         title: 'Permissões por cargo', subtitle: 'Defina o que cada cargo pode fazer no painel. As alterações valem na hora.',
@@ -1222,7 +1222,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         confirmDelete: 'Delete the notice "{title}" and its attached files?', attachFiles: 'Attach file', files: 'Files',
         download: 'Download', removeFile: 'Remove file', uploading: 'Uploading...', by: 'by',
         loadError: 'Could not load the notices.', saveError: 'Could not save the notice.',
-        uploadError: 'Could not upload the file.', maxInfo: 'Up to 10 files per notice — accepts .zip, .rar, .7z, PDF, images and more (max 50 MB each).', fileTooBig: 'The file "{name}" is larger than {mb} MB.',
+        uploadError: 'Could not upload the file.', maxInfo: 'Up to 10 files per notice — accepts .zip, .rar, .7z, PDF, images and more (max 200 MB each).', fileTooBig: 'The file "{name}" is larger than {mb} MB.',
       },
       rolesPage: {
         title: 'Role permissions', subtitle: 'Choose what each role can do in the panel. Changes apply immediately.',

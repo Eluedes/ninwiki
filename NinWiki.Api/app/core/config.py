@@ -124,7 +124,7 @@ class Settings(BaseSettings):
     max_json_body_kb: int = 512              # corpo maximo de requisicoes comuns (uploads tem limite proprio)
 
     # Tamanho maximo de um arquivo anexado a um aviso do quadro da equipe, em MB.
-    max_notice_file_mb: int = 50
+    max_notice_file_mb: int = 200
 
     # Chave da API da DeepL, usada pra traduzir conteudo automaticamente
     # PT->EN ao criar/editar uma entry (ver app/core/translation.py).
