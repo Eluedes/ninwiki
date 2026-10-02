@@ -722,7 +722,7 @@ export type PermissionName =
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
-  | 'notices.view' | 'notices.manage'
+  | 'notices.view' | 'notices.manage' | 'announcement.manage'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view';
 
 export interface ApiMe {
@@ -1280,4 +1280,43 @@ export function sendPageHit(path: string): void {
     credentials: 'omit',
     keepalive: true,
   }).catch(() => {});
+}
+
+
+// ---- Anuncio da pagina inicial ----
+
+export type AnnouncementLevel = 'info' | 'success' | 'warning' | 'event';
+
+export interface ApiAnnouncement {
+  active: boolean;
+  message: string;
+  messagePt: string | null;
+  linkUrl: string;
+  linkLabel: string;
+  level: AnnouncementLevel;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+export interface AnnouncementInput {
+  message: string;
+  messagePt?: string | null;
+  linkUrl: string;
+  linkLabel: string;
+  level: AnnouncementLevel;
+}
+
+/** Anuncio atual da Home (publico). `active: false` = nada para mostrar. */
+export function getAnnouncement(): Promise<ApiAnnouncement> {
+  return apiFetch('/announcement');
+}
+
+/** Publica/troca o anuncio da Home (mensagem vazia remove). Exige announcement.manage. */
+export function saveAnnouncement(input: AnnouncementInput): Promise<ApiAnnouncement> {
+  return apiFetch('/announcement', { method: 'PUT', body: JSON.stringify(input) });
+}
+
+/** Remove o anuncio da Home. */
+export function clearAnnouncement(): Promise<ApiAnnouncement> {
+  return apiFetch('/announcement', { method: 'DELETE' });
 }

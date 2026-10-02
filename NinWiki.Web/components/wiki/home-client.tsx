@@ -7,16 +7,21 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { WikiButton } from '@/components/wiki/wiki-button';
 import { PostCard } from '@/components/blog/post-card';
 import { categories } from '@/lib/data';
-import type { ApiPostSummary } from '@/lib/api-client';
+import type { ApiAnnouncement, ApiPostSummary } from '@/lib/api-client';
+import { AnnouncementBanner } from '@/components/wiki/announcement-banner';
+import { BotInviteCard } from '@/components/wiki/bot-invite-button';
 import Link from 'next/link';
 import { Slash, Newspaper } from 'lucide-react';
 
 /** Pagina inicial: boas-vindas, categorias e os ultimos posts do blog. */
-export function HomeClient({ posts }: { posts: ApiPostSummary[] }) {
+export function HomeClient({ posts, announcement = null }: { posts: ApiPostSummary[]; announcement?: ApiAnnouncement | null }) {
   const { locale, dict } = useLanguage();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
+      {/* Anuncio (editado no painel): sem mensagem nao aparece nada */}
+      <AnnouncementBanner announcement={announcement} />
+
       {/* Hero: bloco de destaque no topo com o slogan do site.
           O <div> com blur-3xl e' so' um efeito decorativo de "brilho"
           no canto, nao tem funcao alem de visual. */}
@@ -66,6 +71,8 @@ export function HomeClient({ posts }: { posts: ApiPostSummary[] }) {
           </Link>
         )}
       </section>
+
+      <BotInviteCard />
     </div>
   );
 }

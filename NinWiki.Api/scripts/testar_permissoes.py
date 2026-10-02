@@ -110,7 +110,7 @@ ROTAS_PUBLICAS = {
     ("GET", "/jutsus"), ("GET", "/jutsus/{jutsu_id}"),
     ("GET", "/villages"), ("GET", "/villages/{village_id}"), ("GET", "/organizations"),
     ("GET", "/posts"), ("GET", "/posts/{post_id}"), ("GET", "/posts/slug/{slug}"),
-    ("GET", "/tags"),
+    ("GET", "/tags"), ("GET", "/announcement"),   # anuncio da Home: leitura publica; escrever exige announcement.manage
     ("POST", "/analytics/hit"),    # a visita avisa o site (origem + limite por IP + ignora robos; guarda so' contagens)
     # engajamento: leitura publica; escrita exige LEITOR logado (cookie proprio, ver reader_auth.py)
     ("GET", "/posts/{slug}/engagement"), ("GET", "/posts/{slug}/comments"),
@@ -1562,6 +1562,49 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     async with AsyncSessionLocal() as db:
         logs = (await db.execute(select(AuditLogEntry.action).where(AuditLogEntry.entity_type == "roles", AuditLogEntry.entity_id == rn + "a"))).scalars().all()
     check("criar/editar/apagar cargo ficam no log", {"create", "update", "delete"} <= set(logs), str(logs))
+
+    secao("27) Anuncio da Home: publico le, so' quem tem announcement.manage escreve")
+    await c.delete("/announcement", headers=S)
+    r = await c.get("/announcement")
+    check("sem anuncio: publico recebe active=false (a Home fica sem nada)", r.status_code == 200 and r.json() == {"active": False, "message": "", "messagePt": None, "linkUrl": "", "linkLabel": "", "level": "info", "updatedAt": None, "updatedBy": None}, r.text)
+    corpo = {"message": f"  {SLUG}   manutencao\n hoje  ", "linkUrl": "https://exemplo.com/aviso", "linkLabel": "Saiba mais", "level": "warning"}
+    r = await c.put("/announcement", json=corpo)
+    check("anonimo NAO publica anuncio (401)", r.status_code == 401)
+    Cc2 = cookie(await recarregar(creator))
+    r = await c.put("/announcement", json=corpo, headers=Cc2)
+    check("Creator NAO publica anuncio (403)", r.status_code == 403)
+    r = await c.put("/announcement", json=corpo, headers=A)
+    check("Adm publica anuncio (texto normalizado em uma linha)", r.status_code == 200 and r.json()["active"] and r.json()["message"] == f"{SLUG} manutencao hoje" and r.json()["level"] == "warning", r.text[:200])
+    pub = (await c.get("/announcement")).json()
+    check("o publico ve o anuncio, o link e quem publicou", pub["active"] and pub["linkUrl"] == "https://exemplo.com/aviso" and pub["updatedBy"] == "TESTE_adm", str(pub))
+    for link, nome in [("javascript:alert(1)", "link javascript: e' recusado"), ("//evil.com", "link //outro-site e' recusado"), ("data:text/html,x", "link data: e' recusado"), ("http://sem-https.com", "link http (sem s) e' recusado"), ("/a b", "link com espaco e' recusado")]:
+        r = await c.put("/announcement", json={**corpo, "linkUrl": link}, headers=A)
+        check(nome, r.status_code == 422, f"{r.status_code} {r.text[:100]}")
+    r = await c.put("/announcement", json={**corpo, "linkUrl": "/blog"}, headers=A)
+    check("link para uma pagina do proprio site (/blog) e' aceito", r.status_code == 200 and r.json()["linkUrl"] == "/blog")
+    r = await c.put("/announcement", json={**corpo, "level": "hacker"}, headers=A)
+    check("nivel desconhecido e' recusado", r.status_code == 422)
+    r = await c.put("/announcement", json={**corpo, "message": "x" * 700}, headers=A)
+    check("mensagem acima de 600 caracteres e' recusada", r.status_code == 422)
+    r = await c.put("/announcement", json={**corpo, "messagePt": "Manutencao hoje (PT)"}, headers=A)
+    check("traducao digitada a mao vale", r.status_code == 200 and r.json()["messagePt"] == "Manutencao hoje (PT)", r.text[:200])
+    async def _fake(v, reverse=False):
+        """DeepL de mentira para provar que a traducao automatica roda quando o texto muda."""
+        return f"PT: {v}" if v else None
+    with patch("app.api.announcement.translate_field", _fake):
+        r = await c.put("/announcement", json={"message": f"{SLUG} novo texto", "level": "info"}, headers=A)
+    check("texto novo sem traducao manual e' traduzido automaticamente", r.status_code == 200 and r.json()["messagePt"] == f"PT: {SLUG} novo texto", r.text[:200])
+    r = await c.put("/announcement", json={"message": "   ", "level": "info"}, headers=A)
+    check("mensagem vazia remove o anuncio", r.status_code == 200 and r.json()["active"] is False and (await c.get("/announcement")).json()["active"] is False)
+    await c.put("/announcement", json={"message": f"{SLUG} de novo", "level": "success"}, headers=A)
+    r = await c.delete("/announcement", headers=Cc2)
+    check("Creator NAO remove anuncio (403)", r.status_code == 403)
+    r = await c.delete("/announcement", headers=A)
+    check("Adm remove o anuncio e a Home volta a ficar sem nada", r.status_code == 200 and (await c.get("/announcement")).json()["active"] is False)
+    async with AsyncSessionLocal() as db:
+        logs = (await db.execute(select(AuditLogEntry.action).where(AuditLogEntry.entity_type == "announcement"))).scalars().all()
+    check("publicar e remover anuncio ficam no log", {"update", "clear"} <= set(logs), str(logs))
+    await c.post("/roles/creator/permissions/reset", headers=S)
 
     secao("25) Texto rico: estilos de letra (cor, fundo, fonte, tamanho) so' no formato permitido")
     from app.schemas.validators import validate_rich_content

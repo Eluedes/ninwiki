@@ -63,7 +63,7 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 515 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 534 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
 python scripts/testar_bot_integracao.py    # 157 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
@@ -163,6 +163,16 @@ A Visão Geral mostra um **gráfico de acessos** (7/30/90 dias: visualizações 
 - **País:** vem do cabeçalho `CF-IPCountry` da **Cloudflare** (precisa de `TRUST_PROXY_HEADERS=true`) ou do banco offline **DB-IP Lite** (CC BY 4.0), que o deploy da API baixa sozinho para `NinWiki.Api/geoip/country.mmdb`. Sem nenhum dos dois, os acessos aparecem como "Desconhecido".
 - Nova migration (`alembic upgrade head`) — o deploy da API já roda.
 - A página **Mapa** está em manutenção: sai do menu e qualquer `/map` vai para `/maintenance` (edite `lib/maintenance.ts` para liberar).
+
+### 2.2d Convidar o bot e anúncio da Home
+- **Botão "Convidar o bot"** (rodapé de todas as páginas + cartão na Home): abre o convite do Discord com as **permissões mínimas**. Para aparecer, ponha o *Application ID* do bot
+  em `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID` (Secret `WEB_ENV`; Discord Developer Portal → sua aplicação do bot → *General Information*) e rode o **Deploy Web**.
+  O link gerado é `https://discord.com/oauth2/authorize?client_id=ID&permissions=84992&scope=bot%20applications.commands`. As permissões (**84992**) são:
+  *View Channels*, *Send Messages*, *Embed Links* e *Read Message History* — nada de Administrator, gerenciar mensagens/cargos/canais nem @everyone.
+  Se o bot for **privado**, desmarque *Public Bot* no Portal (só você o adiciona; o botão do site passa a servir só para você).
+- **Anúncio da Home** (`/admin/announcement`, permissão `announcement.manage`, Adm por padrão): uma faixa no topo da página inicial, com estilo (informação, novidade, aviso, evento),
+  link opcional (só `https://` ou página do site) e tradução automática para português (DeepL; dá para corrigir a mão). **Sem mensagem, nada aparece.** O visitante pode fechar a faixa
+  (volta a aparecer se o texto mudar). Publicar/remover vai para o log. Migration nova: `11d847610b08`.
 
 ### 2.2b Inglês por padrão + DeepL em tudo
 O site, o painel, as mensagens da API e o bot são **inglês por padrão**. Todo conteúdo é escrito em **inglês** e a **DeepL traduz EN→PT-BR**
@@ -354,6 +364,7 @@ DEEPL_API_KEY=
 ```env
 NEXT_PUBLIC_API_URL=https://api.seudominio.com
 NEXT_PUBLIC_SITE_URL=https://wiki.seudominio.com
+NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID=ID_DA_APLICACAO_DO_BOT   # liga o botão "Convidar o bot" (ver 2.2d)
 # opcionais: WEB_RATE_LIMIT_PER_MINUTE=300   BLOCK_SCRAPER_UAS=true
 ```
 ⚠️ Esses valores são embutidos **no build**: mudou algo → edite o Secret e rode o workflow do site de novo.
@@ -481,6 +492,7 @@ sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem s
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | endereço da API (entra no build) |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | endereço público do site: sitemap, RSS, links, vídeos da Twitch (entra no build) |
+| `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID` | vazio | Application ID do **bot** (público, não é segredo): liga o botão "Convidar o bot" no rodapé e na Home; vazio = botão escondido (entra no build) |
 | `WEB_RATE_LIMIT_PER_MINUTE` | `300` | páginas por minuto por IP (`proxy.ts`) |
 | `BLOCK_SCRAPER_UAS` | `true` | bloqueia robôs de cópia conhecidos |
 

@@ -4,6 +4,7 @@
 
 import { useLanguage } from '@/components/providers/language-provider';
 import { NinLogo } from '@/components/icons/nin-logo';
+import { BotInviteButton } from '@/components/wiki/bot-invite-button';
 
 /** Rodape do site. */
 export function Footer() {
@@ -24,6 +25,7 @@ export function Footer() {
               Como este componente e' 'use client', isso roda no navegador -
               nao ha risco de o ano "congelar" numa build antiga, ja' que
               nao ha build estatica (SSG) sendo usada aqui. */}
+          <BotInviteButton compact />
           <p className="text-xs text-muted-foreground">
             {dict.footer.madeWith} &middot; {new Date().getFullYear()}
           </p>

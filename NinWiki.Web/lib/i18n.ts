@@ -91,6 +91,8 @@ export interface Dictionary {
     tier1: string; tier2: string; tier3: string; tier4: string; tier5: string;
   };
   footer: { disclaimer: string; madeWith: string };
+  invite: { title: string; subtitle: string; button: string; buttonShort: string; perms: string };
+  announcement: { dismiss: string; learnMore: string };
   admin: {
     login: { welcome: string; subtitle: string; button: string };
     // Fase 2: autenticacao, cargos, equipe e log geral
@@ -135,7 +137,12 @@ export interface Dictionary {
       orgConfirmDelete: string; orgEmpty: string; orgSave: string; orgCancel: string; orgEditTitle: string; backToVillages: string; noVillagesYet: string;
       orgNameRequired: string; orgIdInvalid: string; orgTranslationNote: string; clanTranslationNote: string;
     };
-    sidebar: { overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
+    announcementPage: {
+      title: string; subtitle: string; message: string; messageHint: string; messagePt: string; messagePtHint: string; link: string; linkHint: string;
+      linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
+      confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
+    };
+    sidebar: { announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
     errorsPage: {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
       occurrences: string; firstSeen: string; lastSeen: string; where: string; route: string; status: string; resolve: string; reopen: string; delete: string;
@@ -400,6 +407,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       disclaimer: 'Este é um projeto de fã não oficial. Nin Online é propriedade de seus respectivos criadores.',
       madeWith: 'Feito pela comunidade',
     },
+    invite: {
+      title: 'Leve o NinWiki para o seu servidor', subtitle: 'O bot do Wiki busca itens, mobs, armas e jutsus direto no Discord (/search) e mostra se o site está no ar (/status).',
+      button: 'Convidar o bot para o seu servidor', buttonShort: 'Convidar o bot', perms: 'Pede só o essencial: ver canais, enviar mensagens, links incorporados e histórico.',
+    },
+    announcement: { dismiss: 'Fechar anúncio', learnMore: 'Saiba mais' },
     blogx: {
       editor: {
         image: 'Inserir imagem (envio)', imageAlt: 'Texto alternativo da imagem (descreva o que aparece; ajuda quem usa leitor de tela):',
@@ -506,15 +518,25 @@ export const dictionaries: Record<Locale, Dictionary> = {
         logActions: {
           create: 'criou', update: 'editou', delete: 'apagou', upload: 'enviou imagem',
           'bulk-status': 'mudou o status de', 'bulk-delete': 'apagou em massa', 'bulk-import': 'importou',
-          login: 'entrou', logout: 'saiu', login_denied: 'teve o login negado', role_change: 'mudou o cargo de', rename: 'renomeou', clear_log: 'limpou o log',
+          login: 'entrou', logout: 'saiu', login_denied: 'teve o login negado', role_change: 'mudou o cargo de', rename: 'renomeou', clear_log: 'limpou o log', clear: 'removeu',
           activate: 'reativou', deactivate: 'desativou', bootstrap: 'foi criado como dono', bootstrap_restore: 'teve o cargo de dono restaurado',
           permission_denied: 'tentou algo sem permissão em', resolve: 'resolveu', reopen: 'reabriu', reset: 'restaurou o padrão de', delete_file: 'removeu um arquivo de',
         },
         logEntities: {
           content_item: 'entry', jutsu: 'jutsu', mastery: 'mastery', upload: 'arquivo',
-          auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post', roles: 'permissões do cargo', notice: 'aviso', error: 'erro',
+          auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post', roles: 'permissões do cargo', notice: 'aviso', announcement: 'anúncio da Home', error: 'erro',
         },
         logSources: { panel: 'Painel', bot: 'Bot', auth: 'Login', system: 'Sistema' },
+      },
+      announcementPage: {
+        title: 'Anúncio da Home', subtitle: 'Uma mensagem em destaque no topo da página inicial. Sem mensagem, nada aparece.',
+        message: 'Mensagem (em inglês)', messageHint: 'Escreva em inglês: a tradução para português é automática (com a chave da DeepL) e aparece para quem usa o site em português.',
+        messagePt: 'Mensagem em português (opcional)', messagePtHint: 'Deixe vazio para traduzir sozinho. Preencha só se quiser corrigir a tradução.',
+        link: 'Link (opcional)', linkHint: 'https://... ou um caminho do site, como /blog', linkLabel: 'Texto do botão do link', level: 'Estilo',
+        levels: { info: 'Informação', success: 'Novidade', warning: 'Aviso', event: 'Evento' }, preview: 'Como vai aparecer',
+        save: 'Publicar anúncio', saving: 'Salvando...', saved: 'Anúncio publicado!', clear: 'Remover anúncio',
+        confirmClear: 'Remover o anúncio? A Home volta a ficar sem nada.', none: 'Sem anúncio no ar agora.', loadError: 'Não foi possível carregar o anúncio.',
+        saveError: 'Não foi possível salvar o anúncio.', updatedBy: 'Atualizado por {name}', counter: '{n}/600',
       },
       blogAdmin: {
         subtitle: 'Notícias e atualizações do site.', newPost: 'Novo post', search: 'Buscar pelo título...',
@@ -551,6 +573,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         clanTranslationNote: 'Versão em português deste clã (vazio = a DeepL traduz ao salvar).',
       },
       sidebar: {
+        announcement: 'Anúncio da Home',
         overview: 'Visão Geral',
         blogPosts: 'Postagens do Blog',
         comments: 'Comentários',
@@ -604,7 +627,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
-          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos',
+          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home',
           'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
           'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'audit.clear': 'Limpar o log', 'analytics.view': 'Ver os acessos ao site',
         },
@@ -1044,6 +1067,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       disclaimer: 'This is an unofficial fan project. Nin Online is property of its respective creators.',
       madeWith: 'Made by the community',
     },
+    invite: {
+      title: 'Bring NinWiki to your server', subtitle: 'The wiki bot looks up items, mobs, weapons and jutsus right inside Discord (/search) and shows whether the site is up (/status).',
+      button: 'Invite the bot to your server', buttonShort: 'Invite the bot', perms: 'It only asks for the essentials: view channels, send messages, embed links and read history.',
+    },
+    announcement: { dismiss: 'Dismiss announcement', learnMore: 'Learn more' },
     blogx: {
       editor: {
         image: 'Insert image (upload)', imageAlt: 'Image alt text (describe what it shows; helps screen reader users):',
@@ -1150,15 +1178,25 @@ export const dictionaries: Record<Locale, Dictionary> = {
         logActions: {
           create: 'created', update: 'updated', delete: 'deleted', upload: 'uploaded an image',
           'bulk-status': 'changed the status of', 'bulk-delete': 'bulk-deleted', 'bulk-import': 'imported',
-          login: 'signed in', logout: 'signed out', login_denied: 'had a login denied', role_change: 'changed the role of', rename: 'renamed', clear_log: 'cleared the log',
+          login: 'signed in', logout: 'signed out', login_denied: 'had a login denied', role_change: 'changed the role of', rename: 'renamed', clear_log: 'cleared the log', clear: 'removed',
           activate: 'reactivated', deactivate: 'deactivated', bootstrap: 'was created as owner', bootstrap_restore: 'had the owner role restored',
           permission_denied: 'tried something without permission on', resolve: 'resolved', reopen: 'reopened', reset: 'restored the defaults of', delete_file: 'removed a file from',
         },
         logEntities: {
           content_item: 'entry', jutsu: 'jutsu', mastery: 'mastery', upload: 'file',
-          auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post', roles: 'role permissions', notice: 'notice', error: 'error',
+          auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post', roles: 'role permissions', notice: 'notice', announcement: 'Home announcement', error: 'error',
         },
         logSources: { panel: 'Panel', bot: 'Bot', auth: 'Login', system: 'System' },
+      },
+      announcementPage: {
+        title: 'Home announcement', subtitle: 'A highlighted message at the top of the home page. With no message, nothing is shown.',
+        message: 'Message (in English)', messageHint: 'Write it in English: the Portuguese version is automatic (with the DeepL key) and shown to visitors using the site in Portuguese.',
+        messagePt: 'Message in Portuguese (optional)', messagePtHint: 'Leave empty to translate automatically. Fill it only to fix the translation.',
+        link: 'Link (optional)', linkHint: 'https://... or a page of the site, like /blog', linkLabel: 'Link button text', level: 'Style',
+        levels: { info: 'Info', success: 'News', warning: 'Warning', event: 'Event' }, preview: 'How it will look',
+        save: 'Publish announcement', saving: 'Saving...', saved: 'Announcement published!', clear: 'Remove announcement',
+        confirmClear: 'Remove the announcement? The home page goes back to showing nothing.', none: 'No announcement live right now.', loadError: 'Could not load the announcement.',
+        saveError: 'Could not save the announcement.', updatedBy: 'Updated by {name}', counter: '{n}/600',
       },
       blogAdmin: {
         subtitle: 'News and updates for the site.', newPost: 'New post', search: 'Search by title...',
@@ -1195,6 +1233,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         clanTranslationNote: 'Portuguese version of this clan (empty = DeepL translates it on save).',
       },
       sidebar: {
+        announcement: 'Home announcement',
         overview: 'Overview',
         blogPosts: 'Blog Posts',
         comments: 'Comments',
@@ -1248,7 +1287,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
-          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices',
+          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement',
           'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
           'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'audit.clear': 'Clear the log', 'analytics.view': 'View site traffic',
         },
