@@ -65,6 +65,9 @@ class Permission(str, Enum):
     # --- Erros do wiki (traceback, IPs - so' o S.Adm) ---
     ERRORS_VIEW = "errors.view"
 
+    # --- Acessos ao site (grafico e paises da Visao Geral) ---
+    ANALYTICS_VIEW = "analytics.view"
+
     # --- Log ---
     AUDIT_VIEW = "audit.view"             # log de CONTEUDO
     AUDIT_VIEW_ALL = "audit.view_all"     # log COMPLETO (login, equipe, seguranca, IPs) - so' S.Adm
@@ -106,6 +109,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.LORE_DELETE,
     Permission.NOTICE_MANAGE,
     Permission.COMMENTS_MODERATE,
+    Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,
 })
 

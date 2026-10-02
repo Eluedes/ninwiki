@@ -84,6 +84,13 @@ def describe_diff(entry: dict) -> str:
     return _clip("\n".join(parts), 600)
 
 
+def _footer(entry: dict) -> str:
+    """Rodape do embed: de onde veio a acao (Panel/Bot/Login) e, se a API mandou, o IP de quem agiu."""
+    source = {"panel": "Panel", "bot": "Bot", "auth": "Login", "system": "System"}.get(entry.get("source", ""), entry.get("source", ""))
+    ip = entry.get("ipAddress")
+    return f"{source} · IP {ip}" if ip else source
+
+
 def format_entry(entry: dict) -> dict:
     """Transforma uma linha do log em {title, description, color, footer, timestamp} (o main.py monta o embed)."""
     actor = entry.get("actorName") or "System"
@@ -97,7 +104,7 @@ def format_entry(entry: dict) -> dict:
         "title": title,
         "description": describe_diff(entry),
         "color": COLORS.get(entry["action"], DEFAULT_COLOR),
-        "footer": {"panel": "Panel", "bot": "Bot", "auth": "Login", "system": "System"}.get(entry.get("source", ""), entry.get("source", "")),
+        "footer": _footer(entry),
         "timestamp": _parse_time(entry["createdAt"]),
     }
 

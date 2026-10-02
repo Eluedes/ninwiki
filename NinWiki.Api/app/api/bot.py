@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.audit_log import clear_log_rows
 from app.api.staff import to_read
 from app.core import staff_service
 from app.core.config import settings
@@ -66,6 +67,14 @@ class BotStaffCreate(BotInvoker):
 class BotRoleUpdate(BotInvoker):
     """Corpo de trocar o cargo de alguem pelo bot."""
     role: StaffRole
+
+
+class BotClearLog(BotInvoker):
+    """Corpo de limpar o log pelo bot: `older_than_days` vazio = tudo; `clear_database=false` = so' o canal do Discord."""
+    older_than_days: int | None = None
+    clear_database: bool = True
+    discord_channel: bool = False
+    check_only: bool = False  # so' confere a permissao (nao apaga nem registra nada)
 
 
 class BotRename(BotInvoker):
@@ -130,6 +139,22 @@ async def bot_change_role(discord_id: str, payload: BotRoleUpdate, db: AsyncSess
     return to_read(target)
 
 
+@router.post("/audit-log/clear")
+async def bot_clear_log(payload: BotClearLog, db: AsyncSession = Depends(get_db)):
+    """Limpa o log (/team clearlog): so' quem tem audit.clear (S.Adm); o bot depois apaga as mensagens do canal, se pedido."""
+    invoker = await _invoker(db, payload.invoker_discord_id)
+    if not has_permission(invoker.role, Permission.AUDIT_CLEAR):
+        raise HTTPException(status_code=403, detail="You do not have permission to do this")
+    if payload.older_than_days is not None and not 1 <= payload.older_than_days <= 3650:
+        raise HTTPException(status_code=422, detail="Days must be between 1 and 3650")
+    if payload.check_only:
+        return {"deleted": 0}
+    deleted = await clear_log_rows(db, invoker, payload.older_than_days, source="bot",
+                                   discord_channel=payload.discord_channel, delete_rows=payload.clear_database)
+    await db.commit()
+    return {"deleted": deleted}
+
+
 @router.patch("/staff/{discord_id}/name", response_model=StaffRead)
 async def bot_rename(discord_id: str, payload: BotRename, db: AsyncSession = Depends(get_db)):
     """Troca o nome (nick) de alguem da equipe (/team manage > Rename) aplicando as regras do invoker (so' S.Adm)."""
@@ -175,10 +200,16 @@ class BotLogEntry(CamelModel):
     source: str
 
 
-@router.get("/audit-log", response_model=list[BotLogEntry])
+class BotLogEntryWithIp(BotLogEntry):
+    """Igual, mas COM o IP de quem agiu (so' quando o bot pede includeIp=true: LOG_SHOW_IP=true no .env do bot)."""
+    ip_address: str | None = None
+
+
+@router.get("/audit-log", response_model=None)
 async def bot_audit_log(
     since: datetime = Query(..., description="So' linhas criadas DEPOIS deste instante (ISO 8601)"),
     limit: int = Query(50, ge=1, le=100),
+    include_ip: bool = Query(False, alias="includeIp", description="Inclui o IP de quem agiu (so' se o dono do bot quiser ver no canal)"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -188,7 +219,8 @@ async def bot_audit_log(
     if since.tzinfo is None:
         since = since.replace(tzinfo=timezone.utc)
     stmt = select(AuditLogEntry).where(AuditLogEntry.created_at > since).order_by(AuditLogEntry.created_at).limit(limit)
-    return (await db.execute(stmt)).scalars().all()
+    model = BotLogEntryWithIp if include_ip else BotLogEntry
+    return [model.model_validate(row, from_attributes=True) for row in (await db.execute(stmt)).scalars().all()]
 
 
 @router.get("/errors", response_model=list[BotErrorEntry])

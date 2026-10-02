@@ -13,7 +13,7 @@ import { WikiImage } from '@/components/wiki/wiki-image';
 import { RichText } from '@/components/lore/rich-text';
 import { cn, shouldShowLevel } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
-import { ArrowLeft, Heart, Swords, Star, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Heart, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem, ApiContentItemSummary } from '@/lib/api-client';
 
 /** Selo do subtipo do mob (o mob comum nao tem selo). */
@@ -31,7 +31,7 @@ function StatTile({ icon: Icon, label, value, tone }: { icon: LucideIcon; label:
         <Icon className="h-4 w-4" />
         {label}
       </div>
-      <p className="mt-1.5 text-2xl font-bold tabular-nums text-card-foreground">{value}</p>
+      <p className={cn('mt-1.5 font-bold text-card-foreground', value.length > 14 ? 'text-base leading-snug' : 'text-2xl tabular-nums')}>{value}</p>
     </div>
   );
 }
@@ -49,6 +49,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
   const name = isPt ? (entry.namePt ?? entry.name) : entry.name;
   const description = isPt ? (entry.descriptionPt ?? entry.description) : entry.description;
   const isMob = entry.category === 'mobs';
+  const isWeapon = entry.category === 'weapons';
   const mobType = entry.mobType ? MOB_TYPE_LABEL[entry.mobType] : undefined;
 
   return (
@@ -63,7 +64,49 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="md:col-span-2 space-y-6">
-          {isMob ? (
+          {isWeapon ? (
+            // ARMAS: titulo com selos (nivel exigido, tipo, classe), peca em destaque, cartoes de dano/velocidade e Stat Bonus.
+            <>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.levelReq} {entry.level}</span>
+                  {entry.weaponType && <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold uppercase text-card-foreground">{entry.weaponType}</span>}
+                  <span className={cn('text-xs font-semibold', rarityConfig[entry.rarity].color)}>{rarityConfig[entry.rarity].label}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-center rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_45%,hsl(var(--primary)/0.2),transparent_65%)] bg-secondary/30 py-14">
+                <WikiImage
+                  src={entry.image}
+                  alt={`Imagem de ${name}`}
+                  fallback={entry.icon}
+                  className="h-44 w-44 rounded-xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
+                />
+              </div>
+
+              {(entry.weaponBaseDamage || entry.weaponSpeed || entry.weaponSpecialAbility) && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {entry.weaponBaseDamage && <StatTile icon={Swords} label={dict.detail.baseDamage} value={entry.weaponBaseDamage} tone="text-orange-400" />}
+                  {entry.weaponSpeed && <StatTile icon={Zap} label={dict.detail.attackSpeed} value={entry.weaponSpeed} tone="text-sky-400" />}
+                  {entry.weaponSpecialAbility && <StatTile icon={Sparkles} label={dict.detail.specialAbility} value={entry.weaponSpecialAbility} tone="text-violet-400" />}
+                </div>
+              )}
+
+              {entry.attributes.length > 0 && (
+                <div>
+                  <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">{dict.detail.statBonus}</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {entry.attributes.map((attr, i) => (
+                      <span key={i} className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-400">
+                        +{attr.value} {attr.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : isMob ? (
             // BESTIARIO: titulo com selos (nivel, tipo, raridade), sprite grande sobre fundo com brilho e cartoes de combate.
             <>
               <div>

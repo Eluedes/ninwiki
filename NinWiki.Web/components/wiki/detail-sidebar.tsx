@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/components/providers/language-provider';
 import { DropRow } from '@/components/wiki/drop-row';
 import { WikiImage } from '@/components/wiki/wiki-image';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Crosshair, Heart, MapPin, Star, Swords, Timer, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem } from '@/lib/api-client';
 
@@ -33,9 +32,9 @@ interface StatRow {
  */
 function WeaponRow({ label, value }: StatRow) {
   return (
-    <div className="flex items-center justify-between px-4 py-2 text-sm">
+    <div className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold text-card-foreground">{value}</span>
+      <span className="text-right font-semibold text-card-foreground">{value}</span>
     </div>
   );
 }
@@ -86,58 +85,46 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
       { id: 'battle', title: dict.detail.battleDataSection, rows: battleDataRows },
     ].filter((s) => s.rows.length > 0);
 
+    // Mesmo visual do bestiario: cabecalho com barra na cor do tema, linhas com valor em destaque, sem secoes que expandem.
     return (
-      <div className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
-        <div className="flex justify-center bg-muted/20 py-6 border-b border-border">
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="flex justify-center border-b border-border bg-[radial-gradient(circle_at_50%_45%,hsl(var(--primary)/0.18),transparent_70%)] bg-muted/20 py-6">
           <WikiImage src={entry.image} alt={`Imagem de ${name}`} fallback={entry.icon} className="h-28 w-28 rounded-lg" />
         </div>
 
-        {/* type="multiple" + defaultValue com todos os ids: comeca com
-            TUDO aberto (igual o print de referencia mostra), mas a
-            pessoa pode fechar qualquer secao clicando no titulo -
-            "multiple" permite varias abertas ao mesmo tempo, diferente
-            do padrao "single" que fecharia uma secao ao abrir outra. */}
-        <Accordion type="multiple" defaultValue={sections.map((s) => s.id)}>
-          {sections.map((section) => (
-            <AccordionItem key={section.id} value={section.id} className="border-border">
-              <AccordionTrigger className="bg-secondary/50 px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-card-foreground hover:no-underline [&>svg]:h-4 [&>svg]:w-4">
-                {section.title}
-              </AccordionTrigger>
-              <AccordionContent className="divide-y divide-border pb-0">
-                {section.rows.map((row, i) => (
-                  <WeaponRow key={i} label={row.label} value={row.value} />
-                ))}
-                {/* Stat Bonus: so' na secao Weapon Details, e so' se
-                    houver atributo cadastrado - reaproveita a lista
-                    generica de Atributos (ver comentario no editor
-                    admin: "Class"/"Stat Bonus" nao precisaram de campo
-                    novo). */}
-                {section.id === 'details' && entry.attributes.length > 0 && (
-                  <div className="px-4 py-2">
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {dict.detail.statBonus}
-                    </p>
-                    {entry.attributes.map((attr, i) => (
-                      <p key={i} className="text-sm text-card-foreground">+{attr.value} {attr.label}</p>
-                    ))}
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        {sections.map((section) => (
+          <div key={section.id}>
+            <SectionTitle>{section.title}</SectionTitle>
+            <div className="divide-y divide-border">
+              {section.rows.map((row, i) => (
+                <WeaponRow key={i} label={row.label} value={row.value} />
+              ))}
+            </div>
+            {/* Stat Bonus: so' na secao de detalhes da arma, e so' se houver atributo cadastrado */}
+            {section.id === 'details' && entry.attributes.length > 0 && (
+              <div className="border-t border-border px-4 py-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{dict.detail.statBonus}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {entry.attributes.map((attr, i) => (
+                    <span key={i} className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-400">
+                      +{attr.value} {attr.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
 
         {entry.drops.length > 0 && (
-          <div className="border-t border-border">
-            <div className="border-b border-border bg-secondary/50 px-4 py-2.5">
-              <h3 className="text-sm font-bold uppercase tracking-wide text-card-foreground">{dict.detail.drops}</h3>
-            </div>
+          <>
+            <SectionTitle>{dict.detail.drops}</SectionTitle>
             <div className="px-4 py-2">
               {entry.drops.map((drop, i) => (
                 <DropRow key={i} drop={drop} />
               ))}
             </div>
-          </div>
+          </>
         )}
       </div>
     );

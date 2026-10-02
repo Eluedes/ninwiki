@@ -393,7 +393,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <label className="text-sm font-semibold text-card-foreground">
               {t.slugLabel}
             </label>
-            <Input {...register('slug')} placeholder="ex: larva" />
+            <Input {...register('slug')} />
             <FieldError message={errors.slug?.message} />
           </div>
         </div>
@@ -670,7 +670,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
       {category !== 'mobs' && (
         <div className="space-y-3 rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-card-foreground">{t.attributesTitle}</h2>
+            <h2 className="font-semibold text-card-foreground">{category === 'weapons' ? dict.detail.statBonus : t.attributesTitle}</h2>
             <Button type="button" variant="outline" size="sm" onClick={addAttribute}>
               <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar
             </Button>

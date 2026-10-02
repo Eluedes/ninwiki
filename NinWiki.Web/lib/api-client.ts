@@ -723,7 +723,7 @@ export type PermissionName =
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage'
-  | 'audit.view' | 'audit.view_all' | 'audit.clear';
+  | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view';
 
 export interface ApiMe {
   id: string;
@@ -1206,4 +1206,35 @@ export function reopenError(id: string): Promise<ApiErrorEvent> {
 /** Apaga o registro de um problema. */
 export function deleteError(id: string): Promise<void> {
   return apiFetch(`/errors/${id}`, { method: 'DELETE' });
+}
+
+
+// ---- Acessos ao site (Visao Geral) ----
+
+export interface ApiTrafficDay { day: string; views: number; visitors: number }
+export interface ApiTrafficCountry { code: string; views: number; visitors: number; share: number }
+export interface ApiTrafficPage { path: string; views: number }
+export interface ApiTrafficSummary {
+  days: number;
+  totalViews: number;
+  totalVisitors: number;
+  series: ApiTrafficDay[];
+  countries: ApiTrafficCountry[];
+  pages: ApiTrafficPage[];
+}
+
+/** Resumo dos acessos dos ultimos `days` dias (grafico, paises e paginas mais vistas). Exige analytics.view. */
+export function getTrafficSummary(days = 30): Promise<ApiTrafficSummary> {
+  return apiFetch(`/analytics/summary?days=${days}`);
+}
+
+/** Avisa a API que uma pagina publica foi aberta (so' contagem anonima; falha em silencio). */
+export function sendPageHit(path: string): void {
+  fetch(`${API_URL}/analytics/hit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path }),
+    credentials: 'omit',
+    keepalive: true,
+  }).catch(() => {});
 }

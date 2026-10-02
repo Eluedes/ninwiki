@@ -69,7 +69,7 @@ class NinWikiBot(discord.Client):
         """Uma volta do feed: busca acoes novas na API e posta no canal de log (embeds, ate' 10 por mensagem)."""
         try:
             channel = self.get_channel(self.settings.log_channel_id) or await self.fetch_channel(self.settings.log_channel_id)
-            entries = await self.api.audit_log_since(query_since(self.feed_state).isoformat())
+            entries = await self.api.audit_log_since(query_since(self.feed_state).isoformat(), include_ip=self.settings.log_show_ip)
             # Trabalha numa COPIA do estado: so' "confirma" depois que o envio deu certo (senao tentaria de novo, sem perder nada).
             new_state = copy.deepcopy(self.feed_state)
             fresh = [e for e in pick_new(new_state, entries) if e["action"] not in self.settings.ignored_log_actions]
@@ -88,6 +88,13 @@ class NinWikiBot(discord.Client):
             if not self._feed_failing:
                 log.warning("Feed de log falhou (tento de novo no proximo ciclo): %s", e)
             self._feed_failing = True
+
+    async def _log_channel(self) -> discord.abc.Messageable | None:
+        """O canal do feed de log (LOG_CHANNEL_ID) ou None se nao estiver configurado."""
+        channel_id = self.settings.log_channel_id
+        if not channel_id:
+            return None
+        return self.get_channel(channel_id) or await self.fetch_channel(channel_id)
 
     async def _errors_channel(self) -> discord.abc.Messageable:
         """O canal de erros (ERROR_CHANNEL_ID, ou o de log se aquele estiver vazio)."""
@@ -158,7 +165,7 @@ class NinWikiBot(discord.Client):
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
-        self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds, self.settings.site_url))
+        self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds, self.settings.site_url, self._log_channel))
         if self.settings.dev_guild_id:
             # Sincroniza so' no servidor de testes: aparece na hora (o global demora ate 1h).
             guild = discord.Object(id=self.settings.dev_guild_id)

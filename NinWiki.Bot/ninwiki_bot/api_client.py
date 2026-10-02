@@ -79,14 +79,26 @@ class NinWikiApi:
             "invokerDiscordId": str(invoker_id), "username": username,
         })
 
+    async def clear_log(
+        self, invoker_id: int, older_than_days: int | None, clear_database: bool, discord_channel: bool, check_only: bool = False,
+    ) -> dict:
+        """Limpa o log do painel (so' S.Adm; None = tudo) e registra a limpeza. `check_only=True` so' confere a permissao."""
+        return await self._request("POST", "/bot/audit-log/clear", json={
+            "invokerDiscordId": str(invoker_id), "olderThanDays": older_than_days,
+            "clearDatabase": clear_database, "discordChannel": discord_channel, "checkOnly": check_only,
+        })
+
     async def set_active(self, invoker_id: int, target_id: int, active: bool) -> dict:
         """Ativa ou desativa alguem em nome de quem digitou o comando."""
         action = "activate" if active else "deactivate"
         return await self._request("POST", f"/bot/staff/{target_id}/{action}", json={"invokerDiscordId": str(invoker_id)})
 
-    async def audit_log_since(self, since_iso: str, limit: int = 50) -> list[dict]:
-        """Linhas do log geral criadas depois de `since_iso` (mais antigas primeiro) - alimenta o canal de log. Sem IPs."""
-        return await self._request("GET", "/bot/audit-log", params={"since": since_iso, "limit": limit})
+    async def audit_log_since(self, since_iso: str, limit: int = 50, include_ip: bool = False) -> list[dict]:
+        """Linhas do log geral criadas depois de `since_iso` (mais antigas primeiro) - alimenta o canal de log. IP so' com include_ip."""
+        params: dict = {"since": since_iso, "limit": limit}
+        if include_ip:
+            params["includeIp"] = "true"
+        return await self._request("GET", "/bot/audit-log", params=params)
 
     async def errors_since(self, since_iso: str, limit: int = 50) -> list[dict]:
         """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""

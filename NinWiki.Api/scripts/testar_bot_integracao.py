@@ -243,7 +243,7 @@ async def testar() -> None:
     from ninwiki_bot.staff_commands import ManageStaffModal, run_manage_action
     grupo = StaffGroup(api, allowed_guilds=set())
     cmd = {c.name: c for c in grupo.commands}
-    check("os 3 comandos existem: list, manage, status", set(cmd) == {"list", "manage", "status"})
+    check("os 4 comandos existem: list, manage, status, clearlog", set(cmd) == {"list", "manage", "status", "clearlog"})
     check("grupo so' funciona em servidor (nao em DM)", grupo.guild_only is True)
 
     i = interacao(IDS["sadm"])
@@ -348,6 +348,53 @@ async def testar() -> None:
     await cmd["status"].callback(grupo, i)
     check("/team status mostra API e banco", "NinWiki status" in texto_enviado(i) and "API" in texto_enviado(i) and "Database" in texto_enviado(i), texto_enviado(i))
 
+    # ---- /team clearlog (so' S.Adm, com confirmacao; limpa o log do painel e/ou as mensagens do canal do Discord) ----
+    from ninwiki_bot.staff_commands import ConfirmClearView, run_clear_log
+    clear_both = app_commands.Choice(name="Panel audit log + Discord log channel", value="both")
+    i = interacao(IDS["adm"])
+    await cmd["clearlog"].callback(grupo, i, clear_both, 3650)
+    check("Adm em /team clearlog: recusa ANTES de perguntar (nada apagado)", texto_enviado(i).startswith("❌") and "permission" in texto_enviado(i).lower(), texto_enviado(i))
+    async def contar_limpezas() -> int:
+        """Quantas linhas 'clear_log' existem agora no log."""
+        async with AsyncSessionLocal() as db:
+            return len((await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log"))).scalars().all())
+
+    antes = await contar_limpezas()
+    i = interacao(IDS["sadm"])
+    await cmd["clearlog"].callback(grupo, i, clear_both, 3650)
+    enviado = i.followup.send.call_args
+    check("S.Adm em /team clearlog recebe a pergunta com os botoes Confirmar/Cancelar (efemera)",
+          "Clear" in str(enviado.args[0]) and isinstance(enviado.kwargs.get("view"), ConfirmClearView) and enviado.kwargs.get("ephemeral") is True)
+    check("so' perguntar (conferir a permissao) NAO grava nada no log", await contar_limpezas() == antes)
+    async with AsyncSessionLocal() as db:
+        db.add(AuditLogEntry(action="create", entity_type="content_item", entity_id="teste-bot-velho", actor_name="TESTE_velho",
+                             source="panel", created_at=datetime.now(timezone.utc) - timedelta(days=4000)))
+        await db.commit()
+    canal = MagicMock()
+    canal.purge = AsyncMock(return_value=[1, 2, 3])
+    texto = await run_clear_log(api, IDS["sadm"], "both", 3650, canal, bot_user_id=777)
+    check("clearlog 'both': apaga o log antigo do painel e as mensagens do bot no canal", "✅" in texto and "3** messages" in texto and canal.purge.await_count == 1, texto)
+    kw = canal.purge.call_args.kwargs
+    fake_msg_bot, fake_msg_outro = MagicMock(), MagicMock()
+    fake_msg_bot.author.id, fake_msg_outro.author.id = 777, 123
+    check("o canal so' perde as mensagens do PROPRIO bot, uma a uma (sem exigir permissao de moderacao)",
+          kw["check"](fake_msg_bot) is True and kw["check"](fake_msg_outro) is False and kw["bulk"] is False and kw["before"] is not None)
+    async with AsyncSessionLocal() as db:
+        velho = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.entity_id == "teste-bot-velho"))).scalars().first()
+        marca = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log", AuditLogEntry.source == "bot").order_by(AuditLogEntry.created_at.desc()))).scalars().first()
+    check("a linha antiga sumiu e a limpeza ficou registrada (source=bot, com o canal)", velho is None and marca is not None and marca.diff.get("discord_channel") is True)
+    canal2 = MagicMock()
+    canal2.purge = AsyncMock(return_value=[])
+    texto = await run_clear_log(api, IDS["sadm"], "channel", None, canal2, bot_user_id=777)
+    check("clearlog 'channel': so' o canal (nao toca no banco) e sem data apaga tudo do bot", "✅" in texto and "panel log" not in texto and canal2.purge.call_args.kwargs["before"] is None, texto)
+    texto = await run_clear_log(api, IDS["sadm"], "channel", None, None, bot_user_id=777)
+    check("sem canal de log configurado: avisa em vez de quebrar", "no Discord log channel" in texto, texto)
+    try:
+        await run_clear_log(api, IDS["adm"], "both", 3650, canal, bot_user_id=777)
+        check("Adm nao consegue limpar nem chamando direto", False)
+    except ApiError as e:
+        check("Adm nao consegue limpar nem chamando direto (403) e o canal nao e' tocado", e.status_code == 403 and canal.purge.await_count == 1, e.detail)
+
     # o invoker enviado a' API e' SEMPRE quem digitou o comando (interaction.user), nunca o "alvo"
     async with AsyncSessionLocal() as db:
         logs = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.source == "bot", AuditLogEntry.actor_name.like("TESTE_%")))).scalars().all()
@@ -369,7 +416,12 @@ async def testar() -> None:
     desde = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
     linhas = await api.audit_log_since(desde)
     check("API devolve as acoes recentes (lista)", isinstance(linhas, list) and len(linhas) >= 1)
-    check("SEM IP nem dados sensiveis nas linhas", all("ipAddress" not in l and "ip_address" not in l for l in linhas))
+    check("SEM IP nem dados sensiveis nas linhas (padrao)", all("ipAddress" not in l and "ip_address" not in l for l in linhas))
+    com_ip = await api.audit_log_since(desde, include_ip=True)
+    check("com includeIp o IP de quem agiu vem junto (LOG_SHOW_IP=true no bot)", len(com_ip) == len(linhas) and all("ipAddress" in l for l in com_ip))
+    from ninwiki_bot.log_feed import format_entry as _fmt
+    check("rodape do embed mostra 'Panel · IP x' quando o IP vem", _fmt({**com_ip[0], "ipAddress": "203.0.113.7"})["footer"].endswith("IP 203.0.113.7")
+          and "IP" not in _fmt({**linhas[0]})["footer"])
     check("ordem cronologica (mais antiga primeiro)", [l["createdAt"] for l in linhas] == sorted(l["createdAt"] for l in linhas))
     futuro = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
     check("nada novo depois de um instante futuro", await api.audit_log_since(futuro) == [])

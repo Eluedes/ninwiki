@@ -143,16 +143,16 @@ class Jutsu(Base):
     cooldown: Mapped[str] = mapped_column(String(100))         # texto unico; se cooldown_by_level existir, a ficha mostra ele
     # ---- Ficha do jutsu (secoes Requirements / Acquisition / Technique Details / Battle Data) ----
     # Texto vazio = a linha nao aparece na pagina. Valores em ingles (termos do jogo), como effect/range.
-    required_level: Mapped[str] = mapped_column(String(50), default="", server_default="")     # "20+"
-    required_stat: Mapped[str] = mapped_column(String(100), default="", server_default="")     # "35 Intellect"
-    scroll_type: Mapped[str] = mapped_column(String(100), default="", server_default="")       # "Sealable Scroll" (+ numero romano do tier)
-    shop: Mapped[str] = mapped_column(String(100), default="", server_default="")              # "Any"
+    required_level: Mapped[str] = mapped_column(String(50), default="", server_default="")     # nivel exigido (texto livre)
+    required_stat: Mapped[str] = mapped_column(String(100), default="", server_default="")     # requisito de atributo (texto livre)
+    scroll_type: Mapped[str] = mapped_column(String(100), default="", server_default="")       # tipo de pergaminho (a ficha junta o numero romano do tier)
+    shop: Mapped[str] = mapped_column(String(100), default="", server_default="")              # onde comprar (texto livre)
     max_level: Mapped[int] = mapped_column(Integer, default=1, server_default="1")             # nivel maximo do jutsu (1-10)
-    damage_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")    # ["6", "6", "8"] (um por nivel)
-    cooldown_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")  # ["16s", "14s", "14s"]
-    cast_type: Mapped[str] = mapped_column(String(100), default="", server_default="")         # "Walk cast"
-    jutsu_class: Mapped[str] = mapped_column(String(100), default="", server_default="")       # "Trap"
-    debuff: Mapped[str] = mapped_column(String(150), default="", server_default="")            # "Burn III"
+    damage_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")    # um valor de dano por nivel
+    cooldown_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")  # um valor de recarga por nivel
+    cast_type: Mapped[str] = mapped_column(String(100), default="", server_default="")         # tipo de conjuracao (texto livre)
+    jutsu_class: Mapped[str] = mapped_column(String(100), default="", server_default="")       # classe do jutsu (texto livre)
+    debuff: Mapped[str] = mapped_column(String(150), default="", server_default="")            # debuff aplicado (texto livre)
     icon: Mapped[str] = mapped_column(String(50))
     # Demonstracao em GIF, opcional - ver components/lore/jutsu-gif.tsx
     # no front, que ja trata o caso desse arquivo nao existir ainda.

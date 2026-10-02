@@ -212,7 +212,7 @@ export default function MasteryEditorPage({ params }: { params: Promise<{ id: st
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.icon}</label>
-            <Input {...register('icon')} placeholder="flame" />
+            <Input {...register('icon')} />
             <FieldError message={errors.icon?.message} />
           </div>
           <div className="space-y-2">

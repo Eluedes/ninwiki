@@ -62,8 +62,8 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 436 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
-python scripts/testar_bot_integracao.py    # 91 verificações do bot + log + erros (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 482 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
+python scripts/testar_bot_integracao.py    # 114 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
 ```
@@ -104,10 +104,10 @@ pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bib
   com um clique; se voltar a acontecer, reabre sozinho. O card "Open" da Visão Geral mostra quantos estão abertos.
 
 ### 2.2 Log, erros e alertas no Discord (bot)
-O bot cuida de **dois canais** (podem ser o mesmo). Os comandos e as mensagens do bot são em **inglês** (comandos: `/team list`, `/team manage` — um formulário (modal) para adicionar, trocar cargo, renomear, desativar e reativar — e `/team status`).
+O bot cuida de **dois canais** (podem ser o mesmo). Os comandos e as mensagens do bot são em **inglês** (comandos: `/team list`, `/team manage` — um formulário (modal) para adicionar, trocar cargo, renomear, desativar e reativar — `/team status` e `/team clearlog` — limpa o log antigo do painel e/ou do canal do Discord, só S.Adm).
 
 **Log geral** (`LOG_CHANNEL_ID`): o que acontece no painel (criou/editou/apagou, logins, mudanças de equipe e de permissões, tentativas
-negadas). **Nunca** mostra IP nem o texto dos conteúdos.
+negadas). Mostra o **IP** de quem agiu no rodapé (`Panel · IP x`) — desligue com `LOG_SHOW_IP=false` no `.env` do bot; deixe esse canal **só para a equipe**. Nunca mostra o texto dos conteúdos.
 
 **Erros e alertas** (`ERROR_CHANNEL_ID`; vazio = usa o canal de log): o bot avisa quando
 - a **API** dá erro (5xx / exceção) — com tipo do erro, local no código, rota e quantas vezes;
@@ -125,6 +125,13 @@ Como ligar:
    `HEALTH_POLL_SECONDS`, `LOG_IGNORE_ACTIONS=login,logout`).
 4. Reinicie o bot. Ele guarda onde parou em `log_state.json` e `error_state.json` (não repete nem perde avisos ao reiniciar).
 Se o **próprio bot** ou a SquareCloud inteira caírem, ninguém avisa — vale ter também um monitor externo (ex: UptimeRobot) no `/health/ready` da API.
+
+### 2.2c Acessos ao site (Visão Geral do painel)
+A Visão Geral mostra um **gráfico de acessos** (7/30/90 dias: visualizações e visitantes), os **países que mais acessam** (bandeira, barra e %) e as páginas mais vistas — só para quem tem a permissão `analytics.view` (grupo Log; ajuste em *Permissões*).
+- **Privacidade:** só contagens por dia/país/página. Sem cookies e sem guardar IP; o "visitante único" é um hash com sal diário que é **apagado em 2 dias**. Robôs e o painel (`/admin`) não contam.
+- **País:** vem do cabeçalho `CF-IPCountry` da **Cloudflare** (precisa de `TRUST_PROXY_HEADERS=true`) ou do banco offline **DB-IP Lite** (CC BY 4.0), que o deploy da API baixa sozinho para `NinWiki.Api/geoip/country.mmdb`. Sem nenhum dos dois, os acessos aparecem como "Desconhecido".
+- Nova migration (`alembic upgrade head`) — o deploy da API já roda.
+- A página **Mapa** está em manutenção: sai do menu e qualquer `/map` vai para `/maintenance` (edite `lib/maintenance.ts` para liberar).
 
 ### 2.2b Inglês por padrão + DeepL em tudo
 O site, o painel, as mensagens da API e o bot são **inglês por padrão**. Todo conteúdo é escrito em **inglês** e a **DeepL traduz EN→PT-BR**

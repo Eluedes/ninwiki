@@ -250,7 +250,7 @@ export function CatalogPageClient({
                 {!isCollapsed && (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {group.entries.map((entry) => (
-                      category === 'mobs' ? <MobCard key={entry.id} entry={entry} /> : <CatalogCard key={entry.id} entry={entry} />
+                      category === 'mobs' || category === 'weapons' ? <MobCard key={entry.id} entry={entry} kind={category === 'weapons' ? 'weapon' : 'mob'} /> : <CatalogCard key={entry.id} entry={entry} />
                     ))}
                   </div>
                 )}
