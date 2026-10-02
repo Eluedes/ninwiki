@@ -20,8 +20,7 @@
 
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
-import { TextStyle } from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
+import { TextStyle, Color, BackgroundColor, FontSize } from '@tiptap/extension-text-style';
 import Underline from '@tiptap/extension-underline';
 import FontFamily from '@tiptap/extension-font-family';
 import TextAlign from '@tiptap/extension-text-align';
@@ -50,6 +49,8 @@ const extensions = [
   HeadingWithId, // titulo com `id` (ancora do indice do post)
   TextStyle,
   Color,
+  BackgroundColor,
+  FontSize,
   Underline,
   FontFamily,
   TextAlign.configure({ types: ['heading', 'paragraph'] }),

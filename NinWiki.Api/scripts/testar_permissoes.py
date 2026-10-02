@@ -1489,6 +1489,31 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         marca = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log").order_by(AuditLogEntry.created_at.desc()))).scalars().first()
     check("o registro antigo sumiu e a limpeza ficou registrada no log", velho is None and marca is not None and marca.diff.get("older_than_days") == 3650)
 
+    secao("25) Texto rico: estilos de letra (cor, fundo, fonte, tamanho) so' no formato permitido")
+    from app.schemas.validators import validate_rich_content
+
+    def _estilo(attrs: dict) -> str:
+        """Documento de 1 paragrafo com a marca textStyle recebida."""
+        return json.dumps({"type": "doc", "content": [{"type": "paragraph", "content": [
+            {"type": "text", "text": "a", "marks": [{"type": "textStyle", "attrs": attrs}]}]}]})
+
+    def _aceita(attrs: dict) -> bool:
+        """True se o validador aceita o estilo."""
+        try:
+            validate_rich_content(_estilo(attrs))
+            return True
+        except ValueError:
+            return False
+
+    check("cor em hexadecimal e' aceita", _aceita({"color": "#dc2626", "backgroundColor": "#ffff00"}))
+    check("fonte do site (var) e fonte de sistema com aspas sao aceitas",
+          _aceita({"fontFamily": "var(--font-lora), serif"}) and _aceita({"fontFamily": '"Times New Roman", Times, serif'}))
+    check("tamanho em px e' aceito", _aceita({"fontSize": "24px", "color": None}))
+    check("cor com ';' ou url() e' recusada (injecao de CSS)",
+          not _aceita({"color": "red;position:fixed"}) and not _aceita({"backgroundColor": "url(x)"}))
+    check("fonte com ';' e' recusada", not _aceita({"fontFamily": "a;b"}))
+    check("atributo de estilo desconhecido e' recusado", not _aceita({"position": "fixed"}))
+
     secao("24) Acessos ao site: grafico por dia, paises e paginas (so' contagens)")
     from app.core import geoip
     c.cookies.clear()

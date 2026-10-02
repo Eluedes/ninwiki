@@ -5,6 +5,7 @@ editado pelo Tiptap). Extraido pra' arquivo proprio pra' nao duplicar a
 mesma logica de seguranca em cada schema - um lugar so' pra manter.
 """
 import json
+import re
 from typing import Any
 
 # Tipos de no' e de marca que o editor Tiptap (e o StarterKit) realmente gera. Qualquer outro tipo
@@ -17,6 +18,11 @@ ALLOWED_NODE_TYPES = frozenset({
     "image", "mention", "video", "details", "detailsSummary", "detailsContent",
 })
 ALLOWED_MARK_TYPES = frozenset({"bold", "italic", "underline", "strike", "code", "link", "textStyle"})
+# Estilo de texto (marca textStyle): vira `style="..."` no site, entao so' valores de formato conhecido (nada de `;`, `url(...)`, `expression`...).
+_COLOR_RE = re.compile(r"^(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[0-9.]{1,4}\s*)?\))$")
+_SIZE_RE = re.compile(r"^\d{1,3}(\.\d)?(px|em|rem|%)$")
+_FONT_RE = re.compile(r"^(var\(--font-[a-z]{2,20}\)|[A-Za-z0-9 \"',.-]{1,80})(, ?(var\(--font-[a-z]{2,20}\)|[A-Za-z0-9 \"'.-]{1,40})){0,5}$")
+_STYLE_ATTRS = {"color": _COLOR_RE, "backgroundColor": _COLOR_RE, "fontSize": _SIZE_RE, "fontFamily": _FONT_RE}
 # Esquemas de link aceitos (links relativos "/..." e ancoras "#..." tambem). Bloqueia javascript:, data:, vbscript:...
 ALLOWED_LINK_SCHEMES = ("http://", "https://", "mailto:", "/", "#")
 # Enderecos aceitos para midia embutida: imagens locais (/uploads/...) ou https; videos SO' dos players oficiais.
@@ -57,6 +63,13 @@ def _check_node(node: Any, depth: int) -> None:
     for mark in node.get("marks") or []:
         if not isinstance(mark, dict) or mark.get("type") not in ALLOWED_MARK_TYPES:
             raise ValueError("Invalid rich content: formatting not allowed")
+        if mark.get("type") == "textStyle":
+            for key, value in (mark.get("attrs") or {}).items():
+                if value is None:
+                    continue
+                pattern = _STYLE_ATTRS.get(key)
+                if pattern is None or not isinstance(value, str) or not pattern.match(value.strip()):
+                    raise ValueError(f"Invalid rich content: text style not allowed ({key})")
         if mark.get("type") == "link":
             href = str((mark.get("attrs") or {}).get("href", "")).strip().lower()
             if not href.startswith(ALLOWED_LINK_SCHEMES):
