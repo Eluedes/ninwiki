@@ -1,93 +1,99 @@
-// Guima - efeitos da pagina "em construcao": frases que se alternam, barra de progresso, cidade que sobe e faiscas no ceu.
+// Guima Company - efeitos da pagina "em construcao": chuva de codigo, terminal que digita, build com porcentagem e frases que se alternam.
 // Sem bibliotecas e sem rede: so' DOM e canvas. Respeita "reduzir movimento" do sistema.
 (function () {
   'use strict';
 
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // 1) Frases que se alternam (a primeira ja' esta' no HTML)
-  var phrases = [
-    'Todo grande sonho começa com uma obra.',
-    'Cada tijolo é um sonho assentado.',
-    'Hoje é obra. Amanhã é conquista.',
-    'Sonhos não esperam: a gente constrói.',
-    'O que está sendo erguido aqui vai valer a espera.'
+  // ---------- 1) Terminal: linhas "digitadas" ----------
+  var script = [
+    { t: '<span class="info">[1/5]</span> compilando ideias ........ <span class="ok">ok</span>' },
+    { t: '<span class="info">[2/5]</span> importando coragem ........ <span class="ok">ok</span>' },
+    { t: '<span class="info">[3/5]</span> refatorando o futuro ...... <span class="ok">ok</span>' },
+    { t: '<span class="info">[4/5]</span> rodando os sonhos ......... <span class="warn">72%</span>' },
+    { t: '<span class="info">[5/5]</span> deploy: <span class="ok">em breve</span> <span class="cursor"></span>' }
   ];
-  var phraseEl = document.getElementById('phrase');
-  var i = 0;
-  if (phraseEl && !reduce) {
-    setInterval(function () {
-      phraseEl.classList.add('out');
-      setTimeout(function () {
-        i = (i + 1) % phrases.length;
-        phraseEl.textContent = phrases[i];
-        phraseEl.classList.remove('out');
-      }, 650);
-    }, 4200);
-  }
-
-  // 2) Barra de progresso da "obra"
+  var term = document.getElementById('term');
   var bar = document.getElementById('bar');
-  if (bar) setTimeout(function () { bar.style.width = '72%'; }, 300);
+  var pct = document.getElementById('pct');
+  var TARGET = 72;
 
-  // 3) Cidade: predios com alturas variadas, subindo em sequencia, com um guindaste no meio
-  var city = document.getElementById('city');
-  if (city) {
-    var total = 22, crane = Math.floor(total * 0.62);
-    for (var n = 0; n < total; n++) {
-      var el = document.createElement('div');
-      if (n === crane) {
-        el.className = 'crane';
-        el.style.setProperty('--h', '92%');
-      } else {
-        el.className = 'b';
-        el.style.setProperty('--h', (28 + Math.round(Math.abs(Math.sin(n * 1.7)) * 62)) + '%');
-      }
-      el.style.setProperty('--d', (n * 0.11).toFixed(2) + 's');
-      city.appendChild(el);
+  /** Mostra uma linha de cada vez (ou tudo de uma vez se o movimento reduzido estiver ligado). */
+  function runTerminal() {
+    if (!term) return;
+    var idx = 0;
+    function next() {
+      if (idx >= script.length) return;
+      var line = document.createElement('span');
+      line.className = 'line';
+      line.innerHTML = script[idx].t;   // texto fixo escrito aqui (nunca vem de fora)
+      term.appendChild(line);
+      idx += 1;
+      if (!reduce) setTimeout(next, 650);
+      else next();
     }
+    setTimeout(next, reduce ? 0 : 500);
   }
 
-  // 4) Faiscas douradas subindo (canvas leve; pausa quando a aba esta' escondida)
-  var canvas = document.getElementById('sky');
+  // ---------- 2) Barra de build com contador ----------
+  function runBar() {
+    if (!bar || !pct) return;
+    if (reduce) { bar.style.width = TARGET + '%'; pct.textContent = TARGET + '%'; return; }
+    setTimeout(function () { bar.style.width = TARGET + '%'; }, 300);
+    var start = null;
+    function tick(ts) {
+      if (start === null) start = ts;
+      var p = Math.min((ts - start) / 2600, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      pct.textContent = Math.round(eased * TARGET) + '%';
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    setTimeout(function () { requestAnimationFrame(tick); }, 300);
+  }
+
+  runTerminal();
+  runBar();
+
+  // ---------- 3) Chuva de codigo (canvas leve; pausa quando a aba esta' escondida) ----------
+  var canvas = document.getElementById('code');
   if (!canvas || reduce || !canvas.getContext) return;
   var ctx = canvas.getContext('2d');
-  var running = false, w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2), sparks = [];
+  var chars = '01{}[]()<>/;=+*#$%&!?~abcdefghijklmnopqrstuvwxyz'.split('');
+  var running = false, w = 0, h = 0, fs = 16, cols = 0, drops = [], last = 0;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   function resize() {
     w = window.innerWidth; h = window.innerHeight;
     canvas.width = w * dpr; canvas.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fs = w < 640 ? 14 : 16;
+    cols = Math.ceil(w / fs);
+    drops = [];
+    for (var c = 0; c < cols; c++) drops.push(Math.random() * -40);
+    ctx.fillStyle = '#050914';
+    ctx.fillRect(0, 0, w, h);
   }
-  function spawn(initial) {
-    return { x: Math.random() * w, y: initial ? Math.random() * h : h + 10, r: Math.random() * 1.8 + .4,
-             v: Math.random() * .6 + .25, drift: (Math.random() - .5) * .3, a: Math.random() * .6 + .3, hue: 28 + Math.random() * 30 };
-  }
-  function start() {
-    resize();
-    var count = Math.min(90, Math.floor((w * h) / 16000));
-    sparks = [];
-    for (var k = 0; k < count; k++) sparks.push(spawn(true));
-  }
-  function frame() {
-    ctx.clearRect(0, 0, w, h);
-    for (var k = 0; k < sparks.length; k++) {
-      var s = sparks[k];
-      s.y -= s.v; s.x += s.drift;
-      if (s.y < -10) sparks[k] = spawn(false);
-      ctx.beginPath();
-      ctx.fillStyle = 'hsla(' + s.hue + ', 100%, 65%, ' + s.a + ')';
-      ctx.shadowColor = 'hsla(' + s.hue + ', 100%, 60%, .8)';
-      ctx.shadowBlur = 8;
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  function frame(ts) {
     if (document.hidden) { running = false; return; }
     requestAnimationFrame(frame);
+    if (ts - last < 55) return;          // ~18 quadros por segundo: leve e com cara de terminal
+    last = ts;
+    ctx.fillStyle = 'rgba(5, 9, 20, .14)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.font = fs + 'px ui-monospace, Menlo, Consolas, monospace';
+    for (var c = 0; c < cols; c++) {
+      var y = drops[c] * fs;
+      if (y > 0) {
+        ctx.fillStyle = Math.random() > .93 ? '#e8ecf8' : (c % 7 === 0 ? '#a78bfa' : '#22d3ee');
+        ctx.fillText(chars[(Math.random() * chars.length) | 0], c * fs, y);
+      }
+      if (y > h && Math.random() > .975) drops[c] = Math.random() * -20;
+      drops[c] += 1;
+    }
   }
   function go() { if (!running) { running = true; requestAnimationFrame(frame); } }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) go(); });
-  window.addEventListener('resize', start);
-  start();
+  window.addEventListener('resize', resize);
+  resize();
   go();
 })();

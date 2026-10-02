@@ -1,11 +1,11 @@
 name: Deploy Guima.Site na SquareCloud (manual)
 
 # Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
-# O site do Guima não tem segredos nem .env de verdade: o workflow roda os testes e envia a pasta Guima.Site.
+# O site da Guima Company não tem segredos nem .env de verdade: o workflow roda os testes e envia a pasta Guima.Site.
 #
 # Secrets necessários:
 #   SQUARE_API_KEY         chave da API da SquareCloud (a mesma dos outros apps)
-#   SQUARE_APP_ID_GUIMA    ID do app "Guima Site" na SquareCloud
+#   SQUARE_APP_ID_GUIMA    ID do app "Guima Company" na SquareCloud
 
 on:
   workflow_dispatch:

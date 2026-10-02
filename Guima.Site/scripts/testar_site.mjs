@@ -33,11 +33,12 @@ function raw(requestPath) {
   });
 }
 
-test('a pagina inicial abre e tem a frase', async () => {
+test('a pagina inicial abre com o nome e a frase', async () => {
   const r = await get('/');
   const html = await r.text();
   assert.equal(r.status, 200);
   assert.match(r.headers.get('content-type'), /text\/html/);
+  assert.match(html, /<title>Guima Company/);
   assert.match(html, /Construindo e realizando/);
 });
 

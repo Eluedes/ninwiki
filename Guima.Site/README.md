@@ -1,6 +1,6 @@
 # Guima.Site
 
-Página única **"Em construção"** do Guima — *Construindo e realizando sonhos*. É um servidor Node **sem nenhuma dependência**
+Página única **"Em construção"** da **Guima Company** — *Construindo e realizando sonhos*, com tema de tecnologia e programação (chuva de código, terminal que "compila" os sonhos e barra de build). É um servidor Node **sem nenhuma dependência**
 (só o que já vem no Node) servindo `public/` (HTML + CSS + JS, sem fontes nem scripts externos).
 
 ```
@@ -21,8 +21,8 @@ PORT=3100 TRUST_PROXY=false node server.js    # abre em http://localhost:3100
 (PowerShell: `$env:PORT=3100; $env:TRUST_PROXY="false"; node server.js`)
 
 ## Mudar o texto / visual
-- Frase de efeito e título: `public/index.html` (h1 e `.tagline`) e as frases que se alternam: lista `phrases` em `public/app.js`.
-- Cores: variáveis no topo de `public/style.css`. Porcentagem da obra: `aria-valuenow` no HTML e `'72%'` em `app.js` (e `.bar` no CSS para "reduzir movimento").
+- Nome e frase de efeito: `public/index.html` (`h1` e `.tagline`). Linhas do terminal e porcentagem do build: `script` e `TARGET` em `public/app.js` (e `aria-valuenow` no HTML, `.bar` no CSS para "reduzir movimento").
+- Cores: variáveis no topo de `public/style.css`.
 
 ## Hospedar na SquareCloud (app novo + subdomínio do Guima)
 1. **Criar o app uma vez:** painel SquareCloud → *Add New → New Application* → envie um `.zip` com `Guima.Site/squarecloud.app` e `Guima.Site/server.js` (+ pasta `public/`).

@@ -6,7 +6,7 @@ Wiki com painel administrativo (mais uma página extra do Guima). Projetos indep
 |---|---|---|---|
 | `NinWiki.Api` | API + banco (conteúdo, login, equipe, avisos, uploads) | Python, FastAPI, PostgreSQL | 8000 |
 | `NinWiki.Web` | Site público + painel `/admin` | Next.js 16, React 18 | 3000 |
-| `Guima.Site` | Página única "em construção" do Guima (Node sem dependências, segurança embutida; ver `Guima.Site/README.md`) | Node | 3100 |
+| `Guima.Site` | Página única "em construção" da Guima Company (Node sem dependências, segurança embutida; ver `Guima.Site/README.md`) | Node | 3100 |
 | `NinWiki.Bot` | Bot de Discord (`/status`, `/search`, `/team ...`, log e painel de status no canal) | Python, discord.py | — |
 
 Outros documentos: `NinWiki.Web/GUIA_DE_EDICAO.md` (editar o frontend), `NinWiki.Web/MAESTRIAS.md`,
