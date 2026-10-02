@@ -3,7 +3,6 @@ Slash commands /team ... to manage the panel staff from Discord (English: the te
 
   /team list     who is on the staff and each person's role
   /team manage   ONE modal to do everything: add someone, change a role, rename, deactivate (remove access) or reactivate
-  /team status   is the API / database / website up right now?
   /team clearlog clears the OLD log (panel audit log and/or the messages in the Discord log channel) - S.Adm only, with confirmation
 
 The bot decides NOTHING on its own: for every action it just forwards to the API WHO typed it (Discord guarantees
@@ -223,7 +222,7 @@ class ConfirmClearView(discord.ui.View):
 
 
 class StaffGroup(app_commands.Group):
-    """Command group /team (list, manage, status)."""
+    """Command group /team (list, manage, clearlog) - only the wiki S.Adm."""
     def __init__(
         self, api: NinWikiApi, allowed_guilds: set[int] | None = None, site_url: str = "",
         log_channel: Callable[[], Awaitable[discord.abc.Messageable | None]] | None = None,
@@ -232,9 +231,6 @@ class StaffGroup(app_commands.Group):
             name="team",
             description="Manage the NinWiki panel staff",
             guild_only=True,  # nao funciona em mensagem direta
-            # Escondido de quem nao gerencia o servidor (o servidor pode liberar para cargos especificos em Integracoes). A API continua
-            # sendo quem decide de verdade: so' a equipe cadastrada consegue agir.
-            default_permissions=discord.Permissions(manage_guild=True),
         )
         self.api = api
         self.allowed_guilds = allowed_guilds or set()
@@ -248,6 +244,15 @@ class StaffGroup(app_commands.Group):
             await interaction.response.send_message(
                 "This command is not available on this server.", ephemeral=True
             )
+            return False
+        # Todos os /team sao SO' do S.Adm do wiki (a API continua sendo quem decide cada acao; isto recusa logo na porta).
+        try:
+            me = await self.api.whoami(interaction.user.id)
+        except ApiError as e:
+            await interaction.response.send_message(f"❌ {e.detail}", ephemeral=True)
+            return False
+        if not me.get("isSuperAdmin"):
+            await interaction.response.send_message("❌ The /team commands are only for the wiki's S.Adm.", ephemeral=True)
             return False
         return True
 
@@ -278,27 +283,6 @@ class StaffGroup(app_commands.Group):
     async def manage(self, interaction: discord.Interaction, user: discord.User | None = None) -> None:
         """Opens the modal that does everything (add / change role / rename / deactivate / reactivate)."""
         await interaction.response.send_modal(ManageStaffModal(self.api, self.allowed_guilds, user))
-
-    @app_commands.command(name="status", description="Is the API, the database and the website up right now?")
-    async def status(self, interaction: discord.Interaction) -> None:
-        """Checks API, database and website right now and shows each one as online or offline."""
-        await interaction.response.defer(ephemeral=True)
-        api_up, db_up = await self.api.api_status()
-        lines = [
-            f"{'🟢' if api_up else '🔴'} **API** — {'online' if api_up else 'OFFLINE'}",
-            f"{'🟢' if (api_up and db_up) else ('🔴' if api_up else '⚪')} **Database** — "
-            + ("online" if (api_up and db_up) else ("OFFLINE" if api_up else "unknown (API is down)")),
-        ]
-        all_ok = api_up and db_up
-        if self.site_url:
-            site_up = await self.api.site_ok(self.site_url)
-            all_ok = all_ok and site_up
-            lines.append(f"{'🟢' if site_up else '🔴'} **Website** — {'online' if site_up else 'OFFLINE'}")
-        else:
-            lines.append("⚪ **Website** — not monitored (set SITE_URL in the bot .env)")
-        embed = discord.Embed(title="NinWiki status", description="\n".join(lines),
-                              color=0x2ECC71 if all_ok else 0xE74C3C)
-        await interaction.followup.send(embed=embed, ephemeral=True, allowed_mentions=NO_MENTIONS)
 
     @app_commands.command(name="clearlog", description="Clear the old log so the team no longer sees it (S.Adm only)")
     @app_commands.describe(where="What to clear", older_than_days="Only entries older than N days (empty = everything)")

@@ -110,6 +110,13 @@ async def _target(db: AsyncSession, raw_id: str) -> User:
     return user
 
 
+@router.get("/me")
+async def bot_me(invokerDiscordId: str, db: AsyncSession = Depends(get_db)):
+    """Quem e' o invoker na equipe do wiki: cargo e se e' S.Adm (o bot libera os comandos /team so' para o S.Adm)."""
+    invoker = await _invoker(db, invokerDiscordId)
+    return {"role": invoker.role.value, "isSuperAdmin": invoker.role == StaffRole.SUPER_ADMIN}
+
+
 @router.get("/staff", response_model=list[StaffRead])
 async def bot_list_staff(invokerDiscordId: str, db: AsyncSession = Depends(get_db)):
     """Lista a equipe para o comando /equipe listar (so' quem tem a permissao staff.view)."""

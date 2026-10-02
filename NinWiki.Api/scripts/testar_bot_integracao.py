@@ -254,7 +254,7 @@ async def testar() -> None:
     from ninwiki_bot.staff_commands import ManageStaffModal, run_manage_action
     grupo = StaffGroup(api, allowed_guilds=set())
     cmd = {c.name: c for c in grupo.commands}
-    check("os 4 comandos existem: list, manage, status, clearlog", set(cmd) == {"list", "manage", "status", "clearlog"})
+    check("os 3 comandos existem: list, manage, clearlog", set(cmd) == {"list", "manage", "clearlog"})
     check("grupo so' funciona em servidor (nao em DM)", grupo.guild_only is True)
 
     i = interacao(IDS["sadm"])
@@ -354,10 +354,19 @@ async def testar() -> None:
         await m.on_submit(i)
     check("modal enviado em servidor nao permitido e' recusado", "not available" in texto_enviado(i))
 
-    # /team status
+    # todos os /team sao SO' do S.Adm do wiki
+    check("/team nao tem mais 'status' (o /status publico cobre)", "status" not in cmd and {"list", "manage", "clearlog"} <= set(cmd))
+    me = await api.whoami(IDS["sadm"])
+    check("whoami: S.Adm", me == {"role": "super_admin", "isSuperAdmin": True}, str(me))
+    check("whoami: Adm nao e' S.Adm", (await api.whoami(IDS["adm"]))["isSuperAdmin"] is False)
+    for quem in ("adm", "creator", "estranho"):
+        i = interacao(IDS[quem])
+        check(f"/team recusa {quem} (so' o S.Adm do wiki usa)", await grupo.interaction_check(i) is False and i.response.send_message.await_count == 1
+              and i.response.send_message.call_args.kwargs.get("ephemeral") is True, texto_enviado(i))
     i = interacao(IDS["sadm"])
-    await cmd["status"].callback(grupo, i)
-    check("/team status mostra API e banco", "NinWiki status" in texto_enviado(i) and "API" in texto_enviado(i) and "Database" in texto_enviado(i), texto_enviado(i))
+    check("/team libera o S.Adm", await grupo.interaction_check(i) is True)
+    i = interacao(IDS["adm"])
+    check("a recusa diz que e' so' do S.Adm", await grupo.interaction_check(i) is False and "S.Adm" in texto_enviado(i), texto_enviado(i))
 
     # ---- /team clearlog (so' S.Adm, com confirmacao; limpa o log do painel e/ou as mensagens do canal do Discord) ----
     from ninwiki_bot.staff_commands import ConfirmClearView, run_clear_log
@@ -697,7 +706,6 @@ async def testar() -> None:
             i4 = interacao(IDS["creator"], guild_id=42)
             await arvore.get_command("search").callback(i4, termo, app_commands.Choice(name="English", value="en"))
             check("/search com language=en ignora o idioma do servidor", "Open the full page" in componentes(i4.followup.send.call_args.kwargs["view"]))
-            check("/team fica escondido de quem nao gerencia o servidor", StaffGroup(api).default_permissions is not None and StaffGroup(api).default_permissions.manage_guild)
             i2 = interacao(IDS["creator"], guild_id=999)
             arvore2 = app_commands.CommandTree(discord.Client(intents=discord.Intents.default()))
             register_public_commands(arvore2, api, {1}, "", _checar, False, idiomas)

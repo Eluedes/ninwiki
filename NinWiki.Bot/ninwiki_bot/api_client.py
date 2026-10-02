@@ -57,6 +57,10 @@ class NinWikiApi:
             raise ApiError(res.status_code, detail or f"Unexpected API error ({res.status_code}).")
         return res.json()
 
+    async def whoami(self, invoker_id: int) -> dict:
+        """Cargo de quem digitou o comando na equipe do wiki ({role, isSuperAdmin}); levanta ApiError 403 se nao for da equipe."""
+        return await self._request("GET", "/bot/me", params={"invokerDiscordId": str(invoker_id)})
+
     async def list_staff(self, invoker_id: int) -> list[dict]:
         """Lista a equipe em nome de quem digitou o comando."""
         return await self._request("GET", "/bot/staff", params={"invokerDiscordId": str(invoker_id)})
