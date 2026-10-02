@@ -246,38 +246,104 @@ async def bot_errors(
 
 # ---- /search do bot: so' conteudo PUBLICO (nada de rascunho, equipe ou log) ----
 
+class BotFact(CamelModel):
+    """Um dado curto da ficha (ex.: Health = 120)."""
+    label: str
+    value: str
+
+
 class BotSearchHit(CamelModel):
-    """Um resultado da busca do bot: o que e', como se chama, um trecho e o caminho da pagina no site."""
+    """Um resultado da busca do bot: o que e', um resumo, a imagem, os dados principais e o caminho da pagina no site."""
     kind: str
     title: str
     icon: str | None = None
-    snippet: str = ""
+    snippet: str = ""                     # 1 linha (lista de outros resultados)
+    summary: str = ""                     # resumo maior (cartao do resultado principal)
+    image: str | None = None              # endereco ABSOLUTO (o Discord precisa conseguir baixar)
+    facts: list[BotFact] = []
     href: str
 
 
-def _plain(value: str | None, limit: int = 140) -> str:
-    """Texto simples de um campo rico (Tiptap JSON ou texto antigo), cortado em `limit` caracteres."""
+def _blocks(value: str | None) -> list[str]:
+    """Texto de um campo rico em linhas: um paragrafo/titulo por linha e '• ' nos itens de lista (texto antigo: uma linha por quebra)."""
     if not value:
-        return ""
-    parts: list[str] = []
+        return []
+    if not value.lstrip().startswith("{"):
+        return [" ".join(line.split()) for line in value.splitlines() if line.strip()]
+    lines: list[str] = []
 
-    def walk(node: object) -> None:
-        """Junta todos os textos da arvore do documento."""
-        if isinstance(node, dict):
-            if isinstance(node.get("text"), str):
-                parts.append(node["text"])
+    def text_of(node: object) -> str:
+        """Todo o texto corrido de um no (e dos filhos)."""
+        if not isinstance(node, dict):
+            return ""
+        if isinstance(node.get("text"), str):
+            return node["text"]
+        return "".join(text_of(c) for c in node.get("content") or [])
+
+    def walk(node: object, bullet: bool = False) -> None:
+        """Percorre o documento: itens de lista viram '• texto', outros blocos viram uma linha."""
+        if not isinstance(node, dict):
+            return
+        kind = node.get("type")
+        if kind in ("paragraph", "heading", "codeBlock", "blockquote"):
+            t = " ".join(text_of(node).split())
+            if t:
+                lines.append(("• " if bullet else "") + t)
+        elif kind == "listItem":
             for child in node.get("content") or []:
-                walk(child)
+                walk(child, True)
+        else:
+            for child in node.get("content") or []:
+                walk(child, bullet)
 
-    text = value
-    if value.lstrip().startswith("{"):
-        try:
-            walk(json.loads(value))
-            text = " ".join(parts)
-        except ValueError:
-            text = value
-    text = " ".join(text.split())
+    try:
+        walk(json.loads(value))
+    except ValueError:
+        return [" ".join(value.split())]
+    return lines
+
+
+def _clip(text: str, limit: int) -> str:
+    """Corta em `limit` caracteres com reticencias."""
     return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+
+
+def _plain(value: str | None, limit: int = 140) -> str:
+    """Texto simples (uma linha so') de um campo rico, cortado em `limit` caracteres."""
+    return _clip(" ".join(_blocks(value)), limit)
+
+
+def _summary(value: str | None, limit: int = 480) -> str:
+    """Resumo com quebras de linha e marcadores, cortado em `limit` caracteres (nunca no meio de uma linha, se der)."""
+    out, size = [], 0
+    for line in _blocks(value):
+        if size + len(line) > limit:
+            remaining = limit - size
+            if remaining > 60 or not out:
+                out.append(_clip(line, max(remaining, 60)))
+            break
+        out.append(line)
+        size += len(line) + 1
+    return "\n".join(out)
+
+
+def _abs_image(path: str | None) -> str | None:
+    """Endereco absoluto da imagem: /uploads/... esta' na API, /images/... no site, https://... ja' e' completo."""
+    if not path:
+        return None
+    path = path.strip()
+    if path.startswith(("https://", "http://")):
+        return path
+    if path.startswith("/uploads/"):
+        return settings.api_base_url.rstrip("/") + path
+    if path.startswith("/images/"):
+        return settings.frontend_origin.rstrip("/") + path
+    return None
+
+
+def _facts(*pairs: tuple[str, object]) -> list[BotFact]:
+    """So' os dados que tem valor (vazio/None some)."""
+    return [BotFact(label=l, value=str(v)) for l, v in pairs if v not in (None, "", 0)]
 
 
 def _like(q: str) -> str:
@@ -285,9 +351,26 @@ def _like(q: str) -> str:
     return "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
+def _item_hit(i: ContentItem) -> BotSearchHit:
+    """Resultado de um item/mob/arma/guia/missao publicado, com os dados certos para cada categoria."""
+    cat = i.category.value
+    common = [("Rarity", i.rarity.value.title()), ("Level", i.level)]
+    if cat == "mobs":
+        facts = _facts(("Health", i.mob_health), ("Damage", i.mob_damage), ("XP", i.mob_experience), ("Range", i.mob_range),
+                       ("Respawn", i.mob_respawn_time), ("Spawns at", i.spawn_location), *common)
+    elif cat == "weapons":
+        facts = _facts(("Type", i.weapon_type), ("Base damage", i.weapon_base_damage), ("Requirement", i.weapon_requirement),
+                       ("Special", i.weapon_special_ability), ("Speed", i.weapon_speed), ("Knockback", i.weapon_knockback_distance),
+                       ("NPC", i.weapon_npc), *common)
+    else:
+        facts = _facts(("Stack", f"{i.max_stack:,}" if i.max_stack else None), *common)
+    return BotSearchHit(kind=cat.rstrip("s"), title=i.name, icon=i.icon, snippet=_plain(i.description), summary=_summary(i.description),
+                        image=_abs_image(i.image), facts=facts[:6], href=f"/detail/{i.slug}")
+
+
 @router.get("/search", response_model=list[BotSearchHit])
 async def bot_search(q: str = Query(..., min_length=2, max_length=60), db: AsyncSession = Depends(get_db)) -> list[BotSearchHit]:
-    """Procura pelo nome em itens/mobs/armas/guias/missoes publicados, jutsus, masteries e posts publicados (ate' 10)."""
+    """Procura pelo nome em itens/mobs/armas/guias/missoes publicados, jutsus, masteries e posts publicados (ate' 10), ja' com resumo, imagem e dados."""
     q = q.strip()
     if len(q) < 2:
         return []
@@ -297,14 +380,21 @@ async def bot_search(q: str = Query(..., min_length=2, max_length=60), db: Async
     items = (await db.execute(
         select(ContentItem).where(ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\"))
         .order_by(ContentItem.name).limit(6))).scalars().all()
-    hits += [BotSearchHit(kind=i.category.value.rstrip("s") if i.category.value != "weapons" else "weapon", title=i.name, icon=i.icon,
-                          snippet=_plain(i.description), href=f"/detail/{i.slug}") for i in items]
+    hits += [_item_hit(i) for i in items]
     masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\")).order_by(Mastery.name).limit(3))).scalars().all()
-    hits += [BotSearchHit(kind="mastery", title=m.name, icon=None, snippet=_plain(m.description), href=f"/masteries/{m.id}") for m in masteries]
+    hits += [BotSearchHit(kind="mastery", title=m.name, icon=None, snippet=_plain(m.description), summary=_summary(m.long_description or m.description),
+                          image=_abs_image(m.image or m.gif), facts=_facts(("Type", m.type.value.title()), ("Element", m.element)),
+                          href=f"/masteries/{m.id}") for m in masteries]
     jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\")).order_by(Jutsu.name).limit(4))).scalars().all()
-    hits += [BotSearchHit(kind="jutsu", title=j.name, icon=None, snippet=f"Tier {j.tier} · {_plain(j.description, 110)}", href=f"/jutsus/{j.id}") for j in jutsus]
+    hits += [BotSearchHit(kind="jutsu", title=j.name, icon=None, snippet=f"Tier {j.tier} · {_plain(j.description, 110)}",
+                          summary=_summary(j.long_description or j.description), image=_abs_image(j.gif),
+                          facts=_facts(("Tier", j.tier), ("Chakra", j.chakra_cost), ("Cooldown", j.cooldown), ("Range", j.range),
+                                       ("Cast time", j.cast_time), ("Effect", j.effect)),
+                          href=f"/jutsus/{j.id}") for j in jutsus]
     posts = (await db.execute(
         select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now), Post.title.ilike(like, escape="\\"))
         .order_by(Post.published_at.desc()).limit(3))).scalars().all()
-    hits += [BotSearchHit(kind="post", title=p.title, icon="📰", snippet=_plain(p.excerpt), href=f"/blog/{p.slug}") for p in posts]
+    hits += [BotSearchHit(kind="post", title=p.title, icon="📰", snippet=_plain(p.excerpt), summary=_summary(p.excerpt), image=_abs_image(p.cover_image),
+                          facts=_facts(("Published", p.published_at.strftime("%b %d, %Y") if p.published_at else None)),
+                          href=f"/blog/{p.slug}") for p in posts]
     return hits[:10]

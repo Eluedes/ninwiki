@@ -14,6 +14,7 @@ A parte dos comandos precisa do discord.py instalado NESTE ambiente
 Cria e apaga os proprios dados de teste (nomes TESTE_...).
 """
 import asyncio
+import json
 import random
 import sys
 import time
@@ -570,13 +571,20 @@ async def testar() -> None:
     termo = f"zzbusca{BASE % 100000}"
     async with AsyncSessionLocal() as db:
         db.add(ContentItem(slug=f"{termo}-pub", category=ContentCategory.WEAPONS, name=f"{termo} Blade", icon="🗡️", rarity=Rarity.COMMON,
-                           description="A blade used in the test", status=ContentStatus.PUBLISHED))
+                           description=json.dumps({"type": "doc", "content": [
+                               {"type": "paragraph", "content": [{"type": "text", "text": "A blade used in the test"}]},
+                               {"type": "bulletList", "content": [{"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Dropped by bandits"}]}]}]}]}),
+                           weapon_type="Katana", weapon_base_damage="42", image="/images/wiki/blade.png", status=ContentStatus.PUBLISHED))
         db.add(ContentItem(slug=f"{termo}-rascunho", category=ContentCategory.ITEMS, name=f"{termo} Secret", icon="🎒", rarity=Rarity.COMMON,
                            description="draft", status=ContentStatus.DRAFT))
         await db.commit()
     try:
         achados = await api.search(termo)
         check("busca acha o conteudo PUBLICADO", any(h["title"] == f"{termo} Blade" and h["href"] == f"/detail/{termo}-pub" and h["kind"] == "weapon" for h in achados), str(achados))
+        blade = next(h for h in achados if h["title"] == f"{termo} Blade")
+        check("busca devolve imagem absoluta, dados da ficha e resumo com marcadores",
+              blade["image"].endswith("/images/wiki/blade.png") and blade["image"].startswith("http")
+              and {"label": "Type", "value": "Katana"} in blade["facts"] and "• Dropped by bandits" in blade["summary"], str(blade))
         check("busca NAO mostra rascunho", all("Secret" not in h["title"] for h in achados))
         check("busca sem resultado devolve lista vazia", await api.search("zzzznadaaqui987") == [])
         check("curingas do LIKE nao viram busca de tudo", await api.search("%%") == [])
@@ -614,6 +622,14 @@ async def testar() -> None:
             v = build_search_view(termo, achados, "https://wiki.exemplo.com/")
             txt = componentes(v)
             check("/search: cartao com titulo, tipo e botao Open para o site", f"{termo} Blade" in txt and "https://wiki.exemplo.com/detail/" in txt, txt[:200])
+            check("/search: resultado principal com imagem (miniatura), dados, resumo e botao da pagina completa",
+                  "Katana" in txt and "A blade used in the test" in txt and "• Dropped by bandits" in txt and any(getattr(x, "label", None) == "Open the full page" for c in v.children[0].children for x in getattr(c, "children", []))
+                  and any(type(c).__name__ == "Section" and type(c.accessory).__name__ == "Thumbnail" for c in v.children[0].children))
+            outro = [{**achados[0], "title": "Segundo"}, *achados]
+            v2 = build_search_view(termo, outro, "https://wiki.exemplo.com", owner_id=7)
+            check("/search: com varios resultados aparece o menu para trocar", any(type(c).__name__ == "ActionRow" and any(type(x).__name__ == "Select" for x in c.children) for c in v2.children[0].children))
+            ev = interacao(8)
+            check("/search: so' quem buscou troca de resultado", await v2.interaction_check(ev) is False and ev.response.send_message.await_count == 1)
             check("/search: sem resultado mostra a dica", "No results" in componentes(build_search_view("xyz", [], "https://wiki.exemplo.com")))
             maldoso = [{"kind": "item", "title": "@everyone **oi**", "snippet": "<@123> [x](http://a)", "href": "//evil.com/x", "icon": None}]
             txt = componentes(build_search_view("q", maldoso, "https://wiki.exemplo.com"))
