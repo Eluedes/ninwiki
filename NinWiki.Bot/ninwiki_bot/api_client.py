@@ -79,6 +79,15 @@ class NinWikiApi:
             "invokerDiscordId": str(invoker_id), "username": username,
         })
 
+    async def clear_log(
+        self, invoker_id: int, older_than_days: int | None, clear_database: bool, discord_channel: bool, check_only: bool = False,
+    ) -> dict:
+        """Limpa o log do painel (so' S.Adm; None = tudo) e registra a limpeza. `check_only=True` so' confere a permissao."""
+        return await self._request("POST", "/bot/audit-log/clear", json={
+            "invokerDiscordId": str(invoker_id), "olderThanDays": older_than_days,
+            "clearDatabase": clear_database, "discordChannel": discord_channel, "checkOnly": check_only,
+        })
+
     async def set_active(self, invoker_id: int, target_id: int, active: bool) -> dict:
         """Ativa ou desativa alguem em nome de quem digitou o comando."""
         action = "activate" if active else "deactivate"

@@ -1,10 +1,10 @@
 'use client';
 
-// Card de um MOB no bestiario (catalogo de mobs): sprite grande sobre um fundo com brilho, nome, nivel, selo de tipo
+// Card de um MOB (bestiario) ou de uma ARMA no catalogo (kind='weapon'): sprite grande sobre um fundo com brilho, nome, nivel, selo de tipo
 // (Boss/NPC/Montaria) e raridade com uma faixa colorida na lateral. O resto do wiki usa o CatalogCard mais simples.
 
 import Link from 'next/link';
-import { Skull } from 'lucide-react';
+import { Skull, Sword } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import type { ApiContentItemSummary } from '@/lib/api-client';
@@ -18,12 +18,12 @@ const MOB_TYPE_LABEL: Record<string, { en: string; pt: string; className: string
   mount: { en: 'Mount', pt: 'Montaria', className: 'bg-amber-500/15 text-amber-400' },
 };
 
-/** Card de um mob no bestiario. */
-export function MobCard({ entry }: { entry: ApiContentItemSummary }) {
+/** Card de um mob no bestiario (ou de uma arma, com kind="weapon"). */
+export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary; kind?: 'mob' | 'weapon' }) {
   const { dict, locale } = useLanguage();
   const name = locale === 'pt' ? (entry.namePt ?? entry.name) : entry.name;
   const rarity = rarityConfig[entry.rarity];
-  const type = entry.mobType ? MOB_TYPE_LABEL[entry.mobType] : undefined;
+  const type = kind === 'mob' && entry.mobType ? MOB_TYPE_LABEL[entry.mobType] : undefined;
 
   return (
     <Link href={`/detail/${entry.slug}`} className="group block">
@@ -39,7 +39,7 @@ export function MobCard({ entry }: { entry: ApiContentItemSummary }) {
           <WikiImage
             src={entry.image}
             alt={`Imagem de ${name}`}
-            fallback={<Skull className="h-8 w-8 text-muted-foreground" />}
+            fallback={kind === 'weapon' ? <Sword className="h-8 w-8 text-muted-foreground" /> : <Skull className="h-8 w-8 text-muted-foreground" />}
             className="h-16 w-16"
           />
         </div>
@@ -47,7 +47,7 @@ export function MobCard({ entry }: { entry: ApiContentItemSummary }) {
           <p className="truncate text-base font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">{name}</p>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">
-              {dict.detail.level} {entry.level}
+              {kind === 'weapon' ? dict.detail.levelReq : dict.detail.level} {entry.level}
             </span>
             {type && (
               <span className={cn('rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase', type.className)}>

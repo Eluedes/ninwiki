@@ -4,6 +4,7 @@ Slash commands /team ... to manage the panel staff from Discord (English: the te
   /team list     who is on the staff and each person's role
   /team manage   ONE modal to do everything: add someone, change a role, rename, deactivate (remove access) or reactivate
   /team status   is the API / database / website up right now?
+  /team clearlog clears the OLD log (panel audit log and/or the messages in the Discord log channel) - S.Adm only, with confirmation
 
 The bot decides NOTHING on its own: for every action it just forwards to the API WHO typed it (Discord guarantees
 that ID) and what they asked for. The API applies the SAME rules as the panel (must be an active staff member, have
@@ -13,6 +14,9 @@ manage the staff, so everyone else gets a clear refusal.
 
 All answers are EPHEMERAL (only the person who typed sees them) - the staff list must not show up for the whole channel.
 """
+from collections.abc import Awaitable, Callable
+from datetime import datetime, timedelta, timezone
+
 import discord
 from discord import app_commands
 
@@ -145,9 +149,85 @@ async def run_manage_action(
     await interaction.followup.send(ok, ephemeral=True, allowed_mentions=NO_MENTIONS)
 
 
+# Onde limpar (valor do parametro `where` do /team clearlog).
+WHERE_CHOICES = [
+    app_commands.Choice(name="Panel audit log + Discord log channel", value="both"),
+    app_commands.Choice(name="Panel audit log only", value="database"),
+    app_commands.Choice(name="Discord log channel only", value="channel"),
+]
+MAX_PURGE = 1000  # mensagens apagadas do canal por execucao (apagar uma a uma e' lento; rode de novo se sobrar)
+
+
+async def run_clear_log(
+    api: NinWikiApi, invoker_id: int, where: str, older_than_days: int | None,
+    channel: discord.abc.Messageable | None, bot_user_id: int | None,
+) -> str:
+    """
+    Clears the log. The API checks the permission (only the S.Adm) and does the database part; then the bot deletes ITS OWN
+    messages in the log channel (no special Discord permission needed to delete your own messages). Returns the answer text.
+    """
+    do_db = where in ("both", "database")
+    do_channel = where in ("both", "channel")
+    result = await api.clear_log(invoker_id, older_than_days, clear_database=do_db, discord_channel=do_channel)
+    parts = []
+    if do_db:
+        parts.append(f"**{result.get('deleted', 0)}** panel log entries deleted")
+    if do_channel:
+        if channel is None or not hasattr(channel, "purge"):
+            parts.append("no Discord log channel configured (LOG_CHANNEL_ID)")
+        else:
+            cutoff = datetime.now(timezone.utc) - timedelta(days=older_than_days) if older_than_days else None
+            try:
+                removed = await channel.purge(
+                    limit=MAX_PURGE, check=lambda m: m.author.id == bot_user_id, before=cutoff, bulk=False, reason="NinWiki: log cleared",
+                )
+                note = f" (limit of {MAX_PURGE} per run - run again to remove more)" if len(removed) >= MAX_PURGE else ""
+                parts.append(f"**{len(removed)}** messages deleted from the Discord log channel{note}")
+            except discord.DiscordException as e:
+                parts.append(f"could not clean the Discord channel ({type(e).__name__})")
+    scope = f"older than {older_than_days} days" if older_than_days else "everything"
+    return f"✅ Log cleared ({scope}): " + "; ".join(parts) + "."
+
+
+class ConfirmClearView(discord.ui.View):
+    """Two buttons (Confirm / Cancel) shown only to the person who typed the command; the work runs after Confirm."""
+
+    def __init__(self, owner_id: int, work: Callable[[], Awaitable[str]]) -> None:
+        super().__init__(timeout=60)
+        self.owner_id = owner_id
+        self.work = work
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        """Only the person who typed the command can press the buttons."""
+        if interaction.user.id != self.owner_id:
+            await interaction.response.send_message("This confirmation is not yours.", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label="Yes, clear the log", style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        """Runs the clearing and shows the result in place of the question."""
+        await interaction.response.edit_message(content="⏳ Clearing the log…", view=None)
+        try:
+            text = await self.work()
+        except ApiError as e:
+            text = f"❌ {e.detail}"
+        await interaction.edit_original_response(content=text)
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        """Gives up: nothing is deleted."""
+        await interaction.response.edit_message(content="Cancelled. Nothing was deleted.", view=None)
+        self.stop()
+
+
 class StaffGroup(app_commands.Group):
     """Command group /team (list, manage, status)."""
-    def __init__(self, api: NinWikiApi, allowed_guilds: set[int] | None = None, site_url: str = ""):
+    def __init__(
+        self, api: NinWikiApi, allowed_guilds: set[int] | None = None, site_url: str = "",
+        log_channel: Callable[[], Awaitable[discord.abc.Messageable | None]] | None = None,
+    ):
         super().__init__(
             name="team",
             description="Manage the NinWiki panel staff",
@@ -156,6 +236,7 @@ class StaffGroup(app_commands.Group):
         self.api = api
         self.allowed_guilds = allowed_guilds or set()
         self.site_url = site_url
+        self.log_channel = log_channel  # devolve o canal de log do Discord (ou None se nao configurado)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """Before every command: only runs on allowed servers (ALLOWED_GUILD_IDS)."""
@@ -215,3 +296,29 @@ class StaffGroup(app_commands.Group):
         embed = discord.Embed(title="NinWiki status", description="\n".join(lines),
                               color=0x2ECC71 if all_ok else 0xE74C3C)
         await interaction.followup.send(embed=embed, ephemeral=True, allowed_mentions=NO_MENTIONS)
+
+    @app_commands.command(name="clearlog", description="Clear the old log so the team no longer sees it (S.Adm only)")
+    @app_commands.describe(where="What to clear", older_than_days="Only entries older than N days (empty = everything)")
+    @app_commands.choices(where=WHERE_CHOICES)
+    async def clearlog(
+        self, interaction: discord.Interaction, where: app_commands.Choice[str],
+        older_than_days: app_commands.Range[int, 1, 3650] | None = None,
+    ) -> None:
+        """Asks for confirmation, then clears the panel audit log and/or the Discord log channel (the API only allows the S.Adm)."""
+        scope = f"older than **{older_than_days} days**" if older_than_days else "**everything**"
+        question = f"⚠️ Clear **{where.name}** — {scope}? This cannot be undone (the clearing itself is recorded in the new log)."
+        invoker = interaction.user.id
+
+        async def work() -> str:
+            channel = await self.log_channel() if self.log_channel else None
+            bot_id = interaction.client.user.id if interaction.client.user else None
+            return await run_clear_log(self.api, invoker, where.value, older_than_days, channel, bot_id)
+
+        # Primeiro confere a permissao (sem apagar nada): quem nao e' S.Adm recebe a recusa ja' aqui, antes da pergunta.
+        await interaction.response.defer(ephemeral=True)
+        try:
+            await self.api.clear_log(invoker, older_than_days, clear_database=False, discord_channel=False, check_only=True)
+        except ApiError as e:
+            await interaction.followup.send(f"❌ {e.detail}", ephemeral=True, allowed_mentions=NO_MENTIONS)
+            return
+        await interaction.followup.send(question, view=ConfirmClearView(invoker, work), ephemeral=True, allowed_mentions=NO_MENTIONS)

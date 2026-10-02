@@ -104,7 +104,7 @@ pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bib
   com um clique; se voltar a acontecer, reabre sozinho. O card "Open" da Visão Geral mostra quantos estão abertos.
 
 ### 2.2 Log, erros e alertas no Discord (bot)
-O bot cuida de **dois canais** (podem ser o mesmo). Os comandos e as mensagens do bot são em **inglês** (comandos: `/team list`, `/team manage` — um formulário (modal) para adicionar, trocar cargo, renomear, desativar e reativar — e `/team status`).
+O bot cuida de **dois canais** (podem ser o mesmo). Os comandos e as mensagens do bot são em **inglês** (comandos: `/team list`, `/team manage` — um formulário (modal) para adicionar, trocar cargo, renomear, desativar e reativar — `/team status` e `/team clearlog` — limpa o log antigo do painel e/ou do canal do Discord, só S.Adm).
 
 **Log geral** (`LOG_CHANNEL_ID`): o que acontece no painel (criou/editou/apagou, logins, mudanças de equipe e de permissões, tentativas
 negadas). **Nunca** mostra IP nem o texto dos conteúdos.

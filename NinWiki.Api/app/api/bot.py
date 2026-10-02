@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.audit_log import clear_log_rows
 from app.api.staff import to_read
 from app.core import staff_service
 from app.core.config import settings
@@ -66,6 +67,14 @@ class BotStaffCreate(BotInvoker):
 class BotRoleUpdate(BotInvoker):
     """Corpo de trocar o cargo de alguem pelo bot."""
     role: StaffRole
+
+
+class BotClearLog(BotInvoker):
+    """Corpo de limpar o log pelo bot: `older_than_days` vazio = tudo; `clear_database=false` = so' o canal do Discord."""
+    older_than_days: int | None = None
+    clear_database: bool = True
+    discord_channel: bool = False
+    check_only: bool = False  # so' confere a permissao (nao apaga nem registra nada)
 
 
 class BotRename(BotInvoker):
@@ -128,6 +137,22 @@ async def bot_change_role(discord_id: str, payload: BotRoleUpdate, db: AsyncSess
     await staff_service.change_role(db, invoker, target, payload.role, source="bot")
     await db.commit()
     return to_read(target)
+
+
+@router.post("/audit-log/clear")
+async def bot_clear_log(payload: BotClearLog, db: AsyncSession = Depends(get_db)):
+    """Limpa o log (/team clearlog): so' quem tem audit.clear (S.Adm); o bot depois apaga as mensagens do canal, se pedido."""
+    invoker = await _invoker(db, payload.invoker_discord_id)
+    if not has_permission(invoker.role, Permission.AUDIT_CLEAR):
+        raise HTTPException(status_code=403, detail="You do not have permission to do this")
+    if payload.older_than_days is not None and not 1 <= payload.older_than_days <= 3650:
+        raise HTTPException(status_code=422, detail="Days must be between 1 and 3650")
+    if payload.check_only:
+        return {"deleted": 0}
+    deleted = await clear_log_rows(db, invoker, payload.older_than_days, source="bot",
+                                   discord_channel=payload.discord_channel, delete_rows=payload.clear_database)
+    await db.commit()
+    return {"deleted": deleted}
 
 
 @router.patch("/staff/{discord_id}/name", response_model=StaffRead)

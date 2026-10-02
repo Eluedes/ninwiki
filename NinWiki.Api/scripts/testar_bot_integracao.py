@@ -243,7 +243,7 @@ async def testar() -> None:
     from ninwiki_bot.staff_commands import ManageStaffModal, run_manage_action
     grupo = StaffGroup(api, allowed_guilds=set())
     cmd = {c.name: c for c in grupo.commands}
-    check("os 3 comandos existem: list, manage, status", set(cmd) == {"list", "manage", "status"})
+    check("os 4 comandos existem: list, manage, status, clearlog", set(cmd) == {"list", "manage", "status", "clearlog"})
     check("grupo so' funciona em servidor (nao em DM)", grupo.guild_only is True)
 
     i = interacao(IDS["sadm"])
@@ -347,6 +347,53 @@ async def testar() -> None:
     i = interacao(IDS["sadm"])
     await cmd["status"].callback(grupo, i)
     check("/team status mostra API e banco", "NinWiki status" in texto_enviado(i) and "API" in texto_enviado(i) and "Database" in texto_enviado(i), texto_enviado(i))
+
+    # ---- /team clearlog (so' S.Adm, com confirmacao; limpa o log do painel e/ou as mensagens do canal do Discord) ----
+    from ninwiki_bot.staff_commands import ConfirmClearView, run_clear_log
+    clear_both = app_commands.Choice(name="Panel audit log + Discord log channel", value="both")
+    i = interacao(IDS["adm"])
+    await cmd["clearlog"].callback(grupo, i, clear_both, 3650)
+    check("Adm em /team clearlog: recusa ANTES de perguntar (nada apagado)", texto_enviado(i).startswith("❌") and "permission" in texto_enviado(i).lower(), texto_enviado(i))
+    async def contar_limpezas() -> int:
+        """Quantas linhas 'clear_log' existem agora no log."""
+        async with AsyncSessionLocal() as db:
+            return len((await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log"))).scalars().all())
+
+    antes = await contar_limpezas()
+    i = interacao(IDS["sadm"])
+    await cmd["clearlog"].callback(grupo, i, clear_both, 3650)
+    enviado = i.followup.send.call_args
+    check("S.Adm em /team clearlog recebe a pergunta com os botoes Confirmar/Cancelar (efemera)",
+          "Clear" in str(enviado.args[0]) and isinstance(enviado.kwargs.get("view"), ConfirmClearView) and enviado.kwargs.get("ephemeral") is True)
+    check("so' perguntar (conferir a permissao) NAO grava nada no log", await contar_limpezas() == antes)
+    async with AsyncSessionLocal() as db:
+        db.add(AuditLogEntry(action="create", entity_type="content_item", entity_id="teste-bot-velho", actor_name="TESTE_velho",
+                             source="panel", created_at=datetime.now(timezone.utc) - timedelta(days=4000)))
+        await db.commit()
+    canal = MagicMock()
+    canal.purge = AsyncMock(return_value=[1, 2, 3])
+    texto = await run_clear_log(api, IDS["sadm"], "both", 3650, canal, bot_user_id=777)
+    check("clearlog 'both': apaga o log antigo do painel e as mensagens do bot no canal", "✅" in texto and "3** messages" in texto and canal.purge.await_count == 1, texto)
+    kw = canal.purge.call_args.kwargs
+    fake_msg_bot, fake_msg_outro = MagicMock(), MagicMock()
+    fake_msg_bot.author.id, fake_msg_outro.author.id = 777, 123
+    check("o canal so' perde as mensagens do PROPRIO bot, uma a uma (sem exigir permissao de moderacao)",
+          kw["check"](fake_msg_bot) is True and kw["check"](fake_msg_outro) is False and kw["bulk"] is False and kw["before"] is not None)
+    async with AsyncSessionLocal() as db:
+        velho = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.entity_id == "teste-bot-velho"))).scalars().first()
+        marca = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log", AuditLogEntry.source == "bot").order_by(AuditLogEntry.created_at.desc()))).scalars().first()
+    check("a linha antiga sumiu e a limpeza ficou registrada (source=bot, com o canal)", velho is None and marca is not None and marca.diff.get("discord_channel") is True)
+    canal2 = MagicMock()
+    canal2.purge = AsyncMock(return_value=[])
+    texto = await run_clear_log(api, IDS["sadm"], "channel", None, canal2, bot_user_id=777)
+    check("clearlog 'channel': so' o canal (nao toca no banco) e sem data apaga tudo do bot", "✅" in texto and "panel log" not in texto and canal2.purge.call_args.kwargs["before"] is None, texto)
+    texto = await run_clear_log(api, IDS["sadm"], "channel", None, None, bot_user_id=777)
+    check("sem canal de log configurado: avisa em vez de quebrar", "no Discord log channel" in texto, texto)
+    try:
+        await run_clear_log(api, IDS["adm"], "both", 3650, canal, bot_user_id=777)
+        check("Adm nao consegue limpar nem chamando direto", False)
+    except ApiError as e:
+        check("Adm nao consegue limpar nem chamando direto (403) e o canal nao e' tocado", e.status_code == 403 and canal.purge.await_count == 1, e.detail)
 
     # o invoker enviado a' API e' SEMPRE quem digitou o comando (interaction.user), nunca o "alvo"
     async with AsyncSessionLocal() as db:

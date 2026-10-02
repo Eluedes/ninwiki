@@ -99,6 +99,29 @@ async def list_audit_log(
     return out
 
 
+async def clear_log_rows(db: AsyncSession, actor: User, older_than_days: int | None, source: str = "panel",
+                         discord_channel: bool = False, delete_rows: bool = True) -> int:
+    """
+    Apaga linhas do log (tudo, ou so' o que passou de N dias) e registra a limpeza como a primeira linha do log novo.
+    `delete_rows=False` so' registra (usado quando o bot limpa APENAS o canal do Discord). Devolve quantas linhas apagou.
+    A checagem de permissao (audit.clear = so' S.Adm) e' de quem chama.
+    """
+    total = 0
+    if delete_rows:
+        stmt = delete(AuditLogEntry)
+        count_stmt = select(func.count()).select_from(AuditLogEntry)
+        if older_than_days is not None:
+            cutoff = datetime.now(timezone.utc) - timedelta(days=older_than_days)
+            stmt = stmt.where(AuditLogEntry.created_at < cutoff)
+            count_stmt = count_stmt.where(AuditLogEntry.created_at < cutoff)
+        total = (await db.execute(count_stmt)).scalar_one()
+        await db.execute(stmt)
+    await log_action(db, action="clear_log", entity_type="security", entity_id="audit-log",
+                     diff={"deleted": total, "older_than_days": older_than_days, "discord_channel": discord_channel},
+                     actor=actor, source=source)
+    return total
+
+
 @router.delete("")
 async def clear_audit_log(
     older_than_days: int | None = Query(None, alias="olderThanDays", ge=1, le=3650,
@@ -111,15 +134,6 @@ async def clear_audit_log(
     mais o historico antigo. A propria limpeza NAO some: fica registrada como a primeira linha do log novo
     (quem limpou, quantas linhas e o criterio).
     """
-    stmt = delete(AuditLogEntry)
-    count_stmt = select(func.count()).select_from(AuditLogEntry)
-    if older_than_days is not None:
-        cutoff = datetime.now(timezone.utc) - timedelta(days=older_than_days)
-        stmt = stmt.where(AuditLogEntry.created_at < cutoff)
-        count_stmt = count_stmt.where(AuditLogEntry.created_at < cutoff)
-    total = (await db.execute(count_stmt)).scalar_one()
-    await db.execute(stmt)
-    await log_action(db, action="clear_log", entity_type="security", entity_id="audit-log",
-                     diff={"deleted": total, "older_than_days": older_than_days}, actor=staff)
+    total = await clear_log_rows(db, staff, older_than_days)
     await db.commit()
     return {"deleted": total}
