@@ -13,7 +13,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { DropRow } from '@/components/wiki/drop-row';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { MapPin, Swords } from 'lucide-react';
+import { Crosshair, Heart, MapPin, Star, Swords, Timer, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem } from '@/lib/api-client';
 
 interface DetailSidebarProps {
@@ -36,6 +36,16 @@ function WeaponRow({ label, value }: StatRow) {
     <div className="flex items-center justify-between px-4 py-2 text-sm">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold text-card-foreground">{value}</span>
+    </div>
+  );
+}
+
+/** Cabecalho de secao do bestiario (barra na cor do tema + titulo em maiusculas). */
+function SectionTitle({ icon: Icon, children }: { icon?: LucideIcon; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1.5 border-y border-border border-l-[3px] border-l-primary bg-secondary/50 px-4 py-2.5">
+      {Icon && <Icon className="h-3.5 w-3.5 text-primary" />}
+      <h3 className="text-sm font-bold uppercase tracking-wide text-card-foreground">{children}</h3>
     </div>
   );
 }
@@ -133,30 +143,88 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
     );
   }
 
+  // BESTIARIO: ficha de mob no mesmo visual da ficha de jutsu (cabecalho com barra na cor do tema, linhas com icone e
+  // valores em cor), mas SEM secoes que expandem - tudo sempre aberto. So' mostra a linha/secao que tiver conteudo.
+  if (entry.category === 'mobs') {
+    const mobRows: { icon: LucideIcon; label: string; value: string; tone: string }[] = [];
+    if (entry.mobHealth) mobRows.push({ icon: Heart, label: dict.detail.mobHealth, value: entry.mobHealth, tone: 'text-red-400' });
+    if (entry.mobDamage) mobRows.push({ icon: Swords, label: dict.detail.mobDamage, value: entry.mobDamage, tone: 'text-orange-400' });
+    if (entry.mobExperience) mobRows.push({ icon: Star, label: dict.detail.mobExperience, value: entry.mobExperience, tone: 'text-amber-400' });
+    if (entry.mobRange) mobRows.push({ icon: Crosshair, label: dict.detail.mobRange, value: entry.mobRange, tone: 'text-sky-400' });
+    if (entry.mobRespawnTime) mobRows.push({ icon: Timer, label: dict.detail.mobRespawn, value: entry.mobRespawnTime, tone: 'text-emerald-400' });
+
+    return (
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="flex justify-center border-b border-border bg-[radial-gradient(circle_at_50%_45%,hsl(var(--primary)/0.18),transparent_70%)] bg-muted/20 py-6">
+          <WikiImage src={entry.image} alt={`Imagem de ${name}`} fallback={entry.icon} className="h-28 w-28 rounded-lg" />
+        </div>
+
+        {mobRows.length > 0 && (
+          <>
+            <SectionTitle>{dict.detail.attributes}</SectionTitle>
+            <div className="divide-y divide-border">
+              {mobRows.map((row) => (
+                <div key={row.label} className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <row.icon className={cn('h-4 w-4', row.tone)} />
+                    {row.label}
+                  </span>
+                  <span className="font-bold tabular-nums text-card-foreground">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Jutsu/Attacks: sempre aparece (com "Nenhum"), como na ficha do proprio jogo */}
+        <SectionTitle icon={Swords}>{dict.detail.attacks}</SectionTitle>
+        <div className="px-4 py-3">
+          {entry.attacks.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {entry.attacks.map((atk, i) => (
+                <span key={i} className="rounded-md border border-border bg-secondary/60 px-2 py-1 text-xs font-medium text-card-foreground">{atk.name}</span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">{dict.detail.noAttacks}</p>
+          )}
+        </div>
+
+        {spawnLocation && (
+          <>
+            <SectionTitle icon={MapPin}>{dict.detail.spawnLocation}</SectionTitle>
+            <p className="px-4 py-3 text-sm leading-relaxed text-card-foreground">{spawnLocation}</p>
+          </>
+        )}
+
+        {entry.drops.length > 0 && (
+          <>
+            <SectionTitle>{dict.detail.drops}</SectionTitle>
+            <div className="px-4 py-2">
+              {entry.drops.map((drop, i) => (
+                <DropRow key={i} drop={drop} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   // Monta a lista de linhas da ficha - o CONTEUDO muda por categoria/
   // tipo, mas a RENDERIZACAO (linhas zebradas label/valor) e' uma so',
   // reaproveitada pra todo mundo. So' inclui uma linha se o campo
   // correspondente tiver valor de verdade (nao mostra "Speed: " vazio
   // pra uma arma que ainda nao teve isso preenchido).
   const statRows: StatRow[] = [];
-  if (entry.category === 'mobs') {
-    if (entry.mobHealth) statRows.push({ label: 'Health', value: entry.mobHealth });
-    if (entry.mobDamage) statRows.push({ label: 'Damage', value: entry.mobDamage });
-    if (entry.mobExperience) statRows.push({ label: 'Experience', value: entry.mobExperience });
-    if (entry.mobRange) statRows.push({ label: 'Range', value: entry.mobRange });
-    if (entry.mobRespawnTime) statRows.push({ label: 'Respawn Time', value: entry.mobRespawnTime });
-  } else {
-    if (entry.category === 'items' && entry.itemType === 'currency' && entry.maxStack != null) {
+  if (entry.category === 'items' && entry.itemType === 'currency' && entry.maxStack != null) {
       statRows.push({ label: dict.detail.maxStack, value: entry.maxStack.toLocaleString('pt-BR') });
-    }
-    if (entry.category === 'items' && entry.itemType === 'cast' && entry.castVillageName) {
-      statRows.push({ label: dict.detail.castVillage, value: entry.castVillageName });
-    }
-    // Atributos genericos - continuam disponiveis pra qualquer
-    // categoria que nao seja Mob (Arma pode ter extra alem de Speed/
-    // Requisito, Item/Missao/Guia nao tem campo fixo proprio ainda).
-    for (const attr of entry.attributes) statRows.push({ label: attr.label, value: attr.value });
   }
+  if (entry.category === 'items' && entry.itemType === 'cast' && entry.castVillageName) {
+    statRows.push({ label: dict.detail.castVillage, value: entry.castVillageName });
+  }
+  // Atributos genericos - valem para toda categoria que nao seja Mob nem Arma (que tem ficha propria acima).
+  for (const attr of entry.attributes) statRows.push({ label: attr.label, value: attr.value });
 
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
@@ -190,46 +258,6 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
               <span className="font-semibold text-card-foreground">{row.value}</span>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Jutsu/Attacks - so' Mob, sempre mostra a secao (mesmo vazia,
-          com "Nenhum") pra bater com a ficha do jogo, que sempre tem
-          esse bloco mesmo quando diz "None". */}
-      {entry.category === 'mobs' && (
-        <div className="border-t border-border">
-          <div className="border-b border-border bg-secondary/50 px-4 py-2.5">
-            <h3 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-card-foreground">
-              <Swords className="h-3.5 w-3.5" /> {dict.detail.attacks}
-            </h3>
-          </div>
-          <div className="px-4 py-2">
-            {entry.attacks.length > 0 ? (
-              <ul className="space-y-1 text-sm text-card-foreground">
-                {entry.attacks.map((atk, i) => (
-                  <li key={i}>• {atk.name}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="py-1 text-sm text-muted-foreground">{dict.detail.noAttacks}</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Local de spawn - so' pra Mob, e so' quando preenchido (o
-          campo e' opcional). */}
-      {entry.category === 'mobs' && spawnLocation && (
-        <div className="border-t border-border px-4 py-3">
-          <div className="flex items-start gap-2">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {dict.detail.spawnLocation}
-              </p>
-              <p className="text-sm text-card-foreground">{spawnLocation}</p>
-            </div>
-          </div>
         </div>
       )}
 

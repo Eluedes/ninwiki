@@ -9,6 +9,7 @@
 import { useState, useMemo } from 'react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { CatalogCard } from '@/components/wiki/catalog-card';
+import { MobCard } from '@/components/wiki/mob-card';
 import { GuideExtras } from '@/components/wiki/guide-extras';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -249,7 +250,7 @@ export function CatalogPageClient({
                 {!isCollapsed && (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {group.entries.map((entry) => (
-                      <CatalogCard key={entry.id} entry={entry} />
+                      category === 'mobs' ? <MobCard key={entry.id} entry={entry} /> : <CatalogCard key={entry.id} entry={entry} />
                     ))}
                   </div>
                 )}

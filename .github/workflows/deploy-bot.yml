@@ -34,4 +34,5 @@ jobs:
           APP_ID: ${{ secrets.SQUARE_APP_ID_BOT }}
           APP_ENV: ${{ secrets.BOT_ENV }}
           RESTART: ${{ inputs.restart }}
+          GIT_SHA: ${{ github.sha }}
         run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Bot ninwiki-bot.zip

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm, useWatch, Controller } from 'react-hook-form';
+import { useForm, useWatch, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { EntryHistory } from '@/components/admin/entry-history';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ArrowLeft, Save, Loader2, Languages } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Languages, Plus, Trash2 } from 'lucide-react';
 import {
   getJutsu,
   createJutsu,
@@ -50,18 +50,22 @@ const emptyForm: JutsuFormValues = {
   requiredStat: '',
   scrollType: '',
   shop: '',
-  maxLevel: 1,
-  damageByLevel: [],
-  cooldownByLevel: [],
+  levels: [{ damage: '', cooldown: '' }],
   castType: '',
   jutsuClass: '',
   debuff: '',
 };
 
-/** Valores por nivel: corta no nivel maximo; se todos estiverem vazios, devolve lista vazia. */
-function trimLevels(values: string[] | undefined, max: number): string[] {
-  const cut = (values ?? []).slice(0, max).map((v) => (v ?? '').trim());
-  return cut.some(Boolean) ? cut : [];
+/** Tabela de niveis a partir do jutsu salvo (uma linha por nivel; pelo menos uma). */
+function levelsFromApi(j: JutsuInput): { damage: string; cooldown: string }[] {
+  const count = Math.min(10, Math.max(1, j.maxLevel ?? 1, j.damageByLevel?.length ?? 0, j.cooldownByLevel?.length ?? 0));
+  return Array.from({ length: count }, (_, i) => ({ damage: j.damageByLevel?.[i] ?? '', cooldown: j.cooldownByLevel?.[i] ?? '' }));
+}
+
+/** Uma coluna da tabela de niveis como lista para a API (tudo vazio vira lista vazia). */
+function levelColumn(values: string[]): string[] {
+  const cleaned = values.map((v) => v.trim());
+  return cleaned.some(Boolean) ? cleaned : [];
 }
 
 /** Mensagem de erro de um campo do formulario. */
@@ -99,7 +103,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
   });
 
   const masteryId = useWatch({ control, name: 'masteryId' });
-  const maxLevel = Math.min(10, Math.max(1, Number(useWatch({ control, name: 'maxLevel' })) || 1));
+  const levelRows = useFieldArray({ control, name: 'levels' });
   const jf = dict.jutsuInfo;
 
   // Mensagem de "erro ao carregar" guardada numa ref: assim o efeito de carga NAO precisa depender de
@@ -116,7 +120,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
     Promise.all([loadMasteries, loadJutsu])
       .then(([m, j]) => {
         setMasteries(m);
-        if (j) reset({ ...emptyForm, ...j, damageByLevel: j.damageByLevel ?? [], cooldownByLevel: j.cooldownByLevel ?? [] });
+        if (j) reset({ ...emptyForm, ...j, levels: levelsFromApi(j) });
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : loadErrorRef.current))
       .finally(() => setLoading(false));
@@ -145,13 +149,16 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
     setSaving(true);
     setApiError(null);
     try {
+      const { levels: _levels, ...rest } = values; // `levels` e' so' do formulario; a API recebe maxLevel/damageByLevel/cooldownByLevel
+      void _levels;
       const payload: JutsuInput = {
-        ...values,
+        ...rest,
         pathId: values.pathId ?? null,
         gif: values.gif || null,
-        // um valor por nivel (corta o que passou do nivel maximo; tudo vazio vira lista vazia)
-        damageByLevel: trimLevels(values.damageByLevel, values.maxLevel),
-        cooldownByLevel: trimLevels(values.cooldownByLevel, values.maxLevel),
+        // cada linha da tabela de niveis e' um nivel: o nivel maximo e' a quantidade de linhas
+        maxLevel: values.levels.length,
+        damageByLevel: levelColumn(values.levels.map((l) => l.damage)),
+        cooldownByLevel: levelColumn(values.levels.map((l) => l.cooldown)),
         namePt: values.namePt ?? null,
         descriptionPt: values.descriptionPt ?? null,
         longDescriptionPt: values.longDescriptionPt ?? null,
@@ -319,12 +326,6 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
               <Input {...register('shop')} placeholder="Any" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">{jf.maxLevel}</label>
-              <Input type="number" min={1} max={10} {...register('maxLevel')} />
-              <p className="text-xs text-muted-foreground">{jf.maxLevelHint}</p>
-              <FieldError message={errors.maxLevel?.message} />
-            </div>
-            <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.castType}</label>
               <Input {...register('castType')} placeholder="Walk cast" />
             </div>
@@ -338,26 +339,27 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">{jf.perLevelHint}</p>
-          <div className="grid gap-4 sm:grid-cols-2">
+          {/* Niveis do jutsu: uma linha por nivel (o nivel maximo e' a quantidade de linhas) */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">{jf.levelsTitle}</label>
+            <p className="text-xs text-muted-foreground">{jf.levelsHint}</p>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">{jf.baseDamage}</label>
-              {Array.from({ length: maxLevel }, (_, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{jf.levelN.replace('{n}', String(i + 1))}</span>
-                  <Input {...register(`damageByLevel.${i}` as const)} placeholder="6" maxLength={40} />
+              {levelRows.fields.map((field, i) => (
+                <div key={field.id} className="grid grid-cols-[4.5rem_1fr_1fr_auto] items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground">{jf.levelN.replace('{n}', String(i + 1))}</span>
+                  <Input {...register(`levels.${i}.damage` as const)} placeholder={jf.baseDamage} maxLength={40} />
+                  <Input {...register(`levels.${i}.cooldown` as const)} placeholder={jf.cooldown} maxLength={40} />
+                  <button type="button" title={jf.removeLevel} disabled={levelRows.fields.length <= 1} onClick={() => levelRows.remove(i)}
+                    className="rounded p-2 text-muted-foreground hover:bg-secondary hover:text-destructive disabled:opacity-30"><Trash2 className="h-4 w-4" /></button>
                 </div>
               ))}
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">{jf.cooldown}</label>
-              {Array.from({ length: maxLevel }, (_, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">{jf.levelN.replace('{n}', String(i + 1))}</span>
-                  <Input {...register(`cooldownByLevel.${i}` as const)} placeholder="16s" maxLength={40} />
-                </div>
-              ))}
-            </div>
+            {levelRows.fields.length < 10 && (
+              <Button type="button" variant="outline" size="sm" onClick={() => levelRows.append({ damage: '', cooldown: '' })}>
+                <Plus className="mr-1.5 h-4 w-4" />{jf.addLevel}
+              </Button>
+            )}
+            <FieldError message={errors.levels?.message} />
           </div>
         </div>
 
