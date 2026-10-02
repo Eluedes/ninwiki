@@ -22,6 +22,7 @@ from ninwiki_bot.api_client import ApiError, NinWikiApi
 from ninwiki_bot.config import BotSettings
 from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_status_panel, query_since as errors_query_since, record_check, update_status
 from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
+from ninwiki_bot.public_commands import register_public_commands
 from ninwiki_bot.staff_commands import StaffGroup
 
 log = logging.getLogger("ninwiki_bot")
@@ -60,6 +61,9 @@ class NinWikiBot(discord.Client):
             """Erro inesperado em um comando: registra no terminal e responde algo generico (sem vazar detalhe)."""
             # Erro inesperado: registra no terminal e responde algo generico -
             # nunca despeja detalhe interno (stack trace, URL, token) no Discord.
+            if isinstance(error, app_commands.CommandOnCooldown):
+                # Freio por pessoa nos comandos publicos (/status, /search): resposta simples, sem registrar como erro.
+                return await interaction.response.send_message(f"⏳ Slow down - try again in {error.retry_after:.0f}s.", ephemeral=True)
             log.exception("Erro num comando", exc_info=error)
             message = "❌ Something went wrong. Try again; if it keeps happening, tell whoever maintains the bot."
             if interaction.response.is_done():
@@ -140,9 +144,8 @@ class NinWikiBot(discord.Client):
         msg = await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
         self.status_store.save(channel.id, msg.id)
 
-    async def _health_tick(self) -> None:
-        """Confere se API, banco e site estao no ar; avisa quando algum cai ou volta e mantem o painel ao vivo atualizado."""
-        now = datetime.now(timezone.utc)
+    async def _check_services(self) -> tuple[dict[str, bool | None], dict[str, int | None]]:
+        """Pergunta agora se API, banco e site respondem (e em quantos ms). None = nao da' pra saber (banco com a API fora)."""
         t0 = time.monotonic()
         api_up, db_up = await self.api.api_status()
         api_ms = int((time.monotonic() - t0) * 1000)
@@ -153,6 +156,19 @@ class NinWikiBot(discord.Client):
             t0 = time.monotonic()
             results["Website"] = await self.api.site_ok(self.settings.site_url)
             timings["Website"] = int((time.monotonic() - t0) * 1000)
+        return results, timings
+
+    async def check_now(self) -> list[ServiceStatus]:
+        """Para o /status: confere agora e devolve o estado de cada servico (a historia de uptime continua a mesma)."""
+        results, timings = await self._check_services()
+        for name, ok in results.items():
+            record_check(self.statuses[name], ok, timings[name])
+        return [self.statuses[n] for n in results]
+
+    async def _health_tick(self) -> None:
+        """Confere se API, banco e site estao no ar; avisa quando algum cai ou volta e mantem o painel ao vivo atualizado."""
+        now = datetime.now(timezone.utc)
+        results, timings = await self._check_services()
         messages = []
         for name, ok in results.items():
             record_check(self.statuses[name], ok, timings[name])
@@ -195,6 +211,7 @@ class NinWikiBot(discord.Client):
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
+        register_public_commands(self.tree, self.api, self.settings.allowed_guilds, self.settings.site_url, self.check_now, bool(self.settings.site_url))
         self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds, self.settings.site_url, self._log_channel))
         if self.settings.dev_guild_id:
             # Sincroniza so' no servidor de testes: aparece na hora (o global demora ate 1h).

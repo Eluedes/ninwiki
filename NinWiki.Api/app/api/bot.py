@@ -13,6 +13,7 @@ Discord ja garante ao bot o ID real de quem executou o comando.
 BOT_API_TOKEN vazio = tudo aqui devolve 404 (desligado).
 """
 import hmac
+import json
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -27,7 +28,10 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import Permission, has_permission
 from app.core.rate_limit import BOT_FAIL, client_key, limiter, retry_message
-from app.models.enums import StaffRole
+from app.models.content import ContentItem
+from app.models.enums import ContentStatus, StaffRole
+from app.models.masteries import Jutsu, Mastery
+from app.models.posts import Post
 from app.models.errors import ErrorEvent
 from app.models.users import AuditLogEntry, User
 from app.schemas.content import CamelModel
@@ -238,3 +242,69 @@ async def bot_errors(
         since = since.replace(tzinfo=timezone.utc)
     stmt = select(ErrorEvent).where(ErrorEvent.last_seen > since).order_by(ErrorEvent.last_seen).limit(limit)
     return (await db.execute(stmt)).scalars().all()
+
+
+# ---- /search do bot: so' conteudo PUBLICO (nada de rascunho, equipe ou log) ----
+
+class BotSearchHit(CamelModel):
+    """Um resultado da busca do bot: o que e', como se chama, um trecho e o caminho da pagina no site."""
+    kind: str
+    title: str
+    icon: str | None = None
+    snippet: str = ""
+    href: str
+
+
+def _plain(value: str | None, limit: int = 140) -> str:
+    """Texto simples de um campo rico (Tiptap JSON ou texto antigo), cortado em `limit` caracteres."""
+    if not value:
+        return ""
+    parts: list[str] = []
+
+    def walk(node: object) -> None:
+        """Junta todos os textos da arvore do documento."""
+        if isinstance(node, dict):
+            if isinstance(node.get("text"), str):
+                parts.append(node["text"])
+            for child in node.get("content") or []:
+                walk(child)
+
+    text = value
+    if value.lstrip().startswith("{"):
+        try:
+            walk(json.loads(value))
+            text = " ".join(parts)
+        except ValueError:
+            text = value
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+
+
+def _like(q: str) -> str:
+    """Escapa % e _ para o texto digitado nao virar curinga do LIKE."""
+    return "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+
+@router.get("/search", response_model=list[BotSearchHit])
+async def bot_search(q: str = Query(..., min_length=2, max_length=60), db: AsyncSession = Depends(get_db)) -> list[BotSearchHit]:
+    """Procura pelo nome em itens/mobs/armas/guias/missoes publicados, jutsus, masteries e posts publicados (ate' 10)."""
+    q = q.strip()
+    if len(q) < 2:
+        return []
+    like = _like(q)
+    now = datetime.now(timezone.utc)
+    hits: list[BotSearchHit] = []
+    items = (await db.execute(
+        select(ContentItem).where(ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\"))
+        .order_by(ContentItem.name).limit(6))).scalars().all()
+    hits += [BotSearchHit(kind=i.category.value.rstrip("s") if i.category.value != "weapons" else "weapon", title=i.name, icon=i.icon,
+                          snippet=_plain(i.description), href=f"/detail/{i.slug}") for i in items]
+    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\")).order_by(Mastery.name).limit(3))).scalars().all()
+    hits += [BotSearchHit(kind="mastery", title=m.name, icon=None, snippet=_plain(m.description), href=f"/masteries/{m.id}") for m in masteries]
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\")).order_by(Jutsu.name).limit(4))).scalars().all()
+    hits += [BotSearchHit(kind="jutsu", title=j.name, icon=None, snippet=f"Tier {j.tier} · {_plain(j.description, 110)}", href=f"/jutsus/{j.id}") for j in jutsus]
+    posts = (await db.execute(
+        select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now), Post.title.ilike(like, escape="\\"))
+        .order_by(Post.published_at.desc()).limit(3))).scalars().all()
+    hits += [BotSearchHit(kind="post", title=p.title, icon="📰", snippet=_plain(p.excerpt), href=f"/blog/{p.slug}") for p in posts]
+    return hits[:10]

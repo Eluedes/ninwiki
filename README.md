@@ -6,7 +6,7 @@ Wiki com painel administrativo. Três projetos independentes na mesma pasta:
 |---|---|---|---|
 | `NinWiki.Api` | API + banco (conteúdo, login, equipe, avisos, uploads) | Python, FastAPI, PostgreSQL | 8000 |
 | `NinWiki.Web` | Site público + painel `/admin` | Next.js 16, React 18 | 3000 |
-| `NinWiki.Bot` | Bot de Discord (`/team ...` + log no canal) | Python, discord.py | — |
+| `NinWiki.Bot` | Bot de Discord (`/status`, `/search`, `/team ...`, log e painel de status no canal) | Python, discord.py | — |
 
 Outros documentos: `NinWiki.Web/GUIA_DE_EDICAO.md` (editar o frontend), `NinWiki.Web/MAESTRIAS.md`,
 `NinWiki.Bot/README.md`, `ROADMAP.md` (o que já foi feito / falta), `FASE2_LOCAL.md` (login e cargos).
@@ -62,13 +62,31 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 482 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
-python scripts/testar_bot_integracao.py    # 114 verificações do bot + log + erros (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 488 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
+python scripts/testar_bot_integracao.py    # 133 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
 ```
 > Se o Python reclamar de `No module named app` ao rodar um script, rode com `PYTHONPATH=.`
 > (Linux/Mac) ou `$env:PYTHONPATH="."` (PowerShell).
+
+### 1.5 Testar uma branch na sua máquina antes de ir para produção
+O deploy sai da `main`. Para testar o que está numa branch (ex.: `claude/sweet-edison-d5di2d`) **sem mexer na `main`**:
+```bash
+git fetch origin claude/sweet-edison-d5di2d          # baixa SÓ essa branch
+git switch claude/sweet-edison-d5di2d                # 1ª vez: cria a branch local ligada à remota
+git pull origin claude/sweet-edison-d5di2d           # nas próximas vezes: só atualiza
+```
+Depois de trocar de branch, atualize o que mudou (rode só o que se aplica):
+```bash
+cd NinWiki.Api && pip install -r requirements.txt && alembic upgrade head   # bibliotecas novas + migrations novas
+cd ../NinWiki.Web && npm install                                            # pacotes novos do site
+cd ../NinWiki.Bot && pip install -r requirements.txt                        # (se mexeu no bot)
+```
+Seus `.env`, `certs/` e `uploads/` **não são do Git**: ficam como estão ao trocar de branch. Se o Git reclamar de alterações locais,
+guarde-as com `git stash` antes do `switch` (e `git stash pop` depois). Para voltar: `git switch main`.
+Quando estiver tudo certo, faça o merge da branch na `main` (pull request no GitHub) e rode os workflows de deploy (seção 3.7).
+> Só quer baixar essa branch numa pasta nova? `git clone --branch claude/sweet-edison-d5di2d --single-branch <URL-do-repositório>`.
 
 ---
 
@@ -99,12 +117,22 @@ pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bib
 - **Jutsus:** a página mostra a ficha em seções que abrem e fecham (Requisitos, Aquisição, Detalhes da técnica, Dados de batalha). No editor você preenche
   nível/atributo exigido, tipo de pergaminho + tier (**1 a 4**), nível máximo com **dano e recarga por nível**, tipo de conjuração, classe, debuff e linhas extras;
   linha vazia some da página.
+- **Visão Geral:** quadro de avisos, contadores, **gráfico de acessos** (7/30/90 dias), **países que mais acessam** e páginas mais vistas
+  (seção 2.2c; permissão `analytics.view`), atividade recente e páginas desatualizadas. No rodapé do menu lateral: **"Web x · API y"** = versão
+  publicada de cada parte (`dev`/`old` = não foi feito deploy com versão — útil para saber se o site no ar é o código novo).
+- **Editor de texto (Tiptap):** negrito/itálico/sublinhado/tachado, títulos, listas, alinhamento, link, ficha, tabela; **cor da letra e cor de fundo**
+  no estilo Word (grade do tema, cores padrão, usadas recentemente e "Mais cores"), **18 fontes** (8 do site + comuns do sistema), **tamanho da letra** e
+  **limpar formatação**. **Spoiler** (blog): selecione o texto e clique no olho riscado — ele vai para dentro de um bloco que o leitor abre com um clique.
+  A API só aceita cor/fonte/tamanho em formato conhecido (proteção contra CSS malicioso).
+- **Bestiário e Armas:** páginas com cartões ricos (vida, dano, XP, alcance, respawn; arma com tipo, requisito, NPC, dano base, habilidade especial,
+  knockback). No painel, o campo extra de armas chama **Stat Bonus**.
+- **Mapa:** está **em manutenção** — sai do menu e qualquer `/map` vai para `/maintenance`. Para liberar, esvazie `MAINTENANCE_PATHS` em `NinWiki.Web/lib/maintenance.ts`.
 - **Erros e problemas** (`/admin/errors`, só S.Adm): tudo que quebrou no wiki — erros da API, erros de tela do site, falhas da DeepL e
   alertas de flood — agrupados (um problema = uma linha com o contador), com local no código e traceback mascarado. Resolva
   com um clique; se voltar a acontecer, reabre sozinho. O card "Open" da Visão Geral mostra quantos estão abertos.
 
 ### 2.2 Log, erros e alertas no Discord (bot)
-O bot cuida de **dois canais** (podem ser o mesmo). Os comandos e as mensagens do bot são em **inglês** (comandos: `/team list`, `/team manage` — um formulário (modal) para adicionar, trocar cargo, renomear, desativar e reativar — `/team status` e `/team clearlog` — limpa o log antigo do painel e/ou do canal do Discord, só S.Adm).
+O bot cuida de **dois canais** (podem ser o mesmo). Os comandos e as mensagens do bot são em **inglês**. **Qualquer pessoa** do servidor usa `/status` (API, banco e site no ar agora, com tempo de resposta) e `/search <termo>` (procura itens, mobs, armas, jutsus, masteries e posts **publicados** e devolve cartões com botão *Open*; ambos usam Components V2, têm limite por pessoa e respeitam `ALLOWED_GUILD_IDS`). Comandos da **equipe** (comandos: `/team list`, `/team manage` — um formulário (modal) para adicionar, trocar cargo, renomear, desativar e reativar — `/team status` e `/team clearlog` — limpa o log antigo do painel e/ou do canal do Discord, só S.Adm).
 
 **Log geral** (`LOG_CHANNEL_ID`): o que acontece no painel (criou/editou/apagou, logins, mudanças de equipe e de permissões, tentativas
 negadas). Mostra o **IP** de quem agiu no rodapé (`Panel · IP x`) — desligue com `LOG_SHOW_IP=false` no `.env` do bot; deixe esse canal **só para a equipe**. Nunca mostra o texto dos conteúdos.
@@ -115,6 +143,7 @@ negadas). Mostra o **IP** de quem agiu no rodapé (`Panel · IP x`) — desligue
 - a **DeepL** para de funcionar (chave recusada, cota do plano gratuito acabou, fora do ar);
 - alguém estoura o limite de requisições (possível flood/cópia em massa);
 - a **API, o banco ou o site** (`SITE_URL`) **caem** — e quando **voltam**.
+**Painel de status ao vivo** (`STATUS_PANEL=true`, padrão): uma mensagem **📡 NinWiki status** no canal de erros, **editada a cada checagem** (online/offline, ms, uptime desde que o bot ligou; o banco aparece como "unknown" se a API estiver fora). Queda/volta continuam gerando aviso novo.
 Anti-spam: o 1º aviso sai na hora; se o mesmo problema continua, só um novo aviso a cada 10 min (com "+N desde o último").
 Problema marcado como resolvido no painel não é repostado (se voltar a acontecer, reabre). Detalhes e traceback: `/admin/errors`.
 
@@ -410,4 +439,6 @@ Todo arquivo começa com um comentário-resumo do que faz e toda função tem um
 - `NinWiki.Api/alembic/versions/*` = histórico do banco; `scripts/*` = testes e utilitários (`migrar_banco.py`, `verificar_projeto.py`).
 - `NinWiki.Web/app/*` = páginas (`(wiki)` público, `admin` painel); `components/*` = peças de tela; `lib/api-client.ts` = tudo que o
   site pede à API; `proxy.ts` = limite por IP/robôs; `next.config.js` = cabeçalhos de segurança/CSP.
-- `NinWiki.Bot/main.py` + `ninwiki_bot/*` = comandos `/equipe` (`staff_commands.py`) e o log no Discord (`log_feed.py`).
+- `NinWiki.Bot/main.py` + `ninwiki_bot/*` = `/status` e `/search` (`public_commands.py`), `/team` (`staff_commands.py`), log no Discord (`log_feed.py`), erros e painel de status (`error_feed.py`).
+- `NinWiki.Web/components/admin/rich-text-editor.tsx` (+ `editor-color-picker.tsx`, `lib/editor-fonts.ts`) = editor de texto; `components/lore/rich-text.tsx` = como o texto aparece no site; `components/admin/traffic-card.tsx` = gráfico de acessos.
+- `NinWiki.Api/app/api/analytics.py` + `core/geoip.py` = acessos anônimos e país; `app/api/bot.py` = rotas do bot (equipe, log, erros, busca).

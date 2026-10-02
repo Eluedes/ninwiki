@@ -72,6 +72,9 @@ import {
   RemoveFormatting,
 } from 'lucide-react';
 
+// TextStyle por DENTRO do negrito (prioridade menor): senao o `strong` do tema (azul no site, cor propria no editor) ganha da cor escolhida.
+const TextStyleInner = TextStyle.extend({ priority: 50 });
+
 /**
  * Tenta interpretar `value` como o JSON que este editor salva. Se nao
  * for um JSON valido (ex: texto antigo, de antes do Tiptap existir, ou
@@ -401,7 +404,7 @@ export function RichTextEditor({
     extensions: [
       // link e underline ja' vem no StarterKit (Tiptap v3): desligados aqui porque sao adicionados abaixo com a nossa configuracao (evita extensao duplicada).
       StarterKit.configure({ link: false, underline: false }),
-      TextStyle,
+      TextStyleInner,
       Color,
       BackgroundColor,
       FontSize,

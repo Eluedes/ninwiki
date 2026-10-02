@@ -8,10 +8,14 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 ## Comandos (só funcionam em servidor, respostas só você vê)
 | Comando | Faz |
 |---|---|
+| `/status` | **qualquer pessoa**: API, banco e site no ar agora (tempo de resposta e uptime), em cartão Components V2 |
+| `/search term` | **qualquer pessoa**: procura no wiki (itens, mobs, armas, guias, missões, masteries, jutsus e posts publicados) e responde com cartões e botão *Open* |
 | `/team list` | mostra a equipe e o cargo de cada um |
 | `/team manage [user]` | abre um **formulário (modal)** que faz tudo: **adicionar**, **trocar cargo**, **renomear**, **desativar** (tira o acesso na hora) e **reativar**. Campos: ação (lista), pessoa (seletor de usuário), cargo (lista, opcional) e nome (texto, opcional). Cada ação usa só o que precisa; `user` é opcional e já deixa a pessoa selecionada |
 | `/team clearlog where [older_than_days]` | **limpa o log antigo** (só S.Adm, com confirmação): o log do painel, as mensagens do canal de log do Discord, ou os dois. Sem `older_than_days` apaga tudo; com ele, só o mais antigo. O bot apaga só as **próprias** mensagens do canal (não precisa de permissão extra), até 1000 por vez. A limpeza fica registrada como a primeira linha do log novo |
 | `/team status` | mostra agora se a **API**, o **banco** e o **site** estão no ar |
+
+**Comandos públicos (Components V2):** `/status` (API, banco e site agora) e `/search <termo>` (busca no wiki, cartões com botão *Open*). Qualquer pessoa usa; 1 uso a cada 5–10 s por pessoa.
 
 **Avisos automáticos de queda:** com `ERROR_CHANNEL_ID` (ou `LOG_CHANNEL_ID`) e `SITE_URL` preenchidos, o bot confere API, banco e site a cada `HEALTH_POLL_SECONDS`
 e avisa no canal **🔴 ... is DOWN** quando algum cai e **🟢 ... is back online** quando volta (com o tempo fora do ar). Sempre que o bot liga, ele também posta

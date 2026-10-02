@@ -560,6 +560,93 @@ async def testar() -> None:
     except ValueError:
         check("HEALTH_POLL_SECONDS < 30 e' recusado", True)
 
+    # ------------------------------------------------------------------
+    secao("7) /status e /search (Components V2) e a busca publica do bot")
+    from app.models.content import ContentItem
+    from app.models.enums import ContentCategory, ContentStatus, Rarity
+    from ninwiki_bot.error_feed import ServiceStatus, record_check
+    from ninwiki_bot.public_commands import build_search_view, build_status_view, register_public_commands
+
+    termo = f"zzbusca{BASE % 100000}"
+    async with AsyncSessionLocal() as db:
+        db.add(ContentItem(slug=f"{termo}-pub", category=ContentCategory.WEAPONS, name=f"{termo} Blade", icon="🗡️", rarity=Rarity.COMMON,
+                           description="A blade used in the test", status=ContentStatus.PUBLISHED))
+        db.add(ContentItem(slug=f"{termo}-rascunho", category=ContentCategory.ITEMS, name=f"{termo} Secret", icon="🎒", rarity=Rarity.COMMON,
+                           description="draft", status=ContentStatus.DRAFT))
+        await db.commit()
+    try:
+        achados = await api.search(termo)
+        check("busca acha o conteudo PUBLICADO", any(h["title"] == f"{termo} Blade" and h["href"] == f"/detail/{termo}-pub" and h["kind"] == "weapon" for h in achados), str(achados))
+        check("busca NAO mostra rascunho", all("Secret" not in h["title"] for h in achados))
+        check("busca sem resultado devolve lista vazia", await api.search("zzzznadaaqui987") == [])
+        check("curingas do LIKE nao viram busca de tudo", await api.search("%%") == [])
+        try:
+            await api.search("a")
+            check("busca com 1 letra e' recusada", False)
+        except ApiError:
+            check("busca com 1 letra e' recusada", True)
+        settings.bot_api_token = ""
+        try:
+            await api.search(termo)
+            check("sem BOT_API_TOKEN a busca do bot fica desligada (404)", False)
+        except ApiError as e:
+            check("sem BOT_API_TOKEN a busca do bot fica desligada (404)", e.status == 404 if hasattr(e, "status") else True)
+        settings.bot_api_token = TOKEN
+
+        if TEM_DISCORD:
+            def componentes(view) -> str:
+                """Todo o texto e links de um LayoutView (para conferir o que o Discord vai mostrar)."""
+                out = []
+                def walk(item) -> None:
+                    """Percorre os componentes do cartao."""
+                    if hasattr(item, "content"):
+                        out.append(item.content)
+                    if getattr(item, "url", None):
+                        out.append(item.url)
+                    for child in getattr(item, "children", []) or []:
+                        walk(child)
+                    if getattr(item, "accessory", None) is not None:
+                        walk(item.accessory)
+                for it in view.children:
+                    walk(it)
+                return "\n".join(out)
+
+            v = build_search_view(termo, achados, "https://wiki.exemplo.com/")
+            txt = componentes(v)
+            check("/search: cartao com titulo, tipo e botao Open para o site", f"{termo} Blade" in txt and "https://wiki.exemplo.com/detail/" in txt, txt[:200])
+            check("/search: sem resultado mostra a dica", "No results" in componentes(build_search_view("xyz", [], "https://wiki.exemplo.com")))
+            maldoso = [{"kind": "item", "title": "@everyone **oi**", "snippet": "<@123> [x](http://a)", "href": "//evil.com/x", "icon": None}]
+            txt = componentes(build_search_view("q", maldoso, "https://wiki.exemplo.com"))
+            check("/search: mencoes e formatacao do site sao neutralizadas e href estranho nao vira botao", "@everyone" not in txt.replace("@\u200beveryone", "") and "evil.com" not in txt, txt)
+
+            ok_st, bad_st = ServiceStatus("API"), ServiceStatus("Website")
+            record_check(ok_st, True, 42)
+            record_check(bad_st, False, 9000)
+            txt = componentes(build_status_view([ok_st, bad_st], datetime.now(timezone.utc), True))
+            check("/status: online com ms, offline em vermelho", "Online" in txt and "42 ms" in txt and "OFFLINE" in txt and "not responding" in txt, txt)
+
+            arvore = app_commands.CommandTree(discord.Client(intents=discord.Intents.default()))
+            async def _checar():
+                """Resultado fixo no lugar da checagem de verdade."""
+                return [ok_st]
+            register_public_commands(arvore, api, set(), "https://wiki.exemplo.com", _checar, True)
+            nomes = {c.name for c in arvore.get_commands()}
+            check("/status e /search existem como comandos de barra", {"status", "search"} <= nomes, str(nomes))
+            cmd = arvore.get_command("search")
+            i = interacao(IDS["creator"])
+            await cmd.callback(i, termo)
+            enviado = i.followup.send.call_args.kwargs
+            check("/search responde com LayoutView (Components V2) e sem mencoes", isinstance(enviado.get("view"), discord.ui.LayoutView) and enviado["allowed_mentions"].everyone is False)
+            i2 = interacao(IDS["creator"], guild_id=999)
+            arvore2 = app_commands.CommandTree(discord.Client(intents=discord.Intents.default()))
+            register_public_commands(arvore2, api, {1}, "", _checar, False)
+            await arvore2.get_command("status").callback(i2)
+            check("/status em servidor nao permitido e' recusado", i2.response.send_message.await_count == 1 and not i2.followup.send.await_count)
+    finally:
+        async with AsyncSessionLocal() as db:
+            await db.execute(delete(ContentItem).where(ContentItem.slug.like(f"{termo}%")))
+            await db.commit()
+
     await http.aclose()
 
 
