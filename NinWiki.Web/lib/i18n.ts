@@ -72,6 +72,7 @@ export interface Dictionary {
   };
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
+  maintenance: { title: string; text: string; back: string };
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterSpecial: string };
@@ -439,13 +440,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
       chakraCost: 'Custo de chakra', cooldown: 'Recarga', castTime: 'Tempo de conjuração', castType: 'Tipo de conjuração', specialEffect: 'Efeito especial',
       jutsuClass: 'Classe', range: 'Alcance', debuff: 'Debuff', levelWord: 'Nível', cpUnit: 'CP',
       sheetTitle: 'Ficha do jutsu', sheetHint: 'Cada linha vazia some da página. Os valores ficam em inglês (termos do jogo).',
-      requiredLevel: 'Nível exigido (ex.: 20+)', requiredStat: 'Atributo exigido (ex.: 35 Intellect)', scrollType: 'Tipo de pergaminho',
-      scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (ex.: Sealable Scroll II).',
+      requiredLevel: 'Nível exigido', requiredStat: 'Atributo exigido', scrollType: 'Tipo de pergaminho',
+      scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (1 a 4 vira I a IV).',
       maxLevelHint: 'De 1 a 10. Define quantos campos por nível aparecem abaixo.', perLevelHint: 'Um valor por nível; deixe vazio o que não se aplica.',
       levelN: 'Nível {n}', tierHint: 'De 1 a 4 (o máximo é 4).',
       levelsTitle: 'Níveis: dano base e recarga', levelsHint: 'Uma linha por nível do jutsu (o nível máximo é a quantidade de linhas). Clique em "Adicionar nível" quando o jutsu subir de nível.',
       addLevel: 'Adicionar nível', removeLevel: 'Remover nível',
     },
+    maintenance: { title: 'Página em manutenção', text: 'Estamos construindo esta página. Volte em breve!', back: 'Voltar ao início' },
     admin: {
       login: {
         welcome: 'Bem-vindo de volta',
@@ -1074,13 +1076,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
       chakraCost: 'Chakra Cost', cooldown: 'Cooldown', castTime: 'Cast Time', castType: 'Cast Type', specialEffect: 'Special Effect',
       jutsuClass: 'Class', range: 'Range', debuff: 'Debuff', levelWord: 'Level', cpUnit: 'CP',
       sheetTitle: 'Jutsu sheet', sheetHint: 'Empty rows are hidden on the page. Values are in English (game terms).',
-      requiredLevel: 'Required level (e.g. 20+)', requiredStat: 'Required stat (e.g. 35 Intellect)', scrollType: 'Scroll type',
-      scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (e.g. Sealable Scroll II).',
+      requiredLevel: 'Required level', requiredStat: 'Required stat', scrollType: 'Scroll type',
+      scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (1 to 4 becomes I to IV).',
       maxLevelHint: 'From 1 to 10. Sets how many per-level fields appear below.', perLevelHint: 'One value per level; leave empty what does not apply.',
       levelN: 'Level {n}', tierHint: 'From 1 to 4 (4 is the maximum).',
       levelsTitle: 'Levels: base damage and cooldown', levelsHint: 'One row per jutsu level (the maximum level is the number of rows). Click "Add level" when the jutsu levels up.',
       addLevel: 'Add level', removeLevel: 'Remove level',
     },
+    maintenance: { title: 'Under maintenance', text: 'We are building this page. Please come back soon!', back: 'Back to home' },
     admin: {
       login: {
         welcome: 'Welcome back',

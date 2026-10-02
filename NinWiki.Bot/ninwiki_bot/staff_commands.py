@@ -66,7 +66,7 @@ class ManageStaffModal(discord.ui.Modal, title="Manage staff"):
     name = discord.ui.Label(
         text="Display name",
         description="Used by Rename (and by Add; empty = their Discord name)",
-        component=discord.ui.TextInput(placeholder="e.g. Rafael", max_length=100, required=False),
+        component=discord.ui.TextInput(max_length=100, required=False),
     )
 
     def __init__(self, api: NinWikiApi, allowed_guilds: set[int], preselected: discord.abc.User | None = None) -> None:

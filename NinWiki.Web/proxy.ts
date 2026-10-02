@@ -13,6 +13,7 @@
 // O IP real vem de CF-Connecting-IP (Cloudflare) ou do ULTIMO X-Forwarded-For (o que o proxy mais
 // proximo anexou; o que vem antes pode ser forjado pelo visitante).
 import { NextResponse, type NextRequest } from 'next/server';
+import { isUnderMaintenance } from '@/lib/maintenance';
 
 const WINDOW_MS = 60_000;
 const LIMIT = Number(process.env.WEB_RATE_LIMIT_PER_MINUTE ?? 300);
@@ -56,6 +57,10 @@ export function proxy(req: NextRequest) {
   const ua = req.headers.get('user-agent') ?? '';
   if (BLOCK_UAS && (ua.length < 8 || SCRAPER_UA.test(ua))) {
     return new NextResponse('Forbidden', { status: 403 });
+  }
+  // Paginas em manutencao (lib/maintenance.ts): vai para /maintenance, mesmo digitando a URL.
+  if (isUnderMaintenance(req.nextUrl.pathname)) {
+    return NextResponse.redirect(new URL('/maintenance', req.url));
   }
   const isPrefetch = req.headers.has('next-router-prefetch') || req.headers.get('purpose') === 'prefetch';
   const ip = clientIp(req);

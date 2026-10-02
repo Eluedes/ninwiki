@@ -6,7 +6,7 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').repla
 
 /** Monta o sitemap; se a API estiver fora do ar, devolve so' as paginas fixas. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const fixed: MetadataRoute.Sitemap = ['', '/blog', '/masteries', '/jutsus', '/village', '/map'].map((path) => ({ url: `${SITE}${path}` }));
+  const fixed: MetadataRoute.Sitemap = ['', '/blog', '/masteries', '/jutsus', '/village'].map((path) => ({ url: `${SITE}${path}` }));
   try {
     const posts = await listPosts('published');
     return [...fixed, ...posts.map((p) => ({ url: `${SITE}/blog/${p.slug}`, lastModified: p.updatedAt }))];

@@ -6,7 +6,7 @@ import type { MetadataRoute } from 'next';
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: '*', allow: '/', disallow: ['/admin', '/login'] },
+      { userAgent: '*', allow: '/', disallow: ['/admin', '/login', '/map', '/maintenance'] },
       // Robos de treino de IA e de copia em massa: sem acesso.
       { userAgent: ['GPTBot', 'CCBot', 'ClaudeBot', 'anthropic-ai', 'Bytespider', 'PetalBot', 'AhrefsBot', 'SemrushBot'], disallow: '/' },
     ],

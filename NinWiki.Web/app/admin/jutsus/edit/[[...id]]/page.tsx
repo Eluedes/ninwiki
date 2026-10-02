@@ -310,32 +310,32 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.requiredLevel}</label>
-              <Input {...register('requiredLevel')} placeholder="20+" />
+              <Input {...register('requiredLevel')} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.requiredStat}</label>
-              <Input {...register('requiredStat')} placeholder="35 Intellect" />
+              <Input {...register('requiredStat')} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.scrollType}</label>
-              <Input {...register('scrollType')} placeholder="Sealable Scroll" />
+              <Input {...register('scrollType')} />
               <p className="text-xs text-muted-foreground">{jf.scrollTypeHint}</p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.shop}</label>
-              <Input {...register('shop')} placeholder="Any" />
+              <Input {...register('shop')} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.castType}</label>
-              <Input {...register('castType')} placeholder="Walk cast" />
+              <Input {...register('castType')} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.jutsuClass}</label>
-              <Input {...register('jutsuClass')} placeholder="Trap" />
+              <Input {...register('jutsuClass')} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.debuff}</label>
-              <Input {...register('debuff')} placeholder="Burn III" />
+              <Input {...register('debuff')} />
             </div>
           </div>
 
