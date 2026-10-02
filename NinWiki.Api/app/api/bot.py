@@ -25,6 +25,7 @@ from app.api.audit_log import clear_log_rows
 from app.api.staff import to_read
 from app.core import staff_service
 from app.core.config import settings
+from app.core.translation import fill_missing_translations
 from app.core.database import get_db
 from app.core.permissions import Permission, has_permission
 from app.core.rate_limit import BOT_FAIL, client_key, limiter, retry_message
@@ -398,6 +399,27 @@ def _item_hit(i: ContentItem, lang: str = "en") -> BotSearchHit:
                         image=_abs_image(i.image), facts=facts[:6], href=f"/detail/{i.slug}")
 
 
+PT_FIELDS = {
+    ContentItem: [("name", "name_pt"), ("description", "description_pt"), ("spawn_location", "spawn_location_pt")],
+    Mastery: [("name", "name_pt"), ("description", "description_pt")],
+    Jutsu: [("name", "name_pt"), ("description", "description_pt")],
+    Post: [("title", "title_pt"), ("excerpt", "excerpt_pt")],
+}
+MAX_TRANSLATED_PER_SEARCH = 4  # limite de linhas traduzidas pela DeepL numa busca (protege a cota do plano gratis)
+
+
+async def _fill_pt(db: AsyncSession, rows: list) -> None:
+    """Busca em portugues: o que ainda nao tem traducao e' traduzido (DeepL) UMA vez e fica salvo - igual ao que o painel faz ao salvar. Sem chave da DeepL nada muda."""
+    changed = False
+    for row in rows[:MAX_TRANSLATED_PER_SEARCH]:
+        pairs = PT_FIELDS[type(row)]
+        if any(not getattr(row, pt) and getattr(row, en) for en, pt in pairs):
+            await fill_missing_translations(row, pairs)
+            changed = True
+    if changed:
+        await db.commit()
+
+
 @router.get("/search", response_model=list[BotSearchHit])
 async def bot_search(
     q: str = Query(..., min_length=2, max_length=60),
@@ -415,27 +437,31 @@ async def bot_search(
         select(ContentItem).where(ContentItem.status == ContentStatus.PUBLISHED,
                                   ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
         .order_by(ContentItem.name).limit(6))).scalars().all()
-    hits += [_item_hit(i, lang) for i in items]
     masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
                                   .order_by(Mastery.name).limit(3))).scalars().all()
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+                               .order_by(Jutsu.name).limit(4))).scalars().all()
+    posts = (await db.execute(
+        select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),
+                           Post.title.ilike(like, escape="\\") | Post.title_pt.ilike(like, escape="\\"))
+        .order_by(Post.published_at.desc()).limit(3))).scalars().all()
+    if lang == "pt":
+        await _fill_pt(db, [*items, *masteries, *jutsus, *posts])
+    hits += [_item_hit(i, lang) for i in items]
     for m in masteries:
-        desc, long_desc = _pick(lang, m.description, m.description_pt), _pick(lang, m.long_description, m.long_description_pt)
+        desc = _pick(lang, m.description, m.description_pt)
+        long_desc = (m.long_description_pt if lang == "pt" else m.long_description) or ""
         hits.append(BotSearchHit(kind="mastery", title=_pick(lang, m.name, m.name_pt), icon=None, snippet=_plain(desc), summary=_summary(long_desc or desc),
                                  image=_abs_image(m.image or m.gif), facts=_facts(("Type", m.type.value.title()), ("Element", m.element), lang=lang),
                                  href=f"/masteries/{m.id}"))
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
-                               .order_by(Jutsu.name).limit(4))).scalars().all()
     for j in jutsus:
-        desc, long_desc = _pick(lang, j.description, j.description_pt), _pick(lang, j.long_description, j.long_description_pt)
+        desc = _pick(lang, j.description, j.description_pt)
+        long_desc = (j.long_description_pt if lang == "pt" else j.long_description) or ""
         hits.append(BotSearchHit(kind="jutsu", title=_pick(lang, j.name, j.name_pt), icon=None, snippet=f"Tier {j.tier} · {_plain(desc, 110)}",
                                  summary=_summary(long_desc or desc), image=_abs_image(j.gif),
                                  facts=_facts(("Tier", j.tier), ("Chakra", j.chakra_cost), ("Cooldown", j.cooldown), ("Range", j.range),
                                               ("Cast time", j.cast_time), ("Effect", j.effect), lang=lang),
                                  href=f"/jutsus/{j.id}"))
-    posts = (await db.execute(
-        select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),
-                           Post.title.ilike(like, escape="\\") | Post.title_pt.ilike(like, escape="\\"))
-        .order_by(Post.published_at.desc()).limit(3))).scalars().all()
     for p in posts:
         excerpt = _pick(lang, p.excerpt, p.excerpt_pt)
         hits.append(BotSearchHit(kind="post", title=_pick(lang, p.title, p.title_pt), icon="📰", snippet=_plain(excerpt), summary=_summary(excerpt),

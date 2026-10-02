@@ -595,6 +595,8 @@ async def testar() -> None:
                                {"type": "paragraph", "content": [{"type": "text", "text": "A blade used in the test"}]},
                                {"type": "bulletList", "content": [{"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Dropped by bandits"}]}]}]}]}),
                            weapon_type="Katana", weapon_base_damage="42", image="/images/wiki/blade.png", status=ContentStatus.PUBLISHED))
+        db.add(ContentItem(slug=f"{termo}-sempt", category=ContentCategory.MOBS, name=f"{termo} Larva", icon="🐛", rarity=Rarity.COMMON,
+                           description="A small larva", mob_health="22", status=ContentStatus.PUBLISHED))
         db.add(ContentItem(slug=f"{termo}-rascunho", category=ContentCategory.ITEMS, name=f"{termo} Secret", icon="🎒", rarity=Rarity.COMMON,
                            description="draft", status=ContentStatus.DRAFT))
         await db.commit()
@@ -610,6 +612,16 @@ async def testar() -> None:
         check("busca em portugues: titulo, resumo e rotulos traduzidos",
               blade_pt["title"] == f"{termo} Lamina" and "Uma lamina" in blade_pt["summary"] and any(f["label"] == "Dano base" for f in blade_pt["facts"]), str(blade_pt))
         check("busca acha tambem pelo nome em portugues", any(h["href"] == f"/detail/{termo}-pub" for h in await api.search(f"{termo} Lamina")))
+        async def _fake_deepl(valor, reverse=False):
+            """DeepL de mentira: devolve 'PT: texto' (so' para provar que a busca traduz e guarda)."""
+            return f"PT: {valor}" if valor else None
+        with patch("app.core.translation.translate_field", _fake_deepl):
+            sempt = next(h for h in await api.search(f"{termo} Larva", "pt") if h["href"] == f"/detail/{termo}-sempt")
+        check("busca em portugues traduz na hora o que nao tinha traducao (DeepL)", sempt["title"] == f"PT: {termo} Larva" and "PT: A small larva" in sempt["summary"], str(sempt))
+        sempt2 = next(h for h in await api.search(f"{termo} Larva", "pt") if h["href"] == f"/detail/{termo}-sempt")
+        check("a traducao fica salva (a proxima busca nao precisa da DeepL)", sempt2["title"] == f"PT: {termo} Larva")
+        sem_en = next(h for h in await api.search(f"{termo} Larva", "en") if h["href"] == f"/detail/{termo}-sempt")
+        check("a busca em ingles continua em ingles", sem_en["title"] == f"{termo} Larva")
         check("busca com idioma invalido e' recusada", await _recusa(api, termo))
         check("busca NAO mostra rascunho", all("Secret" not in h["title"] for h in achados))
         check("busca sem resultado devolve lista vazia", await api.search("zzzznadaaqui987") == [])
