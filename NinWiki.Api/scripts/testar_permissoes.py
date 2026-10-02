@@ -63,6 +63,15 @@ TESTE_IDS_TEXTO = [str(v) for v in IDS.values()] + [str(BASE + n) for n in range
 SLUG = f"teste-perm-{BASE % 100000}"
 
 
+UA_NAVEGADOR = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+
+
+def _hash_visitante_teste() -> str:
+    """Hash do visitante usado nos testes de acessos (para apagar no final)."""
+    from app.api.analytics import _visitor_hash
+    return _visitor_hash(datetime.now(timezone.utc).date(), "203.0.113.9", UA_NAVEGADOR)
+
+
 def cookie(user: User, token: str | None = None) -> dict:
     """Cabecalho Cookie de sessao valida (ou do token informado) para o usuario."""
     return {"Cookie": f"{SESSION_COOKIE}={token or create_session_token(user)}"}
@@ -102,6 +111,7 @@ ROTAS_PUBLICAS = {
     ("GET", "/villages"), ("GET", "/villages/{village_id}"), ("GET", "/organizations"),
     ("GET", "/posts"), ("GET", "/posts/{post_id}"), ("GET", "/posts/slug/{slug}"),
     ("GET", "/tags"),
+    ("POST", "/analytics/hit"),    # a visita avisa o site (origem + limite por IP + ignora robos; guarda so' contagens)
     # engajamento: leitura publica; escrita exige LEITOR logado (cookie proprio, ver reader_auth.py)
     ("GET", "/posts/{slug}/engagement"), ("GET", "/posts/{slug}/comments"),
     ("PUT", "/posts/{slug}/like"), ("DELETE", "/posts/{slug}/like"),
@@ -167,6 +177,9 @@ async def limpar(inicio: datetime) -> None:
         await db.execute(text("DELETE FROM jutsus WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM posts WHERE slug LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM tags WHERE id LIKE :p"), {"p": f"{SLUG}%"})
+        await db.execute(text("DELETE FROM traffic_daily WHERE country = 'QQ'"))
+        await db.execute(text("DELETE FROM traffic_pages WHERE path LIKE :p"), {"p": f"/{SLUG}%"})
+        await db.execute(text("DELETE FROM traffic_visitors WHERE visitor_hash = :h"), {"h": _hash_visitante_teste()})
         await db.execute(text("DELETE FROM readers WHERE discord_id BETWEEN :a AND :b"), {"a": BASE + 30, "b": BASE + 40})
         await db.execute(text("DELETE FROM organizations WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM villages WHERE id LIKE :p"), {"p": f"{SLUG}%"})
@@ -1475,6 +1488,51 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         velho = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.entity_id == f"{SLUG}-velho"))).scalars().first()
         marca = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log").order_by(AuditLogEntry.created_at.desc()))).scalars().first()
     check("o registro antigo sumiu e a limpeza ficou registrada no log", velho is None and marca is not None and marca.diff.get("older_than_days") == 3650)
+
+    secao("24) Acessos ao site: grafico por dia, paises e paginas (so' contagens)")
+    from app.core import geoip
+    c.cookies.clear()
+    H = {"User-Agent": UA_NAVEGADOR, "Origin": "http://localhost:3000"}
+    pagina = f"/{SLUG}-pagina"
+    settings.trust_proxy_headers = True
+    r = await c.post("/analytics/hit", json={"path": pagina + "?utm=x#topo"}, headers={**H, "CF-IPCountry": "qq"})
+    check("visita e' contada (204)", r.status_code == 204, r.text)
+    await c.post("/analytics/hit", json={"path": pagina}, headers={**H, "CF-IPCountry": "QQ"})
+    settings.trust_proxy_headers = False
+    r = await c.get("/analytics/summary?days=7", headers=A)
+    resumo = r.json()
+    pais = next((x for x in resumo["countries"] if x["code"] == "QQ"), None)
+    pag = next((x for x in resumo["pages"] if x["path"] == pagina), None)
+    check("Adm ve o resumo (200) com 7 dias na serie", r.status_code == 200 and len(resumo["series"]) == 7 and resumo["days"] == 7, r.text[:150])
+    check("pais da Cloudflare entra no ranking (2 visualizacoes, 1 visitante unico: mesmo IP+navegador)", pais is not None and pais["views"] == 2 and pais["visitors"] == 1, str(pais))
+    check("pagina entra no ranking sem parametros nem hash (2 visualizacoes)", pag is not None and pag["views"] == 2, str(pag))
+    check("o ultimo ponto da serie e' hoje e soma as visualizacoes", resumo["series"][-1]["views"] >= 2 and resumo["totalViews"] >= 2)
+    n_antes = pais["views"]
+    await c.post("/analytics/hit", json={"path": pagina}, headers={**H, "CF-IPCountry": "QQ"})  # trust_proxy_headers desligado: cabecalho forjado e' ignorado
+    resumo2 = (await c.get("/analytics/summary?days=7", headers=A)).json()
+    check("cabecalho de pais FORJADO e' ignorado sem proxy confiavel (QQ nao cresce; vira desconhecido)",
+          next(x for x in resumo2["countries"] if x["code"] == "QQ")["views"] == n_antes, str(resumo2["countries"][:3]))
+    total_antes = resumo2["totalViews"]
+    for rotulo, corpo, cab in [("robo (User-Agent de bot)", {"path": pagina}, {**H, "User-Agent": "Googlebot/2.1"}),
+                               ("pagina do painel", {"path": "/admin/staff"}, H), ("login", {"path": "/login"}, H),
+                               ("caminho externo", {"path": "//evil.example/x"}, H), ("sem User-Agent", {"path": pagina}, {"Origin": "http://localhost:3000", "User-Agent": ""})]:
+        r = await c.post("/analytics/hit", json=corpo, headers=cab)
+        check(f"ignorado em silencio: {rotulo}", r.status_code == 204)
+    resumo3 = (await c.get("/analytics/summary?days=7", headers=A)).json()
+    check("nada disso entrou na contagem", resumo3["totalViews"] == total_antes, f"{total_antes} -> {resumo3['totalViews']}")
+    check("Origin de outro site -> 403", (await c.post("/analytics/hit", json={"path": pagina}, headers={**H, "Origin": "https://evil.example"})).status_code == 403)
+    check("caminho vazio/gigante -> 422", (await c.post("/analytics/hit", json={"path": ""}, headers=H)).status_code == 422
+          and (await c.post("/analytics/hit", json={"path": "/" + "a" * 300}, headers=H)).status_code == 422)
+    check("Creator nao ve o resumo (403)", (await c.get("/analytics/summary", headers=C)).status_code == 403)
+    check("anonimo nao ve o resumo (401)", (await c.get("/analytics/summary")).status_code == 401)
+    check("dias fora do limite -> 422", (await c.get("/analytics/summary?days=0", headers=A)).status_code == 422)
+    check("geoip: IP privado/invalido vira desconhecido (ZZ) e 'XX' da Cloudflare e' ignorado",
+          geoip.country_of("10.0.0.1") == "ZZ" and geoip.country_of("nao-e-ip") == "ZZ" and geoip.valid_country("xx") is None
+          and geoip.valid_country("br") == "BR" and geoip.country_of("8.8.8.8", "BR", trust_header=True) == "BR")
+    limiter.reset()
+    codigos = [(await c.post("/analytics/hit", json={"path": pagina}, headers=H)).status_code for _ in range(95)]
+    check("flood de visitas: passa o limite por minuto e recebe 429", 429 in codigos and codigos[0] == 204, str(set(codigos)))
+    limiter.reset()
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []

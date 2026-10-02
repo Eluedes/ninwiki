@@ -11,6 +11,7 @@ import { listContentItems, listJutsus, listAuditLog, listPosts, listStaff, listE
 import { Bug, FileText, Boxes, Users, Zap, Loader2, Plus, Pencil, Trash2, History, Send, FileEdit, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { NoticeBoard } from '@/components/admin/notice-board';
+import { TrafficCard } from '@/components/admin/traffic-card';
 import { cn } from '@/lib/utils';
 
 // Quantos dias sem edicao pra uma entry contar como "desatualizada" -
@@ -130,6 +131,9 @@ export default function AdminOverviewPage() {
           </Link>
         ))}
       </div>
+
+      {/* Acessos ao site: grafico + paises que mais acessam (so' quem tem analytics.view) */}
+      {can('analytics.view') && <TrafficCard />}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Atividade recente - puxa do log de auditoria de verdade

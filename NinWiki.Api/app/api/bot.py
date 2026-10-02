@@ -200,10 +200,16 @@ class BotLogEntry(CamelModel):
     source: str
 
 
-@router.get("/audit-log", response_model=list[BotLogEntry])
+class BotLogEntryWithIp(BotLogEntry):
+    """Igual, mas COM o IP de quem agiu (so' quando o bot pede includeIp=true: LOG_SHOW_IP=true no .env do bot)."""
+    ip_address: str | None = None
+
+
+@router.get("/audit-log", response_model=None)
 async def bot_audit_log(
     since: datetime = Query(..., description="So' linhas criadas DEPOIS deste instante (ISO 8601)"),
     limit: int = Query(50, ge=1, le=100),
+    include_ip: bool = Query(False, alias="includeIp", description="Inclui o IP de quem agiu (so' se o dono do bot quiser ver no canal)"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -213,7 +219,8 @@ async def bot_audit_log(
     if since.tzinfo is None:
         since = since.replace(tzinfo=timezone.utc)
     stmt = select(AuditLogEntry).where(AuditLogEntry.created_at > since).order_by(AuditLogEntry.created_at).limit(limit)
-    return (await db.execute(stmt)).scalars().all()
+    model = BotLogEntryWithIp if include_ip else BotLogEntry
+    return [model.model_validate(row, from_attributes=True) for row in (await db.execute(stmt)).scalars().all()]
 
 
 @router.get("/errors", response_model=list[BotErrorEntry])

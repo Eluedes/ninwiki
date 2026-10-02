@@ -8,6 +8,7 @@
 
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { PageHitBeacon } from '@/components/wiki/page-hit-beacon';
 
 /** Layout do site publico: cabecalho, conteudo e rodape. */
 export default function WikiLayout({
@@ -21,6 +22,7 @@ export default function WikiLayout({
     // conteudo (o <main> "empurra" o footer para baixo ocupando todo
     // o espaco sobrando).
     <div className="flex min-h-screen flex-col">
+      <PageHitBeacon />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />

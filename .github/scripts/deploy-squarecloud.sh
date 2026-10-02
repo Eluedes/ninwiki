@@ -49,6 +49,22 @@ if [ -n "${DB_SSL_CA:-}${DB_SSL_CERT:-}${DB_SSL_KEY:-}" ]; then
   chmod 600 "$DIR/certs/"* 2>/dev/null || true
 fi
 
+# Banco de paises (DB-IP Lite, gratis, CC-BY 4.0) para o grafico de acessos da Visao Geral - so' para a API e so' se ainda nao
+# houver o arquivo. Melhor esforco: se o download falhar o deploy segue normal e os acessos ficam como "Desconhecido"
+# (a menos que o site esteja atras da Cloudflare, que ja' informa o pais).
+if [ -f "$DIR/app/core/geoip.py" ] && [ ! -f "$DIR/geoip/country.mmdb" ]; then
+  mkdir -p "$DIR/geoip"
+  for OFFSET in "0 month" "1 month ago"; do
+    MONTH=$(date -u -d "$OFFSET" +%Y-%m)
+    if curl -fsS --max-time 60 -o "$DIR/geoip/country.mmdb.gz" "https://download.db-ip.com/free/dbip-country-lite-${MONTH}.mmdb.gz" \
+       && gunzip -f "$DIR/geoip/country.mmdb.gz"; then
+      echo "Banco de paises DB-IP ${MONTH} incluido."; break
+    fi
+    rm -f "$DIR/geoip/country.mmdb.gz" "$DIR/geoip/country.mmdb"
+  done
+  [ -f "$DIR/geoip/country.mmdb" ] || echo "::warning::Nao consegui baixar o banco de paises (DB-IP); o grafico de paises depende da Cloudflare."
+fi
+
 rm -f "$ZIP"
 # PREBUILT=true: a pasta ja' e' o pacote final (site compilado: node_modules e .next sao justamente o que deve ir).
 if [ "${PREBUILT:-false}" = "true" ]; then

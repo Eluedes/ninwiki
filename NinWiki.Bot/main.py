@@ -69,7 +69,7 @@ class NinWikiBot(discord.Client):
         """Uma volta do feed: busca acoes novas na API e posta no canal de log (embeds, ate' 10 por mensagem)."""
         try:
             channel = self.get_channel(self.settings.log_channel_id) or await self.fetch_channel(self.settings.log_channel_id)
-            entries = await self.api.audit_log_since(query_since(self.feed_state).isoformat())
+            entries = await self.api.audit_log_since(query_since(self.feed_state).isoformat(), include_ip=self.settings.log_show_ip)
             # Trabalha numa COPIA do estado: so' "confirma" depois que o envio deu certo (senao tentaria de novo, sem perder nada).
             new_state = copy.deepcopy(self.feed_state)
             fresh = [e for e in pick_new(new_state, entries) if e["action"] not in self.settings.ignored_log_actions]

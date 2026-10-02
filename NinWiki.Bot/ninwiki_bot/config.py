@@ -20,6 +20,8 @@ class BotSettings(BaseSettings):
     health_poll_seconds: int = 60
     # De quantos em quantos segundos o bot confere se ha' acao nova (minimo 10 para nao martelar a API).
     log_poll_seconds: int = 20
+    # Mostra o IP de quem agiu no canal de log. O canal deve ser visivel SO' para a equipe (IP e' dado pessoal); false = nao mostra.
+    log_show_ip: bool = True
     # Acoes que NAO devem ir para o canal (separadas por virgula), ex: "login,logout" para reduzir ruido.
     log_ignore_actions: str = ""
 

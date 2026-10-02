@@ -393,7 +393,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <label className="text-sm font-semibold text-card-foreground">
               {t.slugLabel}
             </label>
-            <Input {...register('slug')} placeholder="ex: larva" />
+            <Input {...register('slug')} />
             <FieldError message={errors.slug?.message} />
           </div>
         </div>

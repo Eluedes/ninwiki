@@ -416,7 +416,12 @@ async def testar() -> None:
     desde = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
     linhas = await api.audit_log_since(desde)
     check("API devolve as acoes recentes (lista)", isinstance(linhas, list) and len(linhas) >= 1)
-    check("SEM IP nem dados sensiveis nas linhas", all("ipAddress" not in l and "ip_address" not in l for l in linhas))
+    check("SEM IP nem dados sensiveis nas linhas (padrao)", all("ipAddress" not in l and "ip_address" not in l for l in linhas))
+    com_ip = await api.audit_log_since(desde, include_ip=True)
+    check("com includeIp o IP de quem agiu vem junto (LOG_SHOW_IP=true no bot)", len(com_ip) == len(linhas) and all("ipAddress" in l for l in com_ip))
+    from ninwiki_bot.log_feed import format_entry as _fmt
+    check("rodape do embed mostra 'Panel · IP x' quando o IP vem", _fmt({**com_ip[0], "ipAddress": "203.0.113.7"})["footer"].endswith("IP 203.0.113.7")
+          and "IP" not in _fmt({**linhas[0]})["footer"])
     check("ordem cronologica (mais antiga primeiro)", [l["createdAt"] for l in linhas] == sorted(l["createdAt"] for l in linhas))
     futuro = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
     check("nada novo depois de um instante futuro", await api.audit_log_since(futuro) == [])

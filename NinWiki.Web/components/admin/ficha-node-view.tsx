@@ -50,13 +50,13 @@ export function FichaNodeView({ node, updateAttributes }: NodeViewProps) {
             <Input
               value={row.label}
               onChange={(e) => setRow(i, { label: e.target.value })}
-              placeholder="Label (e.g. Level)"
+              placeholder="Label"
               className="h-8 text-xs"
             />
             <Input
               value={row.value}
               onChange={(e) => setRow(i, { value: e.target.value })}
-              placeholder="Value (e.g. 10)"
+              placeholder="Value"
               className="h-8 text-xs"
             />
             <button

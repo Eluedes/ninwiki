@@ -93,9 +93,12 @@ class NinWikiApi:
         action = "activate" if active else "deactivate"
         return await self._request("POST", f"/bot/staff/{target_id}/{action}", json={"invokerDiscordId": str(invoker_id)})
 
-    async def audit_log_since(self, since_iso: str, limit: int = 50) -> list[dict]:
-        """Linhas do log geral criadas depois de `since_iso` (mais antigas primeiro) - alimenta o canal de log. Sem IPs."""
-        return await self._request("GET", "/bot/audit-log", params={"since": since_iso, "limit": limit})
+    async def audit_log_since(self, since_iso: str, limit: int = 50, include_ip: bool = False) -> list[dict]:
+        """Linhas do log geral criadas depois de `since_iso` (mais antigas primeiro) - alimenta o canal de log. IP so' com include_ip."""
+        params: dict = {"since": since_iso, "limit": limit}
+        if include_ip:
+            params["includeIp"] = "true"
+        return await self._request("GET", "/bot/audit-log", params=params)
 
     async def errors_since(self, since_iso: str, limit: int = 50) -> list[dict]:
         """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""

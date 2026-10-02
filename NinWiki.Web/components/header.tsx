@@ -24,6 +24,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import { SteamIcon, DiscordIcon } from '@/components/icons/brand-icons';
 import { NinLogo } from '@/components/icons/nin-logo';
+import { isUnderMaintenance } from '@/lib/maintenance';
 
 // Itens do menu principal. Por decisao do mantenedor, o NavMenu fica
 // enxuto de proposito: so' Home, Vilas e Mapa (+ os botoes de
@@ -37,12 +38,15 @@ import { NinLogo } from '@/components/icons/nin-logo';
 // idiomas pt e en). A ordem aqui e' a ordem em que os itens aparecem,
 // tanto no menu de desktop quanto no menu mobile - os dois usam o
 // MESMO array, entao so' precisa editar em um lugar.
-const navItems: { key: 'home' | 'blog' | 'village' | 'map'; href: string }[] = [
+const allNavItems: { key: 'home' | 'blog' | 'village' | 'map'; href: string }[] = [
   { key: 'home', href: '/' },
   { key: 'blog', href: '/blog' },
   { key: 'village', href: '/village' },
   { key: 'map', href: '/map' },
 ];
+
+// Paginas em manutencao (lib/maintenance.ts) NAO aparecem no menu: nao ha' motivo de mostrar o que ainda nao esta pronto.
+const navItems = allNavItems.filter((item) => !isUnderMaintenance(item.href));
 
 // Links oficiais do jogo (fora do nosso site). Confirmados nas paginas
 // oficiais: loja da Steam e servidor de Discord do Nin Online.
