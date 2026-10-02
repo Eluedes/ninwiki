@@ -22,6 +22,7 @@ from ninwiki_bot.api_client import ApiError, NinWikiApi
 from ninwiki_bot.config import BotSettings
 from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_status_panel, query_since as errors_query_since, record_check, update_status
 from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
+from ninwiki_bot.language import LanguageStore
 from ninwiki_bot.public_commands import register_public_commands
 from ninwiki_bot.staff_commands import StaffGroup
 
@@ -52,6 +53,7 @@ class NinWikiBot(discord.Client):
         self.error_loop = tasks.loop(seconds=settings.log_poll_seconds)(self._error_tick)
         self.error_loop.before_loop(self.wait_until_ready)
         self.statuses = {"API": ServiceStatus("API"), "Database": ServiceStatus("Database"), "Website": ServiceStatus("Website")}
+        self.languages = LanguageStore(Path(__file__).resolve().parent / "language_state.json")
         self.status_store = StatusMessageStore(Path(__file__).resolve().parent / "status_state.json")
         self.health_loop = tasks.loop(seconds=settings.health_poll_seconds)(self._health_tick)
         self.health_loop.before_loop(self.wait_until_ready)
@@ -63,7 +65,7 @@ class NinWikiBot(discord.Client):
             # nunca despeja detalhe interno (stack trace, URL, token) no Discord.
             if isinstance(error, app_commands.CommandOnCooldown):
                 # Freio por pessoa nos comandos publicos (/status, /search): resposta simples, sem registrar como erro.
-                return await interaction.response.send_message(f"⏳ Slow down - try again in {error.retry_after:.0f}s.", ephemeral=True)
+                return await interaction.response.send_message(f"⏳ Slow down / Calma - {error.retry_after:.0f}s.", ephemeral=True)
             log.exception("Erro num comando", exc_info=error)
             message = "❌ Something went wrong. Try again; if it keeps happening, tell whoever maintains the bot."
             if interaction.response.is_done():
@@ -211,7 +213,7 @@ class NinWikiBot(discord.Client):
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
-        register_public_commands(self.tree, self.api, self.settings.allowed_guilds, self.settings.site_url, self.check_now, bool(self.settings.site_url))
+        register_public_commands(self.tree, self.api, self.settings.allowed_guilds, self.settings.site_url, self.check_now, bool(self.settings.site_url), self.languages)
         self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds, self.settings.site_url, self._log_channel))
         if self.settings.dev_guild_id:
             # Sincroniza so' no servidor de testes: aparece na hora (o global demora ate 1h).

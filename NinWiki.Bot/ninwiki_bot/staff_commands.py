@@ -232,6 +232,9 @@ class StaffGroup(app_commands.Group):
             name="team",
             description="Manage the NinWiki panel staff",
             guild_only=True,  # nao funciona em mensagem direta
+            # Escondido de quem nao gerencia o servidor (o servidor pode liberar para cargos especificos em Integracoes). A API continua
+            # sendo quem decide de verdade: so' a equipe cadastrada consegue agir.
+            default_permissions=discord.Permissions(manage_guild=True),
         )
         self.api = api
         self.allowed_guilds = allowed_guilds or set()

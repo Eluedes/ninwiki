@@ -100,9 +100,9 @@ class NinWikiApi:
             params["includeIp"] = "true"
         return await self._request("GET", "/bot/audit-log", params=params)
 
-    async def search(self, query: str) -> list[dict]:
-        """Busca publica pelo nome (itens, mobs, armas, jutsus, masteries, posts): ate' 10 resultados {kind, title, icon, snippet, href}."""
-        return await self._request("GET", "/bot/search", params={"q": query})
+    async def search(self, query: str, lang: str = "en") -> list[dict]:
+        """Busca publica pelo nome (itens, mobs, armas, jutsus, masteries, posts) em `en` ou `pt`: ate' 10 resultados com resumo, imagem e dados."""
+        return await self._request("GET", "/bot/search", params={"q": query, "lang": lang})
 
     async def errors_since(self, since_iso: str, limit: int = 50) -> list[dict]:
         """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""

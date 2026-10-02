@@ -9,7 +9,8 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 | Comando | Faz |
 |---|---|
 | `/status` | **qualquer pessoa**: API, banco e site no ar agora (tempo de resposta e uptime), em cartão Components V2 |
-| `/search term` | **qualquer pessoa**: procura no wiki (itens, mobs, armas, guias, missões, masteries, jutsus e posts publicados) e mostra o melhor resultado com **imagem, dados e resumo** (botão para a página completa e um menu para ver os outros resultados) |
+| `/language language` | **só quem tem "Gerenciar servidor"**: idioma padrão do bot **neste servidor** (English ou Português); vale para `/search` e `/status` e fica salvo em `language_state.json` |
+| `/search term [language]` | **qualquer pessoa**: procura no wiki (itens, mobs, armas, guias, missões, masteries, jutsus e posts publicados) e mostra o melhor resultado com **imagem, dados e resumo** (botão para a página completa e um menu para ver os outros resultados) |
 | `/team list` | mostra a equipe e o cargo de cada um |
 | `/team manage [user]` | abre um **formulário (modal)** que faz tudo: **adicionar**, **trocar cargo**, **renomear**, **desativar** (tira o acesso na hora) e **reativar**. Campos: ação (lista), pessoa (seletor de usuário), cargo (lista, opcional) e nome (texto, opcional). Cada ação usa só o que precisa; `user` é opcional e já deixa a pessoa selecionada |
 | `/team clearlog where [older_than_days]` | **limpa o log antigo** (só S.Adm, com confirmação): o log do painel, as mensagens do canal de log do Discord, ou os dois. Sem `older_than_days` apaga tudo; com ele, só o mais antigo. O bot apaga só as **próprias** mensagens do canal (não precisa de permissão extra), até 1000 por vez. A limpeza fica registrada como a primeira linha do log novo |

@@ -6,3 +6,4 @@ venv
 log_state.json
 error_state.json
 status_state.json
+language_state.json
