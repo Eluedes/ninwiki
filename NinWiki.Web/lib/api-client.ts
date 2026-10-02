@@ -734,8 +734,16 @@ export interface ApiMe {
   avatarUrl: string | null;
   role: StaffRole;
   roleLabel: string;
+  customRole: ApiCustomRoleBrief | null;
   permissions: PermissionName[];
   assignableRoles: StaffRole[];
+}
+
+/** Cargo personalizado resumido (nome e cor). */
+export interface ApiCustomRoleBrief {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface ApiStaff {
@@ -744,6 +752,8 @@ export interface ApiStaff {
   username: string;
   avatarUrl: string | null;
   role: StaffRole;
+  roleLabel: string;
+  customRole: ApiCustomRoleBrief | null;
   isActive: boolean;
   isOwner: boolean;
   createdAt: string;
@@ -784,13 +794,13 @@ export function listStaff(): Promise<ApiStaff[]> {
 }
 
 /** Cadastra alguem na equipe (so' S.Adm). */
-export function createStaff(payload: { discordId: string; role: StaffRole; username?: string }): Promise<ApiStaff> {
+export function createStaff(payload: { discordId: string; role: StaffRole; username?: string; customRoleId?: string | null }): Promise<ApiStaff> {
   return apiFetch('/staff', { method: 'POST', body: JSON.stringify(payload) });
 }
 
 /** Troca o cargo de alguem da equipe. */
-export function updateStaffRole(id: string, role: StaffRole): Promise<ApiStaff> {
-  return apiFetch(`/staff/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) });
+export function updateStaffRole(id: string, role: StaffRole, customRoleId: string | null = null): Promise<ApiStaff> {
+  return apiFetch(`/staff/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role, customRoleId }) });
 }
 
 /** Troca o nome (nick) de alguem da equipe (so' S.Adm, inclusive o proprio). */
@@ -1036,9 +1046,42 @@ export interface ApiRolePermissions {
   permissions: PermissionName[];
 }
 
+/** Cargo personalizado criado pelo S.Adm. */
+export interface ApiCustomRole {
+  id: string;
+  name: string;
+  color: string;
+  description: string;
+  permissions: PermissionName[];
+  members: number;
+}
+
 export interface ApiRolesOverview {
   roles: ApiRolePermissions[];
   permissions: ApiPermissionInfo[];
+  customRoles: ApiCustomRole[];
+}
+
+export interface CustomRoleInput {
+  name: string;
+  color: string;
+  description: string;
+  permissions: PermissionName[];
+}
+
+/** Cria um cargo personalizado (so' S.Adm). */
+export function createCustomRole(input: CustomRoleInput): Promise<ApiRolesOverview> {
+  return apiFetch('/roles/custom', { method: 'POST', body: JSON.stringify(input) });
+}
+
+/** Edita um cargo personalizado (nome, cor, descricao, permissoes). */
+export function updateCustomRole(id: string, input: CustomRoleInput): Promise<ApiRolesOverview> {
+  return apiFetch(`/roles/custom/${id}`, { method: 'PUT', body: JSON.stringify(input) });
+}
+
+/** Apaga um cargo personalizado (so' se ninguem o tiver). */
+export function deleteCustomRole(id: string): Promise<ApiRolesOverview> {
+  return apiFetch(`/roles/custom/${id}`, { method: 'DELETE' });
 }
 
 /** Catalogo de permissoes + o que cada cargo tem hoje (so' S.Adm). */

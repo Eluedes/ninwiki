@@ -16,13 +16,16 @@ REGRAS (todas testadas em scripts/testar_permissoes.py):
 
 Nenhuma funcao aqui da' commit: quem chama decide (mesma transacao do log).
 """
+from uuid import UUID
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import log_action
 from app.core.config import settings
-from app.core.permissions import Permission, assignable_roles, can_manage_role, has_permission
+from app.core.permissions import Permission, assignable_roles, can_manage_role, user_has_permission
 from app.models.enums import StaffRole
+from app.models.roles import CustomRole
 from app.models.users import User
 
 
@@ -53,7 +56,7 @@ async def _count_active_super_admins(db: AsyncSession) -> int:
 
 def _require(actor: User, permission: Permission) -> None:
     """Exige que quem age tenha a permissao (senao StaffError 403)."""
-    if not has_permission(actor.role, permission):
+    if not user_has_permission(actor, permission):
         raise StaffError(403, "You do not have permission to do this")
 
 
@@ -69,12 +72,13 @@ def _check_target_manageable(actor: User, target: User) -> None:
 
 async def add_staff(
     db: AsyncSession, actor: User, discord_id: int, role: StaffRole,
-    username: str | None = None, source: str = "panel",
+    username: str | None = None, source: str = "panel", custom_role_id: UUID | None = None,
 ) -> User:
     """Cadastra alguem na equipe (ou reativa) respeitando permissao e hierarquia; registra no log."""
     _require(actor, Permission.STAFF_CREATE)
     if role not in assignable_roles(actor.role):
         raise StaffError(403, "You cannot register someone with this role")
+    custom = await _custom_role_for(db, role, custom_role_id)
     if await get_by_discord_id(db, discord_id) is not None:
         raise StaffError(409, "This Discord ID is already registered on the team")
     user = User(
@@ -82,14 +86,16 @@ async def add_staff(
         # Nome provisorio: no primeiro login a pessoa ganha o nome/avatar reais do Discord.
         username=(username or f"Discord {discord_id}")[:100],
         role=role,
+        custom_role_id=custom.id if custom else None,
         created_by_id=actor.id,
     )
     db.add(user)
     await db.flush()
     await log_action(
         db, action="create", entity_type="staff", entity_id=str(discord_id),
-        diff={"role": role.value, "username": user.username}, actor=actor, source=source,
+        diff={"role": custom.name if custom else role.value, "username": user.username}, actor=actor, source=source,
     )
+    await db.refresh(user)
     return user
 
 
@@ -121,24 +127,42 @@ async def rename(db: AsyncSession, actor: User, target: User, new_name: str, sou
     return target
 
 
-async def change_role(db: AsyncSession, actor: User, target: User, new_role: StaffRole, source: str = "panel") -> User:
-    """Troca o cargo de alguem, derruba a sessao dele e registra no log."""
+async def _custom_role_for(db: AsyncSession, role: StaffRole, custom_role_id: UUID | None) -> CustomRole | None:
+    """Confere o cargo personalizado pedido: so' existe junto de role = creator e tem que existir de verdade (senao 422)."""
+    if custom_role_id is None:
+        return None
+    if role != StaffRole.CREATOR:
+        raise StaffError(422, "A custom role can only be used with the Creator base role")
+    custom = await db.get(CustomRole, custom_role_id)
+    if custom is None:
+        raise StaffError(422, "This custom role does not exist")
+    return custom
+
+
+async def change_role(
+    db: AsyncSession, actor: User, target: User, new_role: StaffRole, source: str = "panel", custom_role_id: UUID | None = None,
+) -> User:
+    """Troca o cargo (comum ou personalizado) de alguem, derruba a sessao dele e registra no log."""
     _require(actor, Permission.STAFF_EDIT)
     _check_target_manageable(actor, target)
     if new_role not in assignable_roles(actor.role):
         raise StaffError(403, "You cannot give this role")
-    if new_role == target.role:
+    custom = await _custom_role_for(db, new_role, custom_role_id)
+    if new_role == target.role and (custom.id if custom else None) == target.custom_role_id:
         return target
     if target.role == StaffRole.SUPER_ADMIN and target.is_active and await _count_active_super_admins(db) <= 1:
         raise StaffError(400, "Precisa existir pelo menos um S.Adm ativo")
-    before = target.role
+    before = target.custom_role.name if target.custom_role else target.role.value
     target.role = new_role
+    target.custom_role_id = custom.id if custom else None
     target.token_version += 1  # derruba as sessoes antigas: o cargo mudou
     await log_action(
         db, action="role_change", entity_type="staff", entity_id=str(target.discord_id),
-        diff={"before": before.value, "after": new_role.value, "username": target.username},
+        diff={"before": before, "after": custom.name if custom else new_role.value, "username": target.username},
         actor=actor, source=source,
     )
+    await db.flush()
+    await db.refresh(target)
     return target
 
 
@@ -154,7 +178,7 @@ async def set_active(db: AsyncSession, actor: User, target: User, active: bool, 
     target.token_version += 1
     await log_action(
         db, action="activate" if active else "deactivate", entity_type="staff",
-        entity_id=str(target.discord_id), diff={"username": target.username, "role": target.role.value},
+        entity_id=str(target.discord_id), diff={"username": target.username, "role": target.custom_role.name if target.custom_role else target.role.value},
         actor=actor, source=source,
     )
     return target
@@ -178,6 +202,7 @@ async def ensure_owner_account(db: AsyncSession, discord_id: int, username: str,
                          diff={"role": "super_admin", "username": username}, source="auth")
     elif user.role != StaffRole.SUPER_ADMIN or not user.is_active:
         user.role = StaffRole.SUPER_ADMIN
+        user.custom_role_id = None
         user.is_active = True
         user.token_version += 1
         await log_action(db, action="bootstrap_restore", entity_type="staff", entity_id=str(discord_id),

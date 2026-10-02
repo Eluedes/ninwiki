@@ -271,7 +271,7 @@ class StaffGroup(app_commands.Group):
         for m in staff:
             status = "" if m["isActive"] else " · *deactivated*"
             owner = " · owner" if m.get("isOwner") else ""
-            lines.append(f"**{m['username']}** — {ROLE_LABEL.get(m['role'], m['role'])}{owner}{status} · <@{m['discordId']}>")
+            lines.append(f"**{m['username']}** — {m.get('roleLabel') or ROLE_LABEL.get(m['role'], m['role'])}{owner}{status} · <@{m['discordId']}>")
         text = "\n".join(lines) or "Nobody registered."
         if len(text) > 4000:  # limite de descricao de um embed
             text = text[:3990].rsplit("\n", 1)[0] + "\n…"

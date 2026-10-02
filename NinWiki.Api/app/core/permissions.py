@@ -210,3 +210,39 @@ def creator_can_touch_published(role: StaffRole) -> bool:
     ja' publicada e' a pagina AO VIVO do site, e so' Adm/S.Adm alteram.
     """
     return Permission.CONTENT_PUBLISH in ROLE_PERMISSIONS[role]
+
+
+# ---------------- cargos personalizados (criados pelo S.Adm no painel) ----------------
+# Quem tem um cargo personalizado carrega `role = creator` + `custom_role`. As permissoes dele sao SO' as do cargo
+# personalizado (nunca as do Creator, nunca uma exclusiva do S.Adm), por mais que o JSON do banco diga outra coisa.
+
+def custom_permissions(names: list[str] | None) -> frozenset[Permission]:
+    """Converte os nomes guardados no cargo personalizado em permissoes validas (ignora desconhecidas e exclusivas do S.Adm)."""
+    valid = {p.value: p for p in grantable_permissions()}
+    return frozenset(valid[n] for n in (names or []) if n in valid)
+
+
+def user_permissions(user) -> frozenset[Permission]:
+    """Permissoes EFETIVAS de um usuario: as do cargo personalizado (se tiver) ou as do cargo comum."""
+    custom = getattr(user, "custom_role", None)
+    if custom is not None and user.role == StaffRole.CREATOR:
+        return custom_permissions(custom.permissions)
+    return ROLE_PERMISSIONS[user.role]
+
+
+def user_has_permission(user, permission: Permission) -> bool:
+    """True se o usuario tem a permissao (considera o cargo personalizado)."""
+    return permission in user_permissions(user)
+
+
+def user_role_label(user) -> str:
+    """Nome do cargo para mostrar: o do cargo personalizado, ou S.Adm/Adm/Creator."""
+    custom = getattr(user, "custom_role", None)
+    if custom is not None and user.role == StaffRole.CREATOR:
+        return custom.name
+    return ROLE_LABEL[user.role]
+
+
+def visible_permissions_for(user) -> list[str]:
+    """Permissoes que ESTE usuario recebe em /auth/me (ordenadas)."""
+    return sorted(p.value for p in user_permissions(user))

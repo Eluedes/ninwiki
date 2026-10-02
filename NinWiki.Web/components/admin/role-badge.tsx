@@ -15,7 +15,7 @@ const STYLE: Record<StaffRole, { className: string; icon: typeof Crown }> = {
 };
 
 /** Selo colorido do cargo (S.Adm, Adm, Creator). */
-export function RoleBadge({ role, className }: { role: string; className?: string }) {
+export function RoleBadge({ role, className, label: labelOverride, color }: { role: string; className?: string; label?: string; color?: string | null }) {
   const { dict } = useLanguage();
   const known = role in STYLE;
   const style = known ? STYLE[role as StaffRole] : { className: 'bg-secondary text-muted-foreground', icon: Shield };
@@ -25,10 +25,12 @@ export function RoleBadge({ role, className }: { role: string; className?: strin
     creator: dict.admin.auth.roleCreator,
   };
   const Icon = style.icon;
+  // Cargo personalizado: cor escolhida pelo S.Adm (#rrggbb, validada na API) e o nome dele.
+  const custom = color && /^#[0-9a-fA-F]{6}$/.test(color) ? { backgroundColor: `${color}2e`, color } : undefined;
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold', style.className, className)}>
+    <span style={custom} className={cn('inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold', custom ? '' : style.className, className)}>
       <Icon className="h-3 w-3" />
-      {label[role] ?? role}
+      {labelOverride ?? label[role] ?? role}
     </span>
   );
 }

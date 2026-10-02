@@ -62,7 +62,7 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 488 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 515 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
 python scripts/testar_bot_integracao.py    # 157 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
@@ -112,6 +112,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
 - **Nome (nick) da equipe:** em `/admin/staff` (só S.Adm) o lápis ao lado do nome edita o nome de qualquer um, **inclusive o seu**. O nome editado
   fica salvo: o login com o Discord não o sobrescreve mais.
 - **Permissões** (`/admin/permissions`, só S.Adm): liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora.
+- **Cargos personalizados** (mesma tela, seção *Custom roles*): o S.Adm cria cargos como *Tradutor*, *Moderador* ou *Redator* — nome, **cor**, descrição e as permissões que quiser (até 25) — e dá o cargo em `/admin/staff` (aparece no seletor de cargo). Regras: ficam no nível do **Creator** (nunca gerenciam a equipe nem as permissões, nada exclusivo do S.Adm pode ser dado), a edição vale na hora para quem tem o cargo, e um cargo só é apagado quando ninguém o tem. Criar/editar/apagar vai para o log. Migration nova: `39ea91f5adab`.
 - **Log geral:** `/admin/audit-log` (quem fez o quê; o IP só o S.Adm vê). O **S.Adm pode limpar o log** (tudo, ou só o mais antigo que 7/30 dias) para a
   equipe não ver o histórico antigo; a própria limpeza fica registrada como a primeira linha do log novo.
 - **Jutsus:** a página mostra a ficha em seções que abrem e fecham (Requisitos, Aquisição, Detalhes da técnica, Dados de batalha). No editor você preenche

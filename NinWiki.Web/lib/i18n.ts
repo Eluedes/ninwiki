@@ -143,7 +143,7 @@ export interface Dictionary {
       howTo: string;
     };
     noticeBoard: { title: string; subtitle: string; empty: string; newNotice: string; titleLabel: string; bodyLabel: string; pin: string; pinned: string; save: string; saving: string; cancel: string; edit: string; delete: string; confirmDelete: string; attachFiles: string; files: string; download: string; removeFile: string; uploading: string; by: string; loadError: string; saveError: string; uploadError: string; maxInfo: string; fileTooBig: string };
-    rolesPage: { title: string; subtitle: string; permission: string; locked: string; lockedHint: string; save: string; saving: string; saved: string; reset: string; confirmReset: string; loadError: string; saveError: string; unsavedChanges: string; alwaysAll: string; groups: Record<string, string>; names: Record<string, string> };
+    rolesPage: { customTitle: string; customSubtitle: string; newRole: string; editRole: string; roleName: string; roleColor: string; roleDescription: string; createRole: string; saveRole: string; deleteRole: string; confirmDeleteRole: string; membersCount: string; noCustomRoles: string; presetHint: string; selectAll: string; clearAll: string; nameRequired: string; baseNote: string; title: string; subtitle: string; permission: string; locked: string; lockedHint: string; save: string; saving: string; saved: string; reset: string; confirmReset: string; loadError: string; saveError: string; unsavedChanges: string; alwaysAll: string; groups: Record<string, string>; names: Record<string, string> };
     header: { role: { admin: string; mod: string } };
     analytics: { title: string; subtitle: string; views: string; visitors: string; last: string; days: string; countries: string; pages: string; noData: string; noDataHint: string; unknown: string; loadError: string; other: string; credit: string };
     overview: {
@@ -587,6 +587,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
         uploadError: 'Não foi possível enviar o arquivo.', maxInfo: 'Até 10 arquivos por aviso — aceita .zip, .rar, .7z, PDF, imagens e outros (máx. 200 MB cada).', fileTooBig: 'O arquivo "{name}" passa de {mb} MB.',
       },
       rolesPage: {
+        customTitle: 'Cargos personalizados', customSubtitle: 'Crie cargos como Tradutor, Moderador ou Redator, escolha o que cada um pode fazer e dê o cargo na tela Staff.',
+        newRole: 'Novo cargo', editRole: 'Editar cargo', roleName: 'Nome do cargo', roleColor: 'Cor', roleDescription: 'Descrição (opcional)',
+        createRole: 'Criar cargo', saveRole: 'Salvar cargo', deleteRole: 'Apagar cargo', confirmDeleteRole: 'Apagar o cargo "{name}"? Isso não pode ser desfeito.',
+        membersCount: '{n} pessoa(s)', noCustomRoles: 'Nenhum cargo personalizado ainda.',
+        presetHint: 'Começa com as permissões de um Creator; marque ou desmarque o que quiser.', selectAll: 'Marcar tudo', clearAll: 'Limpar', nameRequired: 'Dê um nome ao cargo.',
+        baseNote: 'Cargos personalizados ficam no nível do Creator: nunca gerenciam a equipe nem as permissões (isso é só do S.Adm).',
         title: 'Permissões por cargo', subtitle: 'Defina o que cada cargo pode fazer no painel. As alterações valem na hora.',
         permission: 'Permissão', locked: 'Só S.Adm', lockedHint: 'Exclusiva do S.Adm: não pode ser dada a outros cargos.',
         save: 'Salvar', saving: 'Salvando...', saved: 'Salvo!', reset: 'Restaurar padrão',
@@ -600,7 +606,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
           'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos',
           'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
-          'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'analytics.view': 'Ver os acessos ao site',
+          'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'audit.clear': 'Limpar o log', 'analytics.view': 'Ver os acessos ao site',
         },
       },
       analytics: { title: 'Acessos ao site', subtitle: 'Contagem anônima: sem cookies e sem guardar IP.', views: 'Visualizações', visitors: 'Visitantes', last: 'Últimos', days: 'dias', countries: 'Países que mais acessam', pages: 'Páginas mais vistas', noData: 'Ainda sem acessos registrados', noDataHint: 'Os números aparecem assim que alguém abrir o site público.', unknown: 'Desconhecido', loadError: 'Não foi possível carregar os acessos.', other: 'Outras', credit: 'Países via Cloudflare ou DB-IP.' },
@@ -1225,6 +1231,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
         uploadError: 'Could not upload the file.', maxInfo: 'Up to 10 files per notice — accepts .zip, .rar, .7z, PDF, images and more (max 200 MB each).', fileTooBig: 'The file "{name}" is larger than {mb} MB.',
       },
       rolesPage: {
+        customTitle: 'Custom roles', customSubtitle: 'Create roles like Translator, Moderator or Writer, choose what each one can do and give the role on the Staff page.',
+        newRole: 'New role', editRole: 'Edit role', roleName: 'Role name', roleColor: 'Color', roleDescription: 'Description (optional)',
+        createRole: 'Create role', saveRole: 'Save role', deleteRole: 'Delete role', confirmDeleteRole: 'Delete the role "{name}"? This cannot be undone.',
+        membersCount: '{n} person(s)', noCustomRoles: 'No custom roles yet.',
+        presetHint: 'Starts with a Creator\'s permissions; check or uncheck whatever you like.', selectAll: 'Select all', clearAll: 'Clear', nameRequired: 'Give the role a name.',
+        baseNote: 'Custom roles sit at the Creator level: they never manage the staff or the permissions (that is S.Adm only).',
         title: 'Role permissions', subtitle: 'Choose what each role can do in the panel. Changes apply immediately.',
         permission: 'Permission', locked: 'S.Adm only', lockedHint: 'S.Adm exclusive: cannot be given to other roles.',
         save: 'Save', saving: 'Saving...', saved: 'Saved!', reset: 'Restore defaults',
@@ -1238,7 +1250,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
           'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices',
           'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
-          'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'analytics.view': 'View site traffic',
+          'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'audit.clear': 'Clear the log', 'analytics.view': 'View site traffic',
         },
       },
       analytics: { title: 'Site traffic', subtitle: 'Anonymous counts: no cookies and no stored IPs.', views: 'Views', visitors: 'Visitors', last: 'Last', days: 'days', countries: 'Top countries', pages: 'Most viewed pages', noData: 'No visits recorded yet', noDataHint: 'Numbers show up as soon as someone opens the public site.', unknown: 'Unknown', loadError: 'Could not load the traffic numbers.', other: 'Other', credit: 'Countries via Cloudflare or DB-IP.' },

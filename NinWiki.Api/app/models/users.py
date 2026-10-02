@@ -14,6 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
 from app.models.enums import StaffRole
+from app.models.roles import CustomRole
 
 
 class User(Base, TimestampMixin):
@@ -31,6 +32,12 @@ class User(Base, TimestampMixin):
     # True = o nome foi escolhido a mao no painel (S.Adm): o login com o Discord NAO sobrescreve mais com o nome do Discord.
     username_locked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     role: Mapped[StaffRole] = mapped_column(Enum(StaffRole, name="staff_role"), default=StaffRole.CREATOR)
+
+    # Cargo personalizado (criado pelo S.Adm em /admin/permissions). So' vale com role = creator; vazio = o cargo comum acima.
+    custom_role_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("custom_roles.id", ondelete="RESTRICT"), nullable=True
+    )
+    custom_role: Mapped["CustomRole | None"] = relationship(lazy="joined")
 
     # Desativar = a pessoa perde o acesso NA HORA (a API confere isso a
     # cada requisicao), mas o registro e o historico dela continuam - por

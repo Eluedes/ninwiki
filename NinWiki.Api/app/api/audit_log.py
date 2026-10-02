@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.audit import log_action
 from app.core.auth import get_current_user, require_permission
 from app.core.database import get_db
-from app.core.permissions import Permission, has_permission
+from app.core.permissions import Permission, user_has_permission
 from app.models.users import AuditLogEntry, User
 
 router = APIRouter(prefix="/audit-log", tags=["audit-log"])
@@ -73,10 +73,10 @@ async def list_audit_log(
     PROPRIO dela, so' no feed geral. Gravar uma linha por item pesaria o
     log rapido demais pra' um beneficio que hoje nao parece necessario.
     """
-    sees_everything = has_permission(user.role, Permission.AUDIT_VIEW_ALL)
+    sees_everything = user_has_permission(user, Permission.AUDIT_VIEW_ALL)
     is_entry_history = entity_type is not None and entity_id is not None
 
-    if not is_entry_history and not has_permission(user.role, Permission.AUDIT_VIEW):
+    if not is_entry_history and not user_has_permission(user, Permission.AUDIT_VIEW):
         raise HTTPException(status_code=403, detail="You do not have permission to do this")
 
     stmt = select(AuditLogEntry).order_by(AuditLogEntry.created_at.desc()).limit(limit)

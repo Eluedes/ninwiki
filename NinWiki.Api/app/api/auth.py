@@ -27,7 +27,7 @@ from app.core.audit import log_action
 from app.core.auth import get_current_user, get_optional_user
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.permissions import ROLE_LABEL, assignable_roles, visible_permissions_of
+from app.core.permissions import assignable_roles, user_role_label, visible_permissions_for
 from app.core.rate_limit import AUTH, LOGIN_FAIL, client_key, limiter, retry_message
 from app.core.reader_auth import get_optional_reader
 from app.core.security import (
@@ -38,7 +38,7 @@ from app.core.security import (
 from app.models.readers import Reader
 from app.models.users import User
 from app.schemas.posts import ReaderMe
-from app.schemas.staff import DevLogin, MeRead
+from app.schemas.staff import CustomRoleBrief, DevLogin, MeRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -52,8 +52,9 @@ def _me(user: User) -> MeRead:
     """Monta a resposta de /auth/me: quem esta' logado, cargo, permissoes visiveis e cargos que pode dar."""
     return MeRead(
         id=user.id, discord_id=str(user.discord_id), username=user.username, avatar_url=user.avatar_url,
-        role=user.role, role_label=ROLE_LABEL[user.role],
-        permissions=visible_permissions_of(user.role), assignable_roles=assignable_roles(user.role),
+        role=user.role, role_label=user_role_label(user),
+        custom_role=CustomRoleBrief(id=user.custom_role.id, name=user.custom_role.name, color=user.custom_role.color) if user.custom_role else None,
+        permissions=visible_permissions_for(user), assignable_roles=assignable_roles(user.role),
     )
 
 
