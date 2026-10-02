@@ -57,6 +57,10 @@ class NinWikiApi:
             raise ApiError(res.status_code, detail or f"Unexpected API error ({res.status_code}).")
         return res.json()
 
+    async def whoami(self, invoker_id: int) -> dict:
+        """Cargo de quem digitou o comando na equipe do wiki ({role, isSuperAdmin}); levanta ApiError 403 se nao for da equipe."""
+        return await self._request("GET", "/bot/me", params={"invokerDiscordId": str(invoker_id)})
+
     async def list_staff(self, invoker_id: int) -> list[dict]:
         """Lista a equipe em nome de quem digitou o comando."""
         return await self._request("GET", "/bot/staff", params={"invokerDiscordId": str(invoker_id)})
@@ -100,9 +104,9 @@ class NinWikiApi:
             params["includeIp"] = "true"
         return await self._request("GET", "/bot/audit-log", params=params)
 
-    async def search(self, query: str) -> list[dict]:
-        """Busca publica pelo nome (itens, mobs, armas, jutsus, masteries, posts): ate' 10 resultados {kind, title, icon, snippet, href}."""
-        return await self._request("GET", "/bot/search", params={"q": query})
+    async def search(self, query: str, lang: str = "en") -> list[dict]:
+        """Busca publica pelo nome (itens, mobs, armas, jutsus, masteries, posts) em `en` ou `pt`: ate' 10 resultados com resumo, imagem e dados."""
+        return await self._request("GET", "/bot/search", params={"q": query, "lang": lang})
 
     async def errors_since(self, since_iso: str, limit: int = 50) -> list[dict]:
         """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""

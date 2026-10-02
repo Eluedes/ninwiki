@@ -69,6 +69,15 @@ def secao(t: str) -> None:
     print(f"\n== {t}")
 
 
+async def _recusa(api, termo) -> bool:
+    """True se a API recusa a busca com idioma desconhecido (422)."""
+    try:
+        await api._request("GET", "/bot/search", params={"q": termo, "lang": "xx"})
+    except ApiError:
+        return True
+    return False
+
+
 async def criar(chave: str, role: StaffRole) -> None:
     """Cria um usuario de teste com o cargo informado."""
     async with AsyncSessionLocal() as db:
@@ -96,6 +105,7 @@ def interacao(user_id: int, guild_id: int = 1) -> MagicMock:
     """Simula uma interacao do Discord (quem digitou, em qual servidor)."""
     i = MagicMock()
     i.user.id = user_id
+    i.user.display_name = f"user{user_id}"
     i.guild_id = guild_id
     i.response.defer = AsyncMock()
     i.response.send_message = AsyncMock()
@@ -244,7 +254,7 @@ async def testar() -> None:
     from ninwiki_bot.staff_commands import ManageStaffModal, run_manage_action
     grupo = StaffGroup(api, allowed_guilds=set())
     cmd = {c.name: c for c in grupo.commands}
-    check("os 4 comandos existem: list, manage, status, clearlog", set(cmd) == {"list", "manage", "status", "clearlog"})
+    check("os 3 comandos existem: list, manage, clearlog", set(cmd) == {"list", "manage", "clearlog"})
     check("grupo so' funciona em servidor (nao em DM)", grupo.guild_only is True)
 
     i = interacao(IDS["sadm"])
@@ -344,10 +354,19 @@ async def testar() -> None:
         await m.on_submit(i)
     check("modal enviado em servidor nao permitido e' recusado", "not available" in texto_enviado(i))
 
-    # /team status
+    # todos os /team sao SO' do S.Adm do wiki
+    check("/team nao tem mais 'status' (o /status publico cobre)", "status" not in cmd and {"list", "manage", "clearlog"} <= set(cmd))
+    me = await api.whoami(IDS["sadm"])
+    check("whoami: S.Adm", me == {"role": "super_admin", "isSuperAdmin": True}, str(me))
+    check("whoami: Adm nao e' S.Adm", (await api.whoami(IDS["adm"]))["isSuperAdmin"] is False)
+    for quem in ("adm", "creator", "estranho"):
+        i = interacao(IDS[quem])
+        check(f"/team recusa {quem} (so' o S.Adm do wiki usa)", await grupo.interaction_check(i) is False and i.response.send_message.await_count == 1
+              and i.response.send_message.call_args.kwargs.get("ephemeral") is True, texto_enviado(i))
     i = interacao(IDS["sadm"])
-    await cmd["status"].callback(grupo, i)
-    check("/team status mostra API e banco", "NinWiki status" in texto_enviado(i) and "API" in texto_enviado(i) and "Database" in texto_enviado(i), texto_enviado(i))
+    check("/team libera o S.Adm", await grupo.interaction_check(i) is True)
+    i = interacao(IDS["adm"])
+    check("a recusa diz que e' so' do S.Adm", await grupo.interaction_check(i) is False and "S.Adm" in texto_enviado(i), texto_enviado(i))
 
     # ---- /team clearlog (so' S.Adm, com confirmacao; limpa o log do painel e/ou as mensagens do canal do Discord) ----
     from ninwiki_bot.staff_commands import ConfirmClearView, run_clear_log
@@ -566,11 +585,12 @@ async def testar() -> None:
     from app.models.content import ContentItem
     from app.models.enums import ContentCategory, ContentStatus, Rarity
     from ninwiki_bot.error_feed import ServiceStatus, record_check
+    from ninwiki_bot.language import LanguageStore
     from ninwiki_bot.public_commands import build_search_view, build_status_view, register_public_commands
 
     termo = f"zzbusca{BASE % 100000}"
     async with AsyncSessionLocal() as db:
-        db.add(ContentItem(slug=f"{termo}-pub", category=ContentCategory.WEAPONS, name=f"{termo} Blade", icon="🗡️", rarity=Rarity.COMMON,
+        db.add(ContentItem(slug=f"{termo}-pub", category=ContentCategory.WEAPONS, name=f"{termo} Blade", name_pt=f"{termo} Lamina", description_pt="Uma lamina usada no teste", icon="🗡️", rarity=Rarity.COMMON,
                            description=json.dumps({"type": "doc", "content": [
                                {"type": "paragraph", "content": [{"type": "text", "text": "A blade used in the test"}]},
                                {"type": "bulletList", "content": [{"type": "listItem", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Dropped by bandits"}]}]}]}]}),
@@ -585,6 +605,12 @@ async def testar() -> None:
         check("busca devolve imagem absoluta, dados da ficha e resumo com marcadores",
               blade["image"].endswith("/images/wiki/blade.png") and blade["image"].startswith("http")
               and {"label": "Type", "value": "Katana"} in blade["facts"] and "• Dropped by bandits" in blade["summary"], str(blade))
+        achados_pt = await api.search(termo, "pt")
+        blade_pt = next(h for h in achados_pt if h["href"] == f"/detail/{termo}-pub")
+        check("busca em portugues: titulo, resumo e rotulos traduzidos",
+              blade_pt["title"] == f"{termo} Lamina" and "Uma lamina" in blade_pt["summary"] and any(f["label"] == "Dano base" for f in blade_pt["facts"]), str(blade_pt))
+        check("busca acha tambem pelo nome em portugues", any(h["href"] == f"/detail/{termo}-pub" for h in await api.search(f"{termo} Lamina")))
+        check("busca com idioma invalido e' recusada", await _recusa(api, termo))
         check("busca NAO mostra rascunho", all("Secret" not in h["title"] for h in achados))
         check("busca sem resultado devolve lista vazia", await api.search("zzzznadaaqui987") == [])
         check("curingas do LIKE nao viram busca de tudo", await api.search("%%") == [])
@@ -611,6 +637,8 @@ async def testar() -> None:
                         out.append(item.content)
                     if getattr(item, "url", None):
                         out.append(item.url)
+                    if isinstance(getattr(item, "label", None), str):
+                        out.append(item.label)
                     for child in getattr(item, "children", []) or []:
                         walk(child)
                     if getattr(item, "accessory", None) is not None:
@@ -619,12 +647,17 @@ async def testar() -> None:
                     walk(it)
                 return "\n".join(out)
 
-            v = build_search_view(termo, achados, "https://wiki.exemplo.com/")
+            v = build_search_view(termo, achados, "https://wiki.exemplo.com/", owner_name="Rafael")
             txt = componentes(v)
             check("/search: cartao com titulo, tipo e botao Open para o site", f"{termo} Blade" in txt and "https://wiki.exemplo.com/detail/" in txt, txt[:200])
             check("/search: resultado principal com imagem (miniatura), dados, resumo e botao da pagina completa",
                   "Katana" in txt and "A blade used in the test" in txt and "• Dropped by bandits" in txt and any(getattr(x, "label", None) == "Open the full page" for c in v.children[0].children for x in getattr(c, "children", []))
                   and any(type(c).__name__ == "Section" and type(c.accessory).__name__ == "Thumbnail" for c in v.children[0].children))
+            check("/search: rodape com quem pesquisou e a marca da equipe (com o logo do site)",
+                  "Searched by Rafael" in txt and "Nin Online Wiki Team" in txt and "/images/logo/" in str(v.children[0].children[-1].accessory.media.url if hasattr(v.children[0].children[-1], "accessory") else ""))
+            vp = build_search_view(termo, achados_pt, "https://wiki.exemplo.com/", lang="pt", owner_name="Rafael")
+            txp = componentes(vp)
+            check("/search em portugues: textos, botao e rodape em portugues", "Pesquisado por Rafael" in txp and "Equipe Nin Online Wiki" in txp and "Abrir a página completa" in txp and "Lamina" in txp, txp[:300])
             outro = [{**achados[0], "title": "Segundo"}, *achados]
             v2 = build_search_view(termo, outro, "https://wiki.exemplo.com", owner_id=7)
             check("/search: com varios resultados aparece o menu para trocar", any(type(c).__name__ == "ActionRow" and any(type(x).__name__ == "Select" for x in c.children) for c in v2.children[0].children))
@@ -645,17 +678,37 @@ async def testar() -> None:
             async def _checar():
                 """Resultado fixo no lugar da checagem de verdade."""
                 return [ok_st]
-            register_public_commands(arvore, api, set(), "https://wiki.exemplo.com", _checar, True)
+            import tempfile as _tf
+            idiomas = LanguageStore(_P(_tf.mkdtemp()) / "language_state.json")
+            register_public_commands(arvore, api, set(), "https://wiki.exemplo.com", _checar, True, idiomas)
             nomes = {c.name for c in arvore.get_commands()}
-            check("/status e /search existem como comandos de barra", {"status", "search"} <= nomes, str(nomes))
+            check("/status e /search existem como comandos de barra", {"status", "search", "language"} <= nomes, str(nomes))
             cmd = arvore.get_command("search")
             i = interacao(IDS["creator"])
             await cmd.callback(i, termo)
             enviado = i.followup.send.call_args.kwargs
             check("/search responde com LayoutView (Components V2) e sem mencoes", isinstance(enviado.get("view"), discord.ui.LayoutView) and enviado["allowed_mentions"].everyone is False)
+            # /language: so' com "Gerenciar servidor"; vale por servidor
+            lang_cmd = arvore.get_command("language")
+            sem = interacao(IDS["creator"], guild_id=42)
+            sem.permissions.manage_guild = False
+            await lang_cmd.callback(sem, app_commands.Choice(name="Português", value="pt"))
+            check("/language sem 'Gerenciar servidor' e' recusado e nao muda nada", idiomas.get(42) == "en" and sem.response.send_message.await_count == 1)
+            com = interacao(IDS["adm"], guild_id=42)
+            com.permissions.manage_guild = True
+            await lang_cmd.callback(com, app_commands.Choice(name="Português", value="pt"))
+            check("/language com 'Gerenciar servidor' troca so' aquele servidor e a resposta ja' vem em portugues",
+                  idiomas.get(42) == "pt" and idiomas.get(43) == "en" and "Português" in com.response.send_message.call_args.args[0])
+            check("o idioma sobrevive a reinicio (arquivo)", LanguageStore(idiomas.path).get(42) == "pt")
+            i3 = interacao(IDS["creator"], guild_id=42)
+            await arvore.get_command("search").callback(i3, termo)
+            check("/search sem escolher idioma usa o do servidor (portugues)", "Abrir a página completa" in componentes(i3.followup.send.call_args.kwargs["view"]))
+            i4 = interacao(IDS["creator"], guild_id=42)
+            await arvore.get_command("search").callback(i4, termo, app_commands.Choice(name="English", value="en"))
+            check("/search com language=en ignora o idioma do servidor", "Open the full page" in componentes(i4.followup.send.call_args.kwargs["view"]))
             i2 = interacao(IDS["creator"], guild_id=999)
             arvore2 = app_commands.CommandTree(discord.Client(intents=discord.Intents.default()))
-            register_public_commands(arvore2, api, {1}, "", _checar, False)
+            register_public_commands(arvore2, api, {1}, "", _checar, False, idiomas)
             await arvore2.get_command("status").callback(i2)
             check("/status em servidor nao permitido e' recusado", i2.response.send_message.await_count == 1 and not i2.followup.send.await_count)
     finally:

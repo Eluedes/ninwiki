@@ -110,6 +110,13 @@ async def _target(db: AsyncSession, raw_id: str) -> User:
     return user
 
 
+@router.get("/me")
+async def bot_me(invokerDiscordId: str, db: AsyncSession = Depends(get_db)):
+    """Quem e' o invoker na equipe do wiki: cargo e se e' S.Adm (o bot libera os comandos /team so' para o S.Adm)."""
+    invoker = await _invoker(db, invokerDiscordId)
+    return {"role": invoker.role.value, "isSuperAdmin": invoker.role == StaffRole.SUPER_ADMIN}
+
+
 @router.get("/staff", response_model=list[StaffRead])
 async def bot_list_staff(invokerDiscordId: str, db: AsyncSession = Depends(get_db)):
     """Lista a equipe para o comando /equipe listar (so' quem tem a permissao staff.view)."""
@@ -341,9 +348,31 @@ def _abs_image(path: str | None) -> str | None:
     return None
 
 
-def _facts(*pairs: tuple[str, object]) -> list[BotFact]:
-    """So' os dados que tem valor (vazio/None some)."""
-    return [BotFact(label=l, value=str(v)) for l, v in pairs if v not in (None, "", 0)]
+LABELS_PT = {
+    "Health": "Vida", "Damage": "Dano", "XP": "XP", "Range": "Alcance", "Respawn": "Respawn", "Spawns at": "Aparece em", "Rarity": "Raridade", "Level": "Nível",
+    "Type": "Tipo", "Base damage": "Dano base", "Requirement": "Requisito", "Special": "Especial", "Speed": "Velocidade", "Knockback": "Knockback", "NPC": "NPC",
+    "Stack": "Pilha", "Element": "Elemento", "Tier": "Tier", "Chakra": "Chakra", "Cooldown": "Recarga", "Cast time": "Conjuração", "Effect": "Efeito",
+    "Published": "Publicado em",
+}
+RARITY_PT = {"Common": "Comum", "Uncommon": "Incomum", "Rare": "Raro", "Epic": "Épico", "Legendary": "Lendário"}
+
+
+def _facts(*pairs: tuple[str, object], lang: str = "en") -> list[BotFact]:
+    """So' os dados que tem valor (vazio/None some); em `pt` os rotulos (e a raridade) saem em portugues."""
+    out = []
+    for label, value in pairs:
+        if value in (None, "", 0):
+            continue
+        if lang == "pt":
+            value = RARITY_PT.get(str(value), value) if label == "Rarity" else value
+            label = LABELS_PT.get(label, label)
+        out.append(BotFact(label=label, value=str(value)))
+    return out
+
+
+def _pick(lang: str, en: str | None, pt: str | None) -> str:
+    """Texto no idioma pedido; sem traducao cai para o ingles."""
+    return (pt if lang == "pt" and pt else en) or ""
 
 
 def _like(q: str) -> str:
@@ -351,26 +380,31 @@ def _like(q: str) -> str:
     return "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
-def _item_hit(i: ContentItem) -> BotSearchHit:
+def _item_hit(i: ContentItem, lang: str = "en") -> BotSearchHit:
     """Resultado de um item/mob/arma/guia/missao publicado, com os dados certos para cada categoria."""
     cat = i.category.value
     common = [("Rarity", i.rarity.value.title()), ("Level", i.level)]
     if cat == "mobs":
         facts = _facts(("Health", i.mob_health), ("Damage", i.mob_damage), ("XP", i.mob_experience), ("Range", i.mob_range),
-                       ("Respawn", i.mob_respawn_time), ("Spawns at", i.spawn_location), *common)
+                       ("Respawn", i.mob_respawn_time), ("Spawns at", _pick(lang, i.spawn_location, i.spawn_location_pt)), *common, lang=lang)
     elif cat == "weapons":
         facts = _facts(("Type", i.weapon_type), ("Base damage", i.weapon_base_damage), ("Requirement", i.weapon_requirement),
                        ("Special", i.weapon_special_ability), ("Speed", i.weapon_speed), ("Knockback", i.weapon_knockback_distance),
-                       ("NPC", i.weapon_npc), *common)
+                       ("NPC", i.weapon_npc), *common, lang=lang)
     else:
-        facts = _facts(("Stack", f"{i.max_stack:,}" if i.max_stack else None), *common)
-    return BotSearchHit(kind=cat.rstrip("s"), title=i.name, icon=i.icon, snippet=_plain(i.description), summary=_summary(i.description),
+        facts = _facts(("Stack", f"{i.max_stack:,}" if i.max_stack else None), *common, lang=lang)
+    desc = _pick(lang, i.description, i.description_pt)
+    return BotSearchHit(kind=cat.rstrip("s"), title=_pick(lang, i.name, i.name_pt), icon=i.icon, snippet=_plain(desc), summary=_summary(desc),
                         image=_abs_image(i.image), facts=facts[:6], href=f"/detail/{i.slug}")
 
 
 @router.get("/search", response_model=list[BotSearchHit])
-async def bot_search(q: str = Query(..., min_length=2, max_length=60), db: AsyncSession = Depends(get_db)) -> list[BotSearchHit]:
-    """Procura pelo nome em itens/mobs/armas/guias/missoes publicados, jutsus, masteries e posts publicados (ate' 10), ja' com resumo, imagem e dados."""
+async def bot_search(
+    q: str = Query(..., min_length=2, max_length=60),
+    lang: str = Query("en", pattern="^(en|pt)$", description="Idioma do resumo e dos rotulos (sem traducao cai para o ingles)"),
+    db: AsyncSession = Depends(get_db),
+) -> list[BotSearchHit]:
+    """Procura pelo nome (em ingles ou portugues) em itens/mobs/armas/guias/missoes publicados, jutsus, masteries e posts publicados (ate' 10), com resumo, imagem e dados."""
     q = q.strip()
     if len(q) < 2:
         return []
@@ -378,23 +412,34 @@ async def bot_search(q: str = Query(..., min_length=2, max_length=60), db: Async
     now = datetime.now(timezone.utc)
     hits: list[BotSearchHit] = []
     items = (await db.execute(
-        select(ContentItem).where(ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\"))
+        select(ContentItem).where(ContentItem.status == ContentStatus.PUBLISHED,
+                                  ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
         .order_by(ContentItem.name).limit(6))).scalars().all()
-    hits += [_item_hit(i) for i in items]
-    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\")).order_by(Mastery.name).limit(3))).scalars().all()
-    hits += [BotSearchHit(kind="mastery", title=m.name, icon=None, snippet=_plain(m.description), summary=_summary(m.long_description or m.description),
-                          image=_abs_image(m.image or m.gif), facts=_facts(("Type", m.type.value.title()), ("Element", m.element)),
-                          href=f"/masteries/{m.id}") for m in masteries]
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\")).order_by(Jutsu.name).limit(4))).scalars().all()
-    hits += [BotSearchHit(kind="jutsu", title=j.name, icon=None, snippet=f"Tier {j.tier} · {_plain(j.description, 110)}",
-                          summary=_summary(j.long_description or j.description), image=_abs_image(j.gif),
-                          facts=_facts(("Tier", j.tier), ("Chakra", j.chakra_cost), ("Cooldown", j.cooldown), ("Range", j.range),
-                                       ("Cast time", j.cast_time), ("Effect", j.effect)),
-                          href=f"/jutsus/{j.id}") for j in jutsus]
+    hits += [_item_hit(i, lang) for i in items]
+    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
+                                  .order_by(Mastery.name).limit(3))).scalars().all()
+    for m in masteries:
+        desc, long_desc = _pick(lang, m.description, m.description_pt), _pick(lang, m.long_description, m.long_description_pt)
+        hits.append(BotSearchHit(kind="mastery", title=_pick(lang, m.name, m.name_pt), icon=None, snippet=_plain(desc), summary=_summary(long_desc or desc),
+                                 image=_abs_image(m.image or m.gif), facts=_facts(("Type", m.type.value.title()), ("Element", m.element), lang=lang),
+                                 href=f"/masteries/{m.id}"))
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+                               .order_by(Jutsu.name).limit(4))).scalars().all()
+    for j in jutsus:
+        desc, long_desc = _pick(lang, j.description, j.description_pt), _pick(lang, j.long_description, j.long_description_pt)
+        hits.append(BotSearchHit(kind="jutsu", title=_pick(lang, j.name, j.name_pt), icon=None, snippet=f"Tier {j.tier} · {_plain(desc, 110)}",
+                                 summary=_summary(long_desc or desc), image=_abs_image(j.gif),
+                                 facts=_facts(("Tier", j.tier), ("Chakra", j.chakra_cost), ("Cooldown", j.cooldown), ("Range", j.range),
+                                              ("Cast time", j.cast_time), ("Effect", j.effect), lang=lang),
+                                 href=f"/jutsus/{j.id}"))
     posts = (await db.execute(
-        select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now), Post.title.ilike(like, escape="\\"))
+        select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),
+                           Post.title.ilike(like, escape="\\") | Post.title_pt.ilike(like, escape="\\"))
         .order_by(Post.published_at.desc()).limit(3))).scalars().all()
-    hits += [BotSearchHit(kind="post", title=p.title, icon="📰", snippet=_plain(p.excerpt), summary=_summary(p.excerpt), image=_abs_image(p.cover_image),
-                          facts=_facts(("Published", p.published_at.strftime("%b %d, %Y") if p.published_at else None)),
-                          href=f"/blog/{p.slug}") for p in posts]
+    for p in posts:
+        excerpt = _pick(lang, p.excerpt, p.excerpt_pt)
+        hits.append(BotSearchHit(kind="post", title=_pick(lang, p.title, p.title_pt), icon="📰", snippet=_plain(excerpt), summary=_summary(excerpt),
+                                 image=_abs_image(p.cover_image),
+                                 facts=_facts(("Published", p.published_at.strftime("%d/%m/%Y" if lang == "pt" else "%b %d, %Y") if p.published_at else None), lang=lang),
+                                 href=f"/blog/{p.slug}"))
     return hits[:10]
