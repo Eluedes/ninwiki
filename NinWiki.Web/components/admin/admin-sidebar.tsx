@@ -124,8 +124,12 @@ export function AdminSidebar() {
 export function AdminMobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  // Fecha a gaveta quando a rota muda (ex.: botao voltar do navegador).
-  useEffect(() => setOpen(false), [pathname]);
+  // Fecha a gaveta quando a rota muda (ex.: botao voltar do navegador): ajusta o estado durante a renderizacao, sem efeito.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
