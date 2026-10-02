@@ -11,7 +11,7 @@ jobs:
   no-bat:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Procurar .bat/.cmd versionados
         run: |
           found=$(git ls-files | grep -iE '\.(bat|cmd)$' || true)
