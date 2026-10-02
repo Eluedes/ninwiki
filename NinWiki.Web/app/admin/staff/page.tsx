@@ -15,8 +15,8 @@ import { RoleBadge } from '@/components/admin/role-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ApiError, createStaff, listStaff, setStaffActive, updateStaffName, updateStaffRole,
-  type ApiStaff, type StaffRole,
+  ApiError, createStaff, getRolesOverview, listStaff, setStaffActive, updateStaffName, updateStaffRole,
+  type ApiCustomRole, type ApiStaff, type StaffRole,
 } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +37,8 @@ export default function StaffPage() {
 
   const [discordId, setDiscordId] = useState('');
   const [username, setUsername] = useState('');
-  const [role, setRole] = useState<StaffRole>('creator');
+  const [role, setRole] = useState<string>('creator'); // um cargo comum ('creator'...) ou 'custom:<id>'
+  const [customRoles, setCustomRoles] = useState<ApiCustomRole[]>([]);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null); // linha com o nome em edicao
   const [nameDraft, setNameDraft] = useState('');
@@ -58,9 +59,21 @@ export default function StaffPage() {
 
   useEffect(load, [load]);
 
+  // Cargos personalizados (so' o S.Adm enxerga a tela de cargos; para os outros a lista fica vazia).
+  useEffect(() => {
+    if (!can('roles.manage')) return;
+    getRolesOverview().then((o) => setCustomRoles(o.customRoles)).catch(() => setCustomRoles([]));
+  }, [can]);
+
   const assignable = useMemo(() => me?.assignableRoles ?? [], [me]);
   // O cargo do formulario fica sempre dentro do que essa pessoa pode dar (derivado, sem efeito).
-  const effectiveRole: StaffRole = assignable.includes(role) ? role : (assignable[assignable.length - 1] ?? role);
+  const customChosen = role.startsWith('custom:') ? customRoles.find((r) => r.id === role.slice(7)) : undefined;
+  const effectiveRole: StaffRole = customChosen ? 'creator' : (assignable.includes(role as StaffRole) ? (role as StaffRole) : (assignable[assignable.length - 1] ?? 'creator'));
+  /** Valor do select de uma pessoa: o cargo comum ou 'custom:<id>'. */
+  const valueOf = (m: ApiStaff) => (m.customRole ? `custom:${m.customRole.id}` : m.role);
+  /** Aplica a escolha do select (cargo comum ou personalizado) a um membro. */
+  const changeRole = (m: ApiStaff, value: string) =>
+    run(m.id, () => (value.startsWith('custom:') ? updateStaffRole(m.id, 'creator', value.slice(7)) : updateStaffRole(m.id, value as StaffRole)));
 
   // Esta pessoa pode mexer NESSE membro? (so' visual; o backend valida de novo)
   function manageable(member: ApiStaff): boolean {
@@ -98,7 +111,7 @@ export default function StaffPage() {
     setAdding(true);
     setActionError(null);
     try {
-      const created = await createStaff({ discordId: discordId.trim(), role: effectiveRole, username: username.trim() || undefined });
+      const created = await createStaff({ discordId: discordId.trim(), role: effectiveRole, customRoleId: customChosen?.id ?? null, username: username.trim() || undefined });
       setStaff((prev) => [...prev, created]);
       setDiscordId('');
       setUsername('');
@@ -129,6 +142,12 @@ export default function StaffPage() {
             <p className="mt-2 text-xs text-muted-foreground">{roleDescription[r]}</p>
           </div>
         ))}
+        {customRoles.map((r) => (
+          <div key={r.id} className="rounded-lg border border-border bg-card p-3">
+            <RoleBadge role="creator" label={r.name} color={r.color} />
+            <p className="mt-2 text-xs text-muted-foreground">{r.description || `${r.permissions.length} ${dict.admin.rolesPage.permission.toLowerCase()}`}</p>
+          </div>
+        ))}
       </div>
 
       {can('staff.create') && assignable.length > 0 && (
@@ -153,12 +172,15 @@ export default function StaffPage() {
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">{t.role}</label>
               <select
-                value={effectiveRole}
-                onChange={(e) => setRole(e.target.value as StaffRole)}
+                value={customChosen ? `custom:${customChosen.id}` : effectiveRole}
+                onChange={(e) => setRole(e.target.value)}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
                 {assignable.map((r) => (
                   <option key={r} value={r}>{roleLabel[r]}</option>
+                ))}
+                {assignable.includes('creator') && customRoles.map((r) => (
+                  <option key={r.id} value={`custom:${r.id}`}>{r.name}</option>
                 ))}
               </select>
             </div>
@@ -257,18 +279,21 @@ export default function StaffPage() {
                     <td className="px-4 py-3">
                       {canManage && can('staff.edit') ? (
                         <select
-                          value={m.role}
+                          value={valueOf(m)}
                           disabled={busy}
-                          onChange={(e) => run(m.id, () => updateStaffRole(m.id, e.target.value as StaffRole))}
+                          onChange={(e) => changeRole(m, e.target.value)}
                           className="h-9 rounded-md border border-input bg-background px-2 text-sm"
                         >
                           {/* inclui o cargo atual mesmo que a pessoa nao possa "dar" ele */}
                           {Array.from(new Set([m.role, ...assignable])).map((r) => (
                             <option key={r} value={r} disabled={!assignable.includes(r)}>{roleLabel[r]}</option>
                           ))}
+                          {customRoles.map((r) => (
+                            <option key={r.id} value={`custom:${r.id}`}>{r.name}</option>
+                          ))}
                         </select>
                       ) : (
-                        <RoleBadge role={m.role} />
+                        <RoleBadge role={m.role} label={m.customRole?.name} color={m.customRole?.color} />
                       )}
                     </td>
                     <td className="px-4 py-3">

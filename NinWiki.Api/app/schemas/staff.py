@@ -23,6 +23,13 @@ def parse_discord_id(value: str) -> int:
     return int(value)
 
 
+class CustomRoleBrief(CamelModel):
+    """Cargo personalizado resumido (nome e cor para mostrar ao lado da pessoa)."""
+    id: uuid.UUID
+    name: str
+    color: str
+
+
 class StaffRead(CamelModel):
     """Membro da equipe como a API devolve."""
     id: uuid.UUID
@@ -30,6 +37,8 @@ class StaffRead(CamelModel):
     username: str
     avatar_url: str | None
     role: StaffRole
+    role_label: str          # nome mostrado: o do cargo personalizado ou S.Adm / Adm / Creator
+    custom_role: CustomRoleBrief | None = None
     is_active: bool
     is_owner: bool           # dono do sistema (.env) - o painel nao deixa alterar
     created_at: datetime
@@ -43,7 +52,8 @@ class MeRead(CamelModel):
     username: str
     avatar_url: str | None
     role: StaffRole
-    role_label: str          # "S.Adm" / "Adm" / "Creator"
+    role_label: str          # "S.Adm" / "Adm" / "Creator" ou o nome do cargo personalizado
+    custom_role: CustomRoleBrief | None = None
     permissions: list[str]   # so' as permissoes que ESTE cargo pode ver
     assignable_roles: list[StaffRole]
 
@@ -52,6 +62,7 @@ class StaffCreate(CamelModel):
     """Corpo de cadastrar alguem na equipe."""
     discord_id: str
     role: StaffRole
+    custom_role_id: uuid.UUID | None = None   # cargo personalizado (so' com role = creator)
     username: str | None = None
 
     @field_validator("discord_id")
@@ -70,8 +81,9 @@ class StaffCreate(CamelModel):
 
 
 class StaffRoleUpdate(CamelModel):
-    """Corpo de trocar o cargo."""
+    """Corpo de trocar o cargo (um cargo comum, ou um personalizado com role = creator)."""
     role: StaffRole
+    custom_role_id: uuid.UUID | None = None
 
 
 class DevLogin(CamelModel):

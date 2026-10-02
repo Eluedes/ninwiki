@@ -26,7 +26,7 @@ from app.core.audit import log_action
 from app.core.auth import get_optional_user, require_permission
 from app.core.database import get_db
 from app.core.payloads import apply_scalar_fields
-from app.core.permissions import Permission, has_permission
+from app.core.permissions import Permission, user_has_permission
 from app.models.enums import ContentStatus
 from app.models.posts import Post, Tag
 from app.models.readers import PostComment, PostLike
@@ -110,13 +110,13 @@ def _stamp_publication(post: Post, payload_published_at: datetime | None) -> Non
 
 def _guard_publish(staff: User, new_status: ContentStatus) -> None:
     """Quem nao tem posts.publish nao pode colocar um post como publicado (403)."""
-    if new_status == ContentStatus.PUBLISHED and not has_permission(staff.role, Permission.POST_PUBLISH):
+    if new_status == ContentStatus.PUBLISHED and not user_has_permission(staff, Permission.POST_PUBLISH):
         raise HTTPException(status_code=403, detail="Only an Adm can publish. Save as a draft.")
 
 
 def _guard_edit(staff: User, post: Post, new_status: ContentStatus) -> None:
     """Quem nao tem posts.publish nao mexe em post ja' publicado nem o publica (403)."""
-    if not has_permission(staff.role, Permission.POST_PUBLISH) and post.status == ContentStatus.PUBLISHED:
+    if not user_has_permission(staff, Permission.POST_PUBLISH) and post.status == ContentStatus.PUBLISHED:
         raise HTTPException(status_code=403, detail="This post is already published. Only an Adm can change it.")
     _guard_publish(staff, new_status)
 

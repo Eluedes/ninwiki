@@ -27,7 +27,7 @@ from app.core import staff_service
 from app.core.config import settings
 from app.core.translation import fill_missing_translations
 from app.core.database import get_db
-from app.core.permissions import Permission, has_permission
+from app.core.permissions import Permission, user_has_permission
 from app.core.rate_limit import BOT_FAIL, client_key, limiter, retry_message
 from app.models.content import ContentItem
 from app.models.enums import ContentStatus, StaffRole
@@ -122,7 +122,7 @@ async def bot_me(invokerDiscordId: str, db: AsyncSession = Depends(get_db)):
 async def bot_list_staff(invokerDiscordId: str, db: AsyncSession = Depends(get_db)):
     """Lista a equipe para o comando /equipe listar (so' quem tem a permissao staff.view)."""
     invoker = await _invoker(db, invokerDiscordId)
-    if not has_permission(invoker.role, Permission.STAFF_VIEW):
+    if not user_has_permission(invoker, Permission.STAFF_VIEW):
         raise HTTPException(status_code=403, detail="You do not have permission to do this")
     rows = (await db.execute(select(User).order_by(User.created_at))).scalars().all()
     return [to_read(u) for u in rows]
@@ -155,7 +155,7 @@ async def bot_change_role(discord_id: str, payload: BotRoleUpdate, db: AsyncSess
 async def bot_clear_log(payload: BotClearLog, db: AsyncSession = Depends(get_db)):
     """Limpa o log (/team clearlog): so' quem tem audit.clear (S.Adm); o bot depois apaga as mensagens do canal, se pedido."""
     invoker = await _invoker(db, payload.invoker_discord_id)
-    if not has_permission(invoker.role, Permission.AUDIT_CLEAR):
+    if not user_has_permission(invoker, Permission.AUDIT_CLEAR):
         raise HTTPException(status_code=403, detail="You do not have permission to do this")
     if payload.older_than_days is not None and not 1 <= payload.older_than_days <= 3650:
         raise HTTPException(status_code=422, detail="Days must be between 1 and 3650")

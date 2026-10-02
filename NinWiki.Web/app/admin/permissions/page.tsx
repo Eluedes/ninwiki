@@ -6,14 +6,16 @@
 // (PUT /roles/{cargo}/permissions exige roles.manage e recusa permissao exclusiva do S.Adm).
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Check, Loader2, Lock, RotateCcw, Save } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, Lock, Pencil, Plus, RotateCcw, Save, Trash2 } from 'lucide-react';
 import {
-  ApiError, getRolesOverview, resetRolePermissions, setRolePermissions,
-  type ApiRolesOverview, type PermissionName, type StaffRole,
+  ApiError, createCustomRole, deleteCustomRole, getRolesOverview, resetRolePermissions, setRolePermissions, updateCustomRole,
+  type ApiCustomRole, type ApiRolesOverview, type CustomRoleInput, type PermissionName, type StaffRole,
 } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
+import { CustomRoleDialog } from '@/components/admin/custom-role-dialog';
+import { RoleBadge } from '@/components/admin/role-badge';
 import { cn } from '@/lib/utils';
 
 const EDITABLE: StaffRole[] = ['admin', 'creator'];
@@ -80,6 +82,7 @@ export default function PermissionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<StaffRole | null>(null);
   const [savedRole, setSavedRole] = useState<StaffRole | null>(null);
+  const [dialog, setDialog] = useState<{ role: ApiCustomRole | null } | null>(null);
 
   const apply = useCallback((o: ApiRolesOverview) => {
     setOverview(o);
@@ -148,6 +151,23 @@ export default function PermissionsPage() {
     }
   }
 
+  /** Cria ou edita (conforme o dialogo) um cargo personalizado e atualiza a tela. */
+  async function saveCustom(input: CustomRoleInput) {
+    const editing = dialog?.role;
+    apply(editing ? await updateCustomRole(editing.id, input) : await createCustomRole(input));
+    await refresh();
+  }
+
+  async function removeCustom(r: ApiCustomRole) {
+    if (!window.confirm(t.confirmDeleteRole.replace('{name}', r.name))) return;
+    setError(null);
+    try {
+      apply(await deleteCustomRole(r.id));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t.saveError);
+    }
+  }
+
   if (!overview) {
     return error ? (
       <div className="flex items-center gap-2 text-sm text-red-400"><AlertTriangle className="h-4 w-4" />{error}</div>
@@ -204,6 +224,54 @@ export default function PermissionsPage() {
           </div>
         ))}
       </div>
+
+      {/* Cargos personalizados: o S.Adm cria cargos alem de Adm/Creator, com as permissoes que quiser (nunca as exclusivas do S.Adm) */}
+      <div className="space-y-3 pt-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">{t.customTitle}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t.customSubtitle}</p>
+          </div>
+          <Button size="sm" onClick={() => setDialog({ role: null })}><Plus className="mr-1.5 h-4 w-4" />{t.newRole}</Button>
+        </div>
+        {overview.customRoles.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">{t.noCustomRoles}</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {overview.customRoles.map((r) => (
+              <div key={r.id} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <RoleBadge role="creator" label={r.name} color={r.color} />
+                  <div className="flex gap-1">
+                    <button type="button" title={t.editRole} onClick={() => setDialog({ role: r })} className="rounded p-1.5 text-muted-foreground hover:bg-secondary hover:text-card-foreground"><Pencil className="h-4 w-4" /></button>
+                    <button type="button" title={t.deleteRole} onClick={() => removeCustom(r)} className="rounded p-1.5 text-muted-foreground hover:bg-secondary hover:text-red-400"><Trash2 className="h-4 w-4" /></button>
+                  </div>
+                </div>
+                {r.description && <p className="text-xs text-muted-foreground">{r.description}</p>}
+                <p className="text-xs text-muted-foreground">{t.membersCount.replace('{n}', String(r.members))} · {r.permissions.length} {t.permission.toLowerCase()}</p>
+                <div className="flex flex-wrap gap-1">
+                  {r.permissions.slice(0, 8).map((p) => (
+                    <span key={p} className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">{t.names[p] ?? p}</span>
+                  ))}
+                  {r.permissions.length > 8 && <span className="text-[10px] text-muted-foreground">+{r.permissions.length - 8}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {dialog && (
+        <CustomRoleDialog
+          key={dialog.role?.id ?? 'new'}
+          open
+          onOpenChange={(o) => { if (!o) setDialog(null); }}
+          role={dialog.role}
+          permissions={overview.permissions}
+          creatorDefaults={overview.roles.find((r) => r.role === 'creator')?.permissions ?? []}
+          onSave={saveCustom}
+        />
+      )}
     </div>
   );
 

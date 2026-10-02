@@ -66,7 +66,7 @@ export function AdminHeader() {
               </span>
               <span className="block text-xs text-muted-foreground">{me.discordId}</span>
             </div>
-            <RoleBadge role={me.role} />
+            <RoleBadge role={me.role} label={me.customRole?.name} color={me.customRole?.color} />
             <button
               onClick={handleLogout}
               title={dict.admin.auth.logout}

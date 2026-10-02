@@ -25,7 +25,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.audit import log_action
 from app.core.auth import get_optional_user, require_permission
-from app.core.permissions import Permission, has_permission
+from app.core.permissions import Permission, user_has_permission
 from app.core.database import get_db
 from app.models.users import User
 from app.core.translation import translate_field
@@ -554,7 +554,7 @@ def _hide_draft_from_public(item: ContentItem, user: User | None) -> None:
 
 def _guard_publish(staff: User, new_status: ContentStatus) -> None:
     """Quem nao tem CONTENT_PUBLISH (Creator) nao coloca nada no ar."""
-    if new_status == ContentStatus.PUBLISHED and not has_permission(staff.role, Permission.CONTENT_PUBLISH):
+    if new_status == ContentStatus.PUBLISHED and not user_has_permission(staff, Permission.CONTENT_PUBLISH):
         raise HTTPException(status_code=403, detail="Only an Adm can publish. Save as a draft.")
 
 
@@ -564,7 +564,7 @@ def _guard_edit(staff: User, item: ContentItem, new_status: ContentStatus | None
     site e so' Adm/S.Adm alteram. (Ver Permission.CONTENT_PUBLISH em
     app/core/permissions.py - a regra segue a permissao, nao o nome do cargo.)
     """
-    if not has_permission(staff.role, Permission.CONTENT_PUBLISH) and item.status == ContentStatus.PUBLISHED:
+    if not user_has_permission(staff, Permission.CONTENT_PUBLISH) and item.status == ContentStatus.PUBLISHED:
         raise HTTPException(status_code=403, detail="This entry is already published. Only an Adm can change it.")
     if new_status is not None:
         _guard_publish(staff, new_status)

@@ -2,7 +2,9 @@
 import uuid
 from datetime import datetime
 
-from pydantic import Field
+import re
+
+from pydantic import Field, field_validator
 
 from app.models.enums import StaffRole
 from app.schemas.content import CamelModel
@@ -24,10 +26,52 @@ class RolePermissionsRead(CamelModel):
     permissions: list[str]      # o que o cargo tem HOJE
 
 
+class CustomRoleRead(CamelModel):
+    """Cargo personalizado como a tela mostra: nome, cor, o que pode e quantas pessoas tem este cargo."""
+    id: uuid.UUID
+    name: str
+    color: str
+    description: str
+    permissions: list[str]
+    members: int
+
+
 class RolesOverview(CamelModel):
-    """Visao completa da tela de permissoes (cargos + catalogo)."""
+    """Visao completa da tela de permissoes (cargos + catalogo + cargos personalizados)."""
     roles: list[RolePermissionsRead]
     permissions: list[PermissionInfo]
+    custom_roles: list[CustomRoleRead] = []
+
+
+class CustomRoleWrite(CamelModel):
+    """Corpo de criar/editar um cargo personalizado."""
+    name: str = Field(min_length=1, max_length=30)
+    color: str = "#64748b"
+    description: str = Field(default="", max_length=200)
+    permissions: list[str] = Field(default_factory=list, max_length=60)
+
+    @field_validator("name")
+    @classmethod
+    def _clean_name(cls, v: str) -> str:
+        """Nome sem caracteres de controle nem espacos extras (1 a 30 caracteres)."""
+        name = " ".join("".join(ch if ch.isprintable() else " " for ch in v).split())
+        if not name:
+            raise ValueError("The role name cannot be empty")
+        return name[:30]
+
+    @field_validator("color")
+    @classmethod
+    def _check_color(cls, v: str) -> str:
+        """Cor no formato #rrggbb (vai para um estilo na tela, entao nada alem disso)."""
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", v.strip()):
+            raise ValueError("Color must look like #rrggbb")
+        return v.strip().lower()
+
+    @field_validator("description")
+    @classmethod
+    def _clean_description(cls, v: str) -> str:
+        """Descricao em uma linha so', sem caracteres de controle."""
+        return " ".join("".join(ch if ch.isprintable() else " " for ch in v).split())
 
 
 class RolePermissionsWrite(CamelModel):

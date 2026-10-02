@@ -192,8 +192,9 @@ async def limpar(inicio: datetime) -> None:
         ids_teste = select(User.id).where(User.discord_id.in_([int(x) for x in TESTE_IDS_TEXTO]))
         await db.execute(delete(AuditLogEntry).where(
             AuditLogEntry.user_id.in_(ids_teste) | (AuditLogEntry.actor_name.like("TESTE_%"))
-            | (AuditLogEntry.entity_id.in_(TESTE_IDS_TEXTO)) | (AuditLogEntry.entity_id.like(f"{SLUG}%"))))
+            | (AuditLogEntry.entity_id.in_(TESTE_IDS_TEXTO)) | (AuditLogEntry.entity_id.like(f"{SLUG}%")) | (AuditLogEntry.entity_id.like("TESTE%"))))
         await db.execute(delete(User).where(User.discord_id.in_([int(x) for x in TESTE_IDS_TEXTO])))
+        await db.execute(text("DELETE FROM custom_roles WHERE name LIKE 'TESTE%'"))
         await db.commit()
     print("\n(dados de teste apagados)")
 
@@ -1488,6 +1489,79 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         velho = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.entity_id == f"{SLUG}-velho"))).scalars().first()
         marca = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log").order_by(AuditLogEntry.created_at.desc()))).scalars().first()
     check("o registro antigo sumiu e a limpeza ficou registrada no log", velho is None and marca is not None and marca.diff.get("older_than_days") == 3650)
+
+    secao("26) Cargos personalizados: criar, dar, editar, apagar - e nunca mais poder do que foi liberado")
+    rn = f"TESTE{BASE % 100000}"
+    r = await c.post("/roles/custom", json={"name": rn + "a", "color": "#22c55e", "description": "so' publica conteudo", "permissions": ["content.create", "content.edit", "content.publish"]}, headers=A)
+    check("Adm NAO cria cargo (404, como se nao existisse)", r.status_code == 404)
+    r = await c.post("/roles/custom", json={"name": rn + "a", "color": "#22c55e", "description": "so' publica conteudo", "permissions": ["content.create", "content.edit", "content.publish"]}, headers=S)
+    check("S.Adm cria cargo personalizado", r.status_code == 201 and any(x["name"] == rn + "a" and x["members"] == 0 for x in r.json()["customRoles"]), r.text[:200])
+    papel_a = next(x for x in r.json()["customRoles"] if x["name"] == rn + "a")["id"]
+    for corpo, esperado, nome in [
+        ({"name": rn + "b", "permissions": ["staff.view"]}, 400, "permissao exclusiva do S.Adm e' recusada"),
+        ({"name": rn + "b", "permissions": ["nao.existe"]}, 422, "permissao desconhecida e' recusada"),
+        ({"name": rn + "b", "color": "red;position:fixed"}, 422, "cor fora do formato #rrggbb e' recusada (injecao de CSS)"),
+        ({"name": "Adm", "permissions": []}, 409, "nome igual ao de um cargo de fabrica e' recusado"),
+        ({"name": (rn + "A").lower(), "permissions": []}, 409, "nome repetido (sem diferenciar maiusculas) e' recusado"),
+        ({"name": "   ", "permissions": []}, 422, "nome vazio e' recusado"),
+    ]:
+        r = await c.post("/roles/custom", json=corpo, headers=S)
+        check(nome, r.status_code == esperado, f"{r.status_code} {r.text[:120]}")
+
+    novo = await c.post("/staff", json={"discordId": str(BASE + 26), "role": "creator", "username": "TESTE_cr", "customRoleId": papel_a}, headers=S)
+    check("S.Adm cadastra alguem JA' com o cargo personalizado", novo.status_code == 201 and novo.json()["roleLabel"] == rn + "a" and novo.json()["customRole"]["name"] == rn + "a", novo.text[:200])
+    r = await c.post("/staff", json={"discordId": str(BASE + 27), "role": "admin", "username": "x", "customRoleId": papel_a}, headers=S)
+    check("cargo personalizado so' combina com o Creator base (Adm + personalizado = 422)", r.status_code == 422, r.text[:120])
+    r = await c.post("/staff", json={"discordId": str(BASE + 27), "role": "creator", "username": "x", "customRoleId": "00000000-0000-0000-0000-000000000000"}, headers=S)
+    check("cargo personalizado que nao existe e' recusado", r.status_code == 422)
+
+    r = await c.patch(f"/staff/{creator2.id}/role", json={"role": "creator", "customRoleId": papel_a}, headers=S)
+    check("S.Adm troca alguem para o cargo personalizado", r.status_code == 200 and r.json()["roleLabel"] == rn + "a", r.text[:160])
+    C2 = cookie(await recarregar(creator2))
+    me = (await c.get("/auth/me", headers=C2)).json()
+    check("/auth/me mostra o nome do cargo e SO' as permissoes dele (nao as do Creator)",
+          me["roleLabel"] == rn + "a" and sorted(me["permissions"]) == ["content.create", "content.edit", "content.publish"] and me["customRole"]["color"] == "#22c55e", str(me))
+    r = await c.post("/content-items", json=novo_conteudo("cargo1"), headers=C2)
+    check("o cargo com content.create cria rascunho", r.status_code == 201, r.text[:160])
+    cargo_id = r.json()["id"]
+    r = await c.put(f"/content-items/{cargo_id}", json=novo_conteudo("cargo1", "published"), headers=C2)
+    check("o cargo com content.publish PUBLICA", r.status_code == 200 and r.json()["status"] == "published", f"{r.status_code} {r.text[:160]}")
+    await c.post("/roles/creator/permissions/reset", headers=S)  # testes anteriores podem ter ajustado o Creator
+    Cc = cookie(await recarregar(creator))
+    r = await c.post("/content-items", json=novo_conteudo("cargo2"), headers=Cc)
+    rasc2 = r.json()["id"]
+    r = await c.put(f"/content-items/{rasc2}", json=novo_conteudo("cargo2", "published"), headers=Cc)
+    check("Creator comum continua sem publicar (403)", r.status_code == 403, f"{r.status_code} {r.text[:100]}")
+    r = await c.post("/uploads/image", files={"file": ("a.png", b"x", "image/png")}, headers=C2)
+    check("o cargo NAO ganha o que nao foi liberado (sem uploads.create = 403)", r.status_code == 403, str(r.status_code))
+    check("cargo personalizado nunca enxerga a area da equipe (404)", (await c.get("/staff", headers=C2)).status_code == 404 and (await c.get("/roles/permissions", headers=C2)).status_code == 404)
+
+    r = await c.put(f"/roles/custom/{papel_a}", json={"name": rn + "a", "color": "#22c55e", "description": "so' escreve", "permissions": ["posts.create"]}, headers=S)
+    check("S.Adm edita as permissoes do cargo", r.status_code == 200, r.text[:160])
+    me = (await c.get("/auth/me", headers=C2)).json()
+    check("a edicao vale na hora para quem tem o cargo", me["permissions"] == ["posts.create"], str(me["permissions"]))
+    r = await c.post("/content-items", json=novo_conteudo("cargo3"), headers=C2)
+    check("sem content.create o cargo editado nao cria entry", r.status_code == 403)
+
+    # defesa em profundidade: mesmo se alguem escrever uma permissao exclusiva do S.Adm direto no banco, ela nao vale
+    async with AsyncSessionLocal() as db:
+        await db.execute(text("UPDATE custom_roles SET permissions = '[\"staff.view\", \"audit.clear\", \"posts.create\"]'::jsonb WHERE id = :i"), {"i": papel_a})
+        await db.commit()
+    me = (await c.get("/auth/me", headers=C2)).json()
+    check("permissao exclusiva do S.Adm gravada 'por fora' no banco e' ignorada", me["permissions"] == ["posts.create"] and (await c.get("/staff", headers=C2)).status_code == 404, str(me["permissions"]))
+
+    r = await c.delete(f"/roles/custom/{papel_a}", headers=S)
+    check("nao apaga cargo que ainda tem gente (409)", r.status_code == 409 and "Move them" in r.json()["detail"], r.text[:160])
+    r = await c.patch(f"/staff/{creator2.id}/role", json={"role": "creator"}, headers=S)
+    check("tirar o cargo personalizado volta para o Creator comum", r.status_code == 200 and r.json()["roleLabel"] == "Creator" and r.json()["customRole"] is None, r.text[:160])
+    novo_id = novo.json()["id"]
+    await c.patch(f"/staff/{novo_id}/role", json={"role": "creator"}, headers=S)
+    r = await c.delete(f"/roles/custom/{papel_a}", headers=S)
+    check("sem ninguem usando, o cargo e' apagado", r.status_code == 200 and all(x["name"] != rn + "a" for x in r.json()["customRoles"]), r.text[:160])
+    check("Adm nao edita nem apaga cargos (404)", (await c.delete(f"/roles/custom/{papel_a}", headers=A)).status_code == 404)
+    async with AsyncSessionLocal() as db:
+        logs = (await db.execute(select(AuditLogEntry.action).where(AuditLogEntry.entity_type == "roles", AuditLogEntry.entity_id == rn + "a"))).scalars().all()
+    check("criar/editar/apagar cargo ficam no log", {"create", "update", "delete"} <= set(logs), str(logs))
 
     secao("25) Texto rico: estilos de letra (cor, fundo, fonte, tamanho) so' no formato permitido")
     from app.schemas.validators import validate_rich_content

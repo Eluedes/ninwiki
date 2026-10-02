@@ -1,0 +1,45 @@
+name: Deploy Guima.Site na SquareCloud (manual)
+
+# Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
+# O site do Guima não tem segredos nem .env de verdade: o workflow roda os testes e envia a pasta Guima.Site.
+#
+# Secrets necessários:
+#   SQUARE_API_KEY         chave da API da SquareCloud (a mesma dos outros apps)
+#   SQUARE_APP_ID_GUIMA    ID do app "Guima Site" na SquareCloud
+
+on:
+  workflow_dispatch:
+    inputs:
+      restart:
+        description: 'Reiniciar o app depois do envio'
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-squarecloud-guima
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Testes do site
+        working-directory: Guima.Site
+        run: npm test
+      - name: Enviar Guima.Site
+        env:
+          SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
+          APP_ID: ${{ secrets.SQUARE_APP_ID_GUIMA }}
+          APP_ENV: |
+            PORT=80
+            TRUST_PROXY=true
+          RESTART: ${{ inputs.restart }}
+          GIT_SHA: ${{ github.sha }}
+        run: bash .github/scripts/deploy-squarecloud.sh Guima.Site guima-site.zip

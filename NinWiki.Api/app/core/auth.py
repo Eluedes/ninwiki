@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.audit import log_action
 from app.core.database import AsyncSessionLocal, get_db
 from app.core import role_config
-from app.core.permissions import SUPER_ONLY_PERMISSIONS, Permission, has_permission
+from app.core.permissions import SUPER_ONLY_PERMISSIONS, Permission, user_has_permission
 from app.core.security import SESSION_COOKIE, ensure_same_origin, read_session_token
 from app.models.users import User
 
@@ -90,7 +90,7 @@ def require_permission(*permissions: Permission):
 
     async def dependency(request: Request, user: User = Depends(get_current_user)) -> User:
         """A checagem em si: sem a permissao exigida, 403 (ou 404 se for exclusiva do S.Adm) e registra a tentativa."""
-        missing = [p for p in permissions if not has_permission(user.role, p)]
+        missing = [p for p in permissions if not user_has_permission(user, p)]
         if missing:
             await _log_denied(user, request, missing, hidden)
             if hidden:

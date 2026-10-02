@@ -14,7 +14,8 @@ from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.permissions import Permission
 from app.models.users import User
-from app.schemas.staff import StaffCreate, StaffRead, StaffRename, StaffRoleUpdate
+from app.core.permissions import user_role_label
+from app.schemas.staff import CustomRoleBrief, StaffCreate, StaffRead, StaffRename, StaffRoleUpdate
 
 router = APIRouter(prefix="/staff", tags=["staff"])
 
@@ -23,7 +24,9 @@ def to_read(u: User) -> StaffRead:
     """Converte um usuario no formato que o painel mostra (Discord ID como texto)."""
     return StaffRead(
         id=u.id, discord_id=str(u.discord_id), username=u.username, avatar_url=u.avatar_url,
-        role=u.role, is_active=u.is_active, is_owner=staff_service.is_owner(u),
+        role=u.role, role_label=user_role_label(u),
+        custom_role=CustomRoleBrief(id=u.custom_role.id, name=u.custom_role.name, color=u.custom_role.color) if u.custom_role else None,
+        is_active=u.is_active, is_owner=staff_service.is_owner(u),
         created_at=u.created_at, last_login_at=u.last_login_at,
     )
 
@@ -49,7 +52,8 @@ async def create_staff(
     db: AsyncSession = Depends(get_db),
 ):
     """Cadastra alguem na equipe com um cargo (so' S.Adm)."""
-    user = await staff_service.add_staff(db, actor, int(payload.discord_id), payload.role, payload.username)
+    user = await staff_service.add_staff(db, actor, int(payload.discord_id), payload.role, payload.username,
+                                          custom_role_id=payload.custom_role_id)
     await db.commit()
     return to_read(user)
 
@@ -61,7 +65,7 @@ async def update_role(
 ):
     """Troca o cargo de alguem; a sessao dele cai na hora."""
     target = await _get_or_404(db, staff_id)
-    await staff_service.change_role(db, actor, target, payload.role)
+    await staff_service.change_role(db, actor, target, payload.role, custom_role_id=payload.custom_role_id)
     await db.commit()
     return to_read(target)
 
