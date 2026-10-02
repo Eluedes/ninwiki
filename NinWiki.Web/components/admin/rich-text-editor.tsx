@@ -27,8 +27,7 @@
 import { useRef, useState } from 'react';
 import { useEditor, useEditorState, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { TextStyle } from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
+import { TextStyle, Color, BackgroundColor, FontSize } from '@tiptap/extension-text-style';
 import Underline from '@tiptap/extension-underline';
 import FontFamily from '@tiptap/extension-font-family';
 import TextAlign from '@tiptap/extension-text-align';
@@ -45,6 +44,8 @@ import { FichaEditable } from '@/lib/tiptap-extensions/ficha-editable';
 import { BlogMention, Video, parseVideoUrl } from '@/lib/tiptap-extensions/blog';
 import { mentionSuggestion } from '@/lib/tiptap-extensions/mention-suggestion';
 import { uploadImage } from '@/lib/api-client';
+import { EditorColorPicker } from '@/components/admin/editor-color-picker';
+import { EDITOR_FONTS, FONT_SIZES } from '@/lib/editor-fonts';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/components/providers/language-provider';
 import {
@@ -68,25 +69,8 @@ import {
   Video as VideoIcon,
   EyeOff,
   Loader2,
+  RemoveFormatting,
 } from 'lucide-react';
-
-// Paleta curta de cores de texto - suficiente pra destacar uma palavra
-// (ex: o nome de um efeito, um numero importante) sem virar uma roda
-// de cores gigante que ninguem usa direito.
-const TEXT_COLORS = [
-  { label: 'Default', value: '' },
-  { label: 'Red', value: '#dc2626' },
-  { label: 'Green', value: '#16a34a' },
-  { label: 'Blue', value: '#2563eb' },
-  { label: 'Yellow', value: '#ca8a04' },
-  { label: 'Purple', value: '#9333ea' },
-];
-
-const FONT_FAMILIES = [
-  { label: 'Default', value: '' },
-  { label: 'Serif', value: 'Georgia, serif' },
-  { label: 'Monospace', value: '"Courier New", monospace' },
-];
 
 /**
  * Tenta interpretar `value` como o JSON que este editor salva. Se nao
@@ -133,6 +117,27 @@ function ToolbarButton({
       {children}
     </button>
   );
+}
+
+/**
+ * Cria um spoiler: o titulo fica sempre visivel e o texto SELECIONADO (ou um paragrafo vazio, se nada foi selecionado)
+ * vai para dentro, escondido ate' o leitor clicar.
+ */
+function insertSpoiler(editor: Editor, title: string) {
+  const { from, to, empty } = editor.state.selection;
+  const blocks = empty ? [] : (editor.state.doc.cut(from, to).toJSON().content ?? []);
+  const chain = editor.chain().focus();
+  if (!empty) chain.deleteSelection();
+  chain
+    .insertContent({
+      type: 'details',
+      attrs: { open: true },
+      content: [
+        { type: 'detailsSummary', content: [{ type: 'text', text: title }] },
+        { type: 'detailsContent', content: blocks.length ? blocks : [{ type: 'paragraph' }] },
+      ],
+    })
+    .run();
 }
 
 /** Grupo de botoes extra do BLOG: imagem (upload), citacao, bloco de codigo, video e spoiler. */
@@ -189,7 +194,7 @@ function BlogTools({ editor }: { editor: Editor }) {
       <ToolbarButton
         title={bx.spoiler}
         active={editor.isActive('details')}
-        onClick={() => (editor.isActive('details') ? editor.chain().focus().unsetDetails().run() : editor.chain().focus().setDetails().run())}
+        onClick={() => (editor.isActive('details') ? editor.chain().focus().unsetDetails().run() : insertSpoiler(editor, bx.spoilerTitle))}
       >
         <EyeOff className="h-4 w-4" />
       </ToolbarButton>
@@ -201,6 +206,10 @@ function BlogTools({ editor }: { editor: Editor }) {
 function Toolbar({ editor, blog }: { editor: Editor; blog: boolean }) {
   const { dict } = useLanguage();
   const t = dict.admin.richText;
+  // Re-renderiza a barra a cada mudanca de selecao/texto (o Tiptap v3 nao faz isso sozinho): sem isto os botoes e menus mostram o estado antigo.
+  useEditorState({ editor, selector: ({ editor: e }) => e.state, equalityFn: (a, b) => a === b });
+  const fontNow = (editor.getAttributes('textStyle').fontFamily as string | undefined) ?? '';
+  const sizeNow = ((editor.getAttributes('textStyle').fontSize as string | undefined) ?? '').replace('px', '');
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-secondary/30 p-1.5">
       <ToolbarButton title={t.bold} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
@@ -239,9 +248,10 @@ function Toolbar({ editor, blog }: { editor: Editor; blog: boolean }) {
         <option value="3">{t.heading3}</option>
       </select>
 
-      {/* Fonte */}
+      {/* Fonte e tamanho: mostram o que esta na selecao agora (como no Word) */}
       <select
-        className="h-8 rounded-md border border-border bg-background px-1.5 text-xs text-card-foreground"
+        className="h-8 max-w-[9rem] rounded-md border border-border bg-background px-1.5 text-xs text-card-foreground"
+        value={EDITOR_FONTS.some((f) => f.value === fontNow) ? fontNow : ''}
         onChange={(e) => {
           const v = e.target.value;
           if (v) editor.chain().focus().setFontFamily(v).run();
@@ -249,25 +259,31 @@ function Toolbar({ editor, blog }: { editor: Editor; blog: boolean }) {
         }}
         title={t.font}
       >
-        {FONT_FAMILIES.map((f) => (
-          <option key={f.label} value={f.value}>{f.label}</option>
+        <option value="">{t.defaultFont}</option>
+        {EDITOR_FONTS.map((f) => (
+          <option key={f.label} value={f.value} style={{ fontFamily: f.value }}>{f.label}</option>
         ))}
       </select>
-
-      {/* Cor do texto */}
       <select
-        className="h-8 rounded-md border border-border bg-background px-1.5 text-xs text-card-foreground"
+        className="h-8 w-[3.6rem] rounded-md border border-border bg-background px-1 text-xs text-card-foreground"
+        value={FONT_SIZES.includes(sizeNow) ? sizeNow : ''}
         onChange={(e) => {
           const v = e.target.value;
-          if (v) editor.chain().focus().setColor(v).run();
-          else editor.chain().focus().unsetColor().run();
+          if (v) editor.chain().focus().setFontSize(`${v}px`).run();
+          else editor.chain().focus().unsetFontSize().run();
         }}
-        title={t.textColor}
+        title={t.fontSize}
       >
-        {TEXT_COLORS.map((c) => (
-          <option key={c.label} value={c.value}>{c.label}</option>
-        ))}
+        <option value="">Auto</option>
+        {FONT_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
       </select>
+
+      {/* Cor da letra e cor de fundo (marca-texto), no estilo Word */}
+      <EditorColorPicker editor={editor} mode="text" />
+      <EditorColorPicker editor={editor} mode="background" />
+      <ToolbarButton title={t.clearFormat} onClick={() => editor.chain().focus().unsetAllMarks().run()}>
+        <RemoveFormatting className="h-4 w-4" />
+      </ToolbarButton>
 
       <div className="mx-1 h-5 w-px bg-border" />
 
@@ -387,6 +403,8 @@ export function RichTextEditor({
       StarterKit.configure({ link: false, underline: false }),
       TextStyle,
       Color,
+      BackgroundColor,
+      FontSize,
       Underline,
       FontFamily,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),

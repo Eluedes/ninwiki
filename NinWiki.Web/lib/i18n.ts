@@ -18,7 +18,7 @@ import type { Locale } from './types';
 export interface BlogxDict {
   editor: {
     image: string; imageAlt: string; imageError: string; quote: string; codeBlock: string; video: string;
-    videoPrompt: string; videoInvalid: string; spoiler: string; words: string; characters: string;
+    videoPrompt: string; videoInvalid: string; spoiler: string; spoilerTitle: string; words: string; characters: string;
   };
   post: {
     tagsLabel: string; tagsHint: string; newTagPlaceholder: string; addTag: string; tagError: string; tagsMax: string;
@@ -164,6 +164,7 @@ export interface Dictionary {
       font: string; textColor: string; bulletList: string; orderedList: string;
       alignLeft: string; alignCenter: string; alignRight: string; link: string;
       undo: string; redo: string; insertFicha: string; insertTable: string;
+      fontSize: string; highlightColor: string; automatic: string; noFill: string; themeColors: string; standardColors: string; recentColors: string; moreColors: string; clearFormat: string; defaultFont: string;
     };
     dropPicker: { linked: string; linkedTitle: string; searchPlaceholder: string; searching: string; noResults: string; categoryMobs: string; categoryItems: string; categoryWeapons: string; categoryMissions: string; categoryGuides: string };
     entryHistory: { loading: string; loadError: string; empty: string; bySystem: string; created: string; updated: string; deleted: string };
@@ -404,7 +405,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         image: 'Inserir imagem (envio)', imageAlt: 'Texto alternativo da imagem (descreva o que aparece; ajuda quem usa leitor de tela):',
         imageError: 'Não foi possível enviar a imagem.', quote: 'Citação', codeBlock: 'Bloco de código', video: 'Vídeo do YouTube ou Twitch',
         videoPrompt: 'Cole o link do vídeo (YouTube ou Twitch):', videoInvalid: 'Link não reconhecido. Use um link do YouTube ou da Twitch.',
-        spoiler: 'Spoiler (bloco que abre e fecha)', words: 'palavras', characters: 'caracteres',
+        spoiler: 'Spoiler (esconde o texto selecionado até o leitor clicar)', spoilerTitle: 'Spoiler — clique para ver', words: 'palavras', characters: 'caracteres',
       },
       post: {
         tagsLabel: 'Tags / categorias', tagsHint: 'Até 8. Ajudam o leitor a filtrar o blog.', newTagPlaceholder: 'Nova tag (em inglês)...', addTag: 'Criar tag',
@@ -661,6 +662,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         font: 'Fonte', textColor: 'Cor do texto', bulletList: 'Lista com marcadores', orderedList: 'Lista numerada',
         alignLeft: 'Alinhar à esquerda', alignCenter: 'Centralizar', alignRight: 'Alinhar à direita', link: 'Link',
         undo: 'Desfazer', redo: 'Refazer',
+        fontSize: 'Tamanho da letra', highlightColor: 'Cor de destaque (fundo)', automatic: 'Automático', noFill: 'Sem preenchimento', themeColors: 'Cores do tema', standardColors: 'Cores padrão', recentColors: 'Usadas recentemente', moreColors: 'Mais cores...', clearFormat: 'Limpar formatação', defaultFont: 'Padrão',
         insertFicha: 'Inserir Ficha', insertTable: 'Inserir Tabela',
       },
       dropPicker: {
@@ -1041,7 +1043,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         image: 'Insert image (upload)', imageAlt: 'Image alt text (describe what it shows; helps screen reader users):',
         imageError: 'Could not upload the image.', quote: 'Quote', codeBlock: 'Code block', video: 'YouTube or Twitch video',
         videoPrompt: 'Paste the video link (YouTube or Twitch):', videoInvalid: 'Link not recognized. Use a YouTube or Twitch link.',
-        spoiler: 'Spoiler (block that opens and closes)', words: 'words', characters: 'characters',
+        spoiler: 'Spoiler (hides the selected text until the reader clicks)', spoilerTitle: 'Spoiler — click to reveal', words: 'words', characters: 'characters',
       },
       post: {
         tagsLabel: 'Tags / categories', tagsHint: 'Up to 8. They help readers filter the blog.', newTagPlaceholder: 'New tag (in English)...', addTag: 'Create tag',
@@ -1298,6 +1300,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         font: 'Font', textColor: 'Text color', bulletList: 'Bullet list', orderedList: 'Numbered list',
         alignLeft: 'Align left', alignCenter: 'Center', alignRight: 'Align right', link: 'Link',
         undo: 'Undo', redo: 'Redo',
+        fontSize: 'Font size', highlightColor: 'Highlight color', automatic: 'Automatic', noFill: 'No fill', themeColors: 'Theme colors', standardColors: 'Standard colors', recentColors: 'Recent colors', moreColors: 'More colors...', clearFormat: 'Clear formatting', defaultFont: 'Default',
         insertFicha: 'Insert Sheet', insertTable: 'Insert Table',
       },
       dropPicker: {

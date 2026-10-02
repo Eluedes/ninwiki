@@ -140,8 +140,9 @@ export const BlogMention = Mention.extend({
 
 /** Spoiler no site publico: <details class="spoiler">. */
 export const PublicDetails = Details.extend({
-  renderHTML({ HTMLAttributes }) {
-    return ['details', mergeAttributes(HTMLAttributes, { class: 'spoiler' }), 0];
+  // Sempre fechado no site, mesmo que o editor tenha gravado `open` (senao o spoiler nasce aberto e nao esconde nada).
+  renderHTML() {
+    return ['details', { class: 'spoiler' }, 0];
   },
 });
 /** Titulo do spoiler no site publico: <summary>. */

@@ -332,6 +332,10 @@
 .ProseMirror [data-type='details'] {
   @apply flex gap-2;
 }
+.ProseMirror [data-type='details'] summary {
+  display: block;
+  list-style: none;
+}
 .ProseMirror [data-type='details'] > button {
   @apply h-6 w-6 shrink-0 rounded text-muted-foreground hover:bg-secondary;
 }
