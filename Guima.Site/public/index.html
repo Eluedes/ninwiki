@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guima · Construindo e realizando sonhos</title>
+  <meta name="description" content="Algo grande está sendo erguido aqui. O site do Guima está em construção: volte em breve.">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Guima · Construindo e realizando sonhos">
+  <meta property="og:description" content="Algo grande está sendo erguido aqui. Volte em breve.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div class="glow" aria-hidden="true"></div>
+
+  <main class="hero">
+    <p class="badge"><span class="dot" aria-hidden="true"></span> Em construção</p>
+    <h1 class="brand">Guima</h1>
+    <p class="tagline">Construindo e realizando <em>sonhos</em></p>
+    <p class="phrase" id="phrase" aria-live="polite">Todo grande sonho começa com uma obra.</p>
+
+    <div class="progress" role="progressbar" aria-label="Progresso da obra" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72">
+      <span class="bar" id="bar"></span>
+    </div>
+    <p class="soon">A obra está a todo vapor. Volte em breve.</p>
+  </main>
+
+  <div class="city" id="city" aria-hidden="true"></div>
+
+  <noscript><p class="noscript">Em construção · volte em breve.</p></noscript>
+  <script src="/app.js" defer></script>
+</body>
+</html>

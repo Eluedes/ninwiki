@@ -1,0 +1,4 @@
+*.md
+scripts
+.git
+node_modules
