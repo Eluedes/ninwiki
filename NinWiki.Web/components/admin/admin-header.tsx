@@ -4,17 +4,31 @@
 // (vem de GET /auth/me via useAuth) e o cargo, com o botao de sair.
 
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { LogOut, Pencil } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { LanguageSelector } from '@/components/language-selector';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
+import { ApiError, updateStaffName } from '@/lib/api-client';
 
 /** Cabecalho do painel: idioma, tema e usuario logado com sair. */
 export function AdminHeader() {
   const { dict } = useLanguage();
-  const { me, logout } = useAuth();
+  const { me, logout, can, refresh } = useAuth();
   const router = useRouter();
+
+  /** Troca o PROPRIO nome (so' S.Adm): pergunta o nome novo, salva e atualiza o cabecalho. */
+  async function handleEditMyName() {
+    if (!me) return;
+    const name = window.prompt(dict.admin.auth.editName + ':', me.username);
+    if (name === null || !name.trim() || name.trim() === me.username) return;
+    try {
+      await updateStaffName(me.id, name.trim());
+      await refresh();
+    } catch (err) {
+      window.alert(err instanceof ApiError ? err.message : dict.admin.auth.actionError);
+    }
+  }
 
   async function handleLogout() {
     await logout();
@@ -40,7 +54,15 @@ export function AdminHeader() {
               </div>
             )}
             <div className="hidden sm:block">
-              <span className="block text-sm font-semibold leading-tight text-card-foreground">{me.username}</span>
+              <span className="flex items-center gap-1 text-sm font-semibold leading-tight text-card-foreground">
+                {me.username}
+                {can('staff.edit') && (
+                  <button onClick={handleEditMyName} title={dict.admin.auth.editName}
+                    className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-card-foreground">
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
               <span className="block text-xs text-muted-foreground">{me.discordId}</span>
             </div>
             <RoleBadge role={me.role} />

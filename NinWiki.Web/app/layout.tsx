@@ -20,7 +20,8 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   // base dos enderecos absolutos (og:image, canonical...): NEXT_PUBLIC_SITE_URL, ex: https://wiki.seudominio.com
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: 'Nin Online Wiki',
+  // title.template: cada pagina define so' o seu nome (ex: "Fire Trap") e a aba mostra "Fire Trap · Nin Online Wiki"
+  title: { default: 'Nin Online Wiki', template: '%s · Nin Online Wiki' },
   description: 'The definitive encyclopedia of the Nin Online MMORPG — mobs, items, weapons, masteries, guides and missions.',
 };
 

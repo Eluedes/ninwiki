@@ -3,6 +3,10 @@
 
 import { listVillages } from '@/lib/api-client';
 import { VillagesPageClient } from '@/components/lore/villages-page-client';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Villages' };
+
 
 /** Listagem publica de vilas (Server Component: busca na API). */
 export default async function VillagesPage() {

@@ -6,6 +6,18 @@
 import { getVillage, listVillages, ApiError } from '@/lib/api-client';
 import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { VillagePageClient } from '@/components/lore/village-page-client';
+import type { Metadata } from 'next';
+
+/** Titulo da aba: o nome da vila. */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    return { title: (await getVillage(id)).name };
+  } catch {
+    return { title: 'Villages' };
+  }
+}
+
 
 /** Pagina publica de uma vila (Server Component: busca na API). */
 export default async function VillagePage({

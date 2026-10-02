@@ -7,6 +7,18 @@
 import { getMastery, listJutsus, listAttributes, ApiError } from '@/lib/api-client';
 import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { MasteryPageClient } from '@/components/lore/mastery-page-client';
+import type { Metadata } from 'next';
+
+/** Titulo da aba: o nome da mastery. */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    return { title: `${(await getMastery(id)).name} Mastery` };
+  } catch {
+    return { title: 'Masteries' };
+  }
+}
+
 
 /** Pagina publica de uma mastery (Server Component: busca na API). */
 export default async function MasteryPage({

@@ -7,6 +7,19 @@
 import { getJutsu, getMastery, ApiError } from '@/lib/api-client';
 import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { JutsuPageClient } from '@/components/lore/jutsu-page-client';
+import type { Metadata } from 'next';
+
+/** Titulo da aba: o nome do jutsu (em ingles, o idioma principal do site). */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const jutsu = await getJutsu(id);
+    return { title: jutsu.name };
+  } catch {
+    return { title: 'Jutsu' };
+  }
+}
+
 
 /** Pagina publica de um jutsu (Server Component: busca na API). */
 export default async function JutsuPage({

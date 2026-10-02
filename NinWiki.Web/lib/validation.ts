@@ -86,7 +86,6 @@ export const jutsuSchema = z.object({
   castType: z.string().max(100),
   jutsuClass: z.string().max(100),
   debuff: z.string().max(150),
-  battleExtra: z.array(z.object({ label: z.string().max(60), value: z.string().max(150) })).max(10),
 });
 
 export type JutsuFormValues = z.infer<typeof jutsuSchema>;

@@ -3,6 +3,10 @@
 
 import { listPosts, listTags, type ApiPostSummary, type ApiTagWithCount } from '@/lib/api-client';
 import { BlogPageClient } from '@/components/blog/blog-page-client';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Blog' };
+
 
 /** Listagem publica do blog (so' posts publicados), filtrada pela tag da URL quando houver. */
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ tag?: string }> }) {

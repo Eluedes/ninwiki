@@ -50,8 +50,7 @@ export interface JutsuInfoDict {
   jutsuClass: string; range: string; debuff: string; levelWord: string; cpUnit: string;
   // editor
   sheetTitle: string; sheetHint: string; requiredLevel: string; requiredStat: string; scrollType: string; scrollTypeHint: string;
-  maxLevelHint: string; perLevelHint: string; levelN: string; battleExtra: string; addRow: string; rowLabel: string; rowValue: string;
-  removeRow: string; tierHint: string;
+  maxLevelHint: string; perLevelHint: string; levelN: string; tierHint: string;
 }
 
 export interface Dictionary {
@@ -441,8 +440,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       requiredLevel: 'Nível exigido (ex.: 20+)', requiredStat: 'Atributo exigido (ex.: 35 Intellect)', scrollType: 'Tipo de pergaminho',
       scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (ex.: Sealable Scroll II).',
       maxLevelHint: 'De 1 a 10. Define quantos campos por nível aparecem abaixo.', perLevelHint: 'Um valor por nível; deixe vazio o que não se aplica.',
-      levelN: 'Nível {n}', battleExtra: 'Linhas extras de Dados de batalha', addRow: 'Adicionar linha', rowLabel: 'Nome (ex.: Duração)', rowValue: 'Valor (ex.: 5s)',
-      removeRow: 'Remover linha', tierHint: 'De 1 a 4 (o máximo é 4).',
+      levelN: 'Nível {n}', tierHint: 'De 1 a 4 (o máximo é 4).',
     },
     admin: {
       login: {
@@ -1074,8 +1072,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       requiredLevel: 'Required level (e.g. 20+)', requiredStat: 'Required stat (e.g. 35 Intellect)', scrollType: 'Scroll type',
       scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (e.g. Sealable Scroll II).',
       maxLevelHint: 'From 1 to 10. Sets how many per-level fields appear below.', perLevelHint: 'One value per level; leave empty what does not apply.',
-      levelN: 'Level {n}', battleExtra: 'Extra Battle Data rows', addRow: 'Add row', rowLabel: 'Name (e.g. Duration)', rowValue: 'Value (e.g. 5s)',
-      removeRow: 'Remove row', tierHint: 'From 1 to 4 (4 is the maximum).',
+      levelN: 'Level {n}', tierHint: 'From 1 to 4 (4 is the maximum).',
     },
     admin: {
       login: {

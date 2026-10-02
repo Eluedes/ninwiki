@@ -338,7 +338,6 @@ export interface ApiJutsu {
   castType: string;
   jutsuClass: string;
   debuff: string;
-  battleExtra: { label: string; value: string }[];
 }
 
 // Corpo aceito em criar/editar um jutsu - igual a ApiJutsu, mas `id`
