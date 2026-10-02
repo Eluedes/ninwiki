@@ -2,7 +2,7 @@
 # Instale com: pip install -r requirements.txt (dentro do venv ativado)
 
 fastapi==0.141.1             # framework web assincrono que expoe os endpoints da API
-uvicorn[standard]==0.53.0    # servidor ASGI que roda o FastAPI (o [standard] inclui reload/websockets)
+uvicorn[standard]==0.54.0    # servidor ASGI que roda o FastAPI (o [standard] inclui reload/websockets)
 sqlalchemy[asyncio]==2.0.54  # ORM - unica forma de tocar no banco, nunca SQL puro
 asyncpg==0.31.0              # driver assincrono de Postgres usado pelo SQLAlchemy
 alembic==1.20.0              # gera e aplica migrations (versionamento do schema do banco)
