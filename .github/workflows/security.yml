@@ -1,0 +1,33 @@
+name: Seguranca (bibliotecas com falha conhecida)
+
+# Roda toda segunda-feira, a cada push na main e quando voce clicar em "Run workflow". Falha (vermelho) se alguma biblioteca da API, do bot
+# ou do site tiver vulnerabilidade conhecida - assim voce fica sabendo antes de alguem explorar.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: pip-audit (API e bot)
+        run: |
+          pip install pip-audit
+          pip-audit -r NinWiki.Api/requirements.txt
+          pip-audit -r NinWiki.Bot/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: npm audit (site)
+        working-directory: NinWiki.Web
+        run: npm audit --audit-level=high

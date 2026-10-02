@@ -1,0 +1,16 @@
+# Atualizacoes automaticas de bibliotecas: o GitHub abre um pull request quando uma biblioteca (ou uma Action) tem versao nova ou
+# correcao de seguranca. Nada e' aplicado sozinho: voce revisa e faz o merge.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /NinWiki.Api
+    schedule: { interval: weekly }
+  - package-ecosystem: pip
+    directory: /NinWiki.Bot
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /NinWiki.Web
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }

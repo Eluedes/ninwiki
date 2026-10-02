@@ -5,3 +5,8 @@ venv
 .venv
 uploads
 backups
+*.md
+*.example
+scripts
+docker-compose*.yml
+diagnostico_conexao.py
