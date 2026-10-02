@@ -32,6 +32,9 @@ case "$CHECK" in
   *) echo "::warning::Conferência inconclusiva (HTTP $CHECK) - seguindo para o envio." ;;
 esac
 
+# Versao publicada (commit do GitHub): a API mostra em /health e o painel (S.Adm) mostra no rodape - serve para saber o que esta no ar.
+printf '%s\n' "${GIT_SHA:-unknown}" > "$DIR/VERSION"
+
 # Grava o .env só aqui dentro do runner (nunca vai pro Git).
 # (tr -d '\r': um Secret colado do Windows vem com quebra de linha CRLF - o "\r" ficaria grudado no fim de cada valor.)
 printf '%s\n' "$APP_ENV" | tr -d '\r' > "$DIR/.env"

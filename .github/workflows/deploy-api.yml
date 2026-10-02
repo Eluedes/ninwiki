@@ -39,4 +39,5 @@ jobs:
           DB_SSL_CERT: ${{ secrets.DB_SSL_CERT }}
           DB_SSL_KEY: ${{ secrets.DB_SSL_KEY }}
           RESTART: ${{ inputs.restart }}
+          GIT_SHA: ${{ github.sha }}
         run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Api ninwiki-api.zip

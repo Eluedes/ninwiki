@@ -11,6 +11,8 @@ import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, Use
 import { useAuth } from '@/components/providers/auth-provider';
 import { requiredPermissionFor } from '@/lib/admin-routes';
 import { NinLogo } from '@/components/icons/nin-logo';
+import { useEffect, useState } from 'react';
+import { API_URL } from '@/lib/api-client';
 
 // `as const` congela o array/objetos como literais exatos (em vez de
 // string generica), o que ajuda o TypeScript a checar que `key` bate
@@ -30,6 +32,23 @@ const navItems = [
   { key: 'permissions', href: '/admin/permissions', icon: ShieldCheck },
   { key: 'errors', href: '/admin/errors', icon: Bug },
 ] as const;
+
+/** Versao publicada do site e da API (so' S.Adm): ajuda a saber se o deploy mais recente ja' esta no ar. */
+function VersionInfo() {
+  const [apiVersion, setApiVersion] = useState('…');
+  useEffect(() => {
+    fetch(`${API_URL}/health`)
+      .then((r) => r.json())
+      .then((h: { version?: string }) => setApiVersion(h.version ?? 'old'))
+      .catch(() => setApiVersion('offline'));
+  }, []);
+  const web = (process.env.NEXT_PUBLIC_BUILD_SHA ?? 'dev').slice(0, 7);
+  return (
+    <p className="px-3 pb-2 text-[11px] leading-tight text-muted-foreground/70" title="Versao publicada (commit do GitHub)">
+      Web {web} · API {apiVersion}
+    </p>
+  );
+}
 
 /** Menu lateral do painel, filtrado pelas permissoes do cargo. */
 export function AdminSidebar() {
@@ -80,6 +99,7 @@ export function AdminSidebar() {
       </nav>
 
       <div className="border-t border-border p-3">
+        {can('staff.view') && <VersionInfo />}
         <Link
           href="/"
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-card-foreground"

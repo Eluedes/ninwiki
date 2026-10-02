@@ -146,6 +146,17 @@ uploads_dir.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 
+def _read_version() -> str:
+    """Versao publicada (7 primeiros caracteres do commit): o workflow de deploy grava o arquivo VERSION; local = 'dev'."""
+    try:
+        return (uploads_dir.parent / "VERSION").read_text(encoding="utf-8").strip()[:7] or "dev"
+    except OSError:
+        return "dev"
+
+
+APP_VERSION = _read_version()
+
+
 @app.get("/health")
 async def health_check():
     """
@@ -155,7 +166,7 @@ async def health_check():
     certo, sem precisar testar nenhuma logica de negocio. E' o primeiro
     endpoint que testamos ao configurar o ambiente local.
     """
-    return {"status": "ok", "environment": settings.environment}
+    return {"status": "ok", "environment": settings.environment, "version": APP_VERSION}
 
 
 @app.get("/health/ready")

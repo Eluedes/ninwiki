@@ -44,6 +44,7 @@ jobs:
         env:
           WEB_ENV: ${{ secrets.WEB_ENV }}
           STANDALONE_BUILD: 'true'
+          NEXT_PUBLIC_BUILD_SHA: ${{ github.sha }}   # aparece no rodape do painel (S.Adm): qual versao do site esta no ar
         run: |
           if [ -z "$WEB_ENV" ]; then echo "::error::Secret WEB_ENV vazio. Veja o cabeçalho deste workflow."; exit 1; fi
           printf '%s\n' "$WEB_ENV" | tr -d '\r' > .env   # o Next lê o .env no build
@@ -66,4 +67,5 @@ jobs:
           APP_ENV: ${{ secrets.WEB_ENV }}
           RESTART: ${{ inputs.restart }}
           PREBUILT: 'true'
+          GIT_SHA: ${{ github.sha }}
         run: bash .github/scripts/deploy-squarecloud.sh pkg-web ninwiki-web.zip

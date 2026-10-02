@@ -51,6 +51,7 @@ export interface JutsuInfoDict {
   // editor
   sheetTitle: string; sheetHint: string; requiredLevel: string; requiredStat: string; scrollType: string; scrollTypeHint: string;
   maxLevelHint: string; perLevelHint: string; levelN: string; tierHint: string;
+  levelsTitle: string; levelsHint: string; addLevel: string; removeLevel: string;
 }
 
 export interface Dictionary {
@@ -74,7 +75,7 @@ export interface Dictionary {
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterSpecial: string };
-  detail: { attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string };
+  detail: { attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
   masteryDetail: {
     notFound: string; backToMasteries: string; elemental: string; nonElemental: string;
     aboutMastery: string; masteryPaths: string; noJutsusInPath: string; jutsusOfMastery: string;
@@ -352,6 +353,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       attackSpeed: 'Velocidade de Ataque',
       statBonus: 'Bônus de Atributo',
       knockbackDistance: 'Distância de Knockback',
+      mobHealth: 'Vida', mobDamage: 'Dano', mobExperience: 'Experiência', mobRange: 'Alcance', mobRespawn: 'Reaparecimento', combatStats: 'Combate',
     },
     masteryDetail: {
       notFound: 'Mastery não encontrada.',
@@ -441,6 +443,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (ex.: Sealable Scroll II).',
       maxLevelHint: 'De 1 a 10. Define quantos campos por nível aparecem abaixo.', perLevelHint: 'Um valor por nível; deixe vazio o que não se aplica.',
       levelN: 'Nível {n}', tierHint: 'De 1 a 4 (o máximo é 4).',
+      levelsTitle: 'Níveis: dano base e recarga', levelsHint: 'Uma linha por nível do jutsu (o nível máximo é a quantidade de linhas). Clique em "Adicionar nível" quando o jutsu subir de nível.',
+      addLevel: 'Adicionar nível', removeLevel: 'Remover nível',
     },
     admin: {
       login: {
@@ -984,6 +988,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       attackSpeed: 'Attack Speed',
       statBonus: 'Stat Bonus',
       knockbackDistance: 'Knockback Distance',
+      mobHealth: 'Health', mobDamage: 'Damage', mobExperience: 'Experience', mobRange: 'Range', mobRespawn: 'Respawn', combatStats: 'Combat',
     },
     masteryDetail: {
       notFound: 'Mastery not found.',
@@ -1073,6 +1078,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (e.g. Sealable Scroll II).',
       maxLevelHint: 'From 1 to 10. Sets how many per-level fields appear below.', perLevelHint: 'One value per level; leave empty what does not apply.',
       levelN: 'Level {n}', tierHint: 'From 1 to 4 (4 is the maximum).',
+      levelsTitle: 'Levels: base damage and cooldown', levelsHint: 'One row per jutsu level (the maximum level is the number of rows). Click "Add level" when the jutsu levels up.',
+      addLevel: 'Add level', removeLevel: 'Remove level',
     },
     admin: {
       login: {
