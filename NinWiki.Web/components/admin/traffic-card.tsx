@@ -55,7 +55,7 @@ export function TrafficCard() {
   const maxShare = Math.max(1, ...(data?.countries.map((c) => c.share) ?? [1]));
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+    <div className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold"><Globe2 className="h-5 w-5 text-primary" />{t.title}</h2>
@@ -80,8 +80,8 @@ export function TrafficCard() {
       ) : !data ? (
         <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-          <div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="min-w-0">
             <div className="mb-3 flex gap-6">
               <div><p className="text-2xl font-bold tabular-nums">{data.totalViews.toLocaleString(locale)}</p><p className="text-xs text-muted-foreground">{t.views}</p></div>
               <div><p className="text-2xl font-bold tabular-nums">{data.totalVisitors.toLocaleString(locale)}</p><p className="text-xs text-muted-foreground">{t.visitors}</p></div>
