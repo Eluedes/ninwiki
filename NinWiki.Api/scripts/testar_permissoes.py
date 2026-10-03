@@ -2015,6 +2015,20 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         _cfg.steam_news_require_tag = ""
         r = await c.post("/steam-news/import", headers=A)
         check("sem exigir tag, importa tambem os outros (evento e sem tags)", r.json()["lastRun"]["imported"] == 2, str(r.json()["lastRun"])[:160])
+        feed.append({**_item("teste-steam-777000001", f"{SLUG} Post antigo", ["event"], corpo="Texto antigo."), "gid": "777000001", "date": 1500000000})   # 2017: bem antes do sistema
+        _cfg.steam_news_require_tag = "patchnotes"
+        r = await c.post("/steam-news/import", params={"post": "https://store.steampowered.com/news/app/1"}, headers=A)
+        check("link sem numero de post: 422", r.status_code == 422)
+        r = await c.post("/steam-news/import", params={"post": "https://store.steampowered.com/news/app/1/view/999999999"}, headers=A)
+        check("post que a Steam nao tem: aviso 'not found' (nada importado)", r.status_code == 200 and r.json()["lastRun"]["imported"] == 0 and "not found" in r.json()["lastRun"]["errors"][0], str(r.json()["lastRun"])[:160])
+        r = await c.post("/steam-news/import", params={"post": "https://store.steampowered.com/news/app/1/view/777000001"}, headers=A)
+        check("post antigo e sem a tag: importado pelo link", r.status_code == 200 and r.json()["lastRun"]["imported"] == 1 and not r.json()["lastRun"]["errors"], str(r.json()["lastRun"])[:200])
+        async with _Sess() as db:
+            velho = (await db.execute(text("SELECT published_at, status FROM posts WHERE source_id = '777000001'"))).first()
+        check("o post antigo entra com a DATA ORIGINAL da Steam (2017)", velho is not None and velho[0].year == 2017, str(velho))
+        r = await c.post("/steam-news/import", params={"post": "777000001"}, headers=A)
+        check("importar o mesmo post de novo avisa que ja' existe (nao duplica)", r.json()["lastRun"]["imported"] == 0 and "already imported" in r.json()["lastRun"]["errors"][0])
+        check("so' quem publica importa por link (Creator 403)", (await c.post("/steam-news/import", params={"post": "777000001"}, headers=C)).status_code == 403)
         _cfg.steam_news_app_id = ""
         check("desligado (sem STEAM_NEWS_APP_ID): importar da' 404", (await c.post("/steam-news/import", headers=A)).status_code == 404)
         check("desligado: o estado diz enabled=false", (await c.get("/steam-news/status", headers=A)).json()["enabled"] is False)
@@ -2030,7 +2044,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         sn.fetch_news = original_fetch
         _cfg.steam_news_app_id, _cfg.steam_news_author_name, _cfg.steam_news_status, _cfg.steam_news_require_tag = original_cfg
         async with _Sess() as db:
-            await db.execute(text("DELETE FROM posts WHERE source_id LIKE 'teste-steam-%'"))
+            await db.execute(text("DELETE FROM posts WHERE source_id LIKE 'teste-steam-%' OR source_id = '777000001'"))
             await db.commit()
 
     secao("31) Backup cifrado (banco + imagens) e versao publicada: so' o bot, nunca sem senha")

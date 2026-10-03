@@ -1469,7 +1469,8 @@ export function getSteamNewsStatus(): Promise<ApiSteamStatus> {
   return apiFetch('/steam-news/status');
 }
 
-/** Confere a Steam agora e importa os posts de atualizacao novos. */
-export function runSteamNewsImport(): Promise<ApiSteamStatus> {
-  return apiFetch('/steam-news/import', { method: 'POST' });
+/** Confere a Steam agora e importa os posts de atualizacao novos; com `post` (link ou numero de um post) importa so' esse, mesmo antigo ou sem a tag. */
+export function runSteamNewsImport(post?: string): Promise<ApiSteamStatus> {
+  const q = post?.trim() ? `?post=${encodeURIComponent(post.trim())}` : '';   // com `post` (link ou numero) importa SO' esse post da Steam
+  return apiFetch(`/steam-news/import${q}`, { method: 'POST' });
 }
