@@ -86,6 +86,9 @@ class Settings(BaseSettings):
     steam_news_status: str = "published"           # "published" = vai ao ar na hora; "draft" = entra como rascunho para revisar
     steam_news_author_name: str = ""               # nome mostrado em "por/by" (a desenvolvedora). Vazio = o autor que a Steam informa
     steam_news_require_tag: str = "patchnotes"     # so' importa posts com esta tag da Steam; vazio = importa todos
+    # Alem da tag, aceita posts cujo TITULO bate com esta expressao (a Steam nem sempre marca os updates como `patchnotes`: o tipo "Atualizacao regular" nao e' uma tag da API).
+    # Expressao regular, sem diferenciar maiusculas. Vazio = so' a tag. Padrao: update / patch / hotfix / versao tipo v6.0.0.9b.
+    steam_news_title_pattern: str = r"update|patch|hotfix|\bv?\d+\.\d+(\.\d+)*[a-z]?\b"
     steam_news_max_per_run: int = 5                # teto de posts novos por conferencia (evita inundar o blog na 1a vez)
 
     # Senha compartilhada entre a API e o NinWiki.Bot (header X-Bot-Token).
