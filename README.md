@@ -128,7 +128,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
   **limpar formatação**. **Spoiler** (blog): selecione o texto e clique no olho riscado — ele vai para dentro de um bloco que o leitor abre com um clique.
   A API só aceita cor/fonte/tamanho em formato conhecido (proteção contra CSS malicioso).
 - **Bestiário e Armas:** páginas com cartões ricos (vida, dano, XP, alcance, respawn; arma com tipo, requisito, NPC, dano base, habilidade especial,
-  knockback). No painel, o campo extra de armas chama **Stat Bonus**.
+  knockback). No painel, o campo extra de armas chama **Stat Bonus**. A **descrição é opcional nos mobs** (nas demais categorias continua obrigatória); sem texto, a página pública não mostra o cartão de descrição.
 - **Mapa:** está **em manutenção** — sai do menu e qualquer `/map` vai para `/maintenance`. Para liberar, esvazie `MAINTENANCE_PATHS` em `NinWiki.Web/lib/maintenance.ts`.
 - **Erros e problemas** (`/admin/errors`, só S.Adm): tudo que quebrou no wiki — erros da API, erros de tela do site, falhas da DeepL e
   alertas de flood — agrupados (um problema = uma linha com o contador), com local no código e traceback mascarado. Resolva

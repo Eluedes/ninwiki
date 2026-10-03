@@ -245,7 +245,7 @@ export interface Dictionary {
       weaponKnockbackDistance: string; weaponKnockbackDistancePlaceholder: string;
       maxStack: string; maxStackPlaceholder: string; castVillage: string;
       rarity: string; level: string; image: string;
-      description: string; descriptionPlaceholder: string;
+      description: string; descriptionPlaceholder: string; optionalSuffix: string;
       lore: string; loreOptional: string; lorePlaceholder: string;
       synergy: string; synergyOptional: string; synergyPlaceholder: string;
       spawnLocation: string; spawnLocationPlaceholder: string;
@@ -901,7 +901,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         weaponKnockbackDistance: 'Distância de Knockback', weaponKnockbackDistancePlaceholder: '',
         maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Vila que pode usar',
         rarity: 'Raridade', level: 'Nível', image: 'Imagem',
-        description: 'Descrição', descriptionPlaceholder: 'Descrição curta, sempre visível na página...',
+        description: 'Descrição', descriptionPlaceholder: 'Descrição curta, sempre visível na página...', optionalSuffix: '(opcional)',
         lore: 'Lore', loreOptional: 'Lore (opcional)', lorePlaceholder: 'História, contexto...',
         synergy: 'Sinergia', synergyOptional: 'Sinergia (opcional)',
         synergyPlaceholder: 'Dica de estratégia, combinação com outras técnicas...',
@@ -1577,7 +1577,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         weaponKnockbackDistance: 'Knockback Distance', weaponKnockbackDistancePlaceholder: '',
         maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Village that can use it',
         rarity: 'Rarity', level: 'Level', image: 'Image',
-        description: 'Description', descriptionPlaceholder: 'Short description, always visible on the page...',
+        description: 'Description', descriptionPlaceholder: 'Short description, always visible on the page...', optionalSuffix: '(optional)',
         lore: 'Lore', loreOptional: 'Lore (optional)', lorePlaceholder: 'History, context...',
         synergy: 'Synergy', synergyOptional: 'Synergy (optional)',
         synergyPlaceholder: 'Strategy tip, combination with other techniques...',

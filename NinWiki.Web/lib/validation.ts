@@ -21,7 +21,8 @@ export const contentItemSchema = z.object({
   icon: z.string().min(1, 'Pick an icon (emoji).').max(20),
   image: z.string().nullable().optional(),
   rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']),
-  description: z.string().min(1, 'The description is required.'),
+  // Opcional para mobs (bestiario) - validado no superRefine abaixo.
+  description: z.string(),
   lore: z.string().nullable().optional(),
   synergy: z.string().nullable().optional(),
   // So' relevante quando category === 'mobs' - mesmo padrao de
@@ -49,6 +50,11 @@ export const contentItemSchema = z.object({
   castVillageId: z.string().nullable().optional(),
   mobType: z.enum(['monster', 'boss', 'npc', 'mount']).nullable().optional(),
   itemType: z.enum(['general', 'ring', 'consumable', 'material', 'currency', 'cast']).nullable().optional(),
+}).superRefine((value, ctx) => {
+  // Descricao e' obrigatoria em todas as categorias, exceto mobs.
+  if (value.category !== 'mobs' && !value.description.trim()) {
+    ctx.addIssue({ code: 'custom', path: ['description'], message: 'The description is required.' });
+  }
 });
 
 export type ContentItemFormValues = z.infer<typeof contentItemSchema>;
