@@ -45,6 +45,7 @@ class BackupStore:
     """Guarda em arquivo a hora do ultimo backup bem-sucedido: reiniciar o bot (ex.: a cada deploy) NAO dispara outro backup antes da hora."""
 
     def __init__(self, path: Path):
+        """`path` = arquivo onde a hora do ultimo backup fica salva."""
         self.path = path
 
     def load(self) -> datetime | None:

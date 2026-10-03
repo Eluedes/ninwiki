@@ -414,7 +414,7 @@ GitHub → aba **Actions** → escolha o workflow na lista da esquerda → **Run
    `aplicando migrations...` e depois `iniciando API na porta 80...`. Teste `https://api.seudominio.com/health` (depois do 3.8; antes
    disso use o endereço `*.squareweb.app` do app só para testar).
 2. **Deploy Web na SquareCloud (manual)** → o site é **compilado no próprio GitHub** (leva 2–4 min no workflow) e só o resultado vai para a SquareCloud, que apenas executa `node server.js` (uns 200 MB de RAM). Nos Logs do app deve aparecer `Ready`. (Compilar dentro da SquareCloud estoura a memória e o processo morre com `Killed` — por isso não fazemos assim.)
-3. **Deploy Bot na SquareCloud (manual)** (opcional) → Logs: o bot conecta e, em até 1 h (ou na hora com `DEV_GUILD_ID`), os comandos `/team` aparecem.
+3. **Deploy Bot na SquareCloud (manual)** (opcional) → Logs: o bot conecta e, os comandos aparecem na hora nos servidores de `ALLOWED_GUILD_IDS`/`DEV_GUILD_ID` (sem nenhum deles, em até 1 h em todos).
 
 O que o workflow faz por você: monta o `.env` a partir do Secret, grava os certificados em `certs/`, zipa a pasta **sem** `node_modules`, `.next`, `venv`,
 `uploads`, `staff_files` e `backups`, envia pela API da SquareCloud e apaga tudo (`.env`, certificados, zip) do runner no fim.
@@ -505,6 +505,7 @@ novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses tr
 | `MAX_NOTICE_FILE_MB` | **`200`** | anexo do Quadro de avisos (gravado aos pedaços; a Cloudflare grátis corta acima de 100 MB) |
 | `MAX_JSON_BODY_KB` | `512` | corpo máximo das requisições comuns |
 | `PUBLIC_REQUESTS_PER_MINUTE` / `UPLOAD_REQUESTS_PER_MINUTE` / `WRITE_REQUESTS_PER_MINUTE` | `1200` / `1500` / `120` | limite por IP (leituras, imagens, escritas) |
+| `BACKUP_PASSPHRASE` / `BACKUP_EXCLUDE_TABLES` | vazio / `traffic_visitors,error_events` | senha do backup cifrado (vazio = backups desligados; **guarde-a**: sem ela o backup não abre) / tabelas fora do backup |
 | `STEAM_NEWS_APP_ID` | vazio | liga o **importador de notícias da Steam** (ex.: `1674010`, o número da página `store.steampowered.com/news/app/1674010`): a API confere a cada `STEAM_NEWS_INTERVAL_MINUTES` (30, mín. 10) e copia para o blog, com a tag **Patch Notes**, cada post marcado `patchnotes` na Steam |
 | `STEAM_NEWS_AUTHOR_NAME` | vazio | nome mostrado em *por/by* nos posts importados (a desenvolvedora); vazio = o autor que a Steam informa |
 | `STEAM_NEWS_STATUS` | `published` | `published` publica na hora; `draft` cria **rascunho** para você revisar (troque para `draft` se a conversão errar algo) |
@@ -537,11 +538,13 @@ sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem s
 | `DISCORD_BOT_TOKEN` | — (obrigatória) | token do bot |
 | `NINWIKI_API_URL` | `http://localhost:8000` | endereço da API |
 | `BOT_API_TOKEN` | — (obrigatória) | o **mesmo** da API |
-| `ALLOWED_GUILD_IDS` | vazio | servidores onde os comandos funcionam (vírgula); vazio = qualquer |
-| `DEV_GUILD_ID` | vazio | servidor de testes: comandos aparecem na hora (o global leva até 1 h) |
+| `ALLOWED_GUILD_IDS` | vazio | servidores onde os comandos existem e funcionam (IDs separados por vírgula). O bot **registra os comandos em cada um deles na hora** e **apaga os comandos globais antigos** (some o `/team` velho; nada aparece em servidor fora da lista). Vazio = comandos globais (até 1 h, todos os servidores) |
+| `DEV_GUILD_ID` | vazio | servidor de testes: entra na lista acima (comandos na hora). Em produção pode ficar vazio se `ALLOWED_GUILD_IDS` estiver preenchido |
 | `LOG_CHANNEL_ID` | vazio | canal do log geral (só equipe!) |
 | `ERROR_CHANNEL_ID` | vazio | canal de erros e do painel de status (vazio = usa o de log) |
 | `SITE_URL` | vazio | site público: vigiado pelo bot **e** usado nos botões *Open* do `/search` |
+| `BACKUP_CHANNEL_ID` / `BACKUP_INTERVAL_MINUTES` / `BACKUP_KEEP` / `BACKUP_PART_MB` | vazio / `180` / `8` / `9` | backup automático no canal privado: de quantos em quantos minutos (mín. 30), quantos manter, tamanho de cada parte (ver *Backup automático*); canal vazio = sem backup |
+| `VERSION_WEBHOOK_URL` | vazio | webhook da mensagem *Latest updates* (versão da API e do Web, editada a cada deploy). É segredo |
 | `SITE_HEALTH_URL` | vazio | (opcional) endereço **só** da checagem de saúde, ex.: `https://ninwiki.squareweb.app` (direto da hospedagem, sem Cloudflare/cache na frente); vazio = checa o `SITE_URL` |
 | `STATUS_CHANNEL_ID` | vazio | canal **só do monitor** (painel "NinWiki status" + avisos de API/banco/site caiu/voltou), separado dos erros do wiki; vazio = usa o `ERROR_CHANNEL_ID` |
 | `STATUS_ALERTS` | `false` | `true` = além do painel, manda uma mensagem **nova** a cada "caiu" / "voltou" (padrão: só o painel, que se edita sozinho) |
@@ -562,6 +565,7 @@ Todo arquivo começa com um comentário-resumo do que faz e toda função tem um
   site pede à API; `proxy.ts` = limite por IP/robôs; `next.config.js` = cabeçalhos de segurança/CSP.
 - `NinWiki.Bot/main.py` + `ninwiki_bot/*` = `/status` e `/search` (`public_commands.py`), `/team` (`staff_commands.py`), log no Discord (`log_feed.py`), erros e painel de status (`error_feed.py`).
 - `NinWiki.Web/components/admin/rich-text-editor.tsx` (+ `editor-color-picker.tsx`, `lib/editor-fonts.ts`) = editor de texto; `components/lore/rich-text.tsx` = como o texto aparece no site; `components/admin/traffic-card.tsx` = gráfico de acessos.
+- **Backup / versão / manutenção:** `NinWiki.Api/app/core/backup.py` (gera o backup cifrado) + `app/api/bot.py` (`/bot/backup`, `/bot/version`) + `scripts/restaurar_backup.py`; `NinWiki.Bot/ninwiki_bot/backup_feed.py` e `version_feed.py` (decidem nomes/retenção/quando editar) + `command_sync.py` (comandos por servidor) + `main.py` (os laços); `NinWiki.Api/app/core/steam_news.py` (importador da Steam); `NinWiki.Web/app/version/route.ts` e `proxy.ts` (cabeçalho `x-ninwiki-web`); `Cloudflare/` (Worker da página de manutenção). Ferramentas locais sem relação com o wiki ficam na branch `ferramentas-locais` (**nunca** dar merge).
 - `NinWiki.Api/app/api/analytics.py` + `core/geoip.py` = acessos anônimos e país; `app/api/bot.py` = rotas do bot (equipe, log, erros, busca).
 
 

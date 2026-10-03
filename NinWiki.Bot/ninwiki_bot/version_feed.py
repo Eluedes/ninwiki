@@ -12,6 +12,7 @@ class VersionStore:
     """Guarda em arquivo o id da mensagem do webhook e a ultima versao vista da API e do site."""
 
     def __init__(self, path: Path):
+        """`path` = arquivo (version_state.json) onde o estado fica salvo."""
         self.path = path
 
     def load(self) -> dict:

@@ -97,6 +97,7 @@ class _Builder:
     """Acumula blocos do documento; `buf` e' o paragrafo em andamento (nos de texto)."""
 
     def __init__(self) -> None:
+        """Comeca com nenhum bloco pronto e nenhum paragrafo em andamento."""
         self.blocks: list[dict] = []
         self.buf: list[dict] = []
 
