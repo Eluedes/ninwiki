@@ -342,6 +342,7 @@ GitHub → o repositório → **Settings → Secrets and variables → Actions �
 1. Baixe os 3 arquivos no painel do banco da SquareCloud (`.crt`, `.pem`, `.key`).
 2. Abra cada um no Bloco de Notas, selecione tudo (Ctrl+A) e copie (começa em `-----BEGIN` e termina em `-----END ...-----`).
 3. No app da API → *Variáveis de Ambiente* → crie `DATABASE_SSL_CA` (texto do `.crt`), `DATABASE_SSL_CERT` (texto do `.pem`) e `DATABASE_SSL_KEY` (texto do `.key`). Se o painel não aceitar quebra de linha no valor, cole tudo em **uma linha** trocando cada quebra por `\n`.
+3b. O painel avisa "Variável de ambiente sem aspas" para valores com espaços (o texto do certificado tem). Clique em **Aplicar correção e reiniciar** (ele coloca aspas duplas) ou coloque você mesmo `"..."` em volta do valor. A API ignora essas aspas e também **reconstrói o formato do certificado** caso o painel troque as quebras de linha por espaços ou junte tudo numa linha.
 4. Salve e reinicie. A API grava esse texto num arquivo temporário (permissão 0600, fora da pasta do app, apagado ao sair), só para o TLS conseguir ler.
 5. Apague a pasta `certs/` antiga no File Manager do app e, no GitHub, os Secrets `DB_SSL_CA/CERT/KEY` (não são mais usados).
 6. Localmente o `.env` pode continuar apontando para arquivos (`certs/ca.crt`...): os dois formatos funcionam.
@@ -448,6 +449,7 @@ Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o 
 | Workflow: `HTTP 404` | `SQUARE_APP_ID_*` errado (ID de outro app ou digitado errado) |
 | Workflow verde, mas o app não funciona | olhe os **Logs do app** na SquareCloud — o erro real aparece lá |
 | API não inicia: `JWT_SECRET_KEY` / `DEV_LOGIN_ENABLED` | `.env` inseguro com `ENVIRONMENT=production` — corrija o `API_ENV` |
+| API: `could not read root certificate file ... no certificate or crl found` | o texto de `DATABASE_SSL_CA` está incompleto/cortado ou não é o `.crt`: recopie o arquivo inteiro (do `-----BEGIN` ao `-----END`) e use a versão mais nova da API |
 | API: `Arquivo de certificado do banco nao encontrado` | variáveis `DATABASE_SSL_CA/CERT/KEY` ausentes no painel (ou `DATABASE_SSL_*` aponta para um arquivo que não existe: em produção cole o texto do certificado) |
 | API: `Can't load plugin: sqlalchemy.dialects:driver` ou `DATABASE_URL nao esta definida` | o `API_ENV` não tem a linha `DATABASE_URL` (ou o Secret está vazio/em *Environment secrets*) |
 | API: `Can't load plugin ... postgresql`, `No module named psycopg2` ou banco não encontrado | `DATABASE_URL` sem `+asyncpg` ou sem `/NOME_DO_BANCO` no final — use `postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/NOME_DO_BANCO` |
