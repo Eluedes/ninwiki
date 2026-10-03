@@ -97,9 +97,10 @@ export function ImageUploadField({
           )}
         </div>
 
-        <div className="flex-1 space-y-1.5">
+        {/* min-w-0 + flex-wrap: em colunas estreitas (ex.: Imagem e GIF lado a lado) os botoes quebram de linha em vez de vazar por cima do campo ao lado */}
+        <div className="min-w-0 flex-1 space-y-1.5">
           <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={handleFileChange} className="hidden" id="image-upload-input" />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => inputRef.current?.click()}>
               {uploading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
               {uploading ? t.uploading : t.chooseFile}
