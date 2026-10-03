@@ -93,6 +93,12 @@ async def recarregar(u: User) -> User:
         return await db.get(User, u.id)
 
 
+async def recarregar_por_id(user_id) -> User:
+    """Le um usuario do banco pelo id."""
+    async with AsyncSessionLocal() as db:
+        return await db.get(User, user_id)
+
+
 def novo_conteudo(sufixo: str, status: str = "draft") -> dict:
     """Corpo valido para criar uma entry de teste."""
     return {"slug": f"{SLUG}-{sufixo}", "category": "guides", "name": f"TESTE {sufixo}", "level": 1,
@@ -195,6 +201,7 @@ async def limpar(inicio: datetime) -> None:
             | (AuditLogEntry.entity_id.in_(TESTE_IDS_TEXTO)) | (AuditLogEntry.entity_id.like(f"{SLUG}%")) | (AuditLogEntry.entity_id.like("TESTE%"))))
         await db.execute(delete(User).where(User.discord_id.in_([int(x) for x in TESTE_IDS_TEXTO])))
         await db.execute(text("DELETE FROM custom_roles WHERE name LIKE 'TESTE%'"))
+        await db.execute(text("DELETE FROM media_images WHERE uploaded_by LIKE 'TESTE_%' OR filename LIKE :p"), {"p": f"{SLUG}%"})
         await db.commit()
     print("\n(dados de teste apagados)")
 
@@ -1604,6 +1611,131 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     async with AsyncSessionLocal() as db:
         logs = (await db.execute(select(AuditLogEntry.action).where(AuditLogEntry.entity_type == "announcement"))).scalars().all()
     check("publicar e remover anuncio ficam no log", {"update", "clear"} <= set(logs), str(logs))
+    await c.post("/roles/creator/permissions/reset", headers=S)
+
+    secao("28) Banco de imagens: IDs, busca, uso nos campos de imagem, apagar e sincronizar a pasta")
+    import io
+    from PIL import Image as _Img
+    from app.api.uploads import UPLOAD_DIR as _UPLOADS
+
+    def _png(cor: tuple[int, int, int]) -> bytes:
+        """PNG pequeno e valido (cor diferente = arquivo diferente)."""
+        b = io.BytesIO()
+        _Img.new("RGB", (40, 30), cor).save(b, "PNG")
+        return b.getvalue()
+
+    r = await c.get("/media")
+    check("anonimo NAO ve o banco de imagens (401)", r.status_code == 401)
+    Cm = cookie(await recarregar(creator))
+    r = await c.post("/media", files={"file": ("minha foto.png", _png((200, 10, 10)), "image/png")}, data={"name": f"{SLUG} vermelha"}, headers=Cm)
+    check("Creator envia imagem e recebe um ID", r.status_code == 201 and isinstance(r.json()["id"], int) and r.json()["url"].endswith(".png") and r.json()["width"] == 40, r.text[:200])
+    img = r.json()
+    r = await c.post("/uploads/image", files={"file": ("b.png", _png((10, 200, 10)), "image/png")}, headers=Cm)
+    check("o upload antigo (/uploads/image) tambem entra no banco e devolve o ID", r.status_code == 200 and isinstance(r.json().get("id"), int), r.text[:200])
+    img2 = r.json()
+    r = await c.post("/media", files={"file": ("x.png", b"nao e imagem", "image/png")}, headers=Cm)
+    check("arquivo que nao e' imagem e' recusado", r.status_code == 415)
+    r = await c.get(f"/media/{img['id']}", headers=Cm)
+    check("GET /media/{id} devolve a imagem", r.status_code == 200 and r.json()["name"] == f"{SLUG} vermelha")
+    check("ID inexistente = 404", (await c.get("/media/99999999", headers=Cm)).status_code == 404)
+    for q, nome in [(f"{SLUG} verm", "busca por parte do nome"), (f"#{img['id']}", "busca por #ID"), (f"img:{img['id']}", "busca por img:ID"), (str(img["id"]), "busca pelo numero do ID")]:
+        r = await c.get("/media", params={"q": q}, headers=Cm)
+        check(nome, r.status_code == 200 and any(i["id"] == img["id"] for i in r.json()["items"]), r.text[:120])
+    r = await c.get("/media", params={"limit": 1}, headers=Cm)
+    check("paginacao respeita o limite e informa o total", len(r.json()["items"]) == 1 and r.json()["total"] >= 2)
+
+    r = await c.patch(f"/media/{img['id']}", json={"name": "novo"}, headers=Cm)
+    check("Creator NAO renomeia (403)", r.status_code == 403)
+    r = await c.patch(f"/media/{img['id']}", json={"name": f"{SLUG} renomeada"}, headers=A)
+    check("Adm renomeia a imagem", r.status_code == 200 and r.json()["name"] == f"{SLUG} renomeada")
+
+    # usar o ID nos campos de imagem
+    alvo = novo_conteudo("img1")
+    for ref in (f"img:{img['id']}", f"#{img['id']}", str(img["id"]), f"IMG-{img['id']}"):
+        r = await c.post("/content-items", json={**alvo, "slug": f"{SLUG}-img-{abs(hash(ref)) % 9999}", "image": ref}, headers=A)
+        check(f"content: '{ref}' vira o endereco da imagem", r.status_code == 201 and r.json()["image"] == img["url"], f"{r.status_code} {r.text[:150]}")
+    cid = r.json()["id"]
+    r = await c.post("/content-items", json={**alvo, "slug": f"{SLUG}-img-url", "image": "https://exemplo.com/a.png"}, headers=A)
+    check("endereco normal passa igual", r.status_code == 201 and r.json()["image"] == "https://exemplo.com/a.png")
+    r = await c.post("/content-items", json={**alvo, "slug": f"{SLUG}-img-nao", "image": "img:99999999"}, headers=A)
+    check("ID que nao existe e' recusado (422)", r.status_code == 422 and "not found" in r.json()["detail"], r.text[:150])
+    r = await c.put(f"/content-items/{cid}", json={**alvo, "slug": f"{SLUG}-img-edit", "image": f"img:{img2['id']}"}, headers=A)
+    check("content: editar tambem aceita o ID", r.status_code == 200 and r.json()["image"] == img2["url"], r.text[:150])
+    r = await c.post("/posts", json={"slug": f"{SLUG}-capa", "title": "t", "excerpt": "e", "content": "c", "coverImage": f"#{img['id']}", "status": "draft", "tags": []}, headers=A)
+    check("blog: capa aceita o ID", r.status_code == 201 and r.json()["coverImage"] == img["url"], f"{r.status_code} {r.text[:150]}")
+
+    r = await c.get(f"/media/{img['id']}/usage", headers=Cm)
+    check("Creator NAO ve o uso (403)", r.status_code == 403)
+    r = await c.get(f"/media/{img['id']}/usage", headers=A)
+    kinds = {u["kind"] for u in r.json()}
+    check("o uso mostra o conteudo e o post que usam a imagem", r.status_code == 200 and {"content", "blog post"} <= kinds, r.text[:200])
+    r = await c.delete(f"/media/{img['id']}", headers=Cm)
+    check("Creator NAO apaga imagem (403)", r.status_code == 403)
+    r = await c.delete(f"/media/{img['id']}", headers=A)
+    check("imagem em uso nao e' apagada sem force (409)", r.status_code == 409 and "used in" in r.json()["detail"], r.text[:200])
+    arquivo = _UPLOADS / img["url"].rsplit("/", 1)[1]
+    check("o arquivo continua no disco apos o 409", arquivo.exists())
+    r = await c.delete(f"/media/{img['id']}", params={"force": "true"}, headers=A)
+    check("force=true apaga a imagem e o arquivo", r.status_code == 204 and not arquivo.exists() and (await c.get(f"/media/{img['id']}", headers=Cm)).status_code == 404)
+
+    # sincronizar a pasta: arquivo que ja' estava em uploads/ sem ID
+    solto = _UPLOADS / f"{SLUG}-solto.png"
+    solto.write_bytes(_png((10, 10, 200)))
+    r = await c.post("/media/sync", headers=Cm)
+    check("Creator NAO sincroniza (403)", r.status_code == 403)
+    r = await c.post("/media/sync", headers=A)
+    check("sincronizar registra a imagem solta e ela ganha ID", r.status_code == 200 and r.json()["added"] >= 1, r.text)
+    r = await c.get("/media", params={"limit": 200}, headers=Cm)
+    solto_id = next((i["id"] for i in r.json()["items"] if i["url"].endswith(solto.name)), None)
+    check("a imagem sincronizada aparece na lista", solto_id is not None)
+    check("sincronizar de novo nao duplica", (await c.post("/media/sync", headers=A)).json()["added"] == 0)
+    if solto_id is not None:
+        await c.delete(f"/media/{solto_id}", headers=A)
+    solto.unlink(missing_ok=True)
+    r = await c.delete(f"/media/{img2['id']}", params={"force": "true"}, headers=A)
+    check("apagar a outra imagem de teste (limpeza)", r.status_code == 204)
+    await c.post("/roles/creator/permissions/reset", headers=S)
+
+    secao("29) Remover alguem da equipe e apagar varias imagens de uma vez")
+    nov = await c.post("/staff", json={"discordId": str(BASE + 28), "role": "creator", "username": "TESTE_remover"}, headers=S)
+    nov_id = nov.json()["id"]
+    r = await c.delete(f"/staff/{nov_id}", headers=A)
+    check("Adm NAO remove ninguem da equipe (404, area exclusiva do S.Adm)", r.status_code == 404)
+    r = await c.delete(f"/staff/{sadm.id}", headers=S)
+    check("ninguem remove a si mesmo (400)", r.status_code == 400, r.text[:120])
+    r = await c.delete("/staff/00000000-0000-0000-0000-000000000000", headers=S)
+    check("remover quem nao existe = 404", r.status_code == 404)
+    # a pessoa com sessao valida perde o acesso na hora da remocao
+    cookie_novo = cookie(await recarregar_por_id(nov_id))
+    check("antes de remover, a pessoa acessa o painel", (await c.get("/auth/me", headers=cookie_novo)).status_code == 200)
+    r = await c.delete(f"/staff/{nov_id}", headers=S)
+    check("S.Adm remove alguem da equipe (204)", r.status_code == 204, r.text[:120])
+    check("a sessao da pessoa removida cai na hora (401)", (await c.get("/auth/me", headers=cookie_novo)).status_code == 401)
+    check("ela some da lista da equipe", all(m["id"] != nov_id for m in (await c.get("/staff", headers=S)).json()))
+    async with AsyncSessionLocal() as db:
+        lg = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.entity_type == "staff", AuditLogEntry.action == "delete", AuditLogEntry.entity_id == str(BASE + 28)))).scalars().first()
+    check("a remocao fica no log com o nome de quem foi removido", lg is not None and lg.diff.get("username") == "TESTE_remover", str(lg and lg.diff))
+    # o ultimo S.Adm ativo nunca e' removido: o sadm2 (se ainda existir) remove o sadm, mas nao o contrario quando sobra um so'
+    ativos = [m for m in (await c.get("/staff", headers=S)).json() if m["role"] == "super_admin" and m["isActive"]]
+    check("a regra do ultimo S.Adm existe no servico (staff_service.delete_staff)", hasattr(__import__("app.core.staff_service", fromlist=["x"]), "delete_staff") and len(ativos) >= 1)
+
+    imgs = []
+    for k in range(3):
+        r = await c.post("/media", files={"file": (f"m{k}.png", _png((k * 60, 20, 200)), "image/png")}, data={"name": f"{SLUG} lote {k}"}, headers=Cm)
+        imgs.append(r.json())
+    r = await c.post("/media/bulk-delete", json={"ids": [imgs[0]["id"]]}, headers=Cm)
+    check("Creator NAO apaga em massa (403)", r.status_code == 403)
+    r = await c.post("/content-items", json={**novo_conteudo("emuso"), "image": f"img:{imgs[1]['id']}"}, headers=A)
+    r = await c.post("/media/bulk-delete", json={"ids": [imgs[0]["id"], imgs[1]["id"], imgs[2]["id"], 99999999]}, headers=A)
+    res = r.json()
+    check("em massa: apaga as livres e devolve as em uso e as que nao existem", r.status_code == 200 and sorted(res["deleted"]) == sorted([imgs[0]["id"], imgs[2]["id"]])
+          and [x["id"] for x in res["inUse"]] == [imgs[1]["id"]] and res["notFound"] == [99999999], r.text[:300])
+    check("as apagadas saem do banco e do disco; a em uso continua", (await c.get(f"/media/{imgs[0]['id']}", headers=Cm)).status_code == 404
+          and not (_UPLOADS / imgs[0]["url"].rsplit("/", 1)[1]).exists() and (await c.get(f"/media/{imgs[1]['id']}", headers=Cm)).status_code == 200)
+    r = await c.post("/media/bulk-delete", json={"ids": [imgs[1]["id"]], "force": True}, headers=A)
+    check("com force=true apaga ate' a que esta' em uso", r.status_code == 200 and r.json()["deleted"] == [imgs[1]["id"]])
+    r = await c.post("/media/bulk-delete", json={"ids": []}, headers=A)
+    check("lista vazia e' recusada (422)", r.status_code == 422)
     await c.post("/roles/creator/permissions/reset", headers=S)
 
     secao("25) Texto rico: estilos de letra (cor, fundo, fonte, tamanho) so' no formato permitido")

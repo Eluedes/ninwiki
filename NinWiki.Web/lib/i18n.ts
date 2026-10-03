@@ -107,7 +107,7 @@ export interface Dictionary {
       staffTitle: string; staffSubtitle: string; addStaff: string; discordId: string; discordIdHint: string;
       displayName: string; displayNameHint: string; role: string; status: string; lastLogin: string;
       neverLoggedIn: string; active: string; inactive: string; owner: string; ownerHint: string;
-      deactivate: string; activate: string; confirmDeactivate: string; you: string;
+      deactivate: string; activate: string; confirmDeactivate: string; you: string; remove: string; confirmRemove: string;
       add: string; adding: string; noStaff: string; loadError: string; actionError: string; noManageable: string; editName: string; saveName: string; cancelName: string; nameHint: string;
       logByLabel: string; logAll: string; logContent: string; logAuth: string; logStaff: string; logSecurity: string;
       logActions: Record<string, string>; logEntities: Record<string, string>; logSources: Record<string, string>;
@@ -142,7 +142,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
     errorsPage: {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
       occurrences: string; firstSeen: string; lastSeen: string; where: string; route: string; status: string; resolve: string; reopen: string; delete: string;
@@ -175,7 +175,12 @@ export interface Dictionary {
     };
     dropPicker: { linked: string; linkedTitle: string; searchPlaceholder: string; searching: string; noResults: string; categoryMobs: string; categoryItems: string; categoryWeapons: string; categoryMissions: string; categoryGuides: string };
     entryHistory: { loading: string; loadError: string; empty: string; bySystem: string; created: string; updated: string; deleted: string };
-    imageUpload: { uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
+    mediaPage: {
+      title: string; subtitle: string; upload: string; uploading: string; search: string; empty: string; sync: string; syncing: string; syncDone: string;
+      rename: string; renamePrompt: string; delete: string; confirmDelete: string; confirmForce: string; copyId: string; copyUrl: string; copied: string;
+      selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
+    };
+    imageUpload: { library: string; idResolved: string; idNotFound: string; uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
     dataTable: { noResults: string; selected: string; selectedPlural: string; itemsPerPage: string; pageOf: string; items: string };
     auditLog: {
       title: string; subtitle: string; loading: string; loadError: string; empty: string;
@@ -506,6 +511,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         owner: 'Dono', ownerHint: 'Definido no .env: não pode ser alterado por aqui.',
         deactivate: 'Desativar', activate: 'Reativar',
         confirmDeactivate: 'Desativar {name}? A pessoa perde o acesso na hora.',
+        remove: 'Remover', confirmRemove: 'REMOVER {name} da equipe de vez? A pessoa perde o acesso na hora e não dá para desfazer (o histórico dela no log continua). Para só tirar o acesso por um tempo, use Desativar.',
         you: 'você',
         add: 'Cadastrar', adding: 'Cadastrando...',
         noStaff: 'Nenhum membro cadastrado.',
@@ -518,15 +524,27 @@ export const dictionaries: Record<Locale, Dictionary> = {
         logActions: {
           create: 'criou', update: 'editou', delete: 'apagou', upload: 'enviou imagem',
           'bulk-status': 'mudou o status de', 'bulk-delete': 'apagou em massa', 'bulk-import': 'importou',
-          login: 'entrou', logout: 'saiu', login_denied: 'teve o login negado', role_change: 'mudou o cargo de', rename: 'renomeou', clear_log: 'limpou o log', clear: 'removeu',
+          login: 'entrou', logout: 'saiu', login_denied: 'teve o login negado', role_change: 'mudou o cargo de', rename: 'renomeou', clear_log: 'limpou o log', clear: 'removeu', sync: 'importou imagens para',
           activate: 'reativou', deactivate: 'desativou', bootstrap: 'foi criado como dono', bootstrap_restore: 'teve o cargo de dono restaurado',
           permission_denied: 'tentou algo sem permissão em', resolve: 'resolveu', reopen: 'reabriu', reset: 'restaurou o padrão de', delete_file: 'removeu um arquivo de',
         },
         logEntities: {
           content_item: 'entry', jutsu: 'jutsu', mastery: 'mastery', upload: 'arquivo',
-          auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post', roles: 'permissões do cargo', notice: 'aviso', announcement: 'anúncio da Home', error: 'erro',
+          auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post', roles: 'permissões do cargo', notice: 'aviso', announcement: 'anúncio da Home', media: 'imagem', error: 'erro',
         },
         logSources: { panel: 'Painel', bot: 'Bot', auth: 'Login', system: 'Sistema' },
+      },
+      mediaPage: {
+        title: 'Banco de imagens', subtitle: 'Toda imagem enviada ganha um ID. Digite o ID (img:12, #12 ou só 12) em qualquer campo de imagem: conteúdo, blog, jutsu, mastery, vila, clã...',
+        upload: 'Enviar imagens', uploading: 'Enviando...', search: 'Buscar por nome ou ID...', empty: 'Nenhuma imagem ainda.',
+        sync: 'Importar da pasta de uploads', syncing: 'Importando...', syncDone: '{n} imagem(ns) importada(s).',
+        rename: 'Renomear', renamePrompt: 'Nome da imagem #{id}:', delete: 'Apagar', confirmDelete: 'Apagar a imagem #{id}? O arquivo some do servidor.',
+        confirmForce: 'A imagem #{id} está em uso ({uses}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.', copyId: 'Copiar ID', copyUrl: 'Copiar endereço', copied: 'Copiado!',
+        selected: '{n} selecionada(s)', selectAll: 'Selecionar todas desta página', clearSel: 'Limpar seleção', deleteSelected: 'Apagar selecionadas',
+        confirmBulk: 'Apagar {n} imagem(ns)? Os arquivos somem do servidor.', confirmBulkForce: '{n} imagem(ns) estão em uso (ex.: {where}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.',
+        bulkDone: '{n} imagem(ns) apagada(s).', select: 'Selecionar',
+        usedIn: 'Usada em', notUsed: 'Não está em uso.', loadError: 'Não foi possível carregar as imagens.', actionError: 'Não foi possível concluir a ação.',
+        howTo: 'Como usar: copie o ID e cole no campo de imagem.', pickTitle: 'Escolher imagem do banco', pick: 'Usar esta', total: '{n} imagem(ns)', loadMore: 'Carregar mais', unnamed: 'sem nome', close: 'Fechar',
       },
       announcementPage: {
         title: 'Anúncio da Home', subtitle: 'Uma mensagem em destaque no topo da página inicial. Sem mensagem, nada aparece.',
@@ -573,6 +591,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         clanTranslationNote: 'Versão em português deste clã (vazio = a DeepL traduz ao salvar).',
       },
       sidebar: {
+        media: 'Imagens',
         announcement: 'Anúncio da Home',
         overview: 'Visão Geral',
         blogPosts: 'Postagens do Blog',
@@ -627,8 +646,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
-          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home',
-          'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
+          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens',
+          'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'staff.delete': 'Remover alguém da equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
           'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'audit.clear': 'Limpar o log', 'analytics.view': 'Ver os acessos ao site',
         },
       },
@@ -711,12 +730,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
         created: 'Criada', updated: 'Editada', deleted: 'Apagada',
       },
       imageUpload: {
+        library: 'Banco de imagens', idResolved: 'Imagem #{id} do banco', idNotFound: 'Não existe imagem #{id} no banco.',
         uploading: 'Enviando...',
         chooseFile: 'Escolher arquivo',
         removeImage: 'Remover imagem',
         formatsHint: 'PNG, JPG, GIF ou WEBP, até 5MB.',
         uploadError: 'Erro ao enviar imagem.',
-        manualPlaceholder: 'ou cole uma URL/caminho manualmente...',
+        manualPlaceholder: 'ou cole uma URL, um caminho ou o ID da imagem (img:12)...',
       },
       dataTable: {
         noResults: 'Nenhum resultado encontrado.',
@@ -1166,6 +1186,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         owner: 'Owner', ownerHint: 'Defined in .env: cannot be changed from here.',
         deactivate: 'Deactivate', activate: 'Reactivate',
         confirmDeactivate: 'Deactivate {name}? They lose access immediately.',
+        remove: 'Remove', confirmRemove: 'REMOVE {name} from the team for good? They lose access immediately and this cannot be undone (their history in the log stays). To only take access away for a while, use Deactivate.',
         you: 'you',
         add: 'Register', adding: 'Registering...',
         noStaff: 'No members registered.',
@@ -1178,15 +1199,27 @@ export const dictionaries: Record<Locale, Dictionary> = {
         logActions: {
           create: 'created', update: 'updated', delete: 'deleted', upload: 'uploaded an image',
           'bulk-status': 'changed the status of', 'bulk-delete': 'bulk-deleted', 'bulk-import': 'imported',
-          login: 'signed in', logout: 'signed out', login_denied: 'had a login denied', role_change: 'changed the role of', rename: 'renamed', clear_log: 'cleared the log', clear: 'removed',
+          login: 'signed in', logout: 'signed out', login_denied: 'had a login denied', role_change: 'changed the role of', rename: 'renamed', clear_log: 'cleared the log', clear: 'removed', sync: 'imported images into',
           activate: 'reactivated', deactivate: 'deactivated', bootstrap: 'was created as owner', bootstrap_restore: 'had the owner role restored',
           permission_denied: 'tried something without permission on', resolve: 'resolved', reopen: 'reopened', reset: 'restored the defaults of', delete_file: 'removed a file from',
         },
         logEntities: {
           content_item: 'entry', jutsu: 'jutsu', mastery: 'mastery', upload: 'file',
-          auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post', roles: 'role permissions', notice: 'notice', announcement: 'Home announcement', error: 'error',
+          auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post', roles: 'role permissions', notice: 'notice', announcement: 'Home announcement', media: 'image', error: 'error',
         },
         logSources: { panel: 'Panel', bot: 'Bot', auth: 'Login', system: 'System' },
+      },
+      mediaPage: {
+        title: 'Image library', subtitle: 'Every uploaded image gets an ID. Type the ID (img:12, #12 or just 12) in any image field: content, blog, jutsu, mastery, village, clan...',
+        upload: 'Upload images', uploading: 'Uploading...', search: 'Search by name or ID...', empty: 'No images yet.',
+        sync: 'Import from the uploads folder', syncing: 'Importing...', syncDone: '{n} image(s) imported.',
+        rename: 'Rename', renamePrompt: 'Name of image #{id}:', delete: 'Delete', confirmDelete: 'Delete image #{id}? The file is removed from the server.',
+        confirmForce: 'Image #{id} is in use ({uses}). Delete anyway? Those places will end up with a broken image.', copyId: 'Copy ID', copyUrl: 'Copy address', copied: 'Copied!',
+        selected: '{n} selected', selectAll: 'Select all on this page', clearSel: 'Clear selection', deleteSelected: 'Delete selected',
+        confirmBulk: 'Delete {n} image(s)? The files are removed from the server.', confirmBulkForce: '{n} image(s) are in use (e.g. {where}). Delete anyway? Those places will end up with a broken image.',
+        bulkDone: '{n} image(s) deleted.', select: 'Select',
+        usedIn: 'Used in', notUsed: 'Not in use.', loadError: 'Could not load the images.', actionError: 'Could not complete the action.',
+        howTo: 'How to use: copy the ID and paste it into an image field.', pickTitle: 'Pick an image from the library', pick: 'Use this one', total: '{n} image(s)', loadMore: 'Load more', unnamed: 'unnamed', close: 'Close',
       },
       announcementPage: {
         title: 'Home announcement', subtitle: 'A highlighted message at the top of the home page. With no message, nothing is shown.',
@@ -1233,6 +1266,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         clanTranslationNote: 'Portuguese version of this clan (empty = DeepL translates it on save).',
       },
       sidebar: {
+        media: 'Images',
         announcement: 'Home announcement',
         overview: 'Overview',
         blogPosts: 'Blog Posts',
@@ -1287,8 +1321,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
-          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement',
-          'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
+          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library',
+          'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'staff.delete': 'Remove someone from the team', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
           'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'audit.clear': 'Clear the log', 'analytics.view': 'View site traffic',
         },
       },
@@ -1371,12 +1405,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
         created: 'Created', updated: 'Updated', deleted: 'Deleted',
       },
       imageUpload: {
+        library: 'Image library', idResolved: 'Library image #{id}', idNotFound: 'There is no image #{id} in the library.',
         uploading: 'Uploading...',
         chooseFile: 'Choose file',
         removeImage: 'Remove image',
         formatsHint: 'PNG, JPG, GIF or WEBP, up to 5MB.',
         uploadError: 'Error uploading image.',
-        manualPlaceholder: 'or paste a URL/path manually...',
+        manualPlaceholder: 'or paste a URL, a path or the image ID (img:12)...',
       },
       dataTable: {
         noResults: 'No results found.',

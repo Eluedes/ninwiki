@@ -27,6 +27,7 @@ from app.core.auth import get_optional_user, require_permission
 from app.core.database import get_db
 from app.core.payloads import apply_scalar_fields
 from app.core.permissions import Permission, user_has_permission
+from app.core.media_refs import resolve_images
 from app.models.enums import ContentStatus
 from app.models.posts import Post, Tag
 from app.models.readers import PostComment, PostLike
@@ -185,6 +186,7 @@ async def create_post(
     db: AsyncSession = Depends(get_db),
 ):
     """Cria um post (exige posts.create); Creator so' cria rascunho."""
+    await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     _guard_publish(staff, payload.status)
     if await _slug_taken(db, payload.slug):
         raise HTTPException(status_code=409, detail=f"A post with the slug '{payload.slug}' already exists")
@@ -210,6 +212,7 @@ async def update_post(
 ):
     """Edita um post respeitando as regras de publicar/editar publicado."""
     post = await _load(db, post_id)
+    await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     _guard_edit(staff, post, payload.status)
     if await _slug_taken(db, payload.slug, ignore_id=post.id):
         raise HTTPException(status_code=409, detail=f"A post with the slug '{payload.slug}' already exists")

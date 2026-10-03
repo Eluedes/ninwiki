@@ -63,7 +63,7 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 534 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 580 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
 python scripts/testar_bot_integracao.py    # 172 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
@@ -110,6 +110,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
   `/admin/organizations` (liga cada organização às vilas em que atua).
 - **Quadro de avisos** (Visão Geral): toda a equipe lê e baixa os arquivos; **S.Adm e Adm** postam, fixam, editam, apagam e
   anexam arquivos (até 10 por aviso, `MAX_NOTICE_FILE_MB` MB cada, padrão **200 MB** — o envio é gravado aos pedaços, sem encher a memória; se o site estiver atrás da Cloudflare grátis, ela corta uploads acima de 100 MB; executáveis e HTML são recusados).
+- **Remover da equipe:** em `/admin/staff` o botão **Remove** (só S.Adm, permissão `staff.delete`) tira a pessoa de vez — o acesso cai na hora, o histórico dela no log continua (com o nome) e os posts/avisos dela ficam sem autor. Continua valendo: não remove a si mesmo, nem um dono (`SUPER_ADMIN_DISCORD_IDS`), nem o último S.Adm. Para tirar o acesso só por um tempo, use **Deactivate**.
 - **Nome (nick) da equipe:** em `/admin/staff` (só S.Adm) o lápis ao lado do nome edita o nome de qualquer um, **inclusive o seu**. O nome editado
   fica salvo: o login com o Discord não o sobrescreve mais.
 - **Permissões** (`/admin/permissions`, só S.Adm): liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora.
@@ -165,6 +166,11 @@ A Visão Geral mostra um **gráfico de acessos** (7/30/90 dias: visualizações 
 - A página **Mapa** está em manutenção: sai do menu e qualquer `/map` vai para `/maintenance` (edite `lib/maintenance.ts` para liberar).
 
 ### 2.2d Convidar o bot e anúncio da Home
+- **Banco de imagens** (`/admin/media`, menu *Images*): toda imagem enviada (aqui, pelo campo de imagem ou pelo editor) ganha um **ID** (#1, #2...). Nos campos de imagem de
+  **conteúdo, blog (capa), jutsu, mastery, vila e clã** dá para digitar o ID — `img:12`, `#12` ou só `12` — e a API troca pelo endereço do arquivo ao salvar (ID que não existe = erro claro).
+  Cada campo de imagem também tem o botão **Image library** (escolher numa grade com busca por nome/ID, ou enviar na hora) e o editor do blog tem um botão para inserir imagem do banco.
+  A tela mostra miniatura, tamanho, ID com **Copiar ID / Copiar endereço**; para apagar várias de uma vez marque as caixinhas (ou *Select all on this page*) e use **Delete selected** (as que estão em uso pedem uma segunda confirmação); quem tem `media.manage` (Adm por padrão) renomeia, apaga (avisa onde a imagem está em uso; precisa confirmar para apagar mesmo assim)
+  e usa **Import from the uploads folder** para dar ID às imagens que já estavam em `uploads/` (a primeira abertura da tela já importa sozinha se o banco estiver vazio). Ver e enviar = `uploads.create`. Migration nova: `7b16dcfc1960`.
 - **Botão "Convidar o bot"** (rodapé de todas as páginas + cartão na Home): abre o convite do Discord com as **permissões mínimas**. Para aparecer, ponha o *Application ID* do bot
   em `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID` (Secret `WEB_ENV`; Discord Developer Portal → sua aplicação do bot → *General Information*) e rode o **Deploy Web**.
   O link gerado é `https://discord.com/oauth2/authorize?client_id=ID&permissions=84992&scope=bot%20applications.commands`. As permissões (**84992**) são:
@@ -201,7 +207,7 @@ O português antigo vai para o campo `_pt` e a tradução em inglês vira o camp
   se algum desses arquivos entrar no pacote por engano. Quem extrair o pacote não acha o README, o ROADMAP nem os testes.
   Para isso valer de verdade, mantenha o **repositório do GitHub privado** (se for público, os `.md` ficam à vista lá).
 - **Bibliotecas:** o workflow *Segurança* (toda segunda e a cada push na `main`) roda `pip-audit` e `npm audit` e fica vermelho se houver falha conhecida;
-  o aviso aparece na aba *Actions* (sem abrir branches nem pull requests). Última checagem feita: 0 vulnerabilidades (API, bot e site).
+  o aviso aparece na aba *Actions* (sem abrir branches nem pull requests). Última checagem: 0 vulnerabilidades no que vai para produção (API, bot e site). No site, as ferramentas de **build/lint** (`tailwindcss`, `eslint-config-next`...) ficam em `devDependencies`: elas só rodam no seu computador e no GitHub, nunca na SquareCloud. O `npm install` pode mostrar avisos "high" delas por causa do `braces` (negação de serviço com padrões de glob aninhados) — **ainda não existe versão corrigida** do `braces`; como esses padrões vêm só dos nossos próprios arquivos de configuração (nunca de visitante), não há como explorar. Confira com `npm audit --omit=dev` (deve dar 0) e rode `npm audit` de vez em quando: quando sair a correção, `npm update` resolve.
 - Texto rico: cor, fundo, fonte e tamanho só em formato conhecido (sem injeção de CSS). Bot: `/team` só para o S.Adm do wiki, conferido na API.
 - **O que só você pode fazer:** 2FA no Discord, GitHub e SquareCloud; Cloudflare na frente; backup do banco com restauração testada; não colar segredos em chat/print.
 - Honestidade: conteúdo **público** precisa ser legível por qualquer visitante, então ninguém impede 100% a cópia por um robô

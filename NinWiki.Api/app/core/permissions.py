@@ -45,12 +45,14 @@ class Permission(str, Enum):
     # --- Ferramentas ---
     UPLOAD_CREATE = "uploads.create"
     TRANSLATION_RETRANSLATE = "translation.retranslate"
+    MEDIA_MANAGE = "media.manage"          # renomear/apagar imagens do banco de imagens e sincronizar a pasta (ver e enviar = uploads.create)
 
     # --- Equipe ---
     STAFF_VIEW = "staff.view"
     STAFF_CREATE = "staff.create"
     STAFF_EDIT = "staff.edit"             # trocar cargo
     STAFF_DEACTIVATE = "staff.deactivate"  # desativar/reativar
+    STAFF_DELETE = "staff.delete"          # REMOVER de vez da equipe (so' S.Adm; o historico no log continua)
 
     # --- Quadro de avisos (Visao Geral do painel) ---
     NOTICE_VIEW = "notices.view"          # ler avisos e baixar os arquivos anexados
@@ -88,6 +90,7 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.STAFF_CREATE,
     Permission.STAFF_EDIT,
     Permission.STAFF_DEACTIVATE,
+    Permission.STAFF_DELETE,
     Permission.ROLES_MANAGE,
     Permission.ERRORS_VIEW,
 })
@@ -112,6 +115,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.LORE_DELETE,
     Permission.NOTICE_MANAGE,
     Permission.ANNOUNCEMENT_MANAGE,
+    Permission.MEDIA_MANAGE,
     Permission.COMMENTS_MODERATE,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,

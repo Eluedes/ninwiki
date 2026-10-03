@@ -14,8 +14,9 @@ import { useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
-import { uploadImage, ApiError } from '@/lib/api-client';
-import { Upload, Loader2, X, ImageOff } from 'lucide-react';
+import { uploadImage, getMedia, parseImageRef, ApiError } from '@/lib/api-client';
+import { MediaPickerDialog } from '@/components/admin/media-picker-dialog';
+import { Upload, Loader2, X, ImageOff, Images } from 'lucide-react';
 
 /** Campo de imagem: escolher arquivo (upload) ou colar uma URL, com previa. */
 export function ImageUploadField({
@@ -30,7 +31,24 @@ export function ImageUploadField({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewFailed, setPreviewFailed] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [note, setNote] = useState<string | null>(null); // aviso curto (ex.: "Imagem #12 do banco")
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /** Se o campo tem um ID de imagem (img:12, #12, 12), troca pelo endereco da imagem do banco; ID que nao existe vira aviso. */
+  async function resolveRef() {
+    const id = parseImageRef(value ?? '');
+    if (id === null) { setNote(null); return; }
+    try {
+      const media = await getMedia(id);
+      onChange(media.url);
+      setPreviewFailed(false);
+      setNote(t.idResolved.replace('{id}', String(id)));
+    } catch {
+      setNote(null);
+      setError(t.idNotFound.replace('{id}', String(id)));
+    }
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -73,6 +91,9 @@ export function ImageUploadField({
               {uploading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
               {uploading ? t.uploading : t.chooseFile}
             </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+              <Images className="mr-1.5 h-3.5 w-3.5" />{t.library}
+            </Button>
             {value && (
               <button type="button" onClick={() => onChange('')} className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-red-900/20 hover:text-red-400" title={t.removeImage}>
                 <X className="h-4 w-4" />
@@ -84,6 +105,13 @@ export function ImageUploadField({
       </div>
 
       {error && <p className="text-xs text-destructive">{error}</p>}
+      {note && <p className="text-xs text-emerald-400">{note}</p>}
+
+      <MediaPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPick={(m) => { onChange(m.url); setPreviewFailed(false); setError(null); setNote(t.idResolved.replace('{id}', String(m.id))); }}
+      />
 
       {/* Campo manual por baixo - util pra colar um caminho existente
           (ex: /images/wiki/Larva.png) sem passar por upload. */}
@@ -92,7 +120,11 @@ export function ImageUploadField({
         onChange={(e) => {
           onChange(e.target.value);
           setPreviewFailed(false);
+          setError(null);
+          setNote(null);
         }}
+        onBlur={resolveRef}
+        onKeyDown={(e) => { if (e.key === 'Enter' && parseImageRef(value ?? '') !== null) { e.preventDefault(); resolveRef(); } }}
         placeholder={t.manualPlaceholder}
         className="text-xs"
       />

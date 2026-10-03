@@ -26,6 +26,7 @@ from sqlalchemy.orm import selectinload
 from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.permissions import Permission
+from app.core.media_refs import resolve_images
 from app.core.database import get_db
 from app.models.users import User
 from app.core.payloads import apply_scalar_fields
@@ -109,6 +110,7 @@ async def update_mastery(mastery_id: str, payload: MasteryWrite, staff: User = D
         via ON DELETE SET NULL - nao quebra o jutsu, so' desvincula)
       - id que NAO existia ainda -> cria um path novo
     """
+    await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     stmt = (
         select(Mastery)
         .where(Mastery.id == mastery_id)
@@ -225,6 +227,7 @@ async def get_jutsu(jutsu_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/jutsus", response_model=JutsuRead, status_code=201)
 async def create_jutsu(payload: JutsuWrite, staff: User = Depends(require_permission(Permission.LORE_EDIT)), db: AsyncSession = Depends(get_db)):
     """Cria um jutsu (exige lore.edit); valida mastery/caminho e registra no log."""
+    await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     existing = await db.get(Jutsu, payload.id)
     if existing:
         raise HTTPException(status_code=409, detail=f"A jutsu with the id '{payload.id}' already exists")
@@ -244,6 +247,7 @@ async def create_jutsu(payload: JutsuWrite, staff: User = Depends(require_permis
 @router.put("/jutsus/{jutsu_id}", response_model=JutsuRead)
 async def update_jutsu(jutsu_id: str, payload: JutsuWrite, staff: User = Depends(require_permission(Permission.LORE_EDIT)), db: AsyncSession = Depends(get_db)):
     """Edita um jutsu (exige lore.edit); copia os campos do payload e registra no log."""
+    await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     jutsu = await _get_jutsu_or_404(jutsu_id, db)
     if payload.id != jutsu_id:
         raise HTTPException(status_code=400, detail="Changing the id of an existing jutsu is not allowed")

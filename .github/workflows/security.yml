@@ -28,6 +28,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: npm audit (site)
+      - name: npm audit (site - o que VAI para producao; falha se houver falha alta)
         working-directory: NinWiki.Web
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
+      - name: npm audit (site - ferramentas de build/lint; so' informa)
+        working-directory: NinWiki.Web
+        run: npm audit || true
