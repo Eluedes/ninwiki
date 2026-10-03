@@ -111,6 +111,12 @@ export default function ErrorsPage() {
 
                 {isOpen && (
                   <div className="space-y-3 border-t border-border p-4 text-sm">
+                    {e.hintPt && (
+                      <div className="rounded-lg border border-amber-500/30 bg-amber-900/10 p-3">
+                        <p className="mb-1 text-xs font-semibold text-amber-400">💡 O que pode estar acontecendo</p>
+                        <p className="text-sm leading-relaxed">{e.hintPt}</p>
+                      </div>
+                    )}
                     <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
                       {e.location && <div><dt className="text-xs text-muted-foreground">{t.where}</dt><dd className="font-mono text-xs">{e.location}</dd></div>}
                       {e.path && <div><dt className="text-xs text-muted-foreground">{t.route}</dt><dd className="font-mono text-xs">{e.method} {e.path}</dd></div>}

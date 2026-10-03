@@ -3,8 +3,9 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, computed_field, field_validator
 
+from app.core.error_hints import explain_pt
 from app.schemas.content import CamelModel
 
 
@@ -28,6 +29,12 @@ class ErrorEventRead(CamelModel):
     resolved_at: datetime | None
     resolved_by: str | None
 
+    @computed_field
+    @property
+    def hint_pt(self) -> str:
+        """Explicacao em portugues: causa provavel e o que fazer (ver app/core/error_hints.py)."""
+        return explain_pt(self.source, self.title, self.message, self.status, self.location)
+
 
 class BotErrorEntry(CamelModel):
     """Um problema como o BOT recebe: resumo sem traceback e sem IP (vai para um canal do Discord)."""
@@ -45,6 +52,12 @@ class BotErrorEntry(CamelModel):
     first_seen: datetime
     last_seen: datetime
     resolved: bool
+
+    @computed_field
+    @property
+    def hint_pt(self) -> str:
+        """Explicacao em portugues: causa provavel e o que fazer (ver app/core/error_hints.py)."""
+        return explain_pt(self.source, self.title, self.message, self.status, self.location)
 
 
 class ClientErrorReport(CamelModel):
