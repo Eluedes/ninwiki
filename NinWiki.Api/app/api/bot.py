@@ -235,6 +235,13 @@ async def bot_audit_log(
     return [model.model_validate(row, from_attributes=True) for row in (await db.execute(stmt)).scalars().all()]
 
 
+@router.get("/version")
+async def bot_version() -> dict:
+    """A atualizacao publicada na API (sha, titulo e data do commit): o bot mostra no Discord e edita a mesma mensagem a cada deploy."""
+    from app.core.build_info import read_build
+    return read_build()
+
+
 @router.get("/errors", response_model=list[BotErrorEntry])
 async def bot_errors(
     since: datetime = Query(..., description="So' problemas com ultima ocorrencia DEPOIS deste instante (ISO 8601)"),

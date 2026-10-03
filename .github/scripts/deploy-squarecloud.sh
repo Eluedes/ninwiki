@@ -35,6 +35,11 @@ esac
 
 # Versao publicada (commit do GitHub): a API mostra em /health e o painel (S.Adm) mostra no rodape - serve para saber o que esta no ar.
 printf '%s\n' "${GIT_SHA:-unknown}" > "$DIR/VERSION"
+# VERSION.json: sha + titulo + data da atualizacao (o bot mostra no Discord). Em merge do GitHub o titulo util esta' no CORPO do commit (titulo do PR).
+SUBJECT="$(git log -1 --format=%s 2>/dev/null || true)"; BODY="$(git log -1 --format=%b 2>/dev/null | head -n1 || true)"
+case "$SUBJECT" in "Merge pull request"*) [ -n "$BODY" ] && SUBJECT="$BODY" ;; esac
+COMMIT_DATE="$(git log -1 --format=%cI 2>/dev/null || true)"
+V_SHA="${GIT_SHA:-unknown}" V_MSG="$SUBJECT" V_DATE="$COMMIT_DATE" python3 -c 'import json,os; print(json.dumps({"sha": os.environ["V_SHA"][:40], "message": os.environ["V_MSG"][:200], "date": os.environ["V_DATE"]}))' > "$DIR/VERSION.json"
 
 # Nenhum .env e' gravado aqui: as variaveis vivem no painel da SquareCloud (Variaveis de Ambiente) e persistem entre deploys.
 rm -f "$DIR/.env"
