@@ -40,6 +40,14 @@ export default function MediaPage() {
   const { state: up, upload } = useMediaUpload();
   const manage = can('media.manage');
 
+  // Avisa antes de fechar a aba no meio de um envio em lote
+  useEffect(() => {
+    if (!up.busy) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [up.busy]);
+
   /** Carrega a primeira pagina da busca (ou acrescenta a proxima). */
   const load = useCallback(async (query: string, offset: number) => {
     setLoading(true);
@@ -201,6 +209,9 @@ export default function MediaPage() {
         <div className="space-y-0.5 rounded-lg border border-red-900/40 bg-red-900/20 px-3 py-2 text-sm text-red-300">
           {up.errors.map((e) => <p key={e}>{e}</p>)}
         </div>
+      )}
+      {up.failed.length > 0 && !up.busy && (
+        <Button variant="outline" size="sm" onClick={() => void sendFiles(up.failed)}>{t.retryFailed.replace('{n}', String(up.failed.length))}</Button>
       )}
       {up.skipped > 0 && <p className="text-sm text-amber-400">{t.skipped.replace('{n}', String(up.skipped))}</p>}
       {info && <p className="text-sm text-emerald-400">{info}</p>}

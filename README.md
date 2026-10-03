@@ -504,7 +504,7 @@ novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses tr
 | `LOGIN_REQUESTS_PER_MINUTE` / `LOGIN_FAIL_LIMIT` / `LOGIN_FAIL_WINDOW_MINUTES` / `BOT_FAIL_LIMIT` | `30` / `5` / `15` / `10` | freios do login e do token do bot |
 
 **Enviar milhares de imagens de uma vez (ex.: 4 mil).** Dois caminhos:
-1. *Pelo painel* (Admin → Images, arrastar e soltar): funciona, mas cada imagem é um pedido (limite de 600/min por IP; o painel espera e tenta de novo sozinho no 429). 4 mil imagens levam ~10+ minutos: deixe a aba aberta e envie em levas de ~500–1000.
+1. *Pelo painel* (Admin → Images, arrastar e soltar): funciona, mas cada imagem é um pedido (limite de 600/min por IP; o painel **espaça os envios** (~400/min, abaixo do limite), espera o tempo que a API pedir no 429, tenta de novo em falha de rede/5xx, **para tudo** se a sessão vencer e mostra o botão **Tentar de novo** com o que falhou). 4 mil imagens levam ~10–15 minutos: deixe a aba aberta (o navegador avisa se tentar fechar).
 2. *Direto na pasta (mais rápido)*: coloque os arquivos (`.png`, `.jpg`, `.gif`, `.webp`; prefira nomes simples, sem espaços/acentos) na pasta `uploads/` do app da API (SquareCloud → *Files*) e, no painel, clique em **Sync** (Admin → Images). Cada arquivo novo ganha um ID. O deploy **nunca** mexe nessa pasta.
 Cada imagem ocupa disco no app: confira o espaço do plano antes.
 
