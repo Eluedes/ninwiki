@@ -1,7 +1,8 @@
 'use client';
 
 // Banco de imagens (rota /admin/media): toda imagem enviada ganha um ID que a equipe digita nos campos de imagem (img:12, #12 ou 12).
-// Ver e enviar: uploads.create. Renomear, apagar e importar da pasta: media.manage (a API confere de novo).
+// Ver: uploads.create. Enviar (lote/arrastar e soltar): media.upload (padrao so' S.Adm). Renomear, categoria, apagar e importar da pasta: media.manage (a API confere de novo).
+// 50 imagens por pagina, com filtro por categoria (weapon, clothing...).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, Copy, FolderSync, Images, Loader2, Pencil, Search, Trash2, Upload } from 'lucide-react';
@@ -10,12 +11,12 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ApiError, bulkDeleteMedia, deleteMedia, getMediaUsage, listMedia, renameMedia, syncMedia, type ApiMedia,
+  ApiError, MEDIA_CATEGORIES, bulkDeleteMedia, bulkSetMediaCategory, deleteMedia, getMediaUsage, listMedia, renameMedia, setMediaCategory, syncMedia, type ApiMedia,
 } from '@/lib/api-client';
 import { DropZone } from '@/components/admin/drop-zone';
 import { useMediaUpload } from '@/components/admin/use-media-upload';
 
-const PAGE = 60;
+const PAGE = 50;
 
 /** Copia um texto para a area de transferencia (sem erro se o navegador nao deixar). */
 async function copy(text: string): Promise<boolean> {
@@ -35,10 +36,16 @@ export default function MediaPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [page, setPage] = useState(0);                 // pagina atual (0 = primeira)
+  const [category, setCategory] = useState('');        // filtro: '' = todas, 'none' = sem categoria, ou uma categoria
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [uploadCat, setUploadCat] = useState('');       // categoria dos novos envios (arquivos 'categoria__nome' usam a propria)
+  const [bulkCat, setBulkCat] = useState('');
   const [selected, setSelected] = useState<Set<number>>(new Set()); // imagens marcadas para apagar em massa
   const fileRef = useRef<HTMLInputElement>(null);
   const { state: up, upload } = useMediaUpload();
   const manage = can('media.manage');
+  const canUpload = can('media.upload');
 
   // Avisa antes de fechar a aba no meio de um envio em lote
   useEffect(() => {
@@ -48,13 +55,14 @@ export default function MediaPage() {
     return () => window.removeEventListener('beforeunload', warn);
   }, [up.busy]);
 
-  /** Carrega a primeira pagina da busca (ou acrescenta a proxima). */
-  const load = useCallback(async (query: string, offset: number) => {
+  /** Carrega uma pagina (50 imagens) da busca, ja' filtrada pela categoria. */
+  const load = useCallback(async (query: string, pageNo: number, cat: string) => {
     setLoading(true);
     try {
-      const page = await listMedia(query, PAGE, offset);
-      setItems((prev) => (offset === 0 ? page.items : [...prev, ...page.items]));
-      setTotal(page.total);
+      const res = await listMedia(query, PAGE, pageNo * PAGE, cat);
+      setItems(res.items);
+      setTotal(res.total);
+      setCounts(res.counts ?? {});
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.loadError);
@@ -65,16 +73,16 @@ export default function MediaPage() {
 
   useEffect(() => {
     document.title = `${t.title} - Admin · Nin Online Wiki`;
-    const timer = setTimeout(() => { load(q, 0); }, q ? 250 : 0);
+    const timer = setTimeout(() => { load(q, page, category); }, q ? 250 : 0);
     return () => clearTimeout(timer);
-  }, [q, load, t.title]);
+  }, [q, page, category, load, t.title]);
 
   /** Envia as imagens escolhidas no seletor ou soltas na tela (varias de uma vez) e recarrega a lista. */
   async function sendFiles(files: File[]) {
     setError(null);
     setInfo(null);
-    const created = await upload(files);
-    if (created.length) await load(q, 0);
+    const created = await upload(files, uploadCat);
+    if (created.length) { if (page !== 0) setPage(0); else await load(q, 0, category); }
   }
 
   function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -89,7 +97,7 @@ export default function MediaPage() {
     try {
       const { added } = await syncMedia();
       setInfo(t.syncDone.replace('{n}', String(added)));
-      await load(q, 0);
+      await load(q, 0, category);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.actionError);
     } finally {
@@ -168,6 +176,37 @@ export default function MediaPage() {
     }
   }
 
+  /** Muda a categoria de UMA imagem (select no cartao). */
+  async function handleSetCategory(m: ApiMedia, cat: string) {
+    try {
+      const updated = await setMediaCategory(m.id, cat);
+      setItems((prev) => prev.map((x) => (x.id === m.id ? updated : x)));
+      await load(q, page, category);   // atualiza tambem os contadores e o filtro
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t.actionError);
+    }
+  }
+
+  /** Aplica a categoria escolhida a todas as imagens marcadas. */
+  async function handleBulkCategory() {
+    const ids = [...selected];
+    if (!ids.length || bulkCat === '') return;
+    setBusy('bulk');
+    setError(null);
+    try {
+      const target = bulkCat === 'none' ? '' : bulkCat;
+      const { updated } = await bulkSetMediaCategory(ids, target);
+      setSelected(new Set());
+      setBulkCat('');
+      setInfo(`${updated} ✓`);
+      await load(q, page, category);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t.actionError);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function handleCopy(key: string, text: string) {
     if (await copy(text)) {
       setCopied(key);
@@ -176,7 +215,7 @@ export default function MediaPage() {
   }
 
   return (
-    <DropZone onFiles={sendFiles} label={t.dropHere} disabled={up.busy} className="min-h-[70vh] space-y-5">
+    <DropZone onFiles={sendFiles} label={t.dropHere} disabled={up.busy || !canUpload} className="min-h-[70vh] space-y-5">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Images className="h-6 w-6 text-primary" />{t.title}</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{t.subtitle}</p>
@@ -185,13 +224,22 @@ export default function MediaPage() {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[14rem] flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.search} className="pl-8" />
+          <Input value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }} placeholder={t.search} className="pl-8" />
         </div>
-        <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleUpload} />
-        <Button onClick={() => fileRef.current?.click()} disabled={up.busy}>
-          {up.busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
-          {up.busy ? t.progress.replace('{done}', String(up.done)).replace('{total}', String(up.total)) : t.upload}
-        </Button>
+        {canUpload && (
+          <>
+            <select value={uploadCat} onChange={(e) => setUploadCat(e.target.value)} aria-label={t.newUploadCategory} title={t.newUploadCategory}
+              className="h-10 rounded-md border border-input bg-background px-2 text-sm">
+              <option value="">{t.newUploadCategory}: {t.uncategorized}</option>
+              {MEDIA_CATEGORIES.map((c) => <option key={c} value={c}>{t.newUploadCategory}: {t.categories[c]}</option>)}
+            </select>
+            <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleUpload} />
+            <Button onClick={() => fileRef.current?.click()} disabled={up.busy}>
+              {up.busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
+              {up.busy ? t.progress.replace('{done}', String(up.done)).replace('{total}', String(up.total)) : t.upload}
+            </Button>
+          </>
+        )}
         {manage && (
           <Button variant="outline" onClick={handleSync} disabled={busy === 'sync'}>
             {busy === 'sync' ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <FolderSync className="mr-1.5 h-4 w-4" />}
@@ -199,6 +247,22 @@ export default function MediaPage() {
           </Button>
         )}
       </div>
+
+      {/* Filtro por categoria (com a quantidade de cada uma) */}
+      <div className="flex flex-wrap gap-1.5">
+        {[{ key: '', label: t.allCategories, n: Object.values(counts).reduce((a, b) => a + b, 0) },
+          ...MEDIA_CATEGORIES.map((c) => ({ key: c, label: t.categories[c], n: counts[c] ?? 0 })),
+          { key: 'none', label: t.uncategorized, n: counts[''] ?? 0 }].map((c) => (
+          <button
+            key={c.key || 'all'} type="button" onClick={() => { setCategory(c.key); setPage(0); setSelected(new Set()); }}
+            className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${category === c.key ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'}`}
+          >
+            {c.label} <span className="opacity-70">{c.n}</span>
+          </button>
+        ))}
+      </div>
+
+      {!canUpload && <p className="text-xs text-muted-foreground">{t.noUploadPermission}</p>}
 
       {error && (
         <div className="flex items-center gap-2 rounded-lg border border-red-900/40 bg-red-900/20 px-3 py-2 text-sm text-red-300">
@@ -224,6 +288,12 @@ export default function MediaPage() {
             <>
               <span className="font-semibold">{t.selected.replace('{n}', String(selected.size))}</span>
               <button type="button" className="text-muted-foreground hover:underline" onClick={() => setSelected(new Set())}>{t.clearSel}</button>
+              <select value={bulkCat} onChange={(e) => setBulkCat(e.target.value)} className="h-8 rounded-md border border-input bg-background px-2 text-xs" aria-label={t.setCategory}>
+                <option value="">{t.setCategory}</option>
+                {MEDIA_CATEGORIES.map((c) => <option key={c} value={c}>{t.categories[c]}</option>)}
+                <option value="none">{t.uncategorized}</option>
+              </select>
+              <Button size="sm" variant="outline" disabled={busy === 'bulk' || bulkCat === ''} onClick={handleBulkCategory}>{t.applyCategory}</Button>
               <Button size="sm" variant="destructive" disabled={busy === 'bulk'} onClick={handleBulkDelete}>
                 {busy === 'bulk' ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1.5 h-4 w-4" />}{t.deleteSelected}
               </Button>
@@ -252,6 +322,15 @@ export default function MediaPage() {
                 <span className="text-[11px] text-muted-foreground">{m.width}×{m.height} · {Math.max(1, Math.round(m.bytes / 1024))} KB</span>
               </div>
               <p className="truncate text-xs text-card-foreground" title={m.name}>{m.name || <span className="text-muted-foreground">{t.unnamed}</span>}</p>
+              {manage ? (
+                <select value={m.category} onChange={(e) => void handleSetCategory(m, e.target.value)} aria-label={t.categoryOf}
+                  className="h-7 w-full rounded border border-input bg-background px-1 text-[11px] text-muted-foreground">
+                  <option value="">{t.uncategorized}</option>
+                  {MEDIA_CATEGORIES.map((c) => <option key={c} value={c}>{t.categories[c]}</option>)}
+                </select>
+              ) : (
+                m.category && <span className="inline-block rounded bg-secondary px-1.5 py-0.5 text-[11px] text-muted-foreground">{t.categories[m.category] ?? m.category}</span>
+              )}
               <div className="flex flex-wrap gap-1">
                 <button type="button" onClick={() => handleCopy(`id-${m.id}`, `img:${m.id}`)} className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-[11px] text-muted-foreground hover:border-primary/50 hover:text-card-foreground">
                   {copied === `id-${m.id}` ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}{copied === `id-${m.id}` ? t.copied : t.copyId}
@@ -275,8 +354,12 @@ export default function MediaPage() {
 
       {loading && <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
       {!loading && items.length === 0 && !error && <p className="py-10 text-center text-sm text-muted-foreground">{t.empty}</p>}
-      {!loading && items.length < total && (
-        <div className="flex justify-center"><Button variant="outline" onClick={() => load(q, items.length)}>{t.loadMore}</Button></div>
+      {total > PAGE && (
+        <div className="flex items-center justify-center gap-3">
+          <Button variant="outline" size="sm" disabled={page === 0 || loading} onClick={() => { setPage((p) => Math.max(0, p - 1)); setSelected(new Set()); }}>{t.prev}</Button>
+          <span className="text-sm text-muted-foreground">{t.pageOf.replace('{page}', String(page + 1)).replace('{pages}', String(Math.max(1, Math.ceil(total / PAGE))))}</span>
+          <Button variant="outline" size="sm" disabled={(page + 1) * PAGE >= total || loading} onClick={() => { setPage((p) => p + 1); setSelected(new Set()); }}>{t.next}</Button>
+        </div>
       )}
     </DropZone>
   );

@@ -122,7 +122,7 @@ def _resize_image(content: bytes, extension: str) -> bytes:
         return buffer.getvalue()
 
 
-async def store_image(file: UploadFile, staff: User, db: AsyncSession, name: str = "") -> MediaImage:
+async def store_image(file: UploadFile, staff: User, db: AsyncSession, name: str = "", category: str = "") -> MediaImage:
     """Recebe uma imagem, confere o tipo pelos bytes e o tamanho, redimensiona, salva com nome aleatorio e registra no banco de imagens."""
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
 
@@ -165,7 +165,7 @@ async def store_image(file: UploadFile, staff: User, db: AsyncSession, name: str
 
     # Rotulo para achar na busca: o digitado, ou o nome original do arquivo (so' letras/numeros/espaco; nunca vira caminho).
     label = " ".join("".join(ch if ch.isalnum() or ch in " -_." else " " for ch in (name or Path(file.filename or "").stem)).split())[:80]
-    media = MediaImage(filename=filename, name=label, width=width, height=height, bytes=len(content), uploaded_by=staff.username)
+    media = MediaImage(filename=filename, name=label, category=category, width=width, height=height, bytes=len(content), uploaded_by=staff.username)
     db.add(media)
     await db.flush()
     await log_action(db, action="upload", entity_type="upload", entity_id=filename,

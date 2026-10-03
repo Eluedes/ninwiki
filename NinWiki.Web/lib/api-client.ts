@@ -722,7 +722,7 @@ export type PermissionName =
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
-  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage'
+  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view';
 
 export interface ApiMe {
@@ -1331,9 +1331,14 @@ export function clearAnnouncement(): Promise<ApiAnnouncement> {
 
 // ---- Banco de imagens ----
 
+/** Categorias do banco de imagens (a API aceita so' estas; vazio = sem categoria). */
+export const MEDIA_CATEGORIES = ['weapon', 'clothing', 'consumable', 'currency', 'material', 'ring', 'other'] as const;
+export type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
+
 export interface ApiMedia {
   id: number;
   name: string;
+  category: string;
   url: string;
   width: number;
   height: number;
@@ -1345,6 +1350,7 @@ export interface ApiMedia {
 export interface ApiMediaPage {
   items: ApiMedia[];
   total: number;
+  counts: Record<string, number>;   // imagens por categoria ('' = sem categoria), da biblioteca toda
 }
 
 export interface ApiMediaUse {
@@ -1353,9 +1359,10 @@ export interface ApiMediaUse {
 }
 
 /** Lista/busca o banco de imagens (mais novas primeiro). `q` busca no nome ou pelo ID (12, #12, img:12). */
-export function listMedia(q = '', limit = 60, offset = 0): Promise<ApiMediaPage> {
+export function listMedia(q = '', limit = 50, offset = 0, category?: string): Promise<ApiMediaPage> {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (q.trim()) params.set('q', q.trim());
+  if (category) params.set('category', category);   // 'none' = so' as sem categoria
   return apiFetch(`/media?${params.toString()}`);
 }
 
@@ -1365,10 +1372,11 @@ export function getMedia(id: number): Promise<ApiMedia> {
 }
 
 /** Envia uma imagem para o banco de imagens (multipart) e devolve o ID dela. */
-export async function uploadMedia(file: File, name = ''): Promise<ApiMedia> {
+export async function uploadMedia(file: File, name = '', category = ''): Promise<ApiMedia> {
   const formData = new FormData();
   formData.append('file', file);
   if (name) formData.append('name', name);
+  if (category) formData.append('category', category);
   // Sem apiFetch (ele forca JSON): o navegador define o multipart sozinho.
   const res = await fetch(`${API_URL}/media`, { method: 'POST', body: formData, credentials: 'include' });
   if (res.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
@@ -1382,6 +1390,16 @@ export async function uploadMedia(file: File, name = ''): Promise<ApiMedia> {
 /** Muda o rotulo de uma imagem (so' quem tem media.manage). */
 export function renameMedia(id: number, name: string): Promise<ApiMedia> {
   return apiFetch(`/media/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) });
+}
+
+/** Muda a categoria de uma imagem ('' tira a categoria; so' quem tem media.manage). */
+export function setMediaCategory(id: number, category: string): Promise<ApiMedia> {
+  return apiFetch(`/media/${id}`, { method: 'PATCH', body: JSON.stringify({ category }) });
+}
+
+/** Muda a categoria de varias imagens de uma vez. */
+export function bulkSetMediaCategory(ids: number[], category: string): Promise<{ updated: number }> {
+  return apiFetch('/media/bulk-category', { method: 'POST', body: JSON.stringify({ ids, category }) });
 }
 
 /** Onde a imagem esta' sendo usada. */

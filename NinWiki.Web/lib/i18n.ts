@@ -178,7 +178,7 @@ export interface Dictionary {
     mediaPage: {
       title: string; subtitle: string; upload: string; uploading: string; search: string; empty: string; sync: string; syncing: string; syncDone: string;
       rename: string; renamePrompt: string; delete: string; confirmDelete: string; confirmForce: string; copyId: string; copyUrl: string; copied: string;
-      dropHere: string; progress: string; skipped: string; failedFile: string; retryFailed: string; selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
+      dropHere: string; progress: string; skipped: string; failedFile: string; retryFailed: string; allCategories: string; uncategorized: string; categoryOf: string; newUploadCategory: string; setCategory: string; applyCategory: string; pageOf: string; prev: string; next: string; noUploadPermission: string; categories: Record<string, string>; selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
     };
     imageUpload: { dropHere: string; library: string; idResolved: string; idNotFound: string; uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
     dataTable: { noResults: string; selected: string; selectedPlural: string; itemsPerPage: string; pageOf: string; items: string };
@@ -540,7 +540,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sync: 'Importar da pasta de uploads', syncing: 'Importando...', syncDone: '{n} imagem(ns) importada(s).',
         rename: 'Renomear', renamePrompt: 'Nome da imagem #{id}:', delete: 'Apagar', confirmDelete: 'Apagar a imagem #{id}? O arquivo some do servidor.',
         confirmForce: 'A imagem #{id} está em uso ({uses}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.', copyId: 'Copiar ID', copyUrl: 'Copiar endereço', copied: 'Copiado!',
-        dropHere: 'Solte as imagens aqui para enviar', progress: 'Enviando {done}/{total}...', skipped: '{n} arquivo(s) ignorado(s): só PNG, JPG, GIF e WEBP.', failedFile: '{name}: {error}', retryFailed: 'Tentar de novo ({n} com falha)',
+        dropHere: 'Solte as imagens aqui para enviar', progress: 'Enviando {done}/{total}...', skipped: '{n} arquivo(s) ignorado(s): só PNG, JPG, GIF e WEBP.', failedFile: '{name}: {error}', retryFailed: 'Tentar de novo ({n} com falha)', allCategories: 'Todas', uncategorized: 'Sem categoria', categoryOf: 'Categoria', newUploadCategory: 'Categoria dos novos envios', setCategory: 'Mudar categoria...', applyCategory: 'Aplicar', pageOf: 'Página {page} de {pages}', prev: 'Anterior', next: 'Próxima', noUploadPermission: 'Você não tem permissão para enviar imagens aqui (peça ao S.Adm).', categories: { weapon: 'Armas', clothing: 'Roupas', consumable: 'Consumíveis', currency: 'Moedas', material: 'Materiais', ring: 'Anéis', other: 'Outros' },
         selected: '{n} selecionada(s)', selectAll: 'Selecionar todas desta página', clearSel: 'Limpar seleção', deleteSelected: 'Apagar selecionadas',
         confirmBulk: 'Apagar {n} imagem(ns)? Os arquivos somem do servidor.', confirmBulkForce: '{n} imagem(ns) estão em uso (ex.: {where}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.',
         bulkDone: '{n} imagem(ns) apagada(s).', select: 'Selecionar',
@@ -647,7 +647,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
-          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens',
+          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)',
           'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'staff.delete': 'Remover alguém da equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
           'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'audit.clear': 'Limpar o log', 'analytics.view': 'Ver os acessos ao site',
         },
@@ -1216,7 +1216,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sync: 'Import from the uploads folder', syncing: 'Importing...', syncDone: '{n} image(s) imported.',
         rename: 'Rename', renamePrompt: 'Name of image #{id}:', delete: 'Delete', confirmDelete: 'Delete image #{id}? The file is removed from the server.',
         confirmForce: 'Image #{id} is in use ({uses}). Delete anyway? Those places will end up with a broken image.', copyId: 'Copy ID', copyUrl: 'Copy address', copied: 'Copied!',
-        dropHere: 'Drop the images here to upload', progress: 'Uploading {done}/{total}...', skipped: '{n} file(s) skipped: only PNG, JPG, GIF and WEBP.', failedFile: '{name}: {error}', retryFailed: 'Retry {n} failed',
+        dropHere: 'Drop the images here to upload', progress: 'Uploading {done}/{total}...', skipped: '{n} file(s) skipped: only PNG, JPG, GIF and WEBP.', failedFile: '{name}: {error}', retryFailed: 'Retry {n} failed', allCategories: 'All', uncategorized: 'Uncategorized', categoryOf: 'Category', newUploadCategory: 'Category for new uploads', setCategory: 'Set category...', applyCategory: 'Apply', pageOf: 'Page {page} of {pages}', prev: 'Previous', next: 'Next', noUploadPermission: 'You are not allowed to upload images here (ask the S.Adm).', categories: { weapon: 'Weapons', clothing: 'Clothing', consumable: 'Consumables', currency: 'Currency', material: 'Materials', ring: 'Rings', other: 'Other' },
         selected: '{n} selected', selectAll: 'Select all on this page', clearSel: 'Clear selection', deleteSelected: 'Delete selected',
         confirmBulk: 'Delete {n} image(s)? The files are removed from the server.', confirmBulkForce: '{n} image(s) are in use (e.g. {where}). Delete anyway? Those places will end up with a broken image.',
         bulkDone: '{n} image(s) deleted.', select: 'Select',
@@ -1323,7 +1323,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
-          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library',
+          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.upload': 'Upload images to the image library (bulk)',
           'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'staff.delete': 'Remove someone from the team', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
           'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'audit.clear': 'Clear the log', 'analytics.view': 'View site traffic',
         },

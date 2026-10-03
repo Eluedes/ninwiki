@@ -1627,6 +1627,24 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.get("/media")
     check("anonimo NAO ve o banco de imagens (401)", r.status_code == 401)
     Cm = cookie(await recarregar(creator))
+
+    async def dar_envio_ao_creator() -> None:
+        """Libera media.upload (envio pelo banco de imagens) ao Creator: por padrao so' o S.Adm envia."""
+        atuais = (await c.get("/auth/me", headers=C)).json()["permissions"]
+        await c.put("/roles/creator/permissions", json={"permissions": sorted(set(atuais) | {"media.upload"})}, headers=S)
+
+    r = await c.post("/media", files={"file": ("x.png", _png((9, 9, 9)), "image/png")}, headers=Cm)
+    check("Creator NAO envia pelo banco de imagens por padrao (403)", r.status_code == 403)
+    r = await c.post("/media", files={"file": ("x.png", _png((9, 9, 9)), "image/png")}, headers=A)
+    check("Adm NAO envia pelo banco de imagens por padrao (403)", r.status_code == 403)
+    r = await c.post("/media", files={"file": ("sadm.png", _png((9, 9, 9)), "image/png")}, headers=S)
+    check("S.Adm envia pelo banco de imagens (201)", r.status_code == 201)
+    if r.status_code == 201:
+        await c.delete(f"/media/{r.json()['id']}", params={"force": "true"}, headers=S)
+    r = await c.post("/uploads/image", files={"file": ("campo.png", _png((8, 8, 8)), "image/png")}, headers=Cm)
+    check("o envio pelos CAMPOS de imagem (uploads.create) continua liberado ao Creator", r.status_code == 200, r.text[:120])
+    await dar_envio_ao_creator()
+    check("S.Adm libera media.upload ao Creator e ele passa a enviar", (await c.post("/media", files={"file": ("y.png", _png((7, 7, 7)), "image/png")}, headers=Cm)).status_code == 201)
     r = await c.post("/media", files={"file": ("minha foto.png", _png((200, 10, 10)), "image/png")}, data={"name": f"{SLUG} vermelha"}, headers=Cm)
     check("Creator envia imagem e recebe um ID", r.status_code == 201 and isinstance(r.json()["id"], int) and r.json()["url"].endswith(".png") and r.json()["width"] == 40, r.text[:200])
     img = r.json()
@@ -1719,6 +1737,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     ativos = [m for m in (await c.get("/staff", headers=S)).json() if m["role"] == "super_admin" and m["isActive"]]
     check("a regra do ultimo S.Adm existe no servico (staff_service.delete_staff)", hasattr(__import__("app.core.staff_service", fromlist=["x"]), "delete_staff") and len(ativos) >= 1)
 
+    await dar_envio_ao_creator()   # o reset acima devolveu o padrao
     imgs = []
     for k in range(3):
         r = await c.post("/media", files={"file": (f"m{k}.png", _png((k * 60, 20, 200)), "image/png")}, data={"name": f"{SLUG} lote {k}"}, headers=Cm)
@@ -1736,6 +1755,37 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("com force=true apaga ate' a que esta' em uso", r.status_code == 200 and r.json()["deleted"] == [imgs[1]["id"]])
     r = await c.post("/media/bulk-delete", json={"ids": []}, headers=A)
     check("lista vazia e' recusada (422)", r.status_code == 422)
+
+    # categorias do banco de imagens
+    r = await c.post("/media", files={"file": ("a.png", _png((1, 2, 3)), "image/png")}, data={"name": f"{SLUG} sword", "category": "weapon"}, headers=Cm)
+    ca = r.json()
+    check("envio com categoria guarda a categoria", r.status_code == 201 and ca["category"] == "weapon", r.text[:160])
+    r = await c.post("/media", files={"file": ("b.png", _png((3, 2, 1)), "image/png")}, data={"category": "inventada"}, headers=Cm)
+    check("categoria desconhecida e' recusada (422)", r.status_code == 422)
+    r = await c.post("/media", files={"file": ("c.png", _png((5, 5, 5)), "image/png")}, data={"name": f"{SLUG} semcat"}, headers=Cm)
+    cb = r.json()
+    check("sem categoria fica vazio", r.status_code == 201 and cb["category"] == "")
+    r = await c.get("/media", params={"category": "weapon", "limit": 200}, headers=Cm)
+    ids_w = [i["id"] for i in r.json()["items"]]
+    check("filtro por categoria traz so' as dela", ca["id"] in ids_w and cb["id"] not in ids_w and all(i["category"] == "weapon" for i in r.json()["items"]))
+    r = await c.get("/media", params={"category": "none", "limit": 200}, headers=Cm)
+    check("filtro 'none' traz so' as sem categoria", cb["id"] in [i["id"] for i in r.json()["items"]] and all(i["category"] == "" for i in r.json()["items"]))
+    r = await c.get("/media", headers=Cm)
+    j = r.json()
+    check("a lista informa a contagem por categoria e a pagina padrao e' de 50", j["counts"].get("weapon", 0) >= 1 and len(j["items"]) <= 50 and sum(j["counts"].values()) == j["total"], str(j["counts"]))
+    r = await c.patch(f"/media/{cb['id']}", json={"category": "currency"}, headers=Cm)
+    check("Creator NAO muda a categoria (403)", r.status_code == 403)
+    r = await c.patch(f"/media/{cb['id']}", json={"category": "currency"}, headers=A)
+    check("Adm muda a categoria sem perder o nome", r.status_code == 200 and r.json()["category"] == "currency" and r.json()["name"] == f"{SLUG} semcat", r.text[:160])
+    r = await c.patch(f"/media/{cb['id']}", json={"category": "xyz"}, headers=A)
+    check("categoria invalida no PATCH e' recusada (422)", r.status_code == 422)
+    r = await c.post("/media/bulk-category", json={"ids": [ca["id"], cb["id"]], "category": "ring"}, headers=Cm)
+    check("Creator NAO muda categoria em massa (403)", r.status_code == 403)
+    r = await c.post("/media/bulk-category", json={"ids": [ca["id"], cb["id"], 99999999], "category": "ring"}, headers=A)
+    check("Adm muda a categoria de varias de uma vez", r.status_code == 200 and r.json()["updated"] == 2, r.text[:120])
+    r = await c.post("/media/bulk-category", json={"ids": [ca["id"]], "category": ""}, headers=A)
+    check("categoria vazia tira a categoria", r.status_code == 200 and (await c.get(f"/media/{ca['id']}", headers=Cm)).json()["category"] == "")
+    await c.post("/media/bulk-delete", json={"ids": [ca["id"], cb["id"]], "force": True}, headers=A)
     await c.post("/roles/creator/permissions/reset", headers=S)
 
     secao("25) Texto rico: estilos de letra (cor, fundo, fonte, tamanho) so' no formato permitido")

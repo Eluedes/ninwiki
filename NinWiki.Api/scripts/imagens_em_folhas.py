@@ -9,11 +9,14 @@ PASSO A PASSO
        python scripts/imagens_em_folhas.py folhas  C:\\imagens  C:\\folhas  --por-folha 100
      Cria C:\\folhas\\folha_001.png ... (cada icone ampliado, com um numero) e C:\\folhas\\indice.csv (numero -> arquivo).
   2) Mande as folhas para o Claude no chat (algumas por mensagem) pedindo: "responda em CSV: numero,tipo,nome".
-     Tipos sugeridos: weapon, clothing, consumable, currency, material, ring, other.
+     Categorias (as mesmas do painel): weapon, clothing, consumable, currency, material, ring, other.
+     O nome fica em ingles, sem traduzir, em snake_case e curto (sword, health_potion, gold_coin).
   3) Salve a resposta como C:\\folhas\\respostas.csv e confira com o ensaio (nao muda nada):
        python scripts/imagens_em_folhas.py renomear  C:\\imagens  C:\\folhas  C:\\folhas\\respostas.csv
-     Estando certo, rode de novo com --aplicar: os arquivos viram  tipo-nome-numero.png  (duplicadas recebem o mesmo nome).
-  3) Envie a pasta pelo painel (Admin > Images): o nome do arquivo vira o nome da imagem na biblioteca, e voce acha tudo pela busca.
+     Estando certo, rode de novo com --aplicar: os arquivos viram  categoria__nome.png , e quando o nome se repete o script numera:
+       weapon__sword.png, weapon__sword_2.png, weapon__sword_3.png ...   (a ordem e' a dos numeros das folhas; desenhos iguais tambem recebem o proximo numero)
+  4) Envie a pasta pelo painel (Admin > Images, precisa da permissao "Enviar imagens pelo banco de imagens"): o prefixo "categoria__" vira a CATEGORIA da
+     imagem (filtro rapido) e o resto vira o NOME (sword_2). Voce acha tudo pela busca e pelos botoes de categoria.
 Limite honesto: o Claude reconhece a FORMA do icone (espada, pocao, moeda...), nao o nome oficial no jogo; revise o que parecer estranho.
 """
 import argparse
@@ -26,6 +29,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+CATEGORIES = {"weapon", "clothing", "consumable", "currency", "material", "ring", "other"}   # as mesmas do painel
 EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 CELL = 112      # tamanho de cada icone na folha (ampliado)
 LABEL_H = 18    # faixa do numero embaixo do icone
@@ -48,10 +52,10 @@ def _pixel_hash(path: Path) -> str | None:
 
 
 def _slug(text: str, limit: int = 50) -> str:
-    """Nome seguro de arquivo: minusculas, sem acento, so' letras/numeros/hifen."""
+    """Nome seguro de arquivo em snake_case: minusculas, sem acento, so' letras/numeros/sublinhado."""
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
-    text = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
-    return text[:limit].strip("-")
+    text = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+    return text[:limit].strip("_")
 
 
 def _unique(folder: Path) -> list[tuple[int, Path, list[Path]]]:
@@ -116,19 +120,24 @@ def cmd_renomear(src: Path, out: Path, answers: Path, apply: bool) -> None:
             index[int(row["numero"])] = row["arquivo_principal"]
     plan: list[tuple[Path, Path]] = []
     seen_targets: set[Path] = set()
+    used: dict[str, int] = {}   # quantas vezes cada nome ja' foi usado (para numerar: sword, sword_2, sword_3...)
     with open(answers, encoding="utf-8-sig") as fh:
-        rows = [r for r in csv.reader(fh) if r and r[0].strip().isdigit()]
+        rows = sorted((r for r in csv.reader(fh) if r and r[0].strip().isdigit()), key=lambda r: int(r[0]))
     for r in rows:
         n = int(r[0])
-        tipo, nome = _slug(r[1] if len(r) > 1 else "", 20), _slug(r[2] if len(r) > 2 else "")
-        if n not in items or not tipo:
-            print(f"! ignorado (numero {n} desconhecido ou sem tipo)")
+        cat, nome = _slug(r[1] if len(r) > 1 else "", 20), _slug(r[2] if len(r) > 2 else "")
+        if n not in items or not nome:
+            print(f"! ignorado (numero {n} desconhecido ou sem nome)")
             continue
+        if cat not in CATEGORIES:
+            print(f"! numero {n}: categoria '{cat}' desconhecida, usando 'other'")
+            cat = "other"
         if index.get(n) != items[n][0].name:
             sys.exit(f"A pasta mudou desde que as folhas foram feitas (numero {n}). Gere as folhas de novo.")
-        for k, path in enumerate(items[n][1]):
-            base = "-".join(x for x in (tipo, nome, str(n)) if x) + (f"-copia{k}" if k else "")
-            target = path.with_name(base + path.suffix.lower())
+        for path in items[n][1]:
+            used[nome] = used.get(nome, 0) + 1
+            label = nome if used[nome] == 1 else f"{nome}_{used[nome]}"
+            target = path.with_name(f"{cat}__{label}{path.suffix.lower()}")
             if target in seen_targets or (target.exists() and target != path):
                 print(f"! conflito de nome, pulado: {target.name}")
                 continue
