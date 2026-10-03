@@ -37,7 +37,7 @@ export default function MediaPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [page, setPage] = useState(0);                 // pagina atual (0 = primeira)
-  const [category, setCategory] = useState('none');    // filtro: 'none' = sem categoria (padrao) ou uma categoria. NAO ha' mais "Todas"; a busca por texto procura em todas as visiveis
+  const [categoryState, setCategory] = useState('none');    // filtro: 'none' = sem categoria (padrao) ou uma categoria. NAO ha' mais "Todas"; a busca por texto procura em todas as visiveis
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [restricted, setRestricted] = useState(false);     // a busca bateu com imagem 'closed' que este usuario nao pode ver
   const [uploadCat, setUploadCat] = useState('');       // categoria dos novos envios (arquivos 'categoria__nome' usam a propria)
@@ -49,7 +49,11 @@ export default function MediaPage() {
   const canUpload = can('media.upload');
   const canResetIds = can('media.reset_ids');
   // 'closed' e' privada: so' quem tem media.closed (S.Adm) ve o botao e a opcao; os outros nem sabem que existe
-  const categories = MEDIA_CATEGORIES.filter((c) => c !== 'closed' || can('media.closed'));
+  const categories = MEDIA_CATEGORIES.filter((c) => (c === 'closed' ? can('media.closed') : can(`media.cat.${c}`)));
+  const canNone = can('media.cat.none');   // 'Sem categoria' tambem pode ser trancada para um cargo
+  // Categoria aberta: se estiver trancada para este cargo (ou o login ainda nao carregou), mostra a primeira que ele pode ver
+  const visibleKeys = [...categories, ...(canNone ? ['none'] : [])];
+  const category = visibleKeys.includes(categoryState) ? categoryState : (canNone ? 'none' : (visibleKeys[0] ?? 'none'));
 
   // Avisa antes de fechar a aba no meio de um envio em lote
   useEffect(() => {
@@ -278,7 +282,7 @@ export default function MediaPage() {
       {/* Filtro por categoria (com a quantidade de cada uma) */}
       <div className="flex flex-wrap gap-1.5">
         {[...categories.map((c) => ({ key: c, label: t.categories[c], n: counts[c] ?? 0 })),
-          { key: 'none', label: t.uncategorized, n: counts[''] ?? 0 }].map((c) => (
+          ...(canNone ? [{ key: 'none', label: t.uncategorized, n: counts[''] ?? 0 }] : [])].map((c) => (
           <button
             key={c.key || 'all'} type="button" onClick={() => { setCategory(c.key); setPage(0); setSelected(new Set()); }}
             className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${category === c.key ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'}`}

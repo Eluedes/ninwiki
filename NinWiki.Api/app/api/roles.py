@@ -38,6 +38,8 @@ _GROUPS = {"content": "content", "posts": "posts", "lore": "lore", "uploads": "t
 
 def _group(p: Permission) -> str:
     """Grupo (secao da tela) a que uma permissao pertence."""
+    if p.value.startswith("media.cat."):
+        return "imagecats"
     return _GROUPS.get(p.value.split(".")[0], "other")
 
 
