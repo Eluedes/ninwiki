@@ -2006,9 +2006,10 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         r = await c.post("/steam-news/import", headers=A)
         check("rodar de novo nao duplica (ja' importados contam como pulados)", r.json()["lastRun"]["imported"] == 0 and r.json()["lastRun"]["skipped"] == 2)
         feed.append(_item("teste-steam-005", f"{SLUG} Update 3", ["patchnotes"], corpo="[img]{STEAM_CLAN_IMAGE}/1/a.png[/img]\nTexto."))
+        feed.append(_item("teste-steam-006", "Update v6.0.0.9b", []))   # "Atualizacao regular" da Steam: sem a tag patchnotes, mas o titulo e' de update
         _cfg.steam_news_status = "draft"
         r = await c.post("/steam-news/import", headers=A)
-        check("modo draft: o post novo entra como rascunho", r.json()["lastRun"]["imported"] == 1)
+        check("modo draft: os posts novos entram como rascunho (inclusive o update SEM a tag, achado pelo titulo)", r.json()["lastRun"]["imported"] == 2, str(r.json()["lastRun"])[:200])
         async with _Sess() as db:
             novo = (await db.execute(text("SELECT status, cover_image FROM posts WHERE source_id = 'teste-steam-005'"))).first()
         check("rascunho e a primeira imagem vira a capa", str(novo[0]).lower().endswith("draft") and novo[1] == "https://clan.akamai.steamstatic.com/images/1/a.png", str(novo))

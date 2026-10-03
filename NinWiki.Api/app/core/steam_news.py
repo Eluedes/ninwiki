@@ -235,6 +235,20 @@ async def fetch_news(app_id: str, count: int = 20, transport: httpx.AsyncBaseTra
         return (res.json().get("appnews") or {}).get("newsitems") or []
 
 
+def _is_update(item: dict, need: str) -> bool:
+    """O post conta como atualizacao? Sem tag exigida (`need` vazio): todos. Senao: tem a tag da Steam OU o titulo bate com STEAM_NEWS_TITLE_PATTERN (a Steam nem sempre marca como `patchnotes`)."""
+    if not need:
+        return True
+    if need in [str(t).lower() for t in (item.get("tags") or [])]:
+        return True
+    pattern = settings.steam_news_title_pattern.strip()
+    try:
+        return bool(pattern and re.search(pattern, str(item.get("title") or ""), re.IGNORECASE))
+    except re.error:   # expressao invalida no .env: ignora (so' a tag vale) em vez de derrubar a importacao
+        log.warning("Steam news: STEAM_NEWS_TITLE_PATTERN is not a valid regular expression")
+        return False
+
+
 async def _patch_tag(db: AsyncSession) -> Tag:
     """A tag "Patch Notes" (cria se ainda nao existir, ja' com a traducao)."""
     tag = await db.get(Tag, PATCH_TAG_ID)
@@ -275,7 +289,7 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
     run["seen"] = [{"title": " ".join(str(i.get("title") or "?").split())[:80],
                     "tags": [str(t) for t in (i.get("tags") or [])][:6], "date": int(i.get("date") or 0)} for i in items[:8]]
     need = "" if only_gid else settings.steam_news_require_tag.strip().lower()   # post escolhido a dedo: nao exige a tag
-    wanted = [i for i in items if (str(i.get("gid")) == only_gid if only_gid else (not need or need in [str(t).lower() for t in (i.get("tags") or [])]))]
+    wanted = [i for i in items if (str(i.get("gid")) == only_gid if only_gid else _is_update(i, need))]
     if only_gid and not wanted:
         run["errors"].append(f"Post {only_gid} was not found among the latest {len(items)} Steam news of this game")
     run["matched"] = len(wanted)
