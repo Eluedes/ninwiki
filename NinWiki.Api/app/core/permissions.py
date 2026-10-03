@@ -48,6 +48,22 @@ class Permission(str, Enum):
     MEDIA_UPLOAD = "media.upload"          # enviar imagens PELO BANCO DE IMAGENS (lote, arrastar e soltar). Padrao: so' S.Adm; o S.Adm pode liberar a Adm/Creator em /admin/permissions
     MEDIA_CLOSED = "media.closed"          # ver e usar a categoria "closed" do banco de imagens - so' S.Adm (SUPER_ONLY: os outros nem sabem que ela existe)
     MEDIA_RESET_IDS = "media.reset_ids"    # renumerar os IDs do banco de imagens (1, 2, 3...) - so' S.Adm (SUPER_ONLY)
+    # --- Categorias do banco de imagens: "pode ver as imagens desta categoria". Padrao: todos veem (menos 'closed', so' S.Adm).
+    #     O S.Adm TRANCA uma categoria para um cargo desmarcando a permissao em /admin/permissions: para quem nao tem, ela some da lista, da
+    #     contagem e da busca, e tentar abrir uma imagem dela (ID chutado, img:12) da' o aviso de acesso negado - igual a 'closed'.
+    MEDIA_CAT_WEAPON = "media.cat.weapon"
+    MEDIA_CAT_CLOTHING = "media.cat.clothing"
+    MEDIA_CAT_CONSUMABLE = "media.cat.consumable"
+    MEDIA_CAT_CURRENCY = "media.cat.currency"
+    MEDIA_CAT_MATERIAL = "media.cat.material"
+    MEDIA_CAT_RING = "media.cat.ring"
+    MEDIA_CAT_SCROLL = "media.cat.scroll"
+    MEDIA_CAT_NPC = "media.cat.npc"
+    MEDIA_CAT_MONSTER = "media.cat.monster"
+    MEDIA_CAT_FURNITURE = "media.cat.furniture"
+    MEDIA_CAT_HAIR_BEARD = "media.cat.hair_beard"
+    MEDIA_CAT_OTHER = "media.cat.other"
+    MEDIA_CAT_NONE = "media.cat.none"       # a categoria "Sem categoria"
     MEDIA_MANAGE = "media.manage"          # renomear, escolher categoria, apagar imagens do banco de imagens e sincronizar a pasta. Padrao: so' S.Adm (pode ser liberada em /admin/permissions)
 
     # --- Equipe ---
@@ -106,6 +122,7 @@ _CREATOR: frozenset[Permission] = frozenset({
     Permission.POST_CREATE,
     Permission.POST_EDIT,             # so' em RASCUNHO
     Permission.UPLOAD_CREATE,
+    *(p for p in Permission if p.value.startswith("media.cat.")),   # ve todas as categorias do banco de imagens (o S.Adm pode trancar)
     Permission.TRANSLATION_RETRANSLATE,
     Permission.NOTICE_VIEW,
 })
@@ -143,6 +160,18 @@ ROLE_PERMISSIONS: dict[StaffRole, frozenset[Permission]] = dict(DEFAULT_ROLE_PER
 
 # Cargos cujas permissoes o S.Adm pode editar.
 EDITABLE_ROLES: tuple[StaffRole, ...] = (StaffRole.ADMIN, StaffRole.CREATOR)
+
+
+def category_permission(category: str) -> Permission:
+    """A permissao que libera VER uma categoria do banco de imagens ('' = Sem categoria; 'closed' = so' S.Adm)."""
+    if category == "closed":
+        return Permission.MEDIA_CLOSED
+    return Permission("media.cat." + (category or "none"))
+
+
+def is_category_locked(user, category: str) -> bool:
+    """True se `user` NAO pode ver as imagens da categoria (trancada para o cargo dele, ou 'closed' sem ser S.Adm)."""
+    return not user_has_permission(user, category_permission(category))
 
 
 def grantable_permissions() -> list[Permission]:

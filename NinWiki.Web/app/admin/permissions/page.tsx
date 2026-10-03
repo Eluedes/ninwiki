@@ -19,7 +19,7 @@ import { RoleBadge } from '@/components/admin/role-badge';
 import { cn } from '@/lib/utils';
 
 const EDITABLE: StaffRole[] = ['admin', 'creator'];
-const GROUP_ORDER = ['content', 'posts', 'lore', 'tools', 'notices', 'audit', 'staff'];
+const GROUP_ORDER = ['content', 'posts', 'lore', 'tools', 'imagecats', 'notices', 'audit', 'staff'];
 
 type Draft = Record<string, Set<PermissionName>>;
 

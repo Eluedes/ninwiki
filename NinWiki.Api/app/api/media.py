@@ -29,7 +29,7 @@ from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.media_refs import CLOSED_MESSAGE, media_url, parse_ref
-from app.core.permissions import Permission, user_has_permission
+from app.core.permissions import Permission, is_category_locked, user_has_permission
 from app.models.content import ContentItem
 from app.models.masteries import Jutsu, Mastery
 from app.models.media import MediaImage
@@ -42,46 +42,46 @@ router = APIRouter(prefix="/media", tags=["media"])
 
 
 # Categorias do banco de imagens ('' = sem categoria). Fixas de proposito: o filtro do painel fica pequeno e o nome nao vira lixo digitado.
-MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "closed", "other")
+MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "closed", "other")
+CLOSED = "closed"   # categoria PRIVADA: so' S.Adm (media.closed). As demais podem ser TRANCADAS por cargo em /admin/permissions (media.cat.<categoria>)
 
 
-CLOSED = "closed"   # categoria PRIVADA: so' quem tem media.closed (S.Adm) ve as imagens dela; para os outros e' como se nao existissem
+def _locked_categories(staff: User) -> list[str]:
+    """Categorias ('' = Sem categoria) que este usuario NAO pode ver: 'closed' (so' S.Adm) e as que o S.Adm trancou para o cargo dele."""
+    return [c for c in ("", *MEDIA_CATEGORIES) if is_category_locked(staff, c)]
 
 
-def _can_closed(staff: User) -> bool:
-    """True se o usuario pode ver/usar a categoria 'closed' (so' S.Adm)."""
-    return user_has_permission(staff, Permission.MEDIA_CLOSED)
-
-
-def _hide_closed(stmt, staff: User):
-    """Tira da consulta as imagens 'closed' para quem nao pode ve-las."""
-    return stmt if _can_closed(staff) else stmt.where(MediaImage.category != CLOSED)
+def _hide_locked(stmt, staff: User):
+    """Tira da consulta as imagens de categorias trancadas para o usuario (somem da lista, da contagem e da busca)."""
+    locked = _locked_categories(staff)
+    return stmt.where(MediaImage.category.not_in(locked)) if locked else stmt
 
 
 async def _get_visible(db: AsyncSession, media_id: int, staff: User) -> MediaImage | None:
-    """A imagem pelo ID (None = nao existe). Se for 'closed' e o usuario nao puder ve-la: 403 com o aviso de acesso negado."""
+    """A imagem pelo ID (None = nao existe). Se a categoria dela estiver trancada para o usuario: 403 com o aviso de acesso negado."""
     m = await db.get(MediaImage, media_id)
-    if m is not None and m.category == CLOSED and not _can_closed(staff):
+    if m is not None and is_category_locked(staff, m.category):
         raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
     return m
 
 
-async def _deny_closed_ids(db: AsyncSession, ids: list[int], staff: User) -> None:
-    """Operacao em varias imagens: se QUALQUER uma for 'closed' e o usuario nao puder ve-la, recusa tudo (403 com o aviso)."""
-    if _can_closed(staff):
+async def _deny_locked_ids(db: AsyncSession, ids: list[int], staff: User) -> None:
+    """Operacao em varias imagens: se QUALQUER uma estiver numa categoria trancada para o usuario, recusa tudo (403 com o aviso)."""
+    locked = _locked_categories(staff)
+    if not locked:
         return
-    n = (await db.execute(select(func.count()).select_from(MediaImage).where(MediaImage.id.in_(ids), MediaImage.category == CLOSED))).scalar_one()
+    n = (await db.execute(select(func.count()).select_from(MediaImage).where(MediaImage.id.in_(ids), MediaImage.category.in_(locked)))).scalar_one()
     if n:
         raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
 
 
-def _valid_category(value: str | None, allow_closed: bool = True) -> str:
-    """Categoria valida ('' = sem categoria) ou 422. 'closed' so' vale para quem pode (senao responde como categoria desconhecida)."""
+def _valid_category(value: str | None, staff: User) -> str:
+    """Categoria valida ('' = sem categoria) ou erro: 422 se nao existe; 403 (aviso de acesso negado) se esta' trancada para o usuario."""
     v = (value or "").strip().lower()
-    if v == CLOSED and not allow_closed:
-        raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
     if v and v not in MEDIA_CATEGORIES:
         raise HTTPException(status_code=422, detail=f"Unknown category. Use one of: {', '.join(MEDIA_CATEGORIES)}")
+    if is_category_locked(staff, v):
+        raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
     return v
 
 
@@ -166,11 +166,11 @@ async def list_media(
     if (await db.execute(select(func.count()).select_from(MediaImage))).scalar_one() == 0:
         if await _sync_folder(db, None):
             await db.commit()
-    stmt = _hide_closed(select(MediaImage), staff)
-    if category == CLOSED and not _can_closed(staff):
-        raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
-    if category is not None:  # '' (ou "none") = so' as sem categoria
-        stmt = stmt.where(MediaImage.category == ("" if category == "none" else _valid_category(category, _can_closed(staff))))
+    stmt = _hide_locked(select(MediaImage), staff)
+    if category is not None:  # '' (ou "none") = so' as sem categoria; categoria trancada para o usuario = 403 com o aviso
+        stmt = stmt.where(MediaImage.category == ("" if category == "none" else _valid_category(category, staff)))
+        if category == "none" and is_category_locked(staff, ""):
+            raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
     q = q.strip()
     if q:
         ref = parse_ref(q)
@@ -178,12 +178,13 @@ async def list_media(
         cond = MediaImage.name.ilike(like, escape="\\")
         stmt = stmt.where(or_(cond, MediaImage.id == ref) if ref is not None else cond)
     restricted = False
-    if q and not _can_closed(staff):   # a busca (nome ou ID) bateria com imagem 'closed'? avisa, sem mostrar nada dela
-        probe = select(func.count()).select_from(MediaImage).where(MediaImage.category == CLOSED, or_(cond, MediaImage.id == ref) if ref is not None else cond)
+    locked = _locked_categories(staff)
+    if q and locked:   # a busca (nome ou ID) bateria com imagem de categoria trancada? avisa, sem mostrar nada dela
+        probe = select(func.count()).select_from(MediaImage).where(MediaImage.category.in_(locked), or_(cond, MediaImage.id == ref) if ref is not None else cond)
         restricted = (await db.execute(probe)).scalar_one() > 0
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
     rows = (await db.execute(stmt.order_by(MediaImage.id.desc()).limit(limit).offset(offset))).scalars().all()
-    counts = {c or "": n for c, n in (await db.execute(_hide_closed(select(MediaImage.category, func.count()), staff).group_by(MediaImage.category))).all()}
+    counts = {c or "": n for c, n in (await db.execute(_hide_locked(select(MediaImage.category, func.count()), staff).group_by(MediaImage.category))).all()}
     return MediaPage(items=[_read(m) for m in rows], total=total, counts=counts, restricted=restricted)
 
 
@@ -240,7 +241,7 @@ async def upload_media(
 ) -> MediaRead:
     """Envia uma imagem para o banco de imagens (com categoria opcional) e devolve o ID dela. So' quem tem media.upload (padrao: S.Adm)."""
     # Escolher categoria e' de quem tem media.manage (padrao S.Adm): para os outros a categoria enviada e' ignorada (a imagem entra sem categoria).
-    cat = _valid_category(category, _can_closed(staff)) if user_has_permission(staff, Permission.MEDIA_MANAGE) else ""
+    cat = _valid_category(category, staff) if user_has_permission(staff, Permission.MEDIA_MANAGE) else ""
     return _read(await store_image(file, staff, db, name, cat))
 
 
@@ -259,7 +260,7 @@ async def rename_media(
         diff["name"] = {"before": m.name, "after": new}
         m.name = new
     if payload.category is not None:
-        cat = _valid_category(payload.category, _can_closed(staff))
+        cat = _valid_category(payload.category, staff)
         diff["category"] = {"before": m.category, "after": cat}
         m.category = cat
     await log_action(db, action="rename", entity_type="media", entity_id=str(m.id), diff=diff, actor=staff)
@@ -274,9 +275,9 @@ async def bulk_category(
     staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Muda a categoria de varias imagens de uma vez ('' tira a categoria). Devolve quantas mudaram."""
-    cat = _valid_category(payload.category, _can_closed(staff))
+    cat = _valid_category(payload.category, staff)
     ids = list(dict.fromkeys(payload.ids))
-    await _deny_closed_ids(db, ids, staff)
+    await _deny_locked_ids(db, ids, staff)
     rows = (await db.execute(select(MediaImage).where(MediaImage.id.in_(ids)))).scalars().all()
     for m in rows:
         m.category = cat

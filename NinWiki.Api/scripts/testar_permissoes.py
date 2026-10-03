@@ -1765,7 +1765,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     cc = r.json()
     r = await c.post("/media", files={"file": ("b.png", _png((3, 2, 1)), "image/png")}, data={"category": "inventada"}, headers=S)
     check("categoria desconhecida e' recusada (422)", r.status_code == 422)
-    for nova in ("scroll", "npc", "monster", "furniture"):
+    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard"):
         r = await c.post("/media", files={"file": (f"{nova}.png", _png((4, 4, len(nova))), "image/png")}, data={"category": nova}, headers=S)
         check(f"categoria nova '{nova}' existe", r.status_code == 201 and r.json()["category"] == nova, r.text[:100])
         if r.status_code == 201:
@@ -1837,6 +1837,37 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("a closed continua existindo para o S.Adm", (await c.get(f"/media/{fechada['id']}", headers=S)).status_code == 200)
     await c.delete(f"/media/{fechada['id']}", params={"force": "true"}, headers=S)
     await c.post("/roles/admin/permissions/reset", headers=S)
+
+    # TRANCAR categorias por cargo (permissao media.cat.<categoria>): igual a 'closed', mas escolhido pelo S.Adm
+    r = await c.get("/roles/permissions", headers=S)
+    nomes = {p["name"] for p in r.json()["permissions"]}
+    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.none"} <= nomes)
+    me_cr = (await c.get("/auth/me", headers=Cm)).json()["permissions"]
+    check("por padrao o Creator ve todas as categorias (menos closed)", "media.cat.weapon" in me_cr and "media.cat.none" in me_cr and "media.closed" not in me_cr)
+    trancada = (await c.post("/media", files={"file": ("tr.png", _png((31, 3, 3)), "image/png")}, data={"name": f"{SLUG} trancada", "category": "weapon"}, headers=S)).json()
+    solta = (await c.post("/media", files={"file": ("sc.png", _png((32, 3, 3)), "image/png")}, data={"name": f"{SLUG} sem categoria"}, headers=S)).json()
+    r = await c.put("/roles/creator/permissions", json={"permissions": [p for p in me_cr if p not in ("media.cat.weapon", "media.cat.none")]}, headers=S)
+    check("S.Adm tranca 'weapon' e 'Sem categoria' para o Creator", r.status_code == 200, r.text[:100])
+    r = await c.get("/media", params={"limit": 200}, headers=Cm)
+    j = r.json()
+    check("Creator: as imagens trancadas somem da lista e da contagem", trancada["id"] not in [i["id"] for i in j["items"]] and solta["id"] not in [i["id"] for i in j["items"]]
+          and "weapon" not in j["counts"] and "" not in j["counts"] and sum(j["counts"].values()) == j["total"], str(j["counts"]))
+    r = await c.get(f"/media/{trancada['id']}", headers=Cm)
+    check("Creator chutando o ID de imagem trancada: 403 com o aviso", r.status_code == 403 and "not allowed to view" in r.json()["detail"], r.text[:100])
+    r = await c.get("/media", params={"category": "weapon"}, headers=Cm)
+    check("Creator filtrando pela categoria trancada: 403", r.status_code == 403)
+    r = await c.get("/media", params={"category": "none"}, headers=Cm)
+    check("Creator filtrando 'Sem categoria' trancada: 403", r.status_code == 403)
+    r = await c.get("/media", params={"q": f"{SLUG} trancada"}, headers=Cm)
+    check("busca pelo nome da imagem trancada: nada na lista e restricted=true", r.json()["items"] == [] and r.json()["restricted"] is True)
+    r = await c.post("/content-items", json={**novo_conteudo("tranc-ref"), "image": f"img:{trancada['id']}"}, headers=C)
+    check("Creator nao usa o ID da imagem trancada num campo de imagem (403)", r.status_code == 403)
+    check("o Adm (nao trancado) continua vendo", (await c.get(f"/media/{trancada['id']}", headers=A)).status_code == 200)
+    check("o S.Adm sempre ve", (await c.get(f"/media/{trancada['id']}", headers=S)).status_code == 200)
+    r = await c.put("/roles/creator/permissions", json={"permissions": me_cr}, headers=S)
+    check("S.Adm destranca (devolve as permissoes)", r.status_code == 200 and (await c.get(f"/media/{trancada['id']}", headers=Cm)).status_code == 200)
+    await c.post("/media/bulk-delete", json={"ids": [trancada["id"], solta["id"]], "force": True}, headers=S)
+    await c.post("/roles/creator/permissions/reset", headers=S)
 
     # renumerar os IDs (so' S.Adm)
     r = await c.post("/media/renumber", headers=A)
