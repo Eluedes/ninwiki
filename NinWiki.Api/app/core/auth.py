@@ -17,7 +17,7 @@ from app.core.audit import log_action
 from app.core.database import AsyncSessionLocal, get_db
 from app.core import role_config
 from app.core.permissions import SUPER_ONLY_PERMISSIONS, Permission, user_has_permission
-from app.core.security import SESSION_COOKIE, ensure_same_origin, read_session_token
+from app.core.security import SESSION_COOKIE, current_user_var, ensure_same_origin, read_session_token
 from app.models.users import User
 
 _UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
@@ -56,6 +56,7 @@ async def get_current_user(user: User | None = Depends(get_optional_user)) -> Us
     """Exige login: devolve o usuario logado ou responde 401."""
     if user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    current_user_var.set(user)   # disponivel para checagens fora do handler (ver core/media_refs.py)
     return user
 
 

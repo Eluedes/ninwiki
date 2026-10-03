@@ -45,9 +45,10 @@ export function ImageUploadField({
       onChange(media.url);
       setPreviewFailed(false);
       setNote(t.idResolved.replace('{id}', String(id)));
-    } catch {
+    } catch (err) {
       setNote(null);
-      setError(t.idNotFound.replace('{id}', String(id)));
+      // 403 = imagem da categoria fechada: aviso de acesso negado (nao diz se o ID existe de outra forma)
+      setError(err instanceof ApiError && err.status === 403 ? dict.admin.mediaPage.closedDenied : t.idNotFound.replace('{id}', String(id)));
     }
   }
 
