@@ -29,6 +29,7 @@ class NinWikiApi:
         self._client = client or httpx.AsyncClient(base_url=base_url.rstrip("/"), timeout=10.0)
         # O token vai no header X-Bot-Token de TODA chamada - nunca na URL (URLs vao pra log).
         self._headers = {"X-Bot-Token": bot_token}
+        self.last_site_detail = ""  # por que a ultima checagem do site falhou (vazio = ok); so' para o log do bot
 
     async def aclose(self) -> None:
         """Fecha a conexao HTTP, se foi criada aqui."""
@@ -120,10 +121,22 @@ class NinWikiApi:
             return False, False
         return True, res.status_code == 200
 
-    async def site_ok(self, url: str) -> bool:
-        """True se o site publico responde 200 (usa uma conexao propria, nao a da API)."""
+    async def site_ok(self, url: str, transport: httpx.AsyncBaseTransport | None = None) -> bool:
+        """
+        True se o site publico RESPONDEU (qualquer status abaixo de 500). Usa uma conexao propria, nao a da API.
+        403/429 contam como no ar: o site (ou a Cloudflare na frente) respondeu - so' nao deixou ESTE robo passar; 5xx (inclui os 52x
+        da Cloudflare), timeout, erro de conexao e redirecionamento em loop contam como fora do ar. O motivo fica em last_site_detail.
+        """
+        self.last_site_detail = ""
         try:
-            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers={"User-Agent": "NinWikiBot-HealthCheck/1.0"}) as client:
-                return (await client.get(url)).status_code < 400
-        except httpx.HTTPError:
+            async with httpx.AsyncClient(
+                timeout=10.0, follow_redirects=True, max_redirects=5, transport=transport,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; NinWikiBot-HealthCheck/1.0)", "Accept": "text/html,*/*"},
+            ) as client:
+                res = await client.get(url)
+        except httpx.HTTPError as e:
+            self.last_site_detail = f"{type(e).__name__}: {e}"[:200]
             return False
+        if res.status_code >= 400:
+            self.last_site_detail = f"HTTP {res.status_code}"
+        return res.status_code < 500
