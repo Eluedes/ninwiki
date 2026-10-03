@@ -507,6 +507,7 @@ novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses tr
 1. *Pelo painel* (Admin → Images, arrastar e soltar): funciona, mas cada imagem é um pedido (limite de 600/min por IP; o painel **espaça os envios** (~400/min, abaixo do limite), espera o tempo que a API pedir no 429, tenta de novo em falha de rede/5xx, **para tudo** se a sessão vencer e mostra o botão **Tentar de novo** com o que falhou). 4 mil imagens levam ~10–15 minutos: deixe a aba aberta (o navegador avisa se tentar fechar).
 2. *Direto na pasta (mais rápido)*: coloque os arquivos (`.png`, `.jpg`, `.gif`, `.webp`; prefira nomes simples, sem espaços/acentos) na pasta `uploads/` do app da API (SquareCloud → *Files*) e, no painel, clique em **Sync** (Admin → Images). Cada arquivo novo ganha um ID. O deploy **nunca** mexe nessa pasta.
 Cada imagem ocupa disco no app: confira o espaço do plano antes.
+3. *Nomear em lote, de graça:* o painel usa o **nome do arquivo** como nome da imagem na biblioteca. Para identificar milhares de ícones sem pagar API, use `NinWiki.Api/scripts/imagens_em_folhas.py` (no seu computador): ele monta "folhas" numeradas que você manda ao Claude no chat, e renomeia os arquivos com as respostas (`tipo-nome-numero.png`). Passo a passo no topo do próprio script.
 
 
 Sem variável nova para os acessos ao site: o país vem da Cloudflare (`TRUST_PROXY_HEADERS=true`) **ou** do arquivo `geoip/country.mmdb`, que o workflow da API baixa

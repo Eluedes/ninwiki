@@ -14,6 +14,11 @@ const PARALLEL = 3;
 const MIN_GAP_MS = 150;   // intervalo minimo entre dois envios (todos os "trabalhadores" juntos): ~400/min, abaixo do limite da API (600/min)
 const MAX_RETRIES = 8;
 
+/** Rotulo da imagem na biblioteca = nome do arquivo sem a extensao (ate' 80 caracteres), para achar pela busca. */
+function labelFromFile(file: File): string {
+  return file.name.replace(/\.[^.]+$/, '').slice(0, 80);
+}
+
 /** Segundos que a API pediu para esperar ("Try again in N seconds."), ou 0 se a mensagem nao diz. */
 function waitFromMessage(message: string): number {
   const m = /in (\d+) seconds?/i.exec(message);
@@ -24,7 +29,7 @@ function waitFromMessage(message: string): number {
 async function uploadWithRetry(file: File): Promise<ApiMedia> {
   for (let attempt = 0; ; attempt++) {
     try {
-      return await uploadMedia(file);
+      return await uploadMedia(file, labelFromFile(file));
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 0;
       const transient = status === 429 || status === 0 || status === 502 || status === 503 || status === 504;
