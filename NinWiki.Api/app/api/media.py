@@ -3,11 +3,12 @@ Banco de imagens do painel: toda imagem enviada ganha um ID (#1, #2...) que a eq
 
   GET    /media?q=&limit=&offset=   lista/busca (por nome ou ID)                  uploads.create
   GET    /media/{id}                uma imagem (o painel usa para trocar o ID pelo endereco)   uploads.create
-  POST   /media                     envia uma imagem (multipart: file, name)      uploads.create
   PATCH  /media/{id}                renomeia e/ou muda a categoria                media.manage
   POST   /media/renumber            renumera os IDs a partir de 1                  media.reset_ids (so' S.Adm)
   POST   /media/bulk-category       muda a categoria de varias imagens             media.manage
-  POST   /media                     envia imagem(ns) para o banco de imagens       media.upload (padrao: so' S.Adm)
+  POST   /media                     envia uma imagem (multipart: file, name, category)   media.upload (padrao: so' S.Adm)
+Categoria 'closed': PRIVADA - so' quem tem media.closed (S.Adm) ve; para os outros as imagens dela nao existem (somem da lista e da contagem, 404 no resto).
+Limite: quem digita o ID de uma imagem 'closed' num campo de imagem (img:12) ainda a usa - o ID nao e' mostrado a ninguem que nao seja S.Adm.
   GET    /media/{id}/usage          onde a imagem esta' sendo usada               media.manage
   DELETE /media/{id}                apaga (409 se estiver em uso, a menos que ?force=true)   media.manage
   POST   /media/sync                registra as imagens que ja' estavam em uploads/ e nao tem ID   media.manage
@@ -41,13 +42,32 @@ router = APIRouter(prefix="/media", tags=["media"])
 
 
 # Categorias do banco de imagens ('' = sem categoria). Fixas de proposito: o filtro do painel fica pequeno e o nome nao vira lixo digitado.
-MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "other")
+MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "closed", "other")
 
 
-def _valid_category(value: str | None) -> str:
-    """Categoria valida ('' = sem categoria) ou 422."""
+CLOSED = "closed"   # categoria PRIVADA: so' quem tem media.closed (S.Adm) ve as imagens dela; para os outros e' como se nao existissem
+
+
+def _can_closed(staff: User) -> bool:
+    """True se o usuario pode ver/usar a categoria 'closed' (so' S.Adm)."""
+    return user_has_permission(staff, Permission.MEDIA_CLOSED)
+
+
+def _hide_closed(stmt, staff: User):
+    """Tira da consulta as imagens 'closed' para quem nao pode ve-las."""
+    return stmt if _can_closed(staff) else stmt.where(MediaImage.category != CLOSED)
+
+
+async def _get_visible(db: AsyncSession, media_id: int, staff: User) -> MediaImage | None:
+    """A imagem pelo ID, ou None se nao existir OU se for 'closed' e o usuario nao puder ve-la (mesma resposta: 404)."""
+    m = await db.get(MediaImage, media_id)
+    return None if m is None or (m.category == CLOSED and not _can_closed(staff)) else m
+
+
+def _valid_category(value: str | None, allow_closed: bool = True) -> str:
+    """Categoria valida ('' = sem categoria) ou 422. 'closed' so' vale para quem pode (senao responde como categoria desconhecida)."""
     v = (value or "").strip().lower()
-    if v and v not in MEDIA_CATEGORIES:
+    if v and (v not in MEDIA_CATEGORIES or (v == CLOSED and not allow_closed)):
         raise HTTPException(status_code=422, detail=f"Unknown category. Use one of: {', '.join(MEDIA_CATEGORIES)}")
     return v
 
@@ -132,9 +152,9 @@ async def list_media(
     if (await db.execute(select(func.count()).select_from(MediaImage))).scalar_one() == 0:
         if await _sync_folder(db, None):
             await db.commit()
-    stmt = select(MediaImage)
+    stmt = _hide_closed(select(MediaImage), staff)
     if category is not None:  # '' (ou "none") = so' as sem categoria
-        stmt = stmt.where(MediaImage.category == ("" if category == "none" else _valid_category(category)))
+        stmt = stmt.where(MediaImage.category == ("" if category == "none" else _valid_category(category, _can_closed(staff))))
     q = q.strip()
     if q:
         ref = parse_ref(q)
@@ -143,7 +163,7 @@ async def list_media(
         stmt = stmt.where(or_(cond, MediaImage.id == ref) if ref is not None else cond)
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
     rows = (await db.execute(stmt.order_by(MediaImage.id.desc()).limit(limit).offset(offset))).scalars().all()
-    counts = {c or "": n for c, n in (await db.execute(select(MediaImage.category, func.count()).group_by(MediaImage.category))).all()}
+    counts = {c or "": n for c, n in (await db.execute(_hide_closed(select(MediaImage.category, func.count()), staff).group_by(MediaImage.category))).all()}
     return MediaPage(items=[_read(m) for m in rows], total=total, counts=counts)
 
 
@@ -187,7 +207,7 @@ async def get_media(
     media_id: int, staff: User = Depends(require_permission(Permission.UPLOAD_CREATE)), db: AsyncSession = Depends(get_db),
 ) -> MediaRead:
     """Uma imagem pelo ID (404 se nao existir)."""
-    m = await db.get(MediaImage, media_id)
+    m = await _get_visible(db, media_id, staff)
     if m is None:
         raise HTTPException(status_code=404, detail=f"Image #{media_id} was not found")
     return _read(m)
@@ -200,7 +220,7 @@ async def upload_media(
 ) -> MediaRead:
     """Envia uma imagem para o banco de imagens (com categoria opcional) e devolve o ID dela. So' quem tem media.upload (padrao: S.Adm)."""
     # Escolher categoria e' de quem tem media.manage (padrao S.Adm): para os outros a categoria enviada e' ignorada (a imagem entra sem categoria).
-    cat = _valid_category(category) if user_has_permission(staff, Permission.MEDIA_MANAGE) else ""
+    cat = _valid_category(category, _can_closed(staff)) if user_has_permission(staff, Permission.MEDIA_MANAGE) else ""
     return _read(await store_image(file, staff, db, name, cat))
 
 
@@ -210,7 +230,7 @@ async def rename_media(
     staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
 ) -> MediaRead:
     """Muda o nome e/ou a categoria da imagem (o ID e o arquivo nao mudam)."""
-    m = await db.get(MediaImage, media_id)
+    m = await _get_visible(db, media_id, staff)
     if m is None:
         raise HTTPException(status_code=404, detail=f"Image #{media_id} was not found")
     diff: dict = {}
@@ -219,7 +239,7 @@ async def rename_media(
         diff["name"] = {"before": m.name, "after": new}
         m.name = new
     if payload.category is not None:
-        cat = _valid_category(payload.category)
+        cat = _valid_category(payload.category, _can_closed(staff))
         diff["category"] = {"before": m.category, "after": cat}
         m.category = cat
     await log_action(db, action="rename", entity_type="media", entity_id=str(m.id), diff=diff, actor=staff)
@@ -234,9 +254,9 @@ async def bulk_category(
     staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Muda a categoria de varias imagens de uma vez ('' tira a categoria). Devolve quantas mudaram."""
-    cat = _valid_category(payload.category)
+    cat = _valid_category(payload.category, _can_closed(staff))
     ids = list(dict.fromkeys(payload.ids))
-    rows = (await db.execute(select(MediaImage).where(MediaImage.id.in_(ids)))).scalars().all()
+    rows = (await db.execute(_hide_closed(select(MediaImage).where(MediaImage.id.in_(ids)), staff))).scalars().all()
     for m in rows:
         m.category = cat
     if rows:
@@ -269,7 +289,7 @@ async def media_usage(
     media_id: int, staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
 ) -> list[MediaUse]:
     """Lista onde a imagem esta' sendo usada (ate' 20 por tipo)."""
-    m = await db.get(MediaImage, media_id)
+    m = await _get_visible(db, media_id, staff)
     if m is None:
         raise HTTPException(status_code=404, detail=f"Image #{media_id} was not found")
     return await _usage(db, m.filename)
@@ -299,7 +319,7 @@ async def bulk_delete_media(
     not_found: list[int] = []
     files: list[str] = []
     for media_id in dict.fromkeys(payload.ids):
-        m = await db.get(MediaImage, media_id)
+        m = await _get_visible(db, media_id, staff)
         if m is None:
             not_found.append(media_id)
             continue
@@ -325,7 +345,7 @@ async def delete_media(
     staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
 ) -> None:
     """Apaga a imagem (banco e arquivo). Se estiver em uso responde 409, a menos que `force=true`."""
-    m = await db.get(MediaImage, media_id)
+    m = await _get_visible(db, media_id, staff)
     if m is None:
         raise HTTPException(status_code=404, detail=f"Image #{media_id} was not found")
     uses = await _usage(db, m.filename)

@@ -37,7 +37,7 @@ export default function MediaPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [page, setPage] = useState(0);                 // pagina atual (0 = primeira)
-  const [category, setCategory] = useState('');        // filtro: '' = todas, 'none' = sem categoria, ou uma categoria
+  const [category, setCategory] = useState('none');    // filtro: 'none' = sem categoria (padrao) ou uma categoria. NAO ha' mais "Todas"; a busca por texto procura em todas as visiveis
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [uploadCat, setUploadCat] = useState('');       // categoria dos novos envios (arquivos 'categoria__nome' usam a propria)
   const [bulkCat, setBulkCat] = useState('');
@@ -47,6 +47,8 @@ export default function MediaPage() {
   const manage = can('media.manage');
   const canUpload = can('media.upload');
   const canResetIds = can('media.reset_ids');
+  // 'closed' e' privada: so' quem tem media.closed (S.Adm) ve o botao e a opcao; os outros nem sabem que existe
+  const categories = MEDIA_CATEGORIES.filter((c) => c !== 'closed' || can('media.closed'));
 
   // Avisa antes de fechar a aba no meio de um envio em lote
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function MediaPage() {
   const load = useCallback(async (query: string, pageNo: number, cat: string) => {
     setLoading(true);
     try {
-      const res = await listMedia(query, PAGE, pageNo * PAGE, cat);
+      const res = await listMedia(query, PAGE, pageNo * PAGE, query.trim() ? undefined : cat);   // com texto na busca: procura em todas as categorias visiveis
       setItems(res.items);
       setTotal(res.total);
       setCounts(res.counts ?? {});
@@ -249,7 +251,7 @@ export default function MediaPage() {
             {manage && <select value={uploadCat} onChange={(e) => setUploadCat(e.target.value)} aria-label={t.newUploadCategory} title={t.newUploadCategory}
               className="h-10 rounded-md border border-input bg-background px-2 text-sm">
               <option value="">{t.newUploadCategory}: {t.uncategorized}</option>
-              {MEDIA_CATEGORIES.map((c) => <option key={c} value={c}>{t.newUploadCategory}: {t.categories[c]}</option>)}
+              {categories.map((c) => <option key={c} value={c}>{t.newUploadCategory}: {t.categories[c]}</option>)}
             </select>}
             <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleUpload} />
             <Button onClick={() => fileRef.current?.click()} disabled={up.busy}>
@@ -273,8 +275,7 @@ export default function MediaPage() {
 
       {/* Filtro por categoria (com a quantidade de cada uma) */}
       <div className="flex flex-wrap gap-1.5">
-        {[{ key: '', label: t.allCategories, n: Object.values(counts).reduce((a, b) => a + b, 0) },
-          ...MEDIA_CATEGORIES.map((c) => ({ key: c, label: t.categories[c], n: counts[c] ?? 0 })),
+        {[...categories.map((c) => ({ key: c, label: t.categories[c], n: counts[c] ?? 0 })),
           { key: 'none', label: t.uncategorized, n: counts[''] ?? 0 }].map((c) => (
           <button
             key={c.key || 'all'} type="button" onClick={() => { setCategory(c.key); setPage(0); setSelected(new Set()); }}
@@ -285,6 +286,7 @@ export default function MediaPage() {
         ))}
       </div>
 
+      {q.trim() && <p className="text-xs text-muted-foreground">{t.searchingAll}</p>}
       {!canUpload && <p className="text-xs text-muted-foreground">{t.noUploadPermission}</p>}
 
       {error && (
@@ -313,7 +315,7 @@ export default function MediaPage() {
               <button type="button" className="text-muted-foreground hover:underline" onClick={() => setSelected(new Set())}>{t.clearSel}</button>
               <select value={bulkCat} onChange={(e) => setBulkCat(e.target.value)} className="h-8 rounded-md border border-input bg-background px-2 text-xs" aria-label={t.setCategory}>
                 <option value="">{t.setCategory}</option>
-                {MEDIA_CATEGORIES.map((c) => <option key={c} value={c}>{t.categories[c]}</option>)}
+                {categories.map((c) => <option key={c} value={c}>{t.categories[c]}</option>)}
                 <option value="none">{t.uncategorized}</option>
               </select>
               <Button size="sm" variant="outline" disabled={busy === 'bulk' || bulkCat === ''} onClick={handleBulkCategory}>{t.applyCategory}</Button>
@@ -349,7 +351,7 @@ export default function MediaPage() {
                 <select value={m.category} onChange={(e) => void handleSetCategory(m, e.target.value)} aria-label={t.categoryOf}
                   className="h-7 w-full rounded border border-input bg-background px-1 text-[11px] text-muted-foreground">
                   <option value="">{t.uncategorized}</option>
-                  {MEDIA_CATEGORIES.map((c) => <option key={c} value={c}>{t.categories[c]}</option>)}
+                  {categories.map((c) => <option key={c} value={c}>{t.categories[c]}</option>)}
                 </select>
               ) : (
                 m.category && <span className="inline-block rounded bg-secondary px-1.5 py-0.5 text-[11px] text-muted-foreground">{t.categories[m.category] ?? m.category}</span>

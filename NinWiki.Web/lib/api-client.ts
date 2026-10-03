@@ -722,7 +722,7 @@ export type PermissionName =
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
-  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload' | 'media.reset_ids'
+  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload' | 'media.reset_ids' | 'media.closed'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view';
 
 export interface ApiMe {
@@ -1332,7 +1332,7 @@ export function clearAnnouncement(): Promise<ApiAnnouncement> {
 // ---- Banco de imagens ----
 
 /** Categorias do banco de imagens (a API aceita so' estas; vazio = sem categoria). */
-export const MEDIA_CATEGORIES = ['weapon', 'clothing', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'furniture', 'other'] as const;
+export const MEDIA_CATEGORIES = ['weapon', 'clothing', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'furniture', 'closed', 'other'] as const;
 export type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
 export interface ApiMedia {
