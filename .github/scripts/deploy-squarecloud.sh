@@ -100,3 +100,14 @@ RESP=/tmp/square-resp.json
 # A SquareCloud pode responder 200 com {"status":"error",...}: nesse caso também é falha.
 if grep -q '"status"[[:space:]]*:[[:space:]]*"error"' "$RESP" 2>/dev/null; then echo "::error::A SquareCloud respondeu com erro (corpo acima)."; exit 1; fi
 echo "Deploy enviado."
+
+# Rede de seguranca: alem do ?restart=true do envio, pede o reinicio de novo (a extracao de um pacote grande, como o do site, pode terminar depois
+# do reinicio do envio e o app seguir rodando o codigo antigo). Nao derruba o deploy se falhar: so' avisa, e o app pode ser reiniciado no painel.
+if [ "$RESTART_FLAG" = "true" ]; then
+  sleep 15
+  RHTTP=$(curl -sS -o /dev/null -w '%{http_code}' -X POST "https://api.squarecloud.app/v2/apps/${APP_ID}/restart" -H "Authorization: ${SQUARE_API_KEY}" || echo "000")
+  case "$RHTTP" in
+    2??) echo "Reinicio extra pedido (HTTP ${RHTTP})." ;;
+    *) echo "::warning::Nao consegui pedir o reinicio extra (HTTP ${RHTTP}). Se o app seguir na versao antiga, reinicie pelo painel da SquareCloud." ;;
+  esac
+fi
