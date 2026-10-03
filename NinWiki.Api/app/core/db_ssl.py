@@ -7,6 +7,9 @@ No painel do banco da SquareCloud voce baixa 3 arquivos:
   - Private Key (.key)     -> a chave privada desse certificado (SECRETA: nunca vai pro Git).
 Configure no .env (caminhos relativos a' pasta NinWiki.Api, ex: certs/ca.crt):
   DATABASE_SSL_CA=certs/ca.crt   DATABASE_SSL_CERT=certs/client.pem   DATABASE_SSL_KEY=certs/client.key
+Em PRODUCAO (SquareCloud) nenhum arquivo de certificado vai para o app: cole o TEXTO de cada arquivo (-----BEGIN ... END-----) direto nas
+Variaveis de Ambiente DATABASE_SSL_CA / DATABASE_SSL_CERT / DATABASE_SSL_KEY. O codigo grava esse texto num arquivo temporario
+(permissao 0600, fora da pasta do app, apagado ao sair) so' para o TLS poder le'-lo. Quebras de linha podem vir como "\\n".
 Se o .pem ja' tiver a chave dentro, deixe DATABASE_SSL_KEY vazio. Sem nenhuma dessas variaveis nada muda (banco local, sem TLS).
 
 Este modulo NAO le' configuracao sozinho: recebe os caminhos por parametro, para servir tanto a API (pydantic-settings)
@@ -22,13 +25,35 @@ from pathlib import Path
 API_ROOT = Path(__file__).resolve().parent.parent.parent  # pasta NinWiki.Api
 
 
+_PEM_CACHE: dict[str, str] = {}
+
+
+def _pem_to_tempfile(text: str) -> str:
+    """Grava o TEXTO de um certificado/chave num arquivo temporario 0600 (apagado ao sair) e devolve o caminho. Reaproveita o mesmo arquivo."""
+    if text in _PEM_CACHE:
+        return _PEM_CACHE[text]
+    fd, tmp = tempfile.mkstemp(prefix="ninwiki-tls-", suffix=".pem")
+    with os.fdopen(fd, "w") as fh:
+        fh.write(text.replace("\\n", "\n").strip() + "\n")
+    os.chmod(tmp, 0o600)
+    atexit.register(lambda: Path(tmp).unlink(missing_ok=True))
+    _PEM_CACHE[text] = tmp
+    return tmp
+
+
 def resolve(path: str) -> str:
-    """Caminho absoluto de um certificado (relativo a' pasta NinWiki.Api quando nao for absoluto). Falha claro se nao existir."""
+    """Caminho absoluto de um certificado (relativo a' pasta NinWiki.Api quando nao for absoluto). Aceita tambem o TEXTO do certificado
+    (comeca com -----BEGIN): vira um arquivo temporario seguro. Falha claro se o arquivo nao existir."""
+    if path.strip().startswith("-----BEGIN"):
+        return _pem_to_tempfile(path.strip())
     p = Path(path)
     if not p.is_absolute():
         p = API_ROOT / p
     if not p.is_file():
-        raise FileNotFoundError(f"Arquivo de certificado do banco nao encontrado: {p}")
+        raise FileNotFoundError(
+            f"Arquivo de certificado do banco nao encontrado: {p}. Em producao, cole o TEXTO do certificado (-----BEGIN ...) "
+            "na variavel DATABASE_SSL_CA/CERT/KEY em vez de um caminho de arquivo (ver README)."
+        )
     return str(p)
 
 

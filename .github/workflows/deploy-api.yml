@@ -6,7 +6,7 @@ name: Deploy API na SquareCloud (manual)
 # Secrets necessários:
 #   SQUARE_API_KEY   chave da API da SquareCloud
 #   SQUARE_APP_ID_API   ID do app API na SquareCloud
-#   DB_SSL_CA / DB_SSL_CERT / DB_SSL_KEY   (opcionais) conteudo dos 3 arquivos do banco da SquareCloud (.crt, .pem, .key)
+#   (DB_SSL_* nao sao mais usados: o texto dos certificados vai em DATABASE_SSL_CA/CERT/KEY nas Variáveis de Ambiente do app)
 #   (API_ENV/BOT_ENV não são mais usados: cadastre as variáveis no painel do app)
 
 on:
@@ -34,9 +34,6 @@ jobs:
           SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
           APP_ID: ${{ secrets.SQUARE_APP_ID_API }}
           # Certificados do banco da SquareCloud (conteudo de cada arquivo); opcionais se o banco nao usar TLS com certificado
-          DB_SSL_CA: ${{ secrets.DB_SSL_CA }}
-          DB_SSL_CERT: ${{ secrets.DB_SSL_CERT }}
-          DB_SSL_KEY: ${{ secrets.DB_SSL_KEY }}
           RESTART: ${{ inputs.restart }}
           GIT_SHA: ${{ github.sha }}
         run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Api ninwiki-api.zip
