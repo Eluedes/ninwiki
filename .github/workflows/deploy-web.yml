@@ -4,7 +4,7 @@ name: Deploy Web na SquareCloud (manual)
 #
 # O site é COMPILADO aqui no GitHub (que tem memória de sobra) e só o resultado vai para a SquareCloud, que apenas executa
 # `node server.js`. Compilar dentro da SquareCloud estoura a RAM do app e o processo morre com "Killed".
-# O .env NÃO fica no repositório: vem do Secret WEB_ENV, é usado no build (os NEXT_PUBLIC_* ficam embutidos) e vai junto no pacote.
+# O .env NÃO fica no repositório nem no pacote: o Secret WEB_ENV só serve ao build (os NEXT_PUBLIC_* ficam embutidos); em runtime valem as Variáveis de Ambiente do painel.
 #
 # Secrets necessários:
 #   SQUARE_API_KEY      chave da API da SquareCloud
@@ -64,7 +64,6 @@ jobs:
         env:
           SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
           APP_ID: ${{ secrets.SQUARE_APP_ID_WEB }}
-          APP_ENV: ${{ secrets.WEB_ENV }}
           RESTART: ${{ inputs.restart }}
           PREBUILT: 'true'
           GIT_SHA: ${{ github.sha }}

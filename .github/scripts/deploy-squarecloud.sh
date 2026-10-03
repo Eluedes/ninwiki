@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Uso: deploy-squarecloud.sh <pasta> <nome.zip>
-# Variáveis: SQUARE_API_KEY, APP_ID, APP_ENV (conteúdo do .env), RESTART (true/false)
+# Variáveis: SQUARE_API_KEY, APP_ID, RESTART (true/false)
+# O .env NAO vai mais no pacote: as senhas ficam nas "Variaveis de Ambiente" do painel da SquareCloud (cada app).
 set -euo pipefail
 
 DIR="$1"
 ZIP="$(pwd)/$2"
 
-for v in SQUARE_API_KEY APP_ID APP_ENV; do
+for v in SQUARE_API_KEY APP_ID; do
   if [ -z "${!v:-}" ]; then
     echo "::error::Secret/variável '$v' vazia. Veja o cabeçalho do workflow deploy-*.yml."
     exit 1
@@ -35,9 +36,8 @@ esac
 # Versao publicada (commit do GitHub): a API mostra em /health e o painel (S.Adm) mostra no rodape - serve para saber o que esta no ar.
 printf '%s\n' "${GIT_SHA:-unknown}" > "$DIR/VERSION"
 
-# Grava o .env só aqui dentro do runner (nunca vai pro Git).
-# (tr -d '\r': um Secret colado do Windows vem com quebra de linha CRLF - o "\r" ficaria grudado no fim de cada valor.)
-printf '%s\n' "$APP_ENV" | tr -d '\r' > "$DIR/.env"
+# Nenhum .env e' gravado aqui: as variaveis vivem no painel da SquareCloud (Variaveis de Ambiente) e persistem entre deploys.
+rm -f "$DIR/.env"
 
 # Certificados do banco da SquareCloud (TLS com certificado de cliente) - só para a API, vindos dos Secrets.
 # O conteúdo de cada arquivo fica num Secret; aqui eles viram NinWiki.Api/certs/* DENTRO do zip enviado.
@@ -68,21 +68,21 @@ fi
 rm -f "$ZIP"
 # PREBUILT=true: a pasta ja' e' o pacote final (site compilado: node_modules e .next sao justamente o que deve ir).
 if [ "${PREBUILT:-false}" = "true" ]; then
-  ( cd "$DIR" && zip -qr "$ZIP" . -x ".git/*" "*.md" "*.example" "*.map" "CONTEXTO_PARA_IA*" "ROADMAP*" "FASE2*" )
+  ( cd "$DIR" && zip -qr "$ZIP" . -x ".git/*" ".env" ".env.*" "*.md" "*.example" "*.map" "CONTEXTO_PARA_IA*" "ROADMAP*" "FASE2*" )
 else
   ( cd "$DIR" && zip -qr "$ZIP" . \
       -x "node_modules/*" ".next/*" "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" \
-         "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" "status_state.json" "language_state.json" ".git/*" \
+         ".env" ".env.*" "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" "status_state.json" "language_state.json" ".git/*" \
          `# so' desenvolvimento/documentacao - nao e' necessario para rodar na SquareCloud:` \
          "*.md" "*.example" "docker-compose*.yml" "scripts/*" "diagnostico_conexao.py" ".squarecloudignore" )
 fi
 
 # TRAVA DE SEGURANCA: documentacao, exemplos, scripts de teste e dumps NUNCA podem ir para a SquareCloud (se alguem extrair o pacote,
 # nao deve achar os .md nem o jeito de rodar o projeto). Se algum escapar das exclusoes acima, o deploy para aqui, antes de enviar.
-LEAKS=$(unzip -Z1 "$ZIP" | grep -Ev '(^|/)node_modules/' | grep -Ei '\.md$|\.example$|\.map$|\.dump$|(^|/)scripts/|docker-compose|CONTEXTO_PARA_IA|ROADMAP|FASE2|diagnostico_conexao|\.git/' || true)
+LEAKS=$(unzip -Z1 "$ZIP" | grep -Ev '(^|/)node_modules/' | grep -Ei '(^|/)\.env(\..*)?$|\.md$|\.example$|\.map$|\.dump$|(^|/)scripts/|docker-compose|CONTEXTO_PARA_IA|ROADMAP|FASE2|diagnostico_conexao|\.git/' || true)
 if [ -n "$LEAKS" ]; then
   echo "::error::Arquivos que NAO devem ir para a producao estao no pacote:"; echo "$LEAKS" | head -20
-  rm -rf "$ZIP" "$DIR/.env" "$DIR/certs"; exit 1
+  rm -rf "$ZIP" "$DIR/certs"; exit 1
 fi
 
 [ -f "$DIR/squarecloud.app" ] || { echo "::error::squarecloud.app não encontrado em $DIR"; exit 1; }
@@ -99,9 +99,9 @@ HTTP=$(curl -sS -o resp.json -w '%{http_code}' -X POST \
   -F "file=@${ZIP}")
 
 echo "HTTP ${HTTP}"
-# Mostra a resposta mas nunca o .env.
+# Mostra a resposta da SquareCloud (nao contem segredos).
 cat resp.json; echo
-cp resp.json /tmp/square-resp.json; rm -rf resp.json "$ZIP" "$DIR/.env" "$DIR/certs"
+cp resp.json /tmp/square-resp.json; rm -rf resp.json "$ZIP" "$DIR/certs"
 RESP=/tmp/square-resp.json
 
 [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || { echo "::error::Deploy falhou (HTTP $HTTP). Veja a resposta da SquareCloud acima."; exit 1; }

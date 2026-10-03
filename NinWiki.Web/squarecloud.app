@@ -4,4 +4,4 @@ MAIN=server.js
 MEMORY=512
 VERSION=recommended
 SUBDOMAIN=ninwiki
-START=HOSTNAME=0.0.0.0 PORT=80 node --env-file=.env server.js
+START=HOSTNAME=0.0.0.0 PORT=80 node server.js
