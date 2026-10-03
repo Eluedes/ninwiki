@@ -1,4 +1,4 @@
-name: Deploy API na SquareCloud (manual)
+name: Deploy API
 
 # Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
 # O .env NÃO fica no repositório: vem dos Secrets do GitHub e é gravado só dentro do zip enviado.
