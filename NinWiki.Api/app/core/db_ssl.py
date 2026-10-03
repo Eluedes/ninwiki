@@ -44,8 +44,9 @@ def _pem_to_tempfile(text: str) -> str:
 def resolve(path: str) -> str:
     """Caminho absoluto de um certificado (relativo a' pasta NinWiki.Api quando nao for absoluto). Aceita tambem o TEXTO do certificado
     (comeca com -----BEGIN): vira um arquivo temporario seguro. Falha claro se o arquivo nao existir."""
-    if path.strip().startswith("-----BEGIN"):
-        return _pem_to_tempfile(path.strip())
+    path = path.strip().strip('"').strip("'")  # o painel pede aspas em valores com espacos: se vierem junto, ignora
+    if path.startswith("-----BEGIN"):
+        return _pem_to_tempfile(path)
     p = Path(path)
     if not p.is_absolute():
         p = API_ROOT / p

@@ -342,6 +342,7 @@ GitHub → o repositório → **Settings → Secrets and variables → Actions �
 1. Baixe os 3 arquivos no painel do banco da SquareCloud (`.crt`, `.pem`, `.key`).
 2. Abra cada um no Bloco de Notas, selecione tudo (Ctrl+A) e copie (começa em `-----BEGIN` e termina em `-----END ...-----`).
 3. No app da API → *Variáveis de Ambiente* → crie `DATABASE_SSL_CA` (texto do `.crt`), `DATABASE_SSL_CERT` (texto do `.pem`) e `DATABASE_SSL_KEY` (texto do `.key`). Se o painel não aceitar quebra de linha no valor, cole tudo em **uma linha** trocando cada quebra por `\n`.
+3b. O painel avisa "Variável de ambiente sem aspas" para valores com espaços (o texto do certificado tem). Clique em **Aplicar correção e reiniciar** (ele coloca aspas duplas) ou coloque você mesmo `"..."` em volta do valor. A API ignora essas aspas.
 4. Salve e reinicie. A API grava esse texto num arquivo temporário (permissão 0600, fora da pasta do app, apagado ao sair), só para o TLS conseguir ler.
 5. Apague a pasta `certs/` antiga no File Manager do app e, no GitHub, os Secrets `DB_SSL_CA/CERT/KEY` (não são mais usados).
 6. Localmente o `.env` pode continuar apontando para arquivos (`certs/ca.crt`...): os dois formatos funcionam.
