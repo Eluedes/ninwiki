@@ -269,26 +269,14 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
           <FieldError message={errors.motto?.message} />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2 sm:col-span-1">
-            <label className={label}>{t.image}</label>
-            <Controller
-              control={control}
-              name="image"
-              render={({ field }) => <ImageUploadField value={field.value} onChange={field.onChange} />}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className={label}>{t.mapX}</label>
-            <Input type="number" step="0.01" {...register('mapX')} />
-            <FieldError message={errors.mapX?.message} />
-          </div>
-          <div className="space-y-2">
-            <label className={label}>{t.mapY}</label>
-            <Input type="number" step="0.01" {...register('mapY')} />
-            <FieldError message={errors.mapY?.message} />
-            <p className="text-xs text-muted-foreground">{t.mapHint}</p>
-          </div>
+        {/* Posicao no mapa (mapX/mapY): campos removidos da tela (mapa em manutencao). Os valores continuam no formulario (vem de toFormValues) e voltam iguais ao salvar. */}
+        <div className="space-y-2">
+          <label className={label}>{t.image}</label>
+          <Controller
+            control={control}
+            name="image"
+            render={({ field }) => <ImageUploadField value={field.value} onChange={field.onChange} />}
+          />
         </div>
 
         <div className="space-y-2">
