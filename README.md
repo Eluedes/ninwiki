@@ -525,6 +525,7 @@ sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem s
 | `LOG_CHANNEL_ID` | vazio | canal do log geral (só equipe!) |
 | `ERROR_CHANNEL_ID` | vazio | canal de erros e do painel de status (vazio = usa o de log) |
 | `SITE_URL` | vazio | site público: vigiado pelo bot **e** usado nos botões *Open* do `/search` |
+| `SITE_HEALTH_URL` | vazio | (opcional) endereço **só** da checagem de saúde, ex.: `https://ninwiki.squareweb.app` (direto da hospedagem, sem Cloudflare/cache na frente); vazio = checa o `SITE_URL` |
 | `STATUS_CHANNEL_ID` | vazio | canal **só do monitor** (painel "NinWiki status" + avisos de API/banco/site caiu/voltou), separado dos erros do wiki; vazio = usa o `ERROR_CHANNEL_ID` |
 | `STATUS_ALERTS` | `false` | `true` = além do painel, manda uma mensagem **nova** a cada "caiu" / "voltou" (padrão: só o painel, que se edita sozinho) |
 | `STATUS_DOWN_AFTER` | `3` | checagens seguidas que precisam falhar para avisar "caiu" (suba para 5 se a rede oscila e o bot avisa demais) |

@@ -161,9 +161,9 @@ class NinWikiBot(discord.Client):
         timings: dict[str, int | None] = {"API": api_ms, "Database": api_ms if api_up else None}
         if self.settings.site_url:
             t0 = time.monotonic()
-            results["Website"] = await self.api.site_ok(self.settings.site_url)
+            results["Website"] = await self.api.site_ok(self.settings.site_health_url or self.settings.site_url)
             if not results["Website"]:
-                log.warning("Site fora do ar na checagem (%s): %s", self.settings.site_url, self.api.last_site_detail or "sem detalhe")
+                log.warning("Site fora do ar na checagem (%s): %s", self.settings.site_health_url or self.settings.site_url, self.api.last_site_detail or "sem detalhe")
             timings["Website"] = int((time.monotonic() - t0) * 1000)
         return results, timings
 
