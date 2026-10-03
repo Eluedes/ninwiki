@@ -1350,6 +1350,7 @@ export interface ApiMedia {
 export interface ApiMediaPage {
   items: ApiMedia[];
   total: number;
+  restricted?: boolean;             // true: a busca bateu com imagem(ns) da categoria 'closed' que voce nao pode ver (mostrar o aviso)
   counts: Record<string, number>;   // imagens por categoria ('' = sem categoria), da biblioteca toda
 }
 

@@ -30,6 +30,8 @@ STATE_COOKIE = "ninwiki_oauth_state"  # guarda o "state" do OAuth2 (anti-CSRF do
 # IP de quem esta' chamando, visivel pra' qualquer codigo dentro da mesma
 # requisicao (o log_action le' daqui, sem precisar passar Request pra' todo lado).
 client_ip_var: ContextVar[str | None] = ContextVar("client_ip", default=None)
+# Quem esta' logado NESTA requisicao (preenchido em auth.get_current_user): permite checagens fora dos handlers, ex.: resolver img:12 em campos de imagem.
+current_user_var: ContextVar[object | None] = ContextVar("current_user", default=None)
 
 
 def create_session_token(user: User) -> str:

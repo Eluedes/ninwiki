@@ -39,6 +39,7 @@ export default function MediaPage() {
   const [page, setPage] = useState(0);                 // pagina atual (0 = primeira)
   const [category, setCategory] = useState('none');    // filtro: 'none' = sem categoria (padrao) ou uma categoria. NAO ha' mais "Todas"; a busca por texto procura em todas as visiveis
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [restricted, setRestricted] = useState(false);     // a busca bateu com imagem 'closed' que este usuario nao pode ver
   const [uploadCat, setUploadCat] = useState('');       // categoria dos novos envios (arquivos 'categoria__nome' usam a propria)
   const [bulkCat, setBulkCat] = useState('');
   const [selected, setSelected] = useState<Set<number>>(new Set()); // imagens marcadas para apagar em massa
@@ -66,6 +67,7 @@ export default function MediaPage() {
       setItems(res.items);
       setTotal(res.total);
       setCounts(res.counts ?? {});
+      setRestricted(Boolean(res.restricted));
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.loadError);
@@ -287,6 +289,11 @@ export default function MediaPage() {
       </div>
 
       {q.trim() && <p className="text-xs text-muted-foreground">{t.searchingAll}</p>}
+      {restricted && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-900/20 px-3 py-2 text-sm text-amber-300">
+          <AlertTriangle className="h-4 w-4 shrink-0" />{t.restrictedNotice}
+        </div>
+      )}
       {!canUpload && <p className="text-xs text-muted-foreground">{t.noUploadPermission}</p>}
 
       {error && (

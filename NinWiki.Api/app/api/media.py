@@ -28,7 +28,7 @@ from app.api.uploads import UPLOAD_DIR, store_image
 from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.database import get_db
-from app.core.media_refs import media_url, parse_ref
+from app.core.media_refs import CLOSED_MESSAGE, media_url, parse_ref
 from app.core.permissions import Permission, user_has_permission
 from app.models.content import ContentItem
 from app.models.masteries import Jutsu, Mastery
@@ -59,15 +59,28 @@ def _hide_closed(stmt, staff: User):
 
 
 async def _get_visible(db: AsyncSession, media_id: int, staff: User) -> MediaImage | None:
-    """A imagem pelo ID, ou None se nao existir OU se for 'closed' e o usuario nao puder ve-la (mesma resposta: 404)."""
+    """A imagem pelo ID (None = nao existe). Se for 'closed' e o usuario nao puder ve-la: 403 com o aviso de acesso negado."""
     m = await db.get(MediaImage, media_id)
-    return None if m is None or (m.category == CLOSED and not _can_closed(staff)) else m
+    if m is not None and m.category == CLOSED and not _can_closed(staff):
+        raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
+    return m
+
+
+async def _deny_closed_ids(db: AsyncSession, ids: list[int], staff: User) -> None:
+    """Operacao em varias imagens: se QUALQUER uma for 'closed' e o usuario nao puder ve-la, recusa tudo (403 com o aviso)."""
+    if _can_closed(staff):
+        return
+    n = (await db.execute(select(func.count()).select_from(MediaImage).where(MediaImage.id.in_(ids), MediaImage.category == CLOSED))).scalar_one()
+    if n:
+        raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
 
 
 def _valid_category(value: str | None, allow_closed: bool = True) -> str:
     """Categoria valida ('' = sem categoria) ou 422. 'closed' so' vale para quem pode (senao responde como categoria desconhecida)."""
     v = (value or "").strip().lower()
-    if v and (v not in MEDIA_CATEGORIES or (v == CLOSED and not allow_closed)):
+    if v == CLOSED and not allow_closed:
+        raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
+    if v and v not in MEDIA_CATEGORIES:
         raise HTTPException(status_code=422, detail=f"Unknown category. Use one of: {', '.join(MEDIA_CATEGORIES)}")
     return v
 
@@ -89,6 +102,7 @@ class MediaPage(CamelModel):
     """Pagina de resultados da lista."""
     items: list[MediaRead]
     total: int
+    restricted: bool = False   # True: a busca/ID bateu com imagem(ns) da categoria 'closed' que este usuario nao pode ver (o painel mostra o aviso)
     counts: dict[str, int] = Field(default_factory=dict)   # imagens por categoria ('' = sem categoria), da biblioteca toda
 
 
@@ -153,6 +167,8 @@ async def list_media(
         if await _sync_folder(db, None):
             await db.commit()
     stmt = _hide_closed(select(MediaImage), staff)
+    if category == CLOSED and not _can_closed(staff):
+        raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)
     if category is not None:  # '' (ou "none") = so' as sem categoria
         stmt = stmt.where(MediaImage.category == ("" if category == "none" else _valid_category(category, _can_closed(staff))))
     q = q.strip()
@@ -161,10 +177,14 @@ async def list_media(
         like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
         cond = MediaImage.name.ilike(like, escape="\\")
         stmt = stmt.where(or_(cond, MediaImage.id == ref) if ref is not None else cond)
+    restricted = False
+    if q and not _can_closed(staff):   # a busca (nome ou ID) bateria com imagem 'closed'? avisa, sem mostrar nada dela
+        probe = select(func.count()).select_from(MediaImage).where(MediaImage.category == CLOSED, or_(cond, MediaImage.id == ref) if ref is not None else cond)
+        restricted = (await db.execute(probe)).scalar_one() > 0
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
     rows = (await db.execute(stmt.order_by(MediaImage.id.desc()).limit(limit).offset(offset))).scalars().all()
     counts = {c or "": n for c, n in (await db.execute(_hide_closed(select(MediaImage.category, func.count()), staff).group_by(MediaImage.category))).all()}
-    return MediaPage(items=[_read(m) for m in rows], total=total, counts=counts)
+    return MediaPage(items=[_read(m) for m in rows], total=total, counts=counts, restricted=restricted)
 
 
 @router.post("/sync")
@@ -256,7 +276,8 @@ async def bulk_category(
     """Muda a categoria de varias imagens de uma vez ('' tira a categoria). Devolve quantas mudaram."""
     cat = _valid_category(payload.category, _can_closed(staff))
     ids = list(dict.fromkeys(payload.ids))
-    rows = (await db.execute(_hide_closed(select(MediaImage).where(MediaImage.id.in_(ids)), staff))).scalars().all()
+    await _deny_closed_ids(db, ids, staff)
+    rows = (await db.execute(select(MediaImage).where(MediaImage.id.in_(ids)))).scalars().all()
     for m in rows:
         m.category = cat
     if rows:

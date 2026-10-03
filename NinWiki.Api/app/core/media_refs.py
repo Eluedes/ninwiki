@@ -9,7 +9,12 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.permissions import Permission, user_has_permission
+from app.core.security import current_user_var
 from app.models.media import MediaImage
+
+# Aviso mostrado a quem tenta ver/usar uma imagem da categoria privada "closed" (so' S.Adm): vale para ID chutado, busca por nome e campos de imagem.
+CLOSED_MESSAGE = "Access denied: this image is in a closed (restricted) category and you are not allowed to view it."
 
 REF_RE = re.compile(r"^\s*(?:img\s*[:\-_ ]\s*|id\s*:\s*|#\s*)?(\d{1,9})\s*$", re.IGNORECASE)
 IMAGE_FIELDS = frozenset({"image", "gif", "cover_image"})
@@ -36,6 +41,8 @@ async def resolve_value(db: AsyncSession, value: str | None) -> str | None:
     media = await db.get(MediaImage, ref)
     if media is None:
         raise HTTPException(status_code=422, detail=f"Image #{ref} was not found in the image library")
+    if media.category == "closed" and not user_has_permission(current_user_var.get(), Permission.MEDIA_CLOSED):
+        raise HTTPException(status_code=403, detail=CLOSED_MESSAGE)   # nem usando o ID em um campo de imagem
     return media_url(media.filename)
 
 
