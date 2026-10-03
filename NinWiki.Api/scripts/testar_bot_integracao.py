@@ -574,6 +574,9 @@ async def testar() -> None:
     check("ERROR_CHANNEL_ID vazio usa o canal de log", BotSettings(**cfg, log_channel_id="55").errors_channel == 55)
     check("ERROR_CHANNEL_ID proprio tem prioridade", BotSettings(**cfg, log_channel_id="55", error_channel_id="66").errors_channel == 66)
     check("sem nenhum canal o feed de erros fica desligado", BotSettings(**cfg).errors_channel is None)
+    check("monitor sem canal proprio usa o de erros (e depois o de log)", BotSettings(**cfg, error_channel_id="66").status_channel == 66 and BotSettings(**cfg, log_channel_id="55").status_channel == 55)
+    check("STATUS_CHANNEL_ID separa o monitor dos erros", BotSettings(**cfg, error_channel_id="66", status_channel_id="77").status_channel == 77 and BotSettings(**cfg, error_channel_id="66", status_channel_id="77").errors_channel == 66)
+    check("STATUS_CHANNEL_ID vazio no .env vale como 'nao definido'", BotSettings(**cfg, status_channel_id="").status_channel_id is None)
     try:
         BotSettings(**cfg, health_poll_seconds=5)
         check("HEALTH_POLL_SECONDS < 30 e' recusado", False)

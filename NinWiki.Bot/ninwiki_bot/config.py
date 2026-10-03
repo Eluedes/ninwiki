@@ -14,10 +14,14 @@ class BotSettings(BaseSettings):
     log_channel_id: int | None = None
     # Canal dos ERROS/PROBLEMAS do wiki e dos avisos "API/site fora do ar" (vazio = usa o canal de log; sem nenhum = desligado).
     error_channel_id: int | None = None
+    # Canal SO' do monitor (painel "NinWiki status" e avisos de API/banco/site caiu/voltou), para nao misturar com os erros do wiki. Vazio = usa o canal de erros.
+    status_channel_id: int | None = None
     # Endereco publico do site (ex: https://wiki.seudominio.com): o bot confere se esta' no ar. Vazio = nao vigia o site.
     site_url: str = ""
     # Mantem UMA mensagem 'NinWiki status' no canal de erros, editada a cada checagem (estado ao vivo, tempo de resposta, uptime). false = so' avisa quando cai/volta.
     status_panel: bool = True
+    # Quantas checagens SEGUIDAS precisam falhar para avisar "caiu" (maior = menos alarme falso por oscilacao de rede). Minimo 1.
+    status_down_after: int = 3
     # De quantos em quantos segundos conferir API/banco/site (minimo 30).
     health_poll_seconds: int = 60
     # De quantos em quantos segundos o bot confere se ha' acao nova (minimo 10 para nao martelar a API).
@@ -29,7 +33,7 @@ class BotSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
-    @field_validator("dev_guild_id", "log_channel_id", "error_channel_id", mode="before")
+    @field_validator("dev_guild_id", "log_channel_id", "error_channel_id", "status_channel_id", mode="before")
     @classmethod
     def _empty_guild_is_none(cls, v):
         """Campo de ID vazio no .env vira None (recurso desligado)."""
@@ -44,6 +48,14 @@ class BotSettings(BaseSettings):
             raise ValueError("LOG_POLL_SECONDS minimum is 10")
         return v
 
+    @field_validator("status_down_after")
+    @classmethod
+    def _down_after_minimo(cls, v: int) -> int:
+        """Recusa menos de 1 falha para considerar um servico fora do ar."""
+        if v < 1:
+            raise ValueError("STATUS_DOWN_AFTER minimum is 1")
+        return v
+
     @field_validator("health_poll_seconds")
     @classmethod
     def _health_minimo(cls, v: int) -> int:
@@ -56,6 +68,11 @@ class BotSettings(BaseSettings):
     def errors_channel(self) -> int | None:
         """Canal que recebe erros e avisos de saude: o proprio ERROR_CHANNEL_ID, ou o canal de log se aquele estiver vazio."""
         return self.error_channel_id or self.log_channel_id
+
+    @property
+    def status_channel(self) -> int | None:
+        """Canal do monitor de saude: o proprio STATUS_CHANNEL_ID, ou o canal de erros/log se aquele estiver vazio."""
+        return self.status_channel_id or self.errors_channel
 
     @property
     def ignored_log_actions(self) -> set[str]:

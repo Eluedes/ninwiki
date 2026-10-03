@@ -178,7 +178,7 @@ class StatusMessageStore:
         tmp.replace(self.path)
 
 
-def update_status(status: ServiceStatus, ok: bool, now: datetime) -> dict | None:
+def update_status(status: ServiceStatus, ok: bool, now: datetime, down_after: int = DOWN_AFTER) -> dict | None:
     """
     Registra o resultado de UMA checagem. So' devolve mensagem nas MUDANCAS: caiu (DOWN_AFTER falhas seguidas) ou voltou.
     Uma falha isolada (rede oscilando) nao dispara nada.
@@ -191,9 +191,9 @@ def update_status(status: ServiceStatus, ok: bool, now: datetime) -> dict | None
             return {"title": f"🟢 {status.name} is back online", "description": f"It was unreachable for about {minutes} min.", "color": COLORS["recovered"]}
         return None
     status.failures += 1
-    if status.failures >= DOWN_AFTER and not status.down:
+    if status.failures >= down_after and not status.down:
         status.down, status.down_since = True, now
-        return {"title": f"🔴 {status.name} is DOWN", "description": f"{DOWN_AFTER} checks in a row failed. Visitors and the panel may be affected.", "color": COLORS["down"]}
+        return {"title": f"🔴 {status.name} is DOWN", "description": f"{down_after} checks in a row failed. Visitors and the panel may be affected.", "color": COLORS["down"]}
     return None
 
 
