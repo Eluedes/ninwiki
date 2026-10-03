@@ -592,6 +592,56 @@ async def testar() -> None:
     check("site: redirecionamento em loop = fora do ar, com o motivo", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is False and "TooManyRedirects" in a_.last_site_detail, a_.last_site_detail)
     a_, t_ = _site(lambda r: (_ for _ in ()).throw(httpx.ConnectError("sem rede")))
     check("site: erro de conexao = fora do ar", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is False and "ConnectError" in a_.last_site_detail)
+    # --- comandos so' nos servidores escolhidos (command_sync), backup (backup_feed) e mensagem de versao (version_feed) ---
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    from ninwiki_bot import backup_feed as bf, version_feed as vf
+    from ninwiki_bot.command_sync import sync_commands, target_guilds
+
+    class _Tree:
+        """Arvore de comandos de mentira: so' anota o que o bot pediu."""
+        def __init__(self, fail=()):
+            self.calls, self.fail = [], set(fail)
+        def copy_global_to(self, guild):
+            self.calls.append(("copy", guild))
+        async def sync(self, guild=None):
+            if guild in self.fail:
+                raise RuntimeError("Missing Access")
+            self.calls.append(("sync", guild))
+        def clear_commands(self, guild=None):
+            self.calls.append(("clear", guild))
+
+    check("servidores alvo = permitidos + servidor de testes, sem repetir", target_guilds({3, 1}, 2) == [1, 2, 3] and target_guilds({1}, 1) == [1] and target_guilds(set(), None) == [])
+    t_ = _Tree(); r_ = await sync_commands(t_, [1, 2], lambda g: g)
+    check("comandos registrados em cada servidor e os globais antigos APAGADOS", r_["guilds"] == [1, 2] and t_.calls == [("copy", 1), ("sync", 1), ("copy", 2), ("sync", 2), ("clear", None), ("sync", None)], str(t_.calls))
+    t_ = _Tree(fail={99}); r_ = await sync_commands(t_, [99, 1], lambda g: g)
+    check("servidor com erro nao impede os outros (e e' listado)", r_["guilds"] == [1] and list(r_["failed"]) == [99] and ("clear", None) in t_.calls)
+    t_ = _Tree(fail={99}); r_ = await sync_commands(t_, [99], lambda g: g)
+    check("se NENHUM servidor deu certo, os comandos globais nao sao apagados", r_["guilds"] == [] and ("clear", None) not in t_.calls)
+    t_ = _Tree(); r_ = await sync_commands(t_, [], lambda g: g)
+    check("sem servidores definidos: registro global", r_["global"] is True and t_.calls == [("sync", None)])
+
+    check("nome da parte do backup", bf.part_filename("20261003-1200", 1, 3) == "ninwiki-20261003-1200.nbk.01-of-03" and bf.stamp_of("ninwiki-20261003-1200.nbk.01-of-03") == "20261003-1200" and bf.stamp_of("foto.png") is None)
+    check("partes necessarias (minimo 1)", bf.parts_needed(1, 9 * 1024 * 1024) == 1 and bf.parts_needed(25 * 1024 * 1024, 9 * 1024 * 1024) == 3 and bf.parts_needed(0, 100) == 1)
+    achados = [("20261003-1200", 1), ("20261003-1200", 2), ("20261003-0900", 3), ("20261003-0600", 4), ("20261003-0600", 5)]
+    check("retencao: apaga todas as partes dos backups mais antigos e mantem os N mais novos", bf.messages_to_delete(achados, 2) == [4, 5] and bf.messages_to_delete(achados, 3) == [])
+    agora = _dt.now(_tz.utc)
+    check("backup so' quando passou o intervalo (reiniciar o bot nao dispara outro)", bf.is_due(None, agora, 180) and not bf.is_due(agora - _td(minutes=10), agora, 180) and bf.is_due(agora - _td(hours=4), agora, 180))
+    st_, ch_ = vf.merge({"message_id": None, "api": {}, "web": {}}, {"sha": "abc1234", "message": "m", "date": ""}, None)
+    check("versao: sem mensagem ainda -> precisa criar", ch_ is True and st_["api"]["sha"] == "abc1234")
+    st_["message_id"] = 5
+    check("versao: mesmo hash nao edita a mensagem de novo (nada de flood)", vf.merge(st_, {"sha": "abc1234"}, None)[1] is False)
+    st2_, ch2_ = vf.merge(st_, {"sha": "def5678", "message": "novo"}, {"sha": "dev"})
+    check("versao: deploy novo muda o hash -> edita; 'dev' (sem VERSION.json) e quem nao respondeu nao contam", ch2_ is True and st2_["api"]["sha"] == "def5678" and st2_["web"] == {})
+    emb_ = vf.build_embed(st2_)
+    check("embed de versao tem API e Web", [f[0] for f in emb_["fields"]] == ["API", "Web"] and "def5678" in emb_["fields"][0][1])
+    cfg_ok = dict(_env_file=None, discord_bot_token="abc", bot_api_token=TOKEN)
+    for nome, kwargs in [("BACKUP_INTERVAL_MINUTES menor que 30 e' recusado", {"backup_interval_minutes": 10}), ("BACKUP_PART_MB acima de 24 e' recusado", {"backup_part_mb": 30}), ("BACKUP_KEEP 0 e' recusado", {"backup_keep": 0})]:
+        try:
+            BotSettings(**cfg_ok, **kwargs); recusou = False
+        except Exception:
+            recusou = True
+        check(nome, recusou)
+    check("backup: padrao a cada 3 h, guarda 8, partes de 9 MB; canal vazio = desligado", BotSettings(**cfg_ok).backup_interval_minutes == 180 and BotSettings(**cfg_ok).backup_keep == 8 and BotSettings(**cfg_ok).backup_part_mb == 9 and BotSettings(**cfg_ok, backup_channel_id="").backup_channel_id is None)
     check("STATUS_CHANNEL_ID separa o monitor dos erros", BotSettings(**cfg, error_channel_id="66", status_channel_id="77").status_channel == 77 and BotSettings(**cfg, error_channel_id="66", status_channel_id="77").errors_channel == 66)
     check("STATUS_CHANNEL_ID vazio no .env vale como 'nao definido'", BotSettings(**cfg, status_channel_id="").status_channel_id is None)
     try:

@@ -7,18 +7,21 @@ Como rodar (na pasta NinWiki.Bot, com o venv DO BOT ativado):
 Pre-requisitos: ver README.md (criar o bot no Discord, .env, API rodando).
 """
 import copy
+import io
 import logging
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import tasks
 from pydantic import ValidationError
 
 from ninwiki_bot.api_client import ApiError, NinWikiApi
+from ninwiki_bot.backup_feed import BackupStore, format_size, is_due, messages_to_delete, part_filename, parts_needed, stamp_of
 from ninwiki_bot.command_sync import sync_commands, target_guilds
 from ninwiki_bot.config import BotSettings
 from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_status_panel, query_since as errors_query_since, record_check, update_status
@@ -26,6 +29,7 @@ from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_sin
 from ninwiki_bot.language import LanguageStore
 from ninwiki_bot.public_commands import register_public_commands
 from ninwiki_bot.staff_commands import StaffGroup
+from ninwiki_bot.version_feed import VersionStore, build_embed as build_version_embed, merge as merge_versions
 
 log = logging.getLogger("ninwiki_bot")
 
@@ -58,6 +62,13 @@ class NinWikiBot(discord.Client):
         self.status_store = StatusMessageStore(Path(__file__).resolve().parent / "status_state.json")
         self.health_loop = tasks.loop(seconds=settings.health_poll_seconds)(self._health_tick)
         self.health_loop.before_loop(self.wait_until_ready)
+        # Mensagem "Latest updates" (webhook, editada a cada deploy) e backup periodico (canal privado).
+        self.version_store = VersionStore(Path(__file__).resolve().parent / "version_state.json")
+        self.version_loop = tasks.loop(seconds=120)(self._version_tick)
+        self.version_loop.before_loop(self.wait_until_ready)
+        self.backup_store = BackupStore(Path(__file__).resolve().parent / "backup_state.json")
+        self.backup_loop = tasks.loop(minutes=settings.backup_interval_minutes)(self._backup_tick)
+        self.backup_loop.before_loop(self.wait_until_ready)
 
         @self.tree.error
         async def on_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
@@ -211,6 +222,90 @@ class NinWikiBot(discord.Client):
         except discord.DiscordException as e:
             log.warning("Nao consegui avisar no Discord sobre a mudanca de saude: %s", e)
 
+    async def _version_tick(self) -> None:
+        """A cada 2 min confere a versao publicada da API e do site; se mudou (deploy novo), EDITA a mesma mensagem do webhook (nunca cria outra, exceto se apagarem a antiga)."""
+        try:
+            api_build = await self.api.build_info()
+        except ApiError:
+            api_build = None
+        web_build = await self.api.web_build(self.settings.site_health_url or self.settings.site_url) if self.settings.site_url else None
+        state, changed = merge_versions(self.version_store.load(), api_build, web_build)
+        if not changed:
+            return
+        e = build_version_embed(state)
+        embed = discord.Embed(title=e["title"], color=e["color"], timestamp=datetime.now(timezone.utc))
+        for name, value in e["fields"]:
+            embed.add_field(name=name, value=value, inline=False)
+        embed.set_footer(text=e["footer"])
+        try:
+            async with aiohttp.ClientSession() as session:
+                webhook = discord.Webhook.from_url(self.settings.version_webhook_url, session=session)
+                message_id = state.get("message_id")
+                if message_id:
+                    try:
+                        await webhook.edit_message(message_id, embeds=[embed])
+                    except discord.NotFound:
+                        message_id = None   # apagaram a mensagem: cria outra abaixo
+                if not message_id:
+                    state["message_id"] = (await webhook.send(embeds=[embed], wait=True, username="NinWiki deploys")).id
+        except (discord.DiscordException, aiohttp.ClientError) as exc:
+            log.warning("Nao consegui atualizar a mensagem de versao no webhook: %s", exc)
+            return
+        self.version_store.save(state)
+        log.info("Mensagem de versao atualizada: API %s, Web %s", (state['api'] or {}).get('sha'), (state['web'] or {}).get('sha'))
+
+    async def _backup_tick(self) -> None:
+        """Pede um backup cifrado (banco + imagens) a' API, manda para o canal privado em partes e apaga os mais antigos (mantem BACKUP_KEEP)."""
+        now = datetime.now(timezone.utc)
+        if not is_due(self.backup_store.load(), now, self.settings.backup_interval_minutes):
+            return   # o bot reiniciou (deploy) antes da hora: nao faz backup extra (senao os antigos seriam apagados cedo demais)
+        channel = self.get_channel(self.settings.backup_channel_id) or await self.fetch_channel(self.settings.backup_channel_id)
+        stamp = now.strftime("%Y%m%d-%H%M")
+        backup_id = None
+        try:
+            info = await self.api.start_backup()
+            backup_id = info["id"]
+            limit = getattr(getattr(channel, "guild", None), "filesize_limit", 10 * 1024 * 1024) - 64 * 1024   # tamanho maximo de arquivo deste servidor
+            part_bytes = max(1024 * 1024, min(self.settings.backup_part_mb * 1024 * 1024, limit))
+            total = parts_needed(info["size"], part_bytes)
+            for n in range(1, total + 1):
+                data = await self.api.download_backup_part(backup_id, n, part_bytes)
+                text = (f"💾 **Backup {stamp} UTC** — {info['rows']} database rows, {info['files']} images, {format_size(info['size'])}, {total} part(s). "
+                        "To restore you need ALL parts and the BACKUP_PASSPHRASE.") if n == 1 else None
+                await channel.send(content=text, file=discord.File(io.BytesIO(data), filename=part_filename(stamp, n, total)), allowed_mentions=discord.AllowedMentions.none())
+            self.backup_store.save(now)
+            log.info("Backup %s enviado: %s partes, %s", stamp, total, format_size(info["size"]))
+        except (ApiError, discord.DiscordException) as exc:
+            detail = exc.detail if isinstance(exc, ApiError) else str(exc)
+            log.warning("Backup falhou: %s", detail)
+            try:
+                await channel.send(f"⚠️ **Backup {stamp} UTC failed:** {detail[:300]}", allowed_mentions=discord.AllowedMentions.none())
+            except discord.DiscordException:
+                pass
+            return
+        finally:
+            if backup_id:
+                try:
+                    await self.api.delete_backup(backup_id)
+                except ApiError:
+                    pass
+        # retencao: apaga as partes dos backups mais antigos (so' as mensagens DO BOT com arquivo de backup)
+        found: list[tuple[str, discord.Message]] = []
+        async for m in channel.history(limit=400):
+            if m.author.id == self.user.id:
+                for a in m.attachments:
+                    s = stamp_of(a.filename)
+                    if s:
+                        found.append((s, m))
+                        break
+        doomed = set(messages_to_delete([(s, m.id) for s, m in found], self.settings.backup_keep))
+        for _, m in found:
+            if m.id in doomed:
+                try:
+                    await m.delete()
+                except discord.DiscordException as exc:
+                    log.warning("Nao consegui apagar um backup antigo: %s", exc)
+
     async def setup_hook(self) -> None:
         """Registra os comandos, sincroniza com o Discord e liga o feed de log (se configurado)."""
         if not self.settings.status_channel:
@@ -221,6 +316,12 @@ class NinWikiBot(discord.Client):
         if self.settings.status_channel:
             self.health_loop.start()
             log.info("Vigia de saude e painel de status ligados: canal %s", self.settings.status_channel)
+        if self.settings.version_webhook_url:
+            self.version_loop.start()
+            log.info("Mensagem de versao (webhook) ligada: confere a cada 2 min")
+        if self.settings.backup_channel_id:
+            self.backup_loop.start()
+            log.info("Backup ligado: a cada %s min no canal %s (mantem %s)", self.settings.backup_interval_minutes, self.settings.backup_channel_id, self.settings.backup_keep)
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)

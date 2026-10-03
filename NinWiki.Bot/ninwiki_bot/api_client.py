@@ -36,10 +36,12 @@ class NinWikiApi:
         if self._owns_client:
             await self._client.aclose()
 
-    async def _request(self, method: str, path: str, *, json: dict | None = None, params: dict | None = None) -> Any:
+    async def _request(self, method: str, path: str, *, json: dict | None = None, params: dict | None = None,
+                       timeout: float | None = None, raw: bool = False) -> Any:
         """Faz a chamada com o X-Bot-Token e traduz erros da API em ApiError com a mensagem (em ingles) para mostrar a quem digitou."""
         try:
-            res = await self._client.request(method, path, json=json, params=params, headers=self._headers)
+            res = await self._client.request(method, path, json=json, params=params, headers=self._headers,
+                                             timeout=timeout if timeout is not None else httpx.USE_CLIENT_DEFAULT)
         except httpx.HTTPError as e:
             raise ApiError(503, "Could not reach the NinWiki API. Try again in a moment.") from e
 
@@ -56,7 +58,9 @@ class NinWikiApi:
             elif res.status_code == 404 and detail in (None, "Not Found"):
                 detail = "The API did not answer as expected (is the bot route turned off? empty BOT_API_TOKEN on the API?)."
             raise ApiError(res.status_code, detail or f"Unexpected API error ({res.status_code}).")
-        return res.json()
+        if raw:
+            return res.content
+        return None if res.status_code == 204 else res.json()
 
     async def whoami(self, invoker_id: int) -> dict:
         """Cargo de quem digitou o comando na equipe do wiki ({role, isSuperAdmin}); levanta ApiError 403 se nao for da equipe."""
@@ -147,3 +151,31 @@ class NinWikiApi:
         if code in (401, 403):
             return "cf-mitigated" in res.headers
         return False
+
+    # ---- versao publicada e backup (ver app/core/backup.py e app/core/build_info.py na API) ----
+
+    async def build_info(self) -> dict:
+        """A atualizacao publicada na API: {sha, message, date}."""
+        return await self._request("GET", "/bot/version")
+
+    async def web_build(self, site_url: str) -> dict | None:
+        """A atualizacao publicada no SITE (rota publica /version): {sha, message, date}, ou None se o site nao respondeu."""
+        try:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; NinWikiBot-Version/1.0)"}) as client:
+                res = await client.get(site_url.rstrip("/") + "/version")
+                data = res.json() if res.status_code == 200 else None
+        except (httpx.HTTPError, ValueError):
+            return None
+        return data if isinstance(data, dict) and data.get("sha") else None
+
+    async def start_backup(self) -> dict:
+        """Pede a' API um backup cifrado AGORA (banco + imagens): {id, size, rows, files}. Pode levar alguns minutos."""
+        return await self._request("POST", "/bot/backup", timeout=600.0)
+
+    async def download_backup_part(self, backup_id: str, part: int, size: int) -> bytes:
+        """Baixa a parte `part` (de `size` bytes) do backup."""
+        return await self._request("GET", f"/bot/backup/{backup_id}", params={"part": part, "size": size}, timeout=300.0, raw=True)
+
+    async def delete_backup(self, backup_id: str) -> None:
+        """Manda a API apagar o arquivo temporario do backup."""
+        await self._request("DELETE", f"/bot/backup/{backup_id}")

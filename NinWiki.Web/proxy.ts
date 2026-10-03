@@ -52,15 +52,21 @@ function checkRate(ip: string, now: number, limit: number): number {
   return 0;
 }
 
+/** Marca a resposta como "veio DESTE site" (cabecalho x-ninwiki-web): o Worker da Cloudflare (Cloudflare/maintenance-worker.js) so' mostra a pagina de manutencao quando ele NAO existe. */
+function tag(res: NextResponse): NextResponse {
+  res.headers.set('x-ninwiki-web', '1');
+  return res;
+}
+
 /** Roda antes de cada pagina: bloqueia robos de copia conhecidos e aplica o limite por IP. */
 export function proxy(req: NextRequest) {
   const ua = req.headers.get('user-agent') ?? '';
   if (BLOCK_UAS && (ua.length < 8 || SCRAPER_UA.test(ua))) {
-    return new NextResponse('Forbidden', { status: 403 });
+    return tag(new NextResponse('Forbidden', { status: 403 }));
   }
   // Paginas em manutencao (lib/maintenance.ts): vai para /maintenance, mesmo digitando a URL.
   if (isUnderMaintenance(req.nextUrl.pathname)) {
-    return NextResponse.redirect(new URL('/maintenance', req.url));
+    return tag(NextResponse.redirect(new URL('/maintenance', req.url)));
   }
   const isPrefetch = req.headers.has('next-router-prefetch') || req.headers.get('purpose') === 'prefetch';
   const ip = clientIp(req);
@@ -68,12 +74,12 @@ export function proxy(req: NextRequest) {
     ? checkRate(`${ip}|prefetch`, Date.now(), LIMIT * PREFETCH_MULTIPLIER)
     : checkRate(ip, Date.now(), LIMIT);
   if (wait > 0) {
-    return new NextResponse('Too many requests. Please try again shortly.', {
+    return tag(new NextResponse('Too many requests. Please try again shortly.', {
       status: 429,
       headers: { 'Retry-After': String(wait) },
-    });
+    }));
   }
-  return NextResponse.next();
+  return tag(NextResponse.next());
 }
 
 // Nao passa pelo proxy: arquivos internos do Next (JS/CSS/imagens do build) e o favicon.

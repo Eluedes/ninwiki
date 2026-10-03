@@ -72,6 +72,12 @@ class Settings(BaseSettings):
     # (ver _validar_seguranca abaixo).
     dev_login_enabled: bool = False
 
+    # BACKUP (banco + imagens), feito pelo bot a cada BACKUP_INTERVAL_MINUTES e guardado cifrado num canal privado do Discord (ver app/core/backup.py).
+    # BACKUP_PASSPHRASE e' a senha do arquivo: vazio = backups DESLIGADOS (nunca gera sem senha). GUARDE-A num gerenciador de senhas: sem ela o backup nao abre.
+    # Gere uma com: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    backup_passphrase: str = ""
+    backup_exclude_tables: str = "traffic_visitors,error_events"   # tabelas que ficam FORA do backup (dados descartaveis), separadas por virgula
+
     # IMPORTADOR DE NOTICIAS DA STEAM: se STEAM_NEWS_APP_ID estiver preenchido (ex.: 1674010), a API confere a pagina de noticias do jogo a cada
     # STEAM_NEWS_INTERVAL_MINUTES e copia para o blog, com a tag "Patch Notes", cada post novo marcado como `patchnotes` na Steam.
     # Vazio = desligado. Veja app/core/steam_news.py.

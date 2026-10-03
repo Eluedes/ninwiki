@@ -8,8 +8,9 @@
 //   Send Messages (2048)         /search, /status, painel de status, avisos de queda, log
 //   Embed Links (16384)          os avisos e o log usam embeds
 //   Read Message History (65536) editar o proprio painel de status e limpar as proprias mensagens (/team clearlog)
-// Somando: 84992. Nao pede Administrator, nem gerenciar mensagens/cargos/canais, nem mencionar @everyone.
-export const BOT_PERMISSIONS = 1024 + 2048 + 16384 + 65536;
+//   Attach Files (32768)         enviar os arquivos de BACKUP no canal privado (BACKUP_CHANNEL_ID)
+// Somando: 117760. Nao pede Administrator, nem gerenciar mensagens/cargos/canais, nem mencionar @everyone.
+export const BOT_PERMISSIONS = 1024 + 2048 + 16384 + 32768 + 65536;
 
 /** Endereco para convidar o bot (ou null se o Application ID nao estiver configurado/for invalido). */
 export function botInviteUrl(): string | null {

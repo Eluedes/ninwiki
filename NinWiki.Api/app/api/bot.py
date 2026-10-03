@@ -12,18 +12,22 @@ Discord ja garante ao bot o ID real de quem executou o comando.
 
 BOT_API_TOKEN vazio = tudo aqui devolve 404 (desligado).
 """
+import asyncio
 import hmac
 import json
+import re
 from datetime import datetime, timezone
+from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.audit_log import clear_log_rows
 from app.api.staff import to_read
-from app.core import staff_service
+from app.core import backup, staff_service
+from app.api.uploads import UPLOAD_DIR
 from app.core.config import settings
 from app.core.translation import fill_missing_translations
 from app.core.database import get_db
@@ -240,6 +244,60 @@ async def bot_version() -> dict:
     """A atualizacao publicada na API (sha, titulo e data do commit): o bot mostra no Discord e edita a mesma mensagem a cada deploy."""
     from app.core.build_info import read_build
     return read_build()
+
+
+# ---- Backup (banco + imagens, cifrado): o bot pede para criar, baixa em partes, manda para o canal privado e apaga o temporario ----
+
+_backup_lock = asyncio.Lock()   # um backup por vez (consome memoria/disco)
+
+
+class BackupInfo(CamelModel):
+    """Resumo de um backup recem-criado: id (para baixar), tamanho total, linhas do banco e imagens incluidas."""
+    id: str
+    size: int
+    rows: int
+    files: int
+
+
+def _backup_path(backup_id: str) -> Path:
+    """Caminho do arquivo temporario de um backup; id fora do formato (hex de 32) = 404 (nada de '../')."""
+    if not re.fullmatch(r"[0-9a-f]{32}", backup_id):
+        raise HTTPException(status_code=404, detail="Backup not found")
+    path = backup.BACKUP_DIR / f"{backup_id}.nbk"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Backup not found")
+    return path
+
+
+@router.post("/backup", response_model=BackupInfo)
+async def create_backup_file(db: AsyncSession = Depends(get_db)) -> BackupInfo:
+    """Cria um backup cifrado AGORA (banco + imagens). 503 se BACKUP_PASSPHRASE nao estiver configurada (nunca gera sem senha)."""
+    if not settings.backup_passphrase:
+        raise HTTPException(status_code=503, detail="Backups are disabled: set BACKUP_PASSPHRASE in the API variables")
+    if _backup_lock.locked():
+        raise HTTPException(status_code=409, detail="A backup is already running")
+    async with _backup_lock:
+        exclude = {t.strip() for t in settings.backup_exclude_tables.split(",") if t.strip()}
+        info = await backup.create_backup(db, settings.backup_passphrase, UPLOAD_DIR, exclude)
+    return BackupInfo(id=info["id"], size=info["size"], rows=info["rows"], files=info["files"])
+
+
+@router.get("/backup/{backup_id}")
+async def download_backup_part(backup_id: str, part: int = Query(1, ge=1), size: int = Query(9 * 1024 * 1024, ge=1024, le=24 * 1024 * 1024)) -> Response:
+    """Baixa um PEDACO do backup (a parte `part`, de `size` bytes) - o Discord limita o tamanho de cada arquivo."""
+    path = _backup_path(backup_id)
+    with open(path, "rb") as fh:
+        fh.seek((part - 1) * size)
+        data = fh.read(size)
+    if not data:
+        raise HTTPException(status_code=404, detail="Part not found")
+    return Response(content=data, media_type="application/octet-stream")
+
+
+@router.delete("/backup/{backup_id}", status_code=204)
+async def delete_backup_file(backup_id: str) -> None:
+    """Apaga o arquivo temporario do backup (depois que o bot ja' guardou no Discord)."""
+    _backup_path(backup_id).unlink(missing_ok=True)
 
 
 @router.get("/errors", response_model=list[BotErrorEntry])
