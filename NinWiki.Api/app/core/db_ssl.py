@@ -17,6 +17,7 @@ quanto o Alembic (que le' o .env por conta propria) - ver app/core/database.py e
 """
 import atexit
 import os
+import re
 import shutil
 import ssl
 import tempfile
@@ -26,6 +27,22 @@ API_ROOT = Path(__file__).resolve().parent.parent.parent  # pasta NinWiki.Api
 
 
 _PEM_CACHE: dict[str, str] = {}
+_PEM_BLOCK = re.compile(r"-----BEGIN ([A-Z0-9 ]+)-----(.*?)-----END \1-----", re.S)
+
+
+def normalize_pem(text: str) -> str:
+    """
+    Reconstroi o PEM no formato exato que o OpenSSL exige (cabecalho, corpo base64 em linhas de 64 caracteres, rodape).
+    Paineis de hospedagem costumam mexer na colagem: trocam quebras de linha por ESPACOS, por "\\n" literal ou deixam tudo numa
+    linha so'. O corpo base64 nao tem espaco algum, entao qualquer espaco/quebra/"\\n" dentro dele e' descartado. Aceita varios
+    blocos (ex.: .pem com certificado + chave). Se nao achar nenhum bloco, devolve o texto como veio.
+    """
+    blocks = []
+    for kind, body in _PEM_BLOCK.findall(text.replace("\\n", "\n").replace("\r", "")):
+        b64 = re.sub(r"\s+", "", body)
+        lines = "\n".join(b64[i:i + 64] for i in range(0, len(b64), 64))
+        blocks.append(f"-----BEGIN {kind}-----\n{lines}\n-----END {kind}-----")
+    return "\n".join(blocks) + "\n" if blocks else text.strip() + "\n"
 
 
 def _pem_to_tempfile(text: str) -> str:
@@ -34,7 +51,7 @@ def _pem_to_tempfile(text: str) -> str:
         return _PEM_CACHE[text]
     fd, tmp = tempfile.mkstemp(prefix="ninwiki-tls-", suffix=".pem")
     with os.fdopen(fd, "w") as fh:
-        fh.write(text.replace("\\n", "\n").strip() + "\n")
+        fh.write(normalize_pem(text))
     os.chmod(tmp, 0o600)
     atexit.register(lambda: Path(tmp).unlink(missing_ok=True))
     _PEM_CACHE[text] = tmp
