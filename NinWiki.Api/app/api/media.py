@@ -41,7 +41,7 @@ router = APIRouter(prefix="/media", tags=["media"])
 
 
 # Categorias do banco de imagens ('' = sem categoria). Fixas de proposito: o filtro do painel fica pequeno e o nome nao vira lixo digitado.
-MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "other")
+MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "other")
 
 
 def _valid_category(value: str | None) -> str:

@@ -1765,7 +1765,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     cc = r.json()
     r = await c.post("/media", files={"file": ("b.png", _png((3, 2, 1)), "image/png")}, data={"category": "inventada"}, headers=S)
     check("categoria desconhecida e' recusada (422)", r.status_code == 422)
-    for nova in ("scroll", "npc", "monster"):
+    for nova in ("scroll", "npc", "monster", "furniture"):
         r = await c.post("/media", files={"file": (f"{nova}.png", _png((4, 4, len(nova))), "image/png")}, data={"category": nova}, headers=S)
         check(f"categoria nova '{nova}' existe", r.status_code == 201 and r.json()["category"] == nova, r.text[:100])
         if r.status_code == 201:

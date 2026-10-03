@@ -1332,7 +1332,7 @@ export function clearAnnouncement(): Promise<ApiAnnouncement> {
 // ---- Banco de imagens ----
 
 /** Categorias do banco de imagens (a API aceita so' estas; vazio = sem categoria). */
-export const MEDIA_CATEGORIES = ['weapon', 'clothing', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'other'] as const;
+export const MEDIA_CATEGORIES = ['weapon', 'clothing', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'furniture', 'other'] as const;
 export type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
 export interface ApiMedia {
