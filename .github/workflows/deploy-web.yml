@@ -1,4 +1,4 @@
-name: Deploy Web na SquareCloud (manual)
+name: Deploy Web
 
 # Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
 #
