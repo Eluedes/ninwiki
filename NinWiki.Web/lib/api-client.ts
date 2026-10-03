@@ -1440,3 +1440,35 @@ export interface ApiMediaBulkResult {
 export function bulkDeleteMedia(ids: number[], force = false): Promise<ApiMediaBulkResult> {
   return apiFetch('/media/bulk-delete', { method: 'POST', body: JSON.stringify({ ids, force }) });
 }
+
+
+// ---- Importador de noticias da Steam (posts.publish) ----
+
+export interface ApiSteamRun {
+  at: string;
+  fetched: number;
+  matched: number;
+  imported: number;
+  skipped: number;
+  errors: string[];
+  titles: string[];
+}
+
+export interface ApiSteamStatus {
+  enabled: boolean;
+  appId: string;
+  intervalMinutes: number;
+  mode: string;
+  requireTag: string;
+  lastRun: ApiSteamRun | null;
+}
+
+/** Estado do importador de noticias da Steam (ligado?, jogo, modo e ultima conferencia). */
+export function getSteamNewsStatus(): Promise<ApiSteamStatus> {
+  return apiFetch('/steam-news/status');
+}
+
+/** Confere a Steam agora e importa os posts de atualizacao novos. */
+export function runSteamNewsImport(): Promise<ApiSteamStatus> {
+  return apiFetch('/steam-news/import', { method: 'POST' });
+}

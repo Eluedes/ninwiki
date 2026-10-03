@@ -72,6 +72,16 @@ class Settings(BaseSettings):
     # (ver _validar_seguranca abaixo).
     dev_login_enabled: bool = False
 
+    # IMPORTADOR DE NOTICIAS DA STEAM: se STEAM_NEWS_APP_ID estiver preenchido (ex.: 1674010), a API confere a pagina de noticias do jogo a cada
+    # STEAM_NEWS_INTERVAL_MINUTES e copia para o blog, com a tag "Patch Notes", cada post novo marcado como `patchnotes` na Steam.
+    # Vazio = desligado. Veja app/core/steam_news.py.
+    steam_news_app_id: str = ""
+    steam_news_interval_minutes: int = 30          # de quanto em quanto tempo conferir (minimo 10)
+    steam_news_status: str = "published"           # "published" = vai ao ar na hora; "draft" = entra como rascunho para revisar
+    steam_news_author_name: str = ""               # nome mostrado em "por/by" (a desenvolvedora). Vazio = o autor que a Steam informa
+    steam_news_require_tag: str = "patchnotes"     # so' importa posts com esta tag da Steam; vazio = importa todos
+    steam_news_max_per_run: int = 5                # teto de posts novos por conferencia (evita inundar o blog na 1a vez)
+
     # Senha compartilhada entre a API e o NinWiki.Bot (header X-Bot-Token).
     # Vazio = as rotas do bot ficam DESLIGADAS (404). Gere um valor longo
     # e aleatorio: python -c "import secrets; print(secrets.token_urlsafe(48))"

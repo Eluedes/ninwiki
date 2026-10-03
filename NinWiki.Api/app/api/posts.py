@@ -65,7 +65,7 @@ def _summary(post: Post, counts: tuple[int, int] = (0, 0)) -> dict:
         "id": post.id, "slug": post.slug, "title": post.title, "excerpt": post.excerpt,
         "title_pt": post.title_pt, "excerpt_pt": post.excerpt_pt,
         "cover_image": post.cover_image, "status": post.status,
-        "author_name": post.author.username if post.author else None,
+        "author_name": post.author_label or (post.author.username if post.author else None),   # post importado da Steam mostra o nome da desenvolvedora
         "tags": list(post.tags), "published_at": post.published_at,
         "is_scheduled": post.status == ContentStatus.PUBLISHED and not _is_live(post),
         "like_count": counts[0], "comment_count": counts[1],

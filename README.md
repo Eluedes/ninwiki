@@ -505,6 +505,10 @@ novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses tr
 | `MAX_NOTICE_FILE_MB` | **`200`** | anexo do Quadro de avisos (gravado aos pedaços; a Cloudflare grátis corta acima de 100 MB) |
 | `MAX_JSON_BODY_KB` | `512` | corpo máximo das requisições comuns |
 | `PUBLIC_REQUESTS_PER_MINUTE` / `UPLOAD_REQUESTS_PER_MINUTE` / `WRITE_REQUESTS_PER_MINUTE` | `1200` / `1500` / `120` | limite por IP (leituras, imagens, escritas) |
+| `STEAM_NEWS_APP_ID` | vazio | liga o **importador de notícias da Steam** (ex.: `1674010`, o número da página `store.steampowered.com/news/app/1674010`): a API confere a cada `STEAM_NEWS_INTERVAL_MINUTES` (30, mín. 10) e copia para o blog, com a tag **Patch Notes**, cada post marcado `patchnotes` na Steam |
+| `STEAM_NEWS_AUTHOR_NAME` | vazio | nome mostrado em *por/by* nos posts importados (a desenvolvedora); vazio = o autor que a Steam informa |
+| `STEAM_NEWS_STATUS` | `published` | `published` publica na hora; `draft` cria **rascunho** para você revisar (troque para `draft` se a conversão errar algo) |
+| `STEAM_NEWS_REQUIRE_TAG` / `STEAM_NEWS_MAX_PER_RUN` | `patchnotes` / `5` | só importa posts com esta tag da Steam (vazio = todos) / teto de posts novos por conferência |
 | `MEDIA_UPLOAD_REQUESTS_PER_MINUTE` | `600` | envios de imagem (`POST /media` e `/uploads/image`) por IP: balde próprio, maior, para enviar milhares de imagens; o painel também tenta de novo sozinho quando a API pede calma (429) |
 | `LOGIN_REQUESTS_PER_MINUTE` / `LOGIN_FAIL_LIMIT` / `LOGIN_FAIL_WINDOW_MINUTES` / `BOT_FAIL_LIMIT` | `30` / `5` / `15` / `10` | freios do login e do token do bot |
 
@@ -559,3 +563,11 @@ Todo arquivo começa com um comentário-resumo do que faz e toda função tem um
 - `NinWiki.Bot/main.py` + `ninwiki_bot/*` = `/status` e `/search` (`public_commands.py`), `/team` (`staff_commands.py`), log no Discord (`log_feed.py`), erros e painel de status (`error_feed.py`).
 - `NinWiki.Web/components/admin/rich-text-editor.tsx` (+ `editor-color-picker.tsx`, `lib/editor-fonts.ts`) = editor de texto; `components/lore/rich-text.tsx` = como o texto aparece no site; `components/admin/traffic-card.tsx` = gráfico de acessos.
 - `NinWiki.Api/app/api/analytics.py` + `core/geoip.py` = acessos anônimos e país; `app/api/bot.py` = rotas do bot (equipe, log, erros, busca).
+
+
+## Importador de notícias da Steam (blog automático)
+- **O que faz:** a cada 30 min (`STEAM_NEWS_INTERVAL_MINUTES`) a API pergunta à API pública da Steam (`ISteamNews/GetNewsForApp`, sem chave) pelas notícias do jogo, fica só com as marcadas `patchnotes` que ainda não foram importadas (o `gid` da Steam vai em `posts.source_id`, único: nunca duplica) e cria o post no blog: título e data da Steam, texto convertido para o editor (negrito, links, listas, citações, imagens), **tag Patch Notes**, **por/by = a desenvolvedora** e um **crédito no topo** com o link do post original ("Originally published on Steam…"). Imagens usam o endereço da Steam; a primeira vira a capa; a DeepL traduz para PT como em qualquer post.
+- **Ligar (passo a passo):** (1) no app da **API** (SquareCloud → *Variáveis de Ambiente*) crie `STEAM_NEWS_APP_ID=1674010` e `STEAM_NEWS_AUTHOR_NAME=<nome da desenvolvedora>` (`STEAM_NEWS_STATUS=published` já é o padrão); (2) rode o **Deploy API** (migration `d7a2b9c4e150`) e reinicie; (3) no painel, *Blog posts* ganha o cartão **Notícias da Steam** com o botão **Importar agora** e o resultado da última conferência (só quem tem `posts.publish`).
+- **Se der problema:** troque `STEAM_NEWS_STATUS=draft` e reinicie: os próximos entram como rascunho. Se nada for importado, o cartão mostra "N lidos · 0 de atualização": a Steam não marcou os posts como `patchnotes` — esvazie `STEAM_NEWS_REQUIRE_TAG` para importar todos (e apague os que não servirem).
+- **Direitos autorais:** o texto é da desenvolvedora; o crédito e o link do original ficam no topo de cada post. Confirme que você pode republicar.
+- Na primeira ativação importa no máximo 5 posts (`STEAM_NEWS_MAX_PER_RUN`); clique em *Importar agora* de novo para trazer mais.

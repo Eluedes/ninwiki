@@ -19,6 +19,7 @@ from discord.ext import tasks
 from pydantic import ValidationError
 
 from ninwiki_bot.api_client import ApiError, NinWikiApi
+from ninwiki_bot.command_sync import sync_commands, target_guilds
 from ninwiki_bot.config import BotSettings
 from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_status_panel, query_since as errors_query_since, record_check, update_status
 from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
@@ -225,16 +226,9 @@ class NinWikiBot(discord.Client):
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
         register_public_commands(self.tree, self.api, self.settings.allowed_guilds, self.settings.site_url, self.check_now, bool(self.settings.site_url), self.languages)
         self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds, self.settings.site_url, self._log_channel))
-        if self.settings.dev_guild_id:
-            # Sincroniza so' no servidor de testes: aparece na hora (o global demora ate 1h).
-            guild = discord.Object(id=self.settings.dev_guild_id)
-            self.tree.copy_global_to(guild=guild)
-            await self.tree.sync(guild=guild)
-            log.info("Comandos sincronizados no servidor de testes %s", self.settings.dev_guild_id)
-            log.warning("DEV_GUILD_ID esta' definido: os comandos existem SO' nesse servidor. Em producao (outros servidores) deixe DEV_GUILD_ID vazio e reinicie o bot.")
-        else:
-            await self.tree.sync()
-            log.info("Comandos globais sincronizados (podem levar ate 1h pra aparecer)")
+        # Comandos so' nos servidores escolhidos (ALLOWED_GUILD_IDS + DEV_GUILD_ID), na hora, e sem sobra de comandos globais antigos (ver ninwiki_bot/command_sync.py).
+        result = await sync_commands(self.tree, target_guilds(self.settings.allowed_guilds, self.settings.dev_guild_id), lambda gid: discord.Object(id=gid))
+        self.command_sync_result = result
 
     async def on_ready(self) -> None:
         """Avisa no terminal que o bot esta' online."""

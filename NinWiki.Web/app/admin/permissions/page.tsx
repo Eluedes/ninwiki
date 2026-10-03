@@ -80,8 +80,8 @@ export default function PermissionsPage() {
   const [overview, setOverview] = useState<ApiRolesOverview | null>(null);
   const [draft, setDraft] = useState<Draft>({});
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<StaffRole | null>(null);
-  const [savedRole, setSavedRole] = useState<StaffRole | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [dialog, setDialog] = useState<{ role: ApiCustomRole | null } | null>(null);
 
   const apply = useCallback((o: ApiRolesOverview) => {
@@ -114,7 +114,7 @@ export default function PermissionsPage() {
   }
 
   function toggle(role: StaffRole, perm: PermissionName) {
-    setSavedRole(null);
+    setSaved(false);
     setDraft((prev) => {
       const next = new Set(prev[role]);
       if (next.has(perm)) next.delete(perm); else next.add(perm);
@@ -122,32 +122,42 @@ export default function PermissionsPage() {
     });
   }
 
-  async function save(role: StaffRole) {
-    setBusy(role);
+  /** Salva de uma vez TODOS os cargos que tiveram caixinhas mexidas (Adm e/ou Creator): um botao so'. */
+  async function saveAll() {
+    setBusy(true);
     setError(null);
     try {
-      apply(await setRolePermissions(role, [...(draft[role] ?? [])]));
-      setSavedRole(role);
-      await refresh();
+      let last: ApiRolesOverview | null = null;
+      for (const role of EDITABLE) {
+        if (dirty(role)) last = await setRolePermissions(role, [...(draft[role] ?? [])]);
+      }
+      if (last) {
+        apply(last);
+        setSaved(true);
+        await refresh();
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.saveError);
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
-  async function reset(role: StaffRole) {
-    if (!window.confirm(t.confirmReset.replace('{role}', labels[role] ?? role))) return;
-    setBusy(role);
+  /** Volta TODOS os cargos editaveis (Adm e Creator) ao padrao, depois de confirmar. */
+  async function resetAll() {
+    if (!window.confirm(t.confirmReset.replace('{role}', EDITABLE.map((r) => labels[r] ?? r).join(' / ')))) return;
+    setBusy(true);
     setError(null);
     try {
-      apply(await resetRolePermissions(role));
-      setSavedRole(role);
+      let last: ApiRolesOverview | null = null;
+      for (const role of EDITABLE) last = await resetRolePermissions(role);
+      if (last) apply(last);
+      setSaved(true);
       await refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.saveError);
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
@@ -204,25 +214,21 @@ export default function PermissionsPage() {
           </thead>
           <tbody>
             {grouped.map(({ group, items }) => (
-              <GroupRows key={group} title={t.groups[group] ?? group} items={items} draft={draft} toggle={toggle} labels={labels} busy={busy !== null} t={t} />
+              <GroupRows key={group} title={t.groups[group] ?? group} items={items} draft={draft} toggle={toggle} labels={labels} busy={busy} t={t} />
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="flex flex-wrap gap-6">
-        {EDITABLE.map((role) => (
-          <div key={role} className="flex items-center gap-2">
-            <Button size="sm" disabled={busy !== null || !dirty(role)} onClick={() => save(role)}>
-              {busy === role ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
-              {busy === role ? t.saving : `${t.save} ${labels[role]}`}
-            </Button>
-            <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => reset(role)}>
-              <RotateCcw className="mr-1.5 h-4 w-4" />{t.reset}
-            </Button>
-            {savedRole === role && <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="h-3.5 w-3.5" />{t.saved}</span>}
-          </div>
-        ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" disabled={busy || !EDITABLE.some((r) => dirty(r))} onClick={saveAll}>
+          {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+          {busy ? t.saving : t.save}
+        </Button>
+        <Button size="sm" variant="outline" disabled={busy} onClick={resetAll}>
+          <RotateCcw className="mr-1.5 h-4 w-4" />{t.reset}
+        </Button>
+        {saved && <span className="flex items-center gap-1 text-xs text-emerald-400"><Check className="h-3.5 w-3.5" />{t.saved}</span>}
       </div>
 
       {/* Cargos personalizados: o S.Adm cria cargos alem de Adm/Creator, com as permissoes que quiser (nunca as exclusivas do S.Adm) */}

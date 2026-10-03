@@ -1960,6 +1960,77 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("flood de visitas: passa o limite por minuto e recebe 429", 429 in codigos and codigos[0] == 204, str(set(codigos)))
     limiter.reset()
 
+    secao("30) Importador de noticias da Steam: so' patchnotes, sem duplicar, credito, autor e rascunho/publicado")
+    from app.core import steam_news as sn
+    from app.core.config import settings as _cfg
+    from app.core.database import AsyncSessionLocal as _Sess
+
+    def _item(gid: str, titulo: str, tags: list[str] | None, corpo: str = "[b]Hi[/b] [url=https://x.test/a]link[/url]\n[list][*]one[*]two[/list]") -> dict:
+        """Post de mentira no formato da API de noticias da Steam."""
+        return {"gid": gid, "title": titulo, "url": f"https://store.steampowered.com/news/app/1/view/{gid}", "author": "Steam-Autor", "contents": corpo,
+                "date": 1790000000 + int(gid[-3:]), **({"tags": tags} if tags is not None else {})}
+
+    feed = [_item("teste-steam-001", f"{SLUG} Update 1", ["patchnotes"]), _item("teste-steam-002", f"{SLUG} Evento", ["event"]),
+            _item("teste-steam-003", f"{SLUG} Update 2", ["patchnotes", "other"]), _item("teste-steam-004", f"{SLUG} Sem tags", None)]
+
+    async def _fake(app_id, count=20, transport=None):
+        """Substitui a chamada real a' Steam por uma lista fixa."""
+        return feed
+
+    original_fetch, original_cfg = sn.fetch_news, (_cfg.steam_news_app_id, _cfg.steam_news_author_name, _cfg.steam_news_status, _cfg.steam_news_require_tag)
+    sn.fetch_news = _fake
+    try:
+        _cfg.steam_news_app_id, _cfg.steam_news_author_name, _cfg.steam_news_status, _cfg.steam_news_require_tag = "1", "Dev Studio", "published", "patchnotes"
+        r = await c.get("/steam-news/status")
+        check("anonimo NAO ve o estado do importador (401)", r.status_code == 401)
+        check("Creator NAO ve o importador (403)", (await c.get("/steam-news/status", headers=C)).status_code == 403)
+        r = await c.get("/steam-news/status", headers=A)
+        check("Adm ve o estado: ligado, jogo e modo", r.status_code == 200 and r.json()["enabled"] is True and r.json()["appId"] == "1" and r.json()["mode"] == "published", r.text[:150])
+        check("Creator NAO importa (403)", (await c.post("/steam-news/import", headers=C)).status_code == 403)
+        r = await c.post("/steam-news/import", headers=A)
+        run = r.json()["lastRun"]
+        check("Adm importa: 4 lidos, 2 com a tag patchnotes, 2 importados", r.status_code == 200 and run["fetched"] == 4 and run["matched"] == 2 and run["imported"] == 2 and not run["errors"], str(run)[:200])
+        async with _Sess() as db:
+            posts = (await db.execute(text("SELECT p.title, p.status, p.author_label, p.source_url, p.cover_image, p.content, p.published_at FROM posts p WHERE p.source_id LIKE 'teste-steam-%' ORDER BY p.source_id"))).all()
+            tags = (await db.execute(text("SELECT t.id FROM post_tag_links l JOIN tags t ON t.id = l.tag_id JOIN posts p ON p.id = l.post_id WHERE p.source_id LIKE 'teste-steam-%'"))).scalars().all()
+        check("so' os posts com patchnotes viraram posts do blog", [p[0] for p in posts] == [f"{SLUG} Update 1", f"{SLUG} Update 2"])
+        check("entram PUBLICADOS e com a data da Steam", all(str(p[1]).endswith("PUBLISHED") or str(p[1]).endswith("published") for p in posts) and all(p[6] is not None for p in posts))
+        check("o nome da desenvolvedora aparece em por/by (autor sem usuario)", all(p[2] == "Dev Studio" for p in posts))
+        check("tag Patch Notes ligada aos dois posts", tags.count("patch-notes") == 2)
+        check("credito para o original (link da Steam) no topo do texto", "Originally published on Steam by Dev Studio" in posts[0][5] and "store.steampowered.com/news/app/1/view/teste-steam-001" in posts[0][5])
+        check("o texto virou documento do editor (negrito, link, lista)", '"bold"' in posts[0][5] and "https://x.test/a" in posts[0][5] and "bulletList" in posts[0][5])
+        pub = (await c.get("/posts", params={"limit": 50})).json()
+        check("o post importado aparece no blog publico com 'por' = desenvolvedora", any(x["title"] == f"{SLUG} Update 1" and x["authorName"] == "Dev Studio" for x in pub), str(pub)[:200] if not isinstance(pub, list) else "")
+        r = await c.post("/steam-news/import", headers=A)
+        check("rodar de novo nao duplica (ja' importados contam como pulados)", r.json()["lastRun"]["imported"] == 0 and r.json()["lastRun"]["skipped"] == 2)
+        feed.append(_item("teste-steam-005", f"{SLUG} Update 3", ["patchnotes"], corpo="[img]{STEAM_CLAN_IMAGE}/1/a.png[/img]\nTexto."))
+        _cfg.steam_news_status = "draft"
+        r = await c.post("/steam-news/import", headers=A)
+        check("modo draft: o post novo entra como rascunho", r.json()["lastRun"]["imported"] == 1)
+        async with _Sess() as db:
+            novo = (await db.execute(text("SELECT status, cover_image FROM posts WHERE source_id = 'teste-steam-005'"))).first()
+        check("rascunho e a primeira imagem vira a capa", str(novo[0]).lower().endswith("draft") and novo[1] == "https://clan.akamai.steamstatic.com/images/1/a.png", str(novo))
+        _cfg.steam_news_require_tag = ""
+        r = await c.post("/steam-news/import", headers=A)
+        check("sem exigir tag, importa tambem os outros (evento e sem tags)", r.json()["lastRun"]["imported"] == 2, str(r.json()["lastRun"])[:160])
+        _cfg.steam_news_app_id = ""
+        check("desligado (sem STEAM_NEWS_APP_ID): importar da' 404", (await c.post("/steam-news/import", headers=A)).status_code == 404)
+        check("desligado: o estado diz enabled=false", (await c.get("/steam-news/status", headers=A)).json()["enabled"] is False)
+        # erro da Steam nao derruba
+        async def _boom(*a, **k):
+            """Simula a Steam fora do ar."""
+            raise RuntimeError("steam down")
+        sn.fetch_news = _boom
+        _cfg.steam_news_app_id = "1"
+        r = await c.post("/steam-news/import", headers=A)
+        check("Steam fora do ar: responde 200 e registra o erro (sem derrubar a API)", r.status_code == 200 and r.json()["lastRun"]["errors"], r.text[:160])
+    finally:
+        sn.fetch_news = original_fetch
+        _cfg.steam_news_app_id, _cfg.steam_news_author_name, _cfg.steam_news_status, _cfg.steam_news_require_tag = original_cfg
+        async with _Sess() as db:
+            await db.execute(text("DELETE FROM posts WHERE source_id LIKE 'teste-steam-%'"))
+            await db.commit()
+
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []
     total = 0

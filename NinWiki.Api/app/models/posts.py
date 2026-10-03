@@ -57,5 +57,11 @@ class Post(Base, TimestampMixin):
     author_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     status: Mapped[ContentStatus] = mapped_column(Enum(ContentStatus, name="content_status"), default=ContentStatus.DRAFT)
 
+    # Importado da Steam (ver app/core/steam_news.py): `source_id` = gid do post na Steam (unico: nunca importa duas vezes), `source_url` = link do
+    # original (credito), `author_label` = nome mostrado em "por/by" no lugar do usuario (ex.: a desenvolvedora do jogo).
+    source_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
+    source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    author_label: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
     author: Mapped["User | None"] = relationship()
     tags: Mapped[list[Tag]] = relationship(secondary=post_tag_links, order_by="Tag.name", lazy="selectin")

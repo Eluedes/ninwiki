@@ -7,7 +7,9 @@ Este e' o arquivo que o Uvicorn carrega quando voce roda:
 "app.main:app" significa: modulo app/main.py, objeto chamado `app`.
 """
 import asyncio
+import logging
 import sys
+from contextlib import asynccontextmanager
 
 # CORRECAO PARA WINDOWS - PRECISA SER A PRIMEIRA COISA A RODAR NO ARQUIVO:
 # o event loop PADRAO do asyncio no Windows (ProactorEventLoop) tem um
@@ -35,6 +37,7 @@ from sqlalchemy import text
 from fastapi.staticfiles import StaticFiles
 
 from app.api.analytics import router as analytics_router
+from app.api.steam_news import router as steam_news_router
 from app.api.media import router as media_router
 from app.api.announcement import router as announcement_router
 from app.api.audit_log import router as audit_log_router
@@ -54,6 +57,7 @@ from app.api.tags import router as tags_router
 from app.api.uploads import router as uploads_router
 from app.api.villages import organizations_router, router as villages_router
 from app.core.config import settings
+from app.core import steam_news
 from app.core.database import AsyncSessionLocal
 from app.core.hardening import BodyLimitMiddleware, ErrorCaptureMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware
 from app.core.security import ClientIPMiddleware
@@ -66,6 +70,34 @@ docs_url = "/docs" if settings.environment == "development" else None
 redoc_url = "/redoc" if settings.environment == "development" else None
 openapi_url = "/openapi.json" if settings.environment == "development" else None
 
+_steam_log = logging.getLogger("ninwiki.steam")
+
+
+async def _steam_news_loop() -> None:
+    """Tarefa de fundo: de STEAM_NEWS_INTERVAL_MINUTES em minutos, importa os posts de atualizacao novos da Steam (so' roda se STEAM_NEWS_APP_ID estiver preenchido)."""
+    await asyncio.sleep(60)   # nao disputa recursos com a subida da API
+    while True:
+        try:
+            async with AsyncSessionLocal() as db:
+                run = await steam_news.import_news(db)
+            if run["imported"] or run["errors"]:
+                _steam_log.info("Steam news: %s novo(s), erros: %s", run["imported"], run["errors"])
+        except Exception:  # noqa: BLE001 - a tarefa nunca morre por causa de um ciclo ruim
+            _steam_log.exception("Steam news: falha inesperada no ciclo")
+        await asyncio.sleep(max(10, settings.steam_news_interval_minutes) * 60)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Liga a tarefa de fundo do importador da Steam (se configurado) e a desliga ao encerrar a API."""
+    task = asyncio.create_task(_steam_news_loop()) if settings.steam_news_app_id else None
+    try:
+        yield
+    finally:
+        if task:
+            task.cancel()
+
+
 # Instância principal do FastAPI. Em desenvolvimento, title/version aparecem
 # automaticamente na documentação interativa gerada em /docs.
 app = FastAPI(
@@ -74,6 +106,7 @@ app = FastAPI(
     docs_url=docs_url,
     redoc_url=redoc_url,
     openapi_url=openapi_url,
+    lifespan=lifespan,
 )
 
 # CORS (Cross-Origin Resource Sharing): por padrao, o navegador BLOQUEIA
@@ -119,6 +152,7 @@ async def staff_error_handler(request: Request, exc: StaffError):
 # Conforme mais tipos de conteudo ganharem API (masteries, villages,
 # etc.), cada um ganha seu proprio router aqui, do mesmo jeito.
 app.include_router(content_items_router)
+app.include_router(steam_news_router)
 app.include_router(audit_log_router)
 app.include_router(masteries_router)
 app.include_router(uploads_router)
