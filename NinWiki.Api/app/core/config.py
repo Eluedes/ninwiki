@@ -121,6 +121,7 @@ class Settings(BaseSettings):
     public_requests_per_minute: int = 1200   # leituras (GET) por IP
     upload_requests_per_minute: int = 1500   # imagens em /uploads por IP (uma pagina carrega varias)
     write_requests_per_minute: int = 120     # POST/PUT/PATCH/DELETE por IP
+    media_upload_requests_per_minute: int = 600  # envios de imagem (POST /media e /uploads/image) por IP: envio em lote (milhares) nao pode ser barrado
     max_json_body_kb: int = 512              # corpo maximo de requisicoes comuns (uploads tem limite proprio)
 
     # Tamanho maximo de um arquivo anexado a um aviso do quadro da equipe, em MB.

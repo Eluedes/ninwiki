@@ -11,6 +11,8 @@ COMO NAO FAZER SPAM (o ponto principal deste arquivo):
   - problema marcado como resolvido no painel nao e' repostado (a menos que volte a acontecer: ai' ele reabre e conta como novo).
   - o estado (ids ja' avisados e contadores) fica em error_state.json: reiniciar o bot nao repete avisos.
 
+Cada problema traz `hintPt`: explicacao em portugues (causa provavel e o que fazer) gerada pela API; vira um campo no aviso.
+
 Privacidade: a API nao manda traceback nem IP para o bot; aqui so' mostramos titulo, mensagem curta (ja' mascarada pela
 API), local no codigo, rota e contador.
 """
@@ -98,6 +100,8 @@ def format_error(entry: dict, since_last: int) -> dict:
         fields.append(("Route / page", f"`{_clip(route, 200)}`"))
     if entry.get("status"):
         fields.append(("HTTP status", str(entry["status"])))
+    if entry.get("hintPt"):
+        fields.append(("💡 O que pode estar acontecendo", _clip(entry["hintPt"], 900)))
     fields.append(("Occurrences", f"{entry['count']} total" + ("" if first_time else f" (+{since_last} since the last alert)")))
     return {
         "title": title,

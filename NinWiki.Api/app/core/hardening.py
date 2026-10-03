@@ -169,6 +169,8 @@ class RateLimitMiddleware:
             return
         if path.startswith("/uploads"):
             bucket, limit = "rl-uploads", settings.upload_requests_per_minute
+        elif method == "POST" and path in ("/media", "/uploads/image"):  # envio de imagens (inclusive em lote): limite proprio, maior
+            bucket, limit = "rl-media", settings.media_upload_requests_per_minute
         elif method in _READ_METHODS:
             bucket, limit = "rl-read", settings.public_requests_per_minute
         else:

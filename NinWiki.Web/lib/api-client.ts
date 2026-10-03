@@ -1226,6 +1226,8 @@ export interface ApiErrorEvent {
   // Traceback mascarado da ULTIMA ocorrencia e IP: so' o painel (S.Adm) recebe
   trace: string | null;
   ipAddress: string | null;
+  // Explicacao em portugues (causa provavel + o que fazer), gerada pela API
+  hintPt?: string;
   count: number;
   firstSeen: string;
   lastSeen: string;

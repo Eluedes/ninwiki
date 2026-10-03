@@ -18,6 +18,9 @@ class BotSettings(BaseSettings):
     status_channel_id: int | None = None
     # Endereco publico do site (ex: https://wiki.seudominio.com): o bot confere se esta' no ar. Vazio = nao vigia o site.
     site_url: str = ""
+    # (opcional) Endereco SO para a checagem de saude (ex: https://ninwiki.squareweb.app, o endereco direto da hospedagem, sem Cloudflare/cache na frente).
+    # Vazio = checa o proprio SITE_URL. Os links dos botoes do /search continuam usando o SITE_URL.
+    site_health_url: str = ""
     # Manda tambem uma mensagem NOVA a cada "caiu" / "voltou" (alem do painel que se edita sozinho). Padrao false: o painel basta e nao enche o canal.
     status_alerts: bool = False
     # Mantem UMA mensagem 'NinWiki status' no canal de erros, editada a cada checagem (estado ao vivo, tempo de resposta, uptime). false = so' avisa quando cai/volta.

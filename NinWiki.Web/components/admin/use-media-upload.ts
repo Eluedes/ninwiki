@@ -2,7 +2,7 @@
 
 // Envio de varias imagens para o banco de imagens (escolhidas no seletor OU soltas com arrastar-e-soltar).
 // Ignora o que nao e' imagem, envia 3 por vez, mostra o andamento ("Enviando 2/5") e junta os erros por arquivo -
-// uma imagem com problema nao cancela as outras.
+// uma imagem com problema nao cancela as outras. Se a API pedir calma (429, limite por minuto), espera e tenta de novo (ate' 4 vezes).
 
 import { useCallback, useState } from 'react';
 import { ApiError, uploadMedia, type ApiMedia } from '@/lib/api-client';
@@ -10,6 +10,23 @@ import { useLanguage } from '@/components/providers/language-provider';
 
 const ACCEPTED = /^image\/(png|jpeg|gif|webp)$/;
 const PARALLEL = 3;
+const MAX_RETRIES = 4;
+const RETRY_WAIT_MS = 6000;
+
+/** Envia uma imagem; se a API responder 429 (limite de pedidos), espera um pouco e tenta de novo. */
+async function uploadWithRetry(file: File): Promise<ApiMedia> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await uploadMedia(file);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429 && attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, RETRY_WAIT_MS * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
 
 export interface UploadState {
   busy: boolean;
@@ -42,7 +59,7 @@ export function useMediaUpload() {
       while (next < images.length) {
         const file = images[next++];
         try {
-          created.push(await uploadMedia(file));
+          created.push(await uploadWithRetry(file));
         } catch (err) {
           errors.push(t.failedFile.replace('{name}', file.name).replace('{error}', err instanceof ApiError ? err.message : '?'));
         }

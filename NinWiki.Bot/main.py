@@ -161,9 +161,9 @@ class NinWikiBot(discord.Client):
         timings: dict[str, int | None] = {"API": api_ms, "Database": api_ms if api_up else None}
         if self.settings.site_url:
             t0 = time.monotonic()
-            results["Website"] = await self.api.site_ok(self.settings.site_url)
+            results["Website"] = await self.api.site_ok(self.settings.site_health_url or self.settings.site_url)
             if not results["Website"]:
-                log.warning("Site fora do ar na checagem (%s): %s", self.settings.site_url, self.api.last_site_detail or "sem detalhe")
+                log.warning("Site fora do ar na checagem (%s): %s", self.settings.site_health_url or self.settings.site_url, self.api.last_site_detail or "sem detalhe")
             timings["Website"] = int((time.monotonic() - t0) * 1000)
         return results, timings
 
@@ -231,6 +231,7 @@ class NinWikiBot(discord.Client):
             self.tree.copy_global_to(guild=guild)
             await self.tree.sync(guild=guild)
             log.info("Comandos sincronizados no servidor de testes %s", self.settings.dev_guild_id)
+            log.warning("DEV_GUILD_ID esta' definido: os comandos existem SO' nesse servidor. Em producao (outros servidores) deixe DEV_GUILD_ID vazio e reinicie o bot.")
         else:
             await self.tree.sync()
             log.info("Comandos globais sincronizados (podem levar ate 1h pra aparecer)")

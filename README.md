@@ -200,7 +200,7 @@ O português antigo vai para o campo `_pt` e a tradução em inglês vira o camp
 - Sessão em cookie `httpOnly`/`SameSite=Lax`/`Secure`; checagem de `Origin` (CSRF); login com limite de tentativas.
 - **Limite de requisições por IP** na API (leitura, escrita e imagens separados) e no site (`proxy.ts`): freia cópia em massa
   e flood. Robôs de cópia conhecidos (curl, python-requests, scrapy, headless...) recebem 403 nas páginas.
-  Ajustes: `PUBLIC_REQUESTS_PER_MINUTE`, `WRITE_REQUESTS_PER_MINUTE`, `UPLOAD_REQUESTS_PER_MINUTE` (API) e
+  Ajustes: `PUBLIC_REQUESTS_PER_MINUTE`, `WRITE_REQUESTS_PER_MINUTE`, `UPLOAD_REQUESTS_PER_MINUTE`, `MEDIA_UPLOAD_REQUESTS_PER_MINUTE` (API) e
   `WEB_RATE_LIMIT_PER_MINUTE`, `BLOCK_SCRAPER_UAS=false` (site).
 - Cabeçalhos de segurança + **CSP** + HSTS no site e na API; corpo de requisição limitado (413); uploads com limite de pixels.
 - Texto rico validado no servidor (só blocos/formatações permitidos, links `javascript:` recusados) e filtro no "colar" do editor.
@@ -500,7 +500,14 @@ novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses tr
 | `MAX_NOTICE_FILE_MB` | **`200`** | anexo do Quadro de avisos (gravado aos pedaços; a Cloudflare grátis corta acima de 100 MB) |
 | `MAX_JSON_BODY_KB` | `512` | corpo máximo das requisições comuns |
 | `PUBLIC_REQUESTS_PER_MINUTE` / `UPLOAD_REQUESTS_PER_MINUTE` / `WRITE_REQUESTS_PER_MINUTE` | `1200` / `1500` / `120` | limite por IP (leituras, imagens, escritas) |
+| `MEDIA_UPLOAD_REQUESTS_PER_MINUTE` | `600` | envios de imagem (`POST /media` e `/uploads/image`) por IP: balde próprio, maior, para enviar milhares de imagens; o painel também tenta de novo sozinho quando a API pede calma (429) |
 | `LOGIN_REQUESTS_PER_MINUTE` / `LOGIN_FAIL_LIMIT` / `LOGIN_FAIL_WINDOW_MINUTES` / `BOT_FAIL_LIMIT` | `30` / `5` / `15` / `10` | freios do login e do token do bot |
+
+**Enviar milhares de imagens de uma vez (ex.: 4 mil).** Dois caminhos:
+1. *Pelo painel* (Admin → Images, arrastar e soltar): funciona, mas cada imagem é um pedido (limite de 600/min por IP; o painel espera e tenta de novo sozinho no 429). 4 mil imagens levam ~10+ minutos: deixe a aba aberta e envie em levas de ~500–1000.
+2. *Direto na pasta (mais rápido)*: coloque os arquivos (`.png`, `.jpg`, `.gif`, `.webp`; prefira nomes simples, sem espaços/acentos) na pasta `uploads/` do app da API (SquareCloud → *Files*) e, no painel, clique em **Sync** (Admin → Images). Cada arquivo novo ganha um ID. O deploy **nunca** mexe nessa pasta.
+Cada imagem ocupa disco no app: confira o espaço do plano antes.
+
 
 Sem variável nova para os acessos ao site: o país vem da Cloudflare (`TRUST_PROXY_HEADERS=true`) **ou** do arquivo `geoip/country.mmdb`, que o workflow da API baixa
 sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem só ao Docker do banco).
@@ -525,6 +532,7 @@ sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem s
 | `LOG_CHANNEL_ID` | vazio | canal do log geral (só equipe!) |
 | `ERROR_CHANNEL_ID` | vazio | canal de erros e do painel de status (vazio = usa o de log) |
 | `SITE_URL` | vazio | site público: vigiado pelo bot **e** usado nos botões *Open* do `/search` |
+| `SITE_HEALTH_URL` | vazio | (opcional) endereço **só** da checagem de saúde, ex.: `https://ninwiki.squareweb.app` (direto da hospedagem, sem Cloudflare/cache na frente); vazio = checa o `SITE_URL` |
 | `STATUS_CHANNEL_ID` | vazio | canal **só do monitor** (painel "NinWiki status" + avisos de API/banco/site caiu/voltou), separado dos erros do wiki; vazio = usa o `ERROR_CHANNEL_ID` |
 | `STATUS_ALERTS` | `false` | `true` = além do painel, manda uma mensagem **nova** a cada "caiu" / "voltou" (padrão: só o painel, que se edita sozinho) |
 | `STATUS_DOWN_AFTER` | `3` | checagens seguidas que precisam falhar para avisar "caiu" (suba para 5 se a rede oscila e o bot avisa demais) |
