@@ -503,6 +503,12 @@ novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses tr
 | `MEDIA_UPLOAD_REQUESTS_PER_MINUTE` | `600` | envios de imagem (`POST /media` e `/uploads/image`) por IP: balde próprio, maior, para enviar milhares de imagens; o painel também tenta de novo sozinho quando a API pede calma (429) |
 | `LOGIN_REQUESTS_PER_MINUTE` / `LOGIN_FAIL_LIMIT` / `LOGIN_FAIL_WINDOW_MINUTES` / `BOT_FAIL_LIMIT` | `30` / `5` / `15` / `10` | freios do login e do token do bot |
 
+**Enviar milhares de imagens de uma vez (ex.: 4 mil).** Dois caminhos:
+1. *Pelo painel* (Admin → Images, arrastar e soltar): funciona, mas cada imagem é um pedido (limite de 600/min por IP; o painel espera e tenta de novo sozinho no 429). 4 mil imagens levam ~10+ minutos: deixe a aba aberta e envie em levas de ~500–1000.
+2. *Direto na pasta (mais rápido)*: coloque os arquivos (`.png`, `.jpg`, `.gif`, `.webp`; prefira nomes simples, sem espaços/acentos) na pasta `uploads/` do app da API (SquareCloud → *Files*) e, no painel, clique em **Sync** (Admin → Images). Cada arquivo novo ganha um ID. O deploy **nunca** mexe nessa pasta.
+Cada imagem ocupa disco no app: confira o espaço do plano antes.
+
+
 Sem variável nova para os acessos ao site: o país vem da Cloudflare (`TRUST_PROXY_HEADERS=true`) **ou** do arquivo `geoip/country.mmdb`, que o workflow da API baixa
 sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem só ao Docker do banco).
 

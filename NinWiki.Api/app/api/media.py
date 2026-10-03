@@ -11,6 +11,7 @@ Banco de imagens do painel: toda imagem enviada ganha um ID (#1, #2...) que a eq
 
 Os arquivos continuam em uploads/ com nome aleatorio (mesma validacao do POST /uploads/image: assinatura binaria, limite de pixels, redimensionar).
 """
+import asyncio
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -71,23 +72,31 @@ def _read(m: MediaImage) -> MediaRead:
                      uploaded_by=m.uploaded_by, created_at=m.created_at.isoformat() if m.created_at else "")
 
 
-async def _sync_folder(db: AsyncSession, who: str | None) -> int:
-    """Registra os arquivos de uploads/ que ainda nao estao no banco de imagens (a mais antiga primeiro). Devolve quantos entraram."""
-    known = set((await db.execute(select(MediaImage.filename))).scalars().all())
-    added = 0
+def _scan_folder(known: set[str]) -> list[tuple[str, int, int, int]]:
+    """(Roda numa thread) Le o cabecalho de cada imagem nova de uploads/ - nome, largura, altura, bytes - da mais antiga para a mais nova."""
     files = sorted((p for p in UPLOAD_DIR.iterdir() if p.is_file() and p.suffix.lower() in {".png", ".jpg", ".gif", ".webp"} and p.name not in known),
                    key=lambda p: p.stat().st_mtime)
+    found: list[tuple[str, int, int, int]] = []
     for path in files:
         try:
             with Image.open(path) as img:
                 width, height = img.size
         except Exception:
             continue  # arquivo estranho na pasta: ignora
-        db.add(MediaImage(filename=path.name, name="", width=width, height=height, bytes=path.stat().st_size, uploaded_by=who))
-        added += 1
-    if added:
+        found.append((path.name, width, height, path.stat().st_size))
+    return found
+
+
+async def _sync_folder(db: AsyncSession, who: str | None) -> int:
+    """Registra os arquivos de uploads/ que ainda nao estao no banco de imagens (a mais antiga primeiro). Devolve quantos entraram.
+    A leitura de milhares de arquivos roda numa thread (nao trava o resto da API)."""
+    known = set((await db.execute(select(MediaImage.filename))).scalars().all())
+    found = await asyncio.to_thread(_scan_folder, known)
+    for filename, width, height, size in found:
+        db.add(MediaImage(filename=filename, name="", width=width, height=height, bytes=size, uploaded_by=who))
+    if found:
         await db.flush()
-    return added
+    return len(found)
 
 
 @router.get("", response_model=MediaPage)
