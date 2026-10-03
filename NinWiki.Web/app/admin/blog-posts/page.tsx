@@ -12,6 +12,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { ApiError, deletePost, listPosts, type ApiPostSummary } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
+import { SteamImportCard } from '@/components/admin/steam-import-card';
 
 /** Lista de posts no painel. */
 export default function BlogPostsPage() {
@@ -75,6 +76,8 @@ export default function BlogPostsPage() {
           </Button>
         </Link>
       </div>
+
+      {can('posts.publish') && <SteamImportCard onImported={() => listPosts().then(setPosts).catch(() => undefined)} />}
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

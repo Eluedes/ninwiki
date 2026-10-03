@@ -175,6 +175,7 @@ export interface Dictionary {
     };
     dropPicker: { linked: string; linkedTitle: string; searchPlaceholder: string; searching: string; noResults: string; categoryMobs: string; categoryItems: string; categoryWeapons: string; categoryMissions: string; categoryGuides: string };
     entryHistory: { loading: string; loadError: string; empty: string; bySystem: string; created: string; updated: string; deleted: string };
+    steamImport: { title: string; desc: string; run: string; running: string; last: string; result: string; none: string; draftMode: string; liveMode: string };
     mediaPage: {
       title: string; subtitle: string; upload: string; uploading: string; search: string; empty: string; sync: string; syncing: string; syncDone: string;
       rename: string; renamePrompt: string; delete: string; confirmDelete: string; confirmForce: string; copyId: string; copyUrl: string; copied: string;
@@ -533,6 +534,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
           auth: 'sessão', staff: 'membro', security: 'rota', village: 'vila', organization: 'organização', post: 'post', roles: 'permissões do cargo', notice: 'aviso', announcement: 'anúncio da Home', media: 'imagem', error: 'erro',
         },
         logSources: { panel: 'Painel', bot: 'Bot', auth: 'Login', system: 'Sistema' },
+      },
+      steamImport: {
+        title: 'Notícias da Steam', desc: 'Copia sozinho para o blog (tag Patch Notes) cada post de atualização novo do jogo na Steam.', run: 'Importar agora', running: 'Conferindo a Steam...',
+        last: 'Última conferência', result: '{fetched} lidos · {matched} de atualização · {imported} importados · {skipped} já existiam', none: 'Nenhum post novo.',
+        draftMode: 'Modo: entra como rascunho (revise e publique)', liveMode: 'Modo: publica direto',
       },
       mediaPage: {
         title: 'Banco de imagens', subtitle: 'Toda imagem enviada ganha um ID. Digite o ID (img:12, #12 ou só 12) em qualquer campo de imagem: conteúdo, blog, jutsu, mastery, vila, clã...',
@@ -1209,6 +1215,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
           auth: 'session', staff: 'member', security: 'route', village: 'village', organization: 'organization', post: 'post', roles: 'role permissions', notice: 'notice', announcement: 'Home announcement', media: 'image', error: 'error',
         },
         logSources: { panel: 'Panel', bot: 'Bot', auth: 'Login', system: 'System' },
+      },
+      steamImport: {
+        title: 'Steam news', desc: 'Automatically copies every new game update post from Steam to the blog (Patch Notes tag).', run: 'Import now', running: 'Checking Steam...',
+        last: 'Last check', result: '{fetched} fetched · {matched} patch notes · {imported} imported · {skipped} already there', none: 'No new posts.',
+        draftMode: 'Mode: imported as draft (review and publish)', liveMode: 'Mode: publishes directly',
       },
       mediaPage: {
         title: 'Image library', subtitle: 'Every uploaded image gets an ID. Type the ID (img:12, #12 or just 12) in any image field: content, blog, jutsu, mastery, village, clan...',
