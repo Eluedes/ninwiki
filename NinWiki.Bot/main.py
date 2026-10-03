@@ -231,6 +231,7 @@ class NinWikiBot(discord.Client):
             self.tree.copy_global_to(guild=guild)
             await self.tree.sync(guild=guild)
             log.info("Comandos sincronizados no servidor de testes %s", self.settings.dev_guild_id)
+            log.warning("DEV_GUILD_ID esta' definido: os comandos existem SO' nesse servidor. Em producao (outros servidores) deixe DEV_GUILD_ID vazio e reinicie o bot.")
         else:
             await self.tree.sync()
             log.info("Comandos globais sincronizados (podem levar ate 1h pra aparecer)")
