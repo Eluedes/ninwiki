@@ -583,9 +583,11 @@ async def testar() -> None:
     for codigo, esperado in [(200, True), (301, True), (429, True), (403, False), (401, False), (404, False), (410, False), (500, False), (502, False), (503, False), (522, False)]:
         a_, t_ = _site(lambda r, c=codigo: httpx.Response(c, headers={"location": "/"} if c == 301 else {}) if c != 301 else httpx.Response(200))
         check(f"site: HTTP {codigo} -> {'no ar' if esperado else 'fora do ar'}", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is esperado)
-    for hdrs in ({"cf-mitigated": "challenge"}, {"server": "cloudflare"}):
+    for hdrs in ({"cf-mitigated": "challenge"},):
         a_, t_ = _site(lambda r, h=hdrs: httpx.Response(403, headers=h))
         check(f"site: 403 da Cloudflare ({list(hdrs)[0]}) = no ar", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is True)
+    a_, t_ = _site(lambda r: httpx.Response(403, headers={"server": "cloudflare"}))
+    check("site: 403 da Cloudflare sem desafio (erro 1014 / app apagado) = fora do ar", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is False)
     a_, t_ = _site(lambda r: httpx.Response(302, headers={"location": "https://wiki.exemplo.com/"}))
     check("site: redirecionamento em loop = fora do ar, com o motivo", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is False and "TooManyRedirects" in a_.last_site_detail, a_.last_site_detail)
     a_, t_ = _site(lambda r: (_ for _ in ()).throw(httpx.ConnectError("sem rede")))

@@ -124,8 +124,8 @@ class NinWikiApi:
     async def site_ok(self, url: str, transport: httpx.AsyncBaseTransport | None = None) -> bool:
         """
         True se o SITE respondeu de verdade. Usa uma conexao propria, nao a da API.
-        No ar: 2xx/3xx; 429; e 401/403 SO' quando quem respondeu foi a Cloudflare (cabecalho cf-mitigated ou server: cloudflare) -
-        e' o desafio/WAF dela barrando ESTE robo, o site existe. Fora do ar: 404/410 e demais 4xx (ex.: app apagado, dominio sem app -
+        No ar: 2xx/3xx; 429; e 401/403 SO' quando ha o cabecalho cf-mitigated (desafio da Cloudflare barrando ESTE robo: o site existe).
+        Um 403 comum da Cloudflare NAO conta (ex.: erro 1014 'CNAME Cross-User Banned', dominio apontando para um app que nao existe mais). Fora do ar: 404/410 e demais 4xx (ex.: app apagado, dominio sem app -
         a hospedagem responde 404), 5xx (inclui os 52x da Cloudflare), timeout, erro de conexao e redirecionamento em loop.
         O motivo fica em last_site_detail.
         """
@@ -145,5 +145,5 @@ class NinWikiApi:
         if code < 400 or code == 429:
             return True
         if code in (401, 403):
-            return "cf-mitigated" in res.headers or "cloudflare" in res.headers.get("server", "").lower()
+            return "cf-mitigated" in res.headers
         return False
