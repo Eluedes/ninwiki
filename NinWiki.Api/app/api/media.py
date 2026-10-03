@@ -5,6 +5,7 @@ Banco de imagens do painel: toda imagem enviada ganha um ID (#1, #2...) que a eq
   GET    /media/{id}                uma imagem (o painel usa para trocar o ID pelo endereco)   uploads.create
   POST   /media                     envia uma imagem (multipart: file, name)      uploads.create
   PATCH  /media/{id}                renomeia e/ou muda a categoria                media.manage
+  POST   /media/renumber            renumera os IDs a partir de 1                  media.reset_ids (so' S.Adm)
   POST   /media/bulk-category       muda a categoria de varias imagens             media.manage
   POST   /media                     envia imagem(ns) para o banco de imagens       media.upload (padrao: so' S.Adm)
   GET    /media/{id}/usage          onde a imagem esta' sendo usada               media.manage
@@ -19,7 +20,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from PIL import Image
 from pydantic import Field
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.uploads import UPLOAD_DIR, store_image
@@ -27,7 +28,7 @@ from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.media_refs import media_url, parse_ref
-from app.core.permissions import Permission
+from app.core.permissions import Permission, user_has_permission
 from app.models.content import ContentItem
 from app.models.masteries import Jutsu, Mastery
 from app.models.media import MediaImage
@@ -40,7 +41,7 @@ router = APIRouter(prefix="/media", tags=["media"])
 
 
 # Categorias do banco de imagens ('' = sem categoria). Fixas de proposito: o filtro do painel fica pequeno e o nome nao vira lixo digitado.
-MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "other")
+MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "other")
 
 
 def _valid_category(value: str | None) -> str:
@@ -124,7 +125,7 @@ async def _sync_folder(db: AsyncSession, who: str | None) -> int:
 
 @router.get("", response_model=MediaPage)
 async def list_media(
-    q: str = Query("", max_length=80), category: str | None = Query(None, max_length=20), limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0),
+    q: str = Query("", max_length=80), category: str | None = Query(None, max_length=20), limit: int = Query(100, ge=1, le=200), offset: int = Query(0, ge=0),
     staff: User = Depends(require_permission(Permission.UPLOAD_CREATE)), db: AsyncSession = Depends(get_db),
 ) -> MediaPage:
     """Lista o banco de imagens (mais novas primeiro). `q` busca no nome ou pelo ID (12, #12, img:12). Banco vazio: registra as imagens que ja' estavam em uploads/."""
@@ -158,6 +159,29 @@ async def sync_media(
     return {"added": added}
 
 
+@router.post("/renumber")
+async def renumber_media(
+    staff: User = Depends(require_permission(Permission.MEDIA_RESET_IDS)), db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Renumera os IDs do banco de imagens a partir de 1 (so' S.Adm). As imagens ficam na mesma ordem (a mais antiga vira #1); banco VAZIO
+    reinicia a contagem em 1. Os arquivos e o conteudo que ja' usa as imagens nao mudam (o conteudo guarda o ENDERECO da imagem, nao o ID).
+    So' quem digitou um ID (img:12) e ainda nao salvou perde a referencia: avise a equipe.
+    """
+    total = (await db.execute(select(func.count()).select_from(MediaImage))).scalar_one()
+    if total:
+        # 1) joga todos para uma faixa livre (evita colisao de chave), 2) numera 1..N pela ordem antiga, 3) ajusta a sequencia.
+        await db.execute(text("UPDATE media_images SET id = id + (SELECT MAX(id) FROM media_images)"))
+        await db.execute(text("WITH r AS (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM media_images) "
+                              "UPDATE media_images m SET id = r.rn FROM r WHERE m.id = r.id"))
+        await db.execute(text("SELECT setval(pg_get_serial_sequence('media_images', 'id'), (SELECT MAX(id) FROM media_images), true)"))
+    else:
+        await db.execute(text("SELECT setval(pg_get_serial_sequence('media_images', 'id'), 1, false)"))
+    await log_action(db, action="renumber", entity_type="media", entity_id="all", diff={"count": total}, actor=staff)
+    await db.commit()
+    return {"renumbered": total}
+
+
 @router.get("/{media_id}", response_model=MediaRead)
 async def get_media(
     media_id: int, staff: User = Depends(require_permission(Permission.UPLOAD_CREATE)), db: AsyncSession = Depends(get_db),
@@ -175,7 +199,9 @@ async def upload_media(
     staff: User = Depends(require_permission(Permission.MEDIA_UPLOAD)), db: AsyncSession = Depends(get_db),
 ) -> MediaRead:
     """Envia uma imagem para o banco de imagens (com categoria opcional) e devolve o ID dela. So' quem tem media.upload (padrao: S.Adm)."""
-    return _read(await store_image(file, staff, db, name, _valid_category(category)))
+    # Escolher categoria e' de quem tem media.manage (padrao S.Adm): para os outros a categoria enviada e' ignorada (a imagem entra sem categoria).
+    cat = _valid_category(category) if user_has_permission(staff, Permission.MEDIA_MANAGE) else ""
+    return _read(await store_image(file, staff, db, name, cat))
 
 
 @router.patch("/{media_id}", response_model=MediaRead)

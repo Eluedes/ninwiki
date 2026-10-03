@@ -2,7 +2,7 @@
 
 // Banco de imagens (rota /admin/media): toda imagem enviada ganha um ID que a equipe digita nos campos de imagem (img:12, #12 ou 12).
 // Ver: uploads.create. Enviar (lote/arrastar e soltar): media.upload (padrao so' S.Adm). Renomear, categoria, apagar e importar da pasta: media.manage (a API confere de novo).
-// 50 imagens por pagina, com filtro por categoria (weapon, clothing...).
+// 100 imagens por pagina, com filtro por categoria (weapon, clothing...).
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, Copy, FolderSync, Images, Loader2, Pencil, Search, Trash2, Upload } from 'lucide-react';
@@ -11,12 +11,12 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ApiError, MEDIA_CATEGORIES, bulkDeleteMedia, bulkSetMediaCategory, deleteMedia, getMediaUsage, listMedia, renameMedia, setMediaCategory, syncMedia, type ApiMedia,
+  ApiError, MEDIA_CATEGORIES, bulkDeleteMedia, bulkSetMediaCategory, deleteMedia, getMediaUsage, listMedia, renameMedia, renumberMedia, setMediaCategory, syncMedia, type ApiMedia,
 } from '@/lib/api-client';
 import { DropZone } from '@/components/admin/drop-zone';
 import { useMediaUpload } from '@/components/admin/use-media-upload';
 
-const PAGE = 50;
+const PAGE = 100;
 
 /** Copia um texto para a area de transferencia (sem erro se o navegador nao deixar). */
 async function copy(text: string): Promise<boolean> {
@@ -46,6 +46,7 @@ export default function MediaPage() {
   const { state: up, upload } = useMediaUpload();
   const manage = can('media.manage');
   const canUpload = can('media.upload');
+  const canResetIds = can('media.reset_ids');
 
   // Avisa antes de fechar a aba no meio de um envio em lote
   useEffect(() => {
@@ -176,6 +177,23 @@ export default function MediaPage() {
     }
   }
 
+  /** Renumera os IDs a partir de 1 (so' S.Adm), depois de confirmar. */
+  async function handleResetIds() {
+    if (!window.confirm(t.resetIdsConfirm)) return;
+    setBusy('reset');
+    setError(null);
+    try {
+      const { renumbered } = await renumberMedia();
+      setInfo(t.resetIdsDone.replace('{n}', String(renumbered)));
+      setSelected(new Set());
+      if (page !== 0) setPage(0); else await load(q, 0, category);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t.actionError);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   /** Muda a categoria de UMA imagem (select no cartao). */
   async function handleSetCategory(m: ApiMedia, cat: string) {
     try {
@@ -228,11 +246,11 @@ export default function MediaPage() {
         </div>
         {canUpload && (
           <>
-            <select value={uploadCat} onChange={(e) => setUploadCat(e.target.value)} aria-label={t.newUploadCategory} title={t.newUploadCategory}
+            {manage && <select value={uploadCat} onChange={(e) => setUploadCat(e.target.value)} aria-label={t.newUploadCategory} title={t.newUploadCategory}
               className="h-10 rounded-md border border-input bg-background px-2 text-sm">
               <option value="">{t.newUploadCategory}: {t.uncategorized}</option>
               {MEDIA_CATEGORIES.map((c) => <option key={c} value={c}>{t.newUploadCategory}: {t.categories[c]}</option>)}
-            </select>
+            </select>}
             <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleUpload} />
             <Button onClick={() => fileRef.current?.click()} disabled={up.busy}>
               {up.busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
@@ -244,6 +262,11 @@ export default function MediaPage() {
           <Button variant="outline" onClick={handleSync} disabled={busy === 'sync'}>
             {busy === 'sync' ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <FolderSync className="mr-1.5 h-4 w-4" />}
             {busy === 'sync' ? t.syncing : t.sync}
+          </Button>
+        )}
+        {canResetIds && (
+          <Button variant="outline" onClick={handleResetIds} disabled={busy === 'reset'}>
+            {busy === 'reset' && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{t.resetIds}
           </Button>
         )}
       </div>

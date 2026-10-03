@@ -722,7 +722,7 @@ export type PermissionName =
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
-  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload'
+  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload' | 'media.reset_ids'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view';
 
 export interface ApiMe {
@@ -1332,7 +1332,7 @@ export function clearAnnouncement(): Promise<ApiAnnouncement> {
 // ---- Banco de imagens ----
 
 /** Categorias do banco de imagens (a API aceita so' estas; vazio = sem categoria). */
-export const MEDIA_CATEGORIES = ['weapon', 'clothing', 'consumable', 'currency', 'material', 'ring', 'other'] as const;
+export const MEDIA_CATEGORIES = ['weapon', 'clothing', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'other'] as const;
 export type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
 export interface ApiMedia {
@@ -1390,6 +1390,11 @@ export async function uploadMedia(file: File, name = '', category = ''): Promise
 /** Muda o rotulo de uma imagem (so' quem tem media.manage). */
 export function renameMedia(id: number, name: string): Promise<ApiMedia> {
   return apiFetch(`/media/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) });
+}
+
+/** Renumera os IDs do banco de imagens a partir de 1 (so' S.Adm). */
+export function renumberMedia(): Promise<{ renumbered: number }> {
+  return apiFetch('/media/renumber', { method: 'POST' });
 }
 
 /** Muda a categoria de uma imagem ('' tira a categoria; so' quem tem media.manage). */
