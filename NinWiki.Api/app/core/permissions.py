@@ -45,6 +45,7 @@ class Permission(str, Enum):
     # --- Ferramentas ---
     UPLOAD_CREATE = "uploads.create"
     TRANSLATION_RETRANSLATE = "translation.retranslate"
+    MEDIA_UPLOAD = "media.upload"          # enviar imagens PELO BANCO DE IMAGENS (lote, arrastar e soltar). Padrao: so' S.Adm; o S.Adm pode liberar a Adm/Creator em /admin/permissions
     MEDIA_MANAGE = "media.manage"          # renomear/apagar imagens do banco de imagens e sincronizar a pasta (ver e enviar = uploads.create)
 
     # --- Equipe ---

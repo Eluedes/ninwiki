@@ -4,7 +4,9 @@ Banco de imagens do painel: toda imagem enviada ganha um ID (#1, #2...) que a eq
   GET    /media?q=&limit=&offset=   lista/busca (por nome ou ID)                  uploads.create
   GET    /media/{id}                uma imagem (o painel usa para trocar o ID pelo endereco)   uploads.create
   POST   /media                     envia uma imagem (multipart: file, name)      uploads.create
-  PATCH  /media/{id}                renomeia (so' o rotulo)                       media.manage
+  PATCH  /media/{id}                renomeia e/ou muda a categoria                media.manage
+  POST   /media/bulk-category       muda a categoria de varias imagens             media.manage
+  POST   /media                     envia imagem(ns) para o banco de imagens       media.upload (padrao: so' S.Adm)
   GET    /media/{id}/usage          onde a imagem esta' sendo usada               media.manage
   DELETE /media/{id}                apaga (409 se estiver em uso, a menos que ?force=true)   media.manage
   POST   /media/sync                registra as imagens que ja' estavam em uploads/ e nao tem ID   media.manage
@@ -37,10 +39,23 @@ from app.schemas.content import CamelModel
 router = APIRouter(prefix="/media", tags=["media"])
 
 
+# Categorias do banco de imagens ('' = sem categoria). Fixas de proposito: o filtro do painel fica pequeno e o nome nao vira lixo digitado.
+MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "other")
+
+
+def _valid_category(value: str | None) -> str:
+    """Categoria valida ('' = sem categoria) ou 422."""
+    v = (value or "").strip().lower()
+    if v and v not in MEDIA_CATEGORIES:
+        raise HTTPException(status_code=422, detail=f"Unknown category. Use one of: {', '.join(MEDIA_CATEGORIES)}")
+    return v
+
+
 class MediaRead(CamelModel):
     """Uma imagem do banco de imagens como o painel mostra."""
     id: int
     name: str
+    category: str = ""
     url: str
     width: int
     height: int
@@ -53,11 +68,19 @@ class MediaPage(CamelModel):
     """Pagina de resultados da lista."""
     items: list[MediaRead]
     total: int
+    counts: dict[str, int] = Field(default_factory=dict)   # imagens por categoria ('' = sem categoria), da biblioteca toda
 
 
 class MediaRename(CamelModel):
-    """Corpo de renomear uma imagem."""
-    name: str = Field(default="", max_length=80)
+    """Corpo de editar uma imagem: nome e/ou categoria (o que nao vier fica como esta')."""
+    name: str | None = Field(default=None, max_length=80)
+    category: str | None = Field(default=None, max_length=20)
+
+
+class MediaBulkCategory(CamelModel):
+    """Corpo de mudar a categoria de varias imagens de uma vez ('' = tirar a categoria)."""
+    ids: list[int] = Field(min_length=1, max_length=200)
+    category: str = Field(default="", max_length=20)
 
 
 class MediaUse(CamelModel):
@@ -68,7 +91,7 @@ class MediaUse(CamelModel):
 
 def _read(m: MediaImage) -> MediaRead:
     """Converte a linha do banco no formato da API."""
-    return MediaRead(id=m.id, name=m.name, url=media_url(m.filename), width=m.width, height=m.height, bytes=m.bytes,
+    return MediaRead(id=m.id, name=m.name, category=m.category, url=media_url(m.filename), width=m.width, height=m.height, bytes=m.bytes,
                      uploaded_by=m.uploaded_by, created_at=m.created_at.isoformat() if m.created_at else "")
 
 
@@ -101,7 +124,7 @@ async def _sync_folder(db: AsyncSession, who: str | None) -> int:
 
 @router.get("", response_model=MediaPage)
 async def list_media(
-    q: str = Query("", max_length=80), limit: int = Query(60, ge=1, le=200), offset: int = Query(0, ge=0),
+    q: str = Query("", max_length=80), category: str | None = Query(None, max_length=20), limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0),
     staff: User = Depends(require_permission(Permission.UPLOAD_CREATE)), db: AsyncSession = Depends(get_db),
 ) -> MediaPage:
     """Lista o banco de imagens (mais novas primeiro). `q` busca no nome ou pelo ID (12, #12, img:12). Banco vazio: registra as imagens que ja' estavam em uploads/."""
@@ -109,6 +132,8 @@ async def list_media(
         if await _sync_folder(db, None):
             await db.commit()
     stmt = select(MediaImage)
+    if category is not None:  # '' (ou "none") = so' as sem categoria
+        stmt = stmt.where(MediaImage.category == ("" if category == "none" else _valid_category(category)))
     q = q.strip()
     if q:
         ref = parse_ref(q)
@@ -117,7 +142,8 @@ async def list_media(
         stmt = stmt.where(or_(cond, MediaImage.id == ref) if ref is not None else cond)
     total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
     rows = (await db.execute(stmt.order_by(MediaImage.id.desc()).limit(limit).offset(offset))).scalars().all()
-    return MediaPage(items=[_read(m) for m in rows], total=total)
+    counts = {c or "": n for c, n in (await db.execute(select(MediaImage.category, func.count()).group_by(MediaImage.category))).all()}
+    return MediaPage(items=[_read(m) for m in rows], total=total, counts=counts)
 
 
 @router.post("/sync")
@@ -145,11 +171,11 @@ async def get_media(
 
 @router.post("", response_model=MediaRead, status_code=201)
 async def upload_media(
-    file: UploadFile = File(...), name: str = Form(default="", max_length=80),
-    staff: User = Depends(require_permission(Permission.UPLOAD_CREATE)), db: AsyncSession = Depends(get_db),
+    file: UploadFile = File(...), name: str = Form(default="", max_length=80), category: str = Form(default="", max_length=20),
+    staff: User = Depends(require_permission(Permission.MEDIA_UPLOAD)), db: AsyncSession = Depends(get_db),
 ) -> MediaRead:
-    """Envia uma imagem para o banco de imagens e devolve o ID dela."""
-    return _read(await store_image(file, staff, db, name))
+    """Envia uma imagem para o banco de imagens (com categoria opcional) e devolve o ID dela. So' quem tem media.upload (padrao: S.Adm)."""
+    return _read(await store_image(file, staff, db, name, _valid_category(category)))
 
 
 @router.patch("/{media_id}", response_model=MediaRead)
@@ -157,16 +183,41 @@ async def rename_media(
     media_id: int, payload: MediaRename,
     staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
 ) -> MediaRead:
-    """Muda o rotulo da imagem (o ID e o arquivo nao mudam)."""
+    """Muda o nome e/ou a categoria da imagem (o ID e o arquivo nao mudam)."""
     m = await db.get(MediaImage, media_id)
     if m is None:
         raise HTTPException(status_code=404, detail=f"Image #{media_id} was not found")
-    new = " ".join("".join(ch if ch.isprintable() else " " for ch in payload.name).split())[:80]
-    before, m.name = m.name, new
-    await log_action(db, action="rename", entity_type="media", entity_id=str(m.id), diff={"before": before, "after": new}, actor=staff)
+    diff: dict = {}
+    if payload.name is not None:
+        new = " ".join("".join(ch if ch.isprintable() else " " for ch in payload.name).split())[:80]
+        diff["name"] = {"before": m.name, "after": new}
+        m.name = new
+    if payload.category is not None:
+        cat = _valid_category(payload.category)
+        diff["category"] = {"before": m.category, "after": cat}
+        m.category = cat
+    await log_action(db, action="rename", entity_type="media", entity_id=str(m.id), diff=diff, actor=staff)
     await db.commit()
     await db.refresh(m)
     return _read(m)
+
+
+@router.post("/bulk-category")
+async def bulk_category(
+    payload: MediaBulkCategory,
+    staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Muda a categoria de varias imagens de uma vez ('' tira a categoria). Devolve quantas mudaram."""
+    cat = _valid_category(payload.category)
+    ids = list(dict.fromkeys(payload.ids))
+    rows = (await db.execute(select(MediaImage).where(MediaImage.id.in_(ids)))).scalars().all()
+    for m in rows:
+        m.category = cat
+    if rows:
+        await log_action(db, action="bulk-category", entity_type="media", entity_id=",".join(map(str, ids))[:200],
+                         diff={"count": len(rows), "category": cat}, actor=staff)
+    await db.commit()
+    return {"updated": len(rows)}
 
 
 async def _usage(db: AsyncSession, filename: str) -> list[MediaUse]:

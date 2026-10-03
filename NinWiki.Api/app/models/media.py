@@ -17,6 +17,7 @@ class MediaImage(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     filename: Mapped[str] = mapped_column(String(80), unique=True)          # nome aleatorio em uploads/
     name: Mapped[str] = mapped_column(String(80), default="", server_default="")
+    category: Mapped[str] = mapped_column(String(20), default="", server_default="", index=True)  # weapon, clothing... ('' = sem categoria); filtro rapido do painel
     width: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     height: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     bytes: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
