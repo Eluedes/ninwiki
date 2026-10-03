@@ -1,4 +1,4 @@
-name: Deploy Guima.Site na SquareCloud (manual)
+name: Deploy Guima
 
 # Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
 # O site da Guima Company não tem segredos nem .env de verdade: o workflow roda os testes e envia a pasta Guima.Site.
