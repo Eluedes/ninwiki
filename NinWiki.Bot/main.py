@@ -109,6 +109,11 @@ class NinWikiBot(discord.Client):
         channel_id = self.settings.errors_channel
         return self.get_channel(channel_id) or await self.fetch_channel(channel_id)
 
+    async def _status_channel(self) -> discord.abc.Messageable:
+        """O canal do monitor de saude (STATUS_CHANNEL_ID, ou o de erros/log se aquele estiver vazio)."""
+        channel_id = self.settings.status_channel
+        return self.get_channel(channel_id) or await self.fetch_channel(channel_id)
+
     async def _error_tick(self) -> None:
         """Uma volta do feed de erros: busca problemas novos na API e posta os que merecem aviso (ver error_feed.decide)."""
         try:
@@ -176,7 +181,7 @@ class NinWikiBot(discord.Client):
             record_check(self.statuses[name], ok, timings[name])
             if ok is None:
                 continue
-            msg = update_status(self.statuses[name], ok, now)
+            msg = update_status(self.statuses[name], ok, now, self.settings.status_down_after)
             if msg:
                 messages.append(msg)
         panel = self.settings.status_panel
@@ -192,7 +197,7 @@ class NinWikiBot(discord.Client):
         if not messages and not panel:
             return
         try:
-            channel = await self._errors_channel()
+            channel = await self._status_channel()
             if messages:
                 embeds = [discord.Embed(title=m["title"], description=m["description"], color=m["color"], timestamp=now) for m in messages]
                 await channel.send(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
@@ -204,12 +209,14 @@ class NinWikiBot(discord.Client):
 
     async def setup_hook(self) -> None:
         """Registra os comandos, sincroniza com o Discord e liga o feed de log (se configurado)."""
-        if not self.settings.errors_channel:
-            log.warning("ERROR_CHANNEL_ID e LOG_CHANNEL_ID vazios: os avisos de 'site/API/banco caiu' e 'voltou' estao DESLIGADOS")
+        if not self.settings.status_channel:
+            log.warning("STATUS_CHANNEL_ID, ERROR_CHANNEL_ID e LOG_CHANNEL_ID vazios: o painel de status e os avisos de 'site/API/banco caiu' e 'voltou' estao DESLIGADOS")
         if self.settings.errors_channel:
             self.error_loop.start()
+            log.info("Feed de erros ligado: canal %s", self.settings.errors_channel)
+        if self.settings.status_channel:
             self.health_loop.start()
-            log.info("Feed de erros e vigia de saude ligados: canal %s", self.settings.errors_channel)
+            log.info("Vigia de saude e painel de status ligados: canal %s", self.settings.status_channel)
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)

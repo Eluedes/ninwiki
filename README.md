@@ -64,7 +64,7 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
 python scripts/testar_permissoes.py        # 534 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
-python scripts/testar_bot_integracao.py    # 157 verificações do bot + log + erros (precisa do banco no ar)
+python scripts/testar_bot_integracao.py    # 160 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
 ```
@@ -145,7 +145,7 @@ negadas). Mostra o **IP** de quem agiu no rodapé (`Panel · IP x`) — desligue
 - a **DeepL** para de funcionar (chave recusada, cota do plano gratuito acabou, fora do ar);
 - alguém estoura o limite de requisições (possível flood/cópia em massa);
 - a **API, o banco ou o site** (`SITE_URL`) **caem** — e quando **voltam**.
-**Painel de status ao vivo** (`STATUS_PANEL=true`, padrão): uma mensagem **📡 NinWiki status** no canal de erros, **editada a cada checagem** (online/offline, ms, uptime desde que o bot ligou; o banco aparece como "unknown" se a API estiver fora). Queda/volta continuam gerando aviso novo.
+**Painel de status ao vivo** (`STATUS_PANEL=true`, padrão): uma mensagem **📡 NinWiki status** no canal do monitor (`STATUS_CHANNEL_ID`; vazio = o de erros), **editada a cada checagem** (online/offline, ms, uptime desde que o bot ligou; o banco aparece como "unknown" se a API estiver fora). Queda/volta continuam gerando aviso novo.
 Anti-spam: o 1º aviso sai na hora; se o mesmo problema continua, só um novo aviso a cada 10 min (com "+N desde o último").
 Problema marcado como resolvido no painel não é repostado (se voltar a acontecer, reabre). Detalhes e traceback: `/admin/errors`.
 
@@ -507,6 +507,8 @@ sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem s
 | `LOG_CHANNEL_ID` | vazio | canal do log geral (só equipe!) |
 | `ERROR_CHANNEL_ID` | vazio | canal de erros e do painel de status (vazio = usa o de log) |
 | `SITE_URL` | vazio | site público: vigiado pelo bot **e** usado nos botões *Open* do `/search` |
+| `STATUS_CHANNEL_ID` | vazio | canal **só do monitor** (painel "NinWiki status" + avisos de API/banco/site caiu/voltou), separado dos erros do wiki; vazio = usa o `ERROR_CHANNEL_ID` |
+| `STATUS_DOWN_AFTER` | `3` | checagens seguidas que precisam falhar para avisar "caiu" (suba para 5 se a rede oscila e o bot avisa demais) |
 | `STATUS_PANEL` | `true` | mensagem **📡 NinWiki status** editada a cada checagem; `false` = só avisa queda/volta |
 | `LOG_SHOW_IP` | `true` | mostra o IP de quem agiu no canal de log (canal só da equipe); `false` = não mostra |
 | `HEALTH_POLL_SECONDS` | `60` | intervalo da checagem de API/banco/site (mín. 30) |
