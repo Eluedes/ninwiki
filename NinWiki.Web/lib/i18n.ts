@@ -107,7 +107,7 @@ export interface Dictionary {
       staffTitle: string; staffSubtitle: string; addStaff: string; discordId: string; discordIdHint: string;
       displayName: string; displayNameHint: string; role: string; status: string; lastLogin: string;
       neverLoggedIn: string; active: string; inactive: string; owner: string; ownerHint: string;
-      deactivate: string; activate: string; confirmDeactivate: string; you: string;
+      deactivate: string; activate: string; confirmDeactivate: string; you: string; remove: string; confirmRemove: string;
       add: string; adding: string; noStaff: string; loadError: string; actionError: string; noManageable: string; editName: string; saveName: string; cancelName: string; nameHint: string;
       logByLabel: string; logAll: string; logContent: string; logAuth: string; logStaff: string; logSecurity: string;
       logActions: Record<string, string>; logEntities: Record<string, string>; logSources: Record<string, string>;
@@ -178,7 +178,7 @@ export interface Dictionary {
     mediaPage: {
       title: string; subtitle: string; upload: string; uploading: string; search: string; empty: string; sync: string; syncing: string; syncDone: string;
       rename: string; renamePrompt: string; delete: string; confirmDelete: string; confirmForce: string; copyId: string; copyUrl: string; copied: string;
-      usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
+      selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
     };
     imageUpload: { library: string; idResolved: string; idNotFound: string; uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
     dataTable: { noResults: string; selected: string; selectedPlural: string; itemsPerPage: string; pageOf: string; items: string };
@@ -511,6 +511,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         owner: 'Dono', ownerHint: 'Definido no .env: não pode ser alterado por aqui.',
         deactivate: 'Desativar', activate: 'Reativar',
         confirmDeactivate: 'Desativar {name}? A pessoa perde o acesso na hora.',
+        remove: 'Remover', confirmRemove: 'REMOVER {name} da equipe de vez? A pessoa perde o acesso na hora e não dá para desfazer (o histórico dela no log continua). Para só tirar o acesso por um tempo, use Desativar.',
         you: 'você',
         add: 'Cadastrar', adding: 'Cadastrando...',
         noStaff: 'Nenhum membro cadastrado.',
@@ -539,6 +540,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sync: 'Importar da pasta de uploads', syncing: 'Importando...', syncDone: '{n} imagem(ns) importada(s).',
         rename: 'Renomear', renamePrompt: 'Nome da imagem #{id}:', delete: 'Apagar', confirmDelete: 'Apagar a imagem #{id}? O arquivo some do servidor.',
         confirmForce: 'A imagem #{id} está em uso ({uses}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.', copyId: 'Copiar ID', copyUrl: 'Copiar endereço', copied: 'Copiado!',
+        selected: '{n} selecionada(s)', selectAll: 'Selecionar todas desta página', clearSel: 'Limpar seleção', deleteSelected: 'Apagar selecionadas',
+        confirmBulk: 'Apagar {n} imagem(ns)? Os arquivos somem do servidor.', confirmBulkForce: '{n} imagem(ns) estão em uso (ex.: {where}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.',
+        bulkDone: '{n} imagem(ns) apagada(s).', select: 'Selecionar',
         usedIn: 'Usada em', notUsed: 'Não está em uso.', loadError: 'Não foi possível carregar as imagens.', actionError: 'Não foi possível concluir a ação.',
         howTo: 'Como usar: copie o ID e cole no campo de imagem.', pickTitle: 'Escolher imagem do banco', pick: 'Usar esta', total: '{n} imagem(ns)', loadMore: 'Carregar mais', unnamed: 'sem nome', close: 'Fechar',
       },
@@ -643,7 +647,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
           'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens',
-          'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
+          'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'staff.delete': 'Remover alguém da equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
           'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'audit.clear': 'Limpar o log', 'analytics.view': 'Ver os acessos ao site',
         },
       },
@@ -1182,6 +1186,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         owner: 'Owner', ownerHint: 'Defined in .env: cannot be changed from here.',
         deactivate: 'Deactivate', activate: 'Reactivate',
         confirmDeactivate: 'Deactivate {name}? They lose access immediately.',
+        remove: 'Remove', confirmRemove: 'REMOVE {name} from the team for good? They lose access immediately and this cannot be undone (their history in the log stays). To only take access away for a while, use Deactivate.',
         you: 'you',
         add: 'Register', adding: 'Registering...',
         noStaff: 'No members registered.',
@@ -1210,6 +1215,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sync: 'Import from the uploads folder', syncing: 'Importing...', syncDone: '{n} image(s) imported.',
         rename: 'Rename', renamePrompt: 'Name of image #{id}:', delete: 'Delete', confirmDelete: 'Delete image #{id}? The file is removed from the server.',
         confirmForce: 'Image #{id} is in use ({uses}). Delete anyway? Those places will end up with a broken image.', copyId: 'Copy ID', copyUrl: 'Copy address', copied: 'Copied!',
+        selected: '{n} selected', selectAll: 'Select all on this page', clearSel: 'Clear selection', deleteSelected: 'Delete selected',
+        confirmBulk: 'Delete {n} image(s)? The files are removed from the server.', confirmBulkForce: '{n} image(s) are in use (e.g. {where}). Delete anyway? Those places will end up with a broken image.',
+        bulkDone: '{n} image(s) deleted.', select: 'Select',
         usedIn: 'Used in', notUsed: 'Not in use.', loadError: 'Could not load the images.', actionError: 'Could not complete the action.',
         howTo: 'How to use: copy the ID and paste it into an image field.', pickTitle: 'Pick an image from the library', pick: 'Use this one', total: '{n} image(s)', loadMore: 'Load more', unnamed: 'unnamed', close: 'Close',
       },
@@ -1314,7 +1322,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
           'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library',
-          'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
+          'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'staff.delete': 'Remove someone from the team', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
           'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'audit.clear': 'Clear the log', 'analytics.view': 'View site traffic',
         },
       },

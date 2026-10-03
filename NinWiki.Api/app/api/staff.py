@@ -82,6 +82,16 @@ async def update_name(
     return to_read(target)
 
 
+@router.delete("/{staff_id}", status_code=204)
+async def delete_member(
+    staff_id: UUID, actor: User = Depends(require_permission(Permission.STAFF_DELETE)), db: AsyncSession = Depends(get_db),
+):
+    """Remove alguem da equipe de vez (so' S.Adm); o acesso cai na hora e o historico no log continua."""
+    target = await _get_or_404(db, staff_id)
+    await staff_service.delete_staff(db, actor, target)
+    await db.commit()
+
+
 @router.post("/{staff_id}/deactivate", response_model=StaffRead)
 async def deactivate(
     staff_id: UUID, actor: User = Depends(require_permission(Permission.STAFF_DEACTIVATE)),

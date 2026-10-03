@@ -189,6 +189,50 @@ async def media_usage(
     return await _usage(db, m.filename)
 
 
+class MediaBulkDelete(CamelModel):
+    """Corpo de apagar varias imagens de uma vez."""
+    ids: list[int] = Field(min_length=1, max_length=200)
+    force: bool = False
+
+
+class MediaBulkResult(CamelModel):
+    """Resultado do apagar em massa: o que foi apagado e o que ficou por estar em uso."""
+    deleted: list[int]
+    in_use: list[dict]       # [{id, uses: [{kind, label}]}] - nao apagadas (sem force)
+    not_found: list[int]
+
+
+@router.post("/bulk-delete", response_model=MediaBulkResult)
+async def bulk_delete_media(
+    payload: MediaBulkDelete,
+    staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
+) -> MediaBulkResult:
+    """Apaga varias imagens. As que estao em uso ficam de fora (e voltam em `inUse`), a menos que `force=true`."""
+    deleted: list[int] = []
+    in_use: list[dict] = []
+    not_found: list[int] = []
+    files: list[str] = []
+    for media_id in dict.fromkeys(payload.ids):
+        m = await db.get(MediaImage, media_id)
+        if m is None:
+            not_found.append(media_id)
+            continue
+        uses = await _usage(db, m.filename)
+        if uses and not payload.force:
+            in_use.append({"id": media_id, "uses": [u.model_dump() for u in uses[:5]]})
+            continue
+        files.append(m.filename)
+        deleted.append(media_id)
+        await db.delete(m)
+    if deleted:
+        await log_action(db, action="bulk-delete", entity_type="media", entity_id=",".join(map(str, deleted))[:200],
+                         diff={"count": len(deleted), "force": payload.force}, actor=staff)
+    await db.commit()
+    for filename in files:
+        (UPLOAD_DIR / Path(filename).name).unlink(missing_ok=True)
+    return MediaBulkResult(deleted=deleted, in_use=in_use, not_found=not_found)
+
+
 @router.delete("/{media_id}", status_code=204)
 async def delete_media(
     media_id: int, force: bool = Query(False),

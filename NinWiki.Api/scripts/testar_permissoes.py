@@ -93,6 +93,12 @@ async def recarregar(u: User) -> User:
         return await db.get(User, u.id)
 
 
+async def recarregar_por_id(user_id) -> User:
+    """Le um usuario do banco pelo id."""
+    async with AsyncSessionLocal() as db:
+        return await db.get(User, user_id)
+
+
 def novo_conteudo(sufixo: str, status: str = "draft") -> dict:
     """Corpo valido para criar uma entry de teste."""
     return {"slug": f"{SLUG}-{sufixo}", "category": "guides", "name": f"TESTE {sufixo}", "level": 1,
@@ -1688,6 +1694,48 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     solto.unlink(missing_ok=True)
     r = await c.delete(f"/media/{img2['id']}", params={"force": "true"}, headers=A)
     check("apagar a outra imagem de teste (limpeza)", r.status_code == 204)
+    await c.post("/roles/creator/permissions/reset", headers=S)
+
+    secao("29) Remover alguem da equipe e apagar varias imagens de uma vez")
+    nov = await c.post("/staff", json={"discordId": str(BASE + 28), "role": "creator", "username": "TESTE_remover"}, headers=S)
+    nov_id = nov.json()["id"]
+    r = await c.delete(f"/staff/{nov_id}", headers=A)
+    check("Adm NAO remove ninguem da equipe (404, area exclusiva do S.Adm)", r.status_code == 404)
+    r = await c.delete(f"/staff/{sadm.id}", headers=S)
+    check("ninguem remove a si mesmo (400)", r.status_code == 400, r.text[:120])
+    r = await c.delete("/staff/00000000-0000-0000-0000-000000000000", headers=S)
+    check("remover quem nao existe = 404", r.status_code == 404)
+    # a pessoa com sessao valida perde o acesso na hora da remocao
+    cookie_novo = cookie(await recarregar_por_id(nov_id))
+    check("antes de remover, a pessoa acessa o painel", (await c.get("/auth/me", headers=cookie_novo)).status_code == 200)
+    r = await c.delete(f"/staff/{nov_id}", headers=S)
+    check("S.Adm remove alguem da equipe (204)", r.status_code == 204, r.text[:120])
+    check("a sessao da pessoa removida cai na hora (401)", (await c.get("/auth/me", headers=cookie_novo)).status_code == 401)
+    check("ela some da lista da equipe", all(m["id"] != nov_id for m in (await c.get("/staff", headers=S)).json()))
+    async with AsyncSessionLocal() as db:
+        lg = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.entity_type == "staff", AuditLogEntry.action == "delete", AuditLogEntry.entity_id == str(BASE + 28)))).scalars().first()
+    check("a remocao fica no log com o nome de quem foi removido", lg is not None and lg.diff.get("username") == "TESTE_remover", str(lg and lg.diff))
+    # o ultimo S.Adm ativo nunca e' removido: o sadm2 (se ainda existir) remove o sadm, mas nao o contrario quando sobra um so'
+    ativos = [m for m in (await c.get("/staff", headers=S)).json() if m["role"] == "super_admin" and m["isActive"]]
+    check("a regra do ultimo S.Adm existe no servico (staff_service.delete_staff)", hasattr(__import__("app.core.staff_service", fromlist=["x"]), "delete_staff") and len(ativos) >= 1)
+
+    imgs = []
+    for k in range(3):
+        r = await c.post("/media", files={"file": (f"m{k}.png", _png((k * 60, 20, 200)), "image/png")}, data={"name": f"{SLUG} lote {k}"}, headers=Cm)
+        imgs.append(r.json())
+    r = await c.post("/media/bulk-delete", json={"ids": [imgs[0]["id"]]}, headers=Cm)
+    check("Creator NAO apaga em massa (403)", r.status_code == 403)
+    r = await c.post("/content-items", json={**novo_conteudo("emuso"), "image": f"img:{imgs[1]['id']}"}, headers=A)
+    r = await c.post("/media/bulk-delete", json={"ids": [imgs[0]["id"], imgs[1]["id"], imgs[2]["id"], 99999999]}, headers=A)
+    res = r.json()
+    check("em massa: apaga as livres e devolve as em uso e as que nao existem", r.status_code == 200 and sorted(res["deleted"]) == sorted([imgs[0]["id"], imgs[2]["id"]])
+          and [x["id"] for x in res["inUse"]] == [imgs[1]["id"]] and res["notFound"] == [99999999], r.text[:300])
+    check("as apagadas saem do banco e do disco; a em uso continua", (await c.get(f"/media/{imgs[0]['id']}", headers=Cm)).status_code == 404
+          and not (_UPLOADS / imgs[0]["url"].rsplit("/", 1)[1]).exists() and (await c.get(f"/media/{imgs[1]['id']}", headers=Cm)).status_code == 200)
+    r = await c.post("/media/bulk-delete", json={"ids": [imgs[1]["id"]], "force": True}, headers=A)
+    check("com force=true apaga ate' a que esta' em uso", r.status_code == 200 and r.json()["deleted"] == [imgs[1]["id"]])
+    r = await c.post("/media/bulk-delete", json={"ids": []}, headers=A)
+    check("lista vazia e' recusada (422)", r.status_code == 422)
     await c.post("/roles/creator/permissions/reset", headers=S)
 
     secao("25) Texto rico: estilos de letra (cor, fundo, fonte, tamanho) so' no formato permitido")

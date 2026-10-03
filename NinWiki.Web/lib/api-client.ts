@@ -721,7 +721,7 @@ export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
-  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
+  | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view';
 
@@ -806,6 +806,11 @@ export function updateStaffRole(id: string, role: StaffRole, customRoleId: strin
 /** Troca o nome (nick) de alguem da equipe (so' S.Adm, inclusive o proprio). */
 export function updateStaffName(id: string, username: string): Promise<ApiStaff> {
   return apiFetch(`/staff/${id}/name`, { method: 'PATCH', body: JSON.stringify({ username }) });
+}
+
+/** Remove alguem da equipe de vez (so' S.Adm). */
+export function deleteStaff(id: string): Promise<void> {
+  return apiFetch(`/staff/${id}`, { method: 'DELETE' });
 }
 
 /** Ativa ou desativa alguem da equipe. */
@@ -1396,4 +1401,15 @@ export function syncMedia(): Promise<{ added: number }> {
 export function parseImageRef(value: string): number | null {
   const m = /^\s*(?:img\s*[:\-_ ]\s*|id\s*:\s*|#\s*)?(\d{1,9})\s*$/i.exec(value);
   return m ? Number(m[1]) : null;
+}
+
+export interface ApiMediaBulkResult {
+  deleted: number[];
+  inUse: { id: number; uses: ApiMediaUse[] }[];
+  notFound: number[];
+}
+
+/** Apaga varias imagens; as em uso voltam em `inUse` (nao apagadas) a menos que `force`. */
+export function bulkDeleteMedia(ids: number[], force = false): Promise<ApiMediaBulkResult> {
+  return apiFetch('/media/bulk-delete', { method: 'POST', body: JSON.stringify({ ids, force }) });
 }

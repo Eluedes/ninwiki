@@ -8,14 +8,14 @@
 // e ele aparece aqui.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, AlertTriangle, UserPlus, Lock, Pencil, Check, X } from 'lucide-react';
+import { Loader2, AlertTriangle, UserPlus, Lock, Pencil, Check, X, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ApiError, createStaff, getRolesOverview, listStaff, setStaffActive, updateStaffName, updateStaffRole,
+  ApiError, createStaff, deleteStaff, getRolesOverview, listStaff, setStaffActive, updateStaffName, updateStaffRole,
   type ApiCustomRole, type ApiStaff, type StaffRole,
 } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -119,6 +119,21 @@ export default function StaffPage() {
       setActionError(err instanceof ApiError ? err.message : t.actionError);
     } finally {
       setAdding(false);
+    }
+  }
+
+  /** Remove a pessoa da equipe de vez (pede confirmacao); some da lista e perde o acesso na hora. */
+  async function handleRemove(member: ApiStaff) {
+    if (!window.confirm(t.confirmRemove.replace('{name}', member.username))) return;
+    setBusyId(member.id);
+    setActionError(null);
+    try {
+      await deleteStaff(member.id);
+      setStaff((prev) => prev.filter((m) => m.id !== member.id));
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : t.actionError);
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -304,7 +319,12 @@ export default function StaffPage() {
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {m.lastLoginAt ? new Date(m.lastLoginAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US') : t.neverLoggedIn}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="space-x-2 whitespace-nowrap px-4 py-3 text-right">
+                      {canManage && can('staff.delete') && (
+                        <Button variant="outline" size="sm" disabled={busy} onClick={() => handleRemove(m)} className="text-red-400 hover:text-red-300">
+                          <Trash2 className="mr-1.5 h-3 w-3" />{t.remove}
+                        </Button>
+                      )}
                       {canManage && can('staff.deactivate') ? (
                         m.isActive ? (
                           <Button variant="outline" size="sm" disabled={busy} onClick={() => handleDeactivate(m)}>

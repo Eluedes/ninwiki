@@ -10,7 +10,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ApiError, deleteMedia, getMediaUsage, listMedia, renameMedia, syncMedia, uploadMedia, type ApiMedia,
+  ApiError, bulkDeleteMedia, deleteMedia, getMediaUsage, listMedia, renameMedia, syncMedia, uploadMedia, type ApiMedia,
 } from '@/lib/api-client';
 
 const PAGE = 60;
@@ -33,6 +33,7 @@ export default function MediaPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set()); // imagens marcadas para apagar em massa
   const fileRef = useRef<HTMLInputElement>(null);
   const manage = can('media.manage');
 
@@ -122,6 +123,42 @@ export default function MediaPage() {
     }
   }
 
+  /** Marca/desmarca uma imagem. */
+  function toggle(id: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  /** Apaga as marcadas: primeiro as livres; as que estao em uso so' com uma segunda confirmacao (mostrando onde). */
+  async function handleBulkDelete() {
+    const ids = [...selected];
+    if (!ids.length || !window.confirm(t.confirmBulk.replace('{n}', String(ids.length)))) return;
+    setBusy('bulk');
+    setError(null);
+    try {
+      let result = await bulkDeleteMedia(ids);
+      let removed = result.deleted;
+      if (result.inUse.length > 0) {
+        const where = result.inUse.slice(0, 3).map((x) => `#${x.id} → ${x.uses[0]?.kind}: ${x.uses[0]?.label}`).join('; ');
+        if (window.confirm(t.confirmBulkForce.replace('{n}', String(result.inUse.length)).replace('{where}', where))) {
+          result = await bulkDeleteMedia(result.inUse.map((x) => x.id), true);
+          removed = [...removed, ...result.deleted];
+        }
+      }
+      setItems((prev) => prev.filter((x) => !removed.includes(x.id)));
+      setTotal((n) => Math.max(0, n - removed.length));
+      setSelected(new Set());
+      setInfo(t.bulkDone.replace('{n}', String(removed.length)));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t.actionError);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function handleCopy(key: string, text: string) {
     if (await copy(text)) {
       setCopied(key);
@@ -160,11 +197,33 @@ export default function MediaPage() {
         </div>
       )}
       {info && <p className="text-sm text-emerald-400">{info}</p>}
+
+      {/* Barra de selecao em massa (so' quem pode apagar) */}
+      {manage && (
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <button type="button" className="text-primary hover:underline" onClick={() => setSelected(new Set(items.map((m) => m.id)))}>{t.selectAll}</button>
+          {selected.size > 0 && (
+            <>
+              <span className="font-semibold">{t.selected.replace('{n}', String(selected.size))}</span>
+              <button type="button" className="text-muted-foreground hover:underline" onClick={() => setSelected(new Set())}>{t.clearSel}</button>
+              <Button size="sm" variant="destructive" disabled={busy === 'bulk'} onClick={handleBulkDelete}>
+                {busy === 'bulk' ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1.5 h-4 w-4" />}{t.deleteSelected}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
       <p className="text-xs text-muted-foreground">{t.howTo} · {t.total.replace('{n}', String(total))}</p>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {items.map((m) => (
-          <div key={m.id} className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div key={m.id} className={`relative overflow-hidden rounded-xl border bg-card shadow-sm ${selected.has(m.id) ? 'border-primary ring-2 ring-primary/40' : 'border-border'}`}>
+            {manage && (
+              <input
+                type="checkbox" checked={selected.has(m.id)} onChange={() => toggle(m.id)} aria-label={`${t.select} #${m.id}`}
+                className="absolute left-2 top-2 z-10 h-5 w-5 cursor-pointer accent-[hsl(var(--primary))]"
+              />
+            )}
             <div className="flex aspect-square items-center justify-center bg-secondary/30">
               {/* eslint-disable-next-line @next/next/no-img-element -- miniatura de arquivo do proprio servidor de uploads */}
               <img src={m.url} alt={m.name || `#${m.id}`} loading="lazy" className="max-h-full max-w-full object-contain [image-rendering:pixelated]" />

@@ -166,6 +166,24 @@ async def change_role(
     return target
 
 
+async def delete_staff(db: AsyncSession, actor: User, target: User, source: str = "panel") -> None:
+    """
+    REMOVE alguem da equipe de vez (diferente de desativar, que e' reversivel). Mesmas travas de sempre: nao remove a si mesmo, nem um dono (.env),
+    nem quem esta' acima na hierarquia, nem o ultimo S.Adm ativo. O que a pessoa fez fica no log (o nome fica gravado nas linhas); posts e avisos dela
+    continuam, so' sem autor.
+    """
+    _require(actor, Permission.STAFF_DELETE)
+    _check_target_manageable(actor, target)
+    if target.role == StaffRole.SUPER_ADMIN and target.is_active and await _count_active_super_admins(db) <= 1:
+        raise StaffError(400, "Precisa existir pelo menos um S.Adm ativo")
+    await log_action(
+        db, action="delete", entity_type="staff", entity_id=str(target.discord_id),
+        diff={"username": target.username, "role": target.custom_role.name if target.custom_role else target.role.value},
+        actor=actor, source=source,
+    )
+    await db.delete(target)
+
+
 async def set_active(db: AsyncSession, actor: User, target: User, active: bool, source: str = "panel") -> User:
     """Ativa/desativa alguem (derruba a sessao) e registra no log."""
     _require(actor, Permission.STAFF_DEACTIVATE)

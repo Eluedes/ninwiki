@@ -52,6 +52,7 @@ class Permission(str, Enum):
     STAFF_CREATE = "staff.create"
     STAFF_EDIT = "staff.edit"             # trocar cargo
     STAFF_DEACTIVATE = "staff.deactivate"  # desativar/reativar
+    STAFF_DELETE = "staff.delete"          # REMOVER de vez da equipe (so' S.Adm; o historico no log continua)
 
     # --- Quadro de avisos (Visao Geral do painel) ---
     NOTICE_VIEW = "notices.view"          # ler avisos e baixar os arquivos anexados
@@ -89,6 +90,7 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.STAFF_CREATE,
     Permission.STAFF_EDIT,
     Permission.STAFF_DEACTIVATE,
+    Permission.STAFF_DELETE,
     Permission.ROLES_MANAGE,
     Permission.ERRORS_VIEW,
 })
