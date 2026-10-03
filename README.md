@@ -63,7 +63,7 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 534 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 566 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
 python scripts/testar_bot_integracao.py    # 172 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
@@ -165,6 +165,11 @@ A Visão Geral mostra um **gráfico de acessos** (7/30/90 dias: visualizações 
 - A página **Mapa** está em manutenção: sai do menu e qualquer `/map` vai para `/maintenance` (edite `lib/maintenance.ts` para liberar).
 
 ### 2.2d Convidar o bot e anúncio da Home
+- **Banco de imagens** (`/admin/media`, menu *Images*): toda imagem enviada (aqui, pelo campo de imagem ou pelo editor) ganha um **ID** (#1, #2...). Nos campos de imagem de
+  **conteúdo, blog (capa), jutsu, mastery, vila e clã** dá para digitar o ID — `img:12`, `#12` ou só `12` — e a API troca pelo endereço do arquivo ao salvar (ID que não existe = erro claro).
+  Cada campo de imagem também tem o botão **Image library** (escolher numa grade com busca por nome/ID, ou enviar na hora) e o editor do blog tem um botão para inserir imagem do banco.
+  A tela mostra miniatura, tamanho, ID com **Copiar ID / Copiar endereço**; quem tem `media.manage` (Adm por padrão) renomeia, apaga (avisa onde a imagem está em uso; precisa confirmar para apagar mesmo assim)
+  e usa **Import from the uploads folder** para dar ID às imagens que já estavam em `uploads/` (a primeira abertura da tela já importa sozinha se o banco estiver vazio). Ver e enviar = `uploads.create`. Migration nova: `7b16dcfc1960`.
 - **Botão "Convidar o bot"** (rodapé de todas as páginas + cartão na Home): abre o convite do Discord com as **permissões mínimas**. Para aparecer, ponha o *Application ID* do bot
   em `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID` (Secret `WEB_ENV`; Discord Developer Portal → sua aplicação do bot → *General Information*) e rode o **Deploy Web**.
   O link gerado é `https://discord.com/oauth2/authorize?client_id=ID&permissions=84992&scope=bot%20applications.commands`. As permissões (**84992**) são:

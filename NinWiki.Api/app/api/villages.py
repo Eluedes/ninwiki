@@ -24,6 +24,7 @@ from app.core.database import get_db
 from app.core.payloads import apply_scalar_fields
 from app.core.translation import fill_missing_translations, retranslate_fields
 from app.core.permissions import Permission
+from app.core.media_refs import resolve_images
 from app.models.users import User
 from app.models.villages import Clan, Organization, OrganizationVillage, Village
 from app.schemas.villages import (
@@ -106,6 +107,7 @@ async def create_village(
     db: AsyncSession = Depends(get_db),
 ):
     """Cria uma vila com seus cla's (exige lore.edit)."""
+    await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     if await db.get(Village, payload.id) is not None:
         raise HTTPException(status_code=409, detail=f"A village with the id '{payload.id}' already exists")
     village = Village(**payload.model_dump(exclude={"clans"}))
@@ -128,6 +130,7 @@ async def update_village(
     db: AsyncSession = Depends(get_db),
 ):
     """Edita a vila; a lista de cla's enviada substitui a atual."""
+    await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     village = await _load_village(db, village_id)
     if village is None:
         raise HTTPException(status_code=404, detail="Village not found")

@@ -26,6 +26,7 @@ from sqlalchemy.orm import selectinload
 from app.core.audit import log_action
 from app.core.auth import get_optional_user, require_permission
 from app.core.permissions import Permission, user_has_permission
+from app.core.media_refs import resolve_images
 from app.core.database import get_db
 from app.models.users import User
 from app.core.translation import translate_field
@@ -363,6 +364,7 @@ async def create_content_item(
     devolve 409 (Conflict) em vez de deixar o Postgres estourar um
     erro de constraint cru pro cliente.
     """
+    await resolve_images(db, payload)  # image: aceita o ID do banco de imagens (img:12)
     # (criar sempre gera RASCUNHO - ver ContentItemCreate; quem publica e' o
     # PUT com status/bulk-status, ambos protegidos por CONTENT_PUBLISH)
     existing = await db.execute(select(ContentItem).where(ContentItem.slug == payload.slug))
@@ -424,6 +426,7 @@ async def update_content_item(
     posicao, que facilmente bagunçaria a ordem em edicoes parciais.
     """
     item = await _get_item_or_404(item_id, db)
+    await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     _guard_edit(staff, item, payload.status)
     before = {"name": item.name, "status": item.status.value}
 

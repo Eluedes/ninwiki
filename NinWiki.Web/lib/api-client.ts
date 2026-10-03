@@ -722,7 +722,7 @@ export type PermissionName =
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'roles.manage' | 'errors.view'
-  | 'notices.view' | 'notices.manage' | 'announcement.manage'
+  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view';
 
 export interface ApiMe {
@@ -1319,4 +1319,81 @@ export function saveAnnouncement(input: AnnouncementInput): Promise<ApiAnnouncem
 /** Remove o anuncio da Home. */
 export function clearAnnouncement(): Promise<ApiAnnouncement> {
   return apiFetch('/announcement', { method: 'DELETE' });
+}
+
+
+// ---- Banco de imagens ----
+
+export interface ApiMedia {
+  id: number;
+  name: string;
+  url: string;
+  width: number;
+  height: number;
+  bytes: number;
+  uploadedBy: string | null;
+  createdAt: string;
+}
+
+export interface ApiMediaPage {
+  items: ApiMedia[];
+  total: number;
+}
+
+export interface ApiMediaUse {
+  kind: string;
+  label: string;
+}
+
+/** Lista/busca o banco de imagens (mais novas primeiro). `q` busca no nome ou pelo ID (12, #12, img:12). */
+export function listMedia(q = '', limit = 60, offset = 0): Promise<ApiMediaPage> {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  if (q.trim()) params.set('q', q.trim());
+  return apiFetch(`/media?${params.toString()}`);
+}
+
+/** Uma imagem do banco pelo ID. */
+export function getMedia(id: number): Promise<ApiMedia> {
+  return apiFetch(`/media/${id}`);
+}
+
+/** Envia uma imagem para o banco de imagens (multipart) e devolve o ID dela. */
+export async function uploadMedia(file: File, name = ''): Promise<ApiMedia> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (name) formData.append('name', name);
+  // Sem apiFetch (ele forca JSON): o navegador define o multipart sozinho.
+  const res = await fetch(`${API_URL}/media`, { method: 'POST', body: formData, credentials: 'include' });
+  if (res.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new ApiError(res.status, body?.detail ?? `Error ${res.status} while uploading the image`);
+  }
+  return res.json();
+}
+
+/** Muda o rotulo de uma imagem (so' quem tem media.manage). */
+export function renameMedia(id: number, name: string): Promise<ApiMedia> {
+  return apiFetch(`/media/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) });
+}
+
+/** Onde a imagem esta' sendo usada. */
+export function getMediaUsage(id: number): Promise<ApiMediaUse[]> {
+  return apiFetch(`/media/${id}/usage`);
+}
+
+/** Apaga a imagem (409 se estiver em uso, a menos que `force`). */
+export function deleteMedia(id: number, force = false): Promise<void> {
+  return apiFetch(`/media/${id}${force ? '?force=true' : ''}`, { method: 'DELETE' });
+}
+
+/** Registra no banco as imagens que ja' estavam na pasta de uploads sem ID. */
+export function syncMedia(): Promise<{ added: number }> {
+  return apiFetch('/media/sync', { method: 'POST' });
+}
+
+/** ID de imagem escrito num campo (`img:12`, `#12`, `12`...) ou null se for outra coisa (um endereco, por exemplo). */
+export function parseImageRef(value: string): number | null {
+  const m = /^\s*(?:img\s*[:\-_ ]\s*|id\s*:\s*|#\s*)?(\d{1,9})\s*$/i.exec(value);
+  return m ? Number(m[1]) : null;
 }

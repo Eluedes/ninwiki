@@ -45,6 +45,7 @@ class Permission(str, Enum):
     # --- Ferramentas ---
     UPLOAD_CREATE = "uploads.create"
     TRANSLATION_RETRANSLATE = "translation.retranslate"
+    MEDIA_MANAGE = "media.manage"          # renomear/apagar imagens do banco de imagens e sincronizar a pasta (ver e enviar = uploads.create)
 
     # --- Equipe ---
     STAFF_VIEW = "staff.view"
@@ -112,6 +113,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.LORE_DELETE,
     Permission.NOTICE_MANAGE,
     Permission.ANNOUNCEMENT_MANAGE,
+    Permission.MEDIA_MANAGE,
     Permission.COMMENTS_MODERATE,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,

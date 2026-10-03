@@ -35,6 +35,7 @@ from sqlalchemy import text
 from fastapi.staticfiles import StaticFiles
 
 from app.api.analytics import router as analytics_router
+from app.api.media import router as media_router
 from app.api.announcement import router as announcement_router
 from app.api.audit_log import router as audit_log_router
 from app.api.auth import router as auth_router
@@ -127,6 +128,7 @@ app.include_router(engagement_router)
 app.include_router(comments_moderation_router)
 app.include_router(tags_router)
 app.include_router(analytics_router)
+app.include_router(media_router)
 app.include_router(announcement_router)
 app.include_router(search_router)
 app.include_router(organizations_router)

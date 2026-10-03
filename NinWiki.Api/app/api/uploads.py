@@ -34,6 +34,7 @@ from app.core.auth import require_permission
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import Permission
+from app.models.media import MediaImage
 from app.models.users import User
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
@@ -60,8 +61,9 @@ MAGIC_NUMBERS: dict[bytes, str] = {
 
 
 class UploadResponse(BaseModel):
-    """Resposta do upload: a URL publica da imagem salva."""
+    """Resposta do upload: a URL publica da imagem salva e o ID dela no banco de imagens."""
     url: str
+    id: int | None = None
 
 
 def _detect_extension(header: bytes) -> str | None:
@@ -120,13 +122,8 @@ def _resize_image(content: bytes, extension: str) -> bytes:
         return buffer.getvalue()
 
 
-@router.post("/image", response_model=UploadResponse)
-async def upload_image(
-    file: UploadFile,
-    staff: User = Depends(require_permission(Permission.UPLOAD_CREATE)),
-    db: AsyncSession = Depends(get_db),
-):
-    """Recebe uma imagem, confere o tipo pelos bytes e o tamanho, redimensiona e salva com nome aleatorio."""
+async def store_image(file: UploadFile, staff: User, db: AsyncSession, name: str = "") -> MediaImage:
+    """Recebe uma imagem, confere o tipo pelos bytes e o tamanho, redimensiona, salva com nome aleatorio e registra no banco de imagens."""
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
 
     # le' o arquivo INTEIRO na memoria de uma vez - aceitavel pro limite
@@ -147,6 +144,8 @@ async def upload_image(
 
     try:
         content = _resize_image(content, extension)
+        with Image.open(BytesIO(content)) as img:
+            width, height = img.size
     except Exception:
         # Arquivo passou na checagem de assinatura binaria mas nao e'
         # uma imagem de verdade que o Pillow consegue abrir (corrompido,
@@ -164,8 +163,23 @@ async def upload_image(
     filepath = UPLOAD_DIR / filename
     filepath.write_bytes(content)
 
+    # Rotulo para achar na busca: o digitado, ou o nome original do arquivo (so' letras/numeros/espaco; nunca vira caminho).
+    label = " ".join("".join(ch if ch.isalnum() or ch in " -_." else " " for ch in (name or Path(file.filename or "").stem)).split())[:80]
+    media = MediaImage(filename=filename, name=label, width=width, height=height, bytes=len(content), uploaded_by=staff.username)
+    db.add(media)
+    await db.flush()
     await log_action(db, action="upload", entity_type="upload", entity_id=filename,
-                     diff={"bytes": len(content)}, actor=staff)
+                     diff={"bytes": len(content), "imageId": media.id}, actor=staff)
     await db.commit()
+    return media
 
-    return UploadResponse(url=f"{settings.api_base_url}/uploads/{filename}")
+
+@router.post("/image", response_model=UploadResponse)
+async def upload_image(
+    file: UploadFile,
+    staff: User = Depends(require_permission(Permission.UPLOAD_CREATE)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Recebe uma imagem (mesmo fluxo do banco de imagens) e devolve a URL e o ID dela."""
+    media = await store_image(file, staff, db)
+    return UploadResponse(url=f"{settings.api_base_url}/uploads/{media.filename}", id=media.id)

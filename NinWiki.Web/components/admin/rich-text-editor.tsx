@@ -45,6 +45,7 @@ import { BlogMention, Video, parseVideoUrl } from '@/lib/tiptap-extensions/blog'
 import { mentionSuggestion } from '@/lib/tiptap-extensions/mention-suggestion';
 import { uploadImage } from '@/lib/api-client';
 import { EditorColorPicker } from '@/components/admin/editor-color-picker';
+import { MediaPickerDialog } from '@/components/admin/media-picker-dialog';
 import { EDITOR_FONTS, FONT_SIZES } from '@/lib/editor-fonts';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -64,6 +65,7 @@ import {
   LayoutGrid,
   Table2,
   ImagePlus,
+  Images,
   Quote,
   Code2,
   Video as VideoIcon,
@@ -149,6 +151,13 @@ function BlogTools({ editor }: { editor: Editor }) {
   const bx = dict.blogx.editor;
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+
+  /** Insere no texto uma imagem escolhida no banco de imagens (pede o texto alternativo, para acessibilidade). */
+  function insertFromLibrary(url: string) {
+    const alt = window.prompt(bx.imageAlt, '') ?? '';
+    editor.chain().focus().setImage({ src: url, alt: alt.trim() }).run();
+  }
 
   /** Envia a imagem escolhida para a API e a insere no texto (pede o texto alternativo, para acessibilidade). */
   async function handleImage(file: File | undefined) {
@@ -185,6 +194,10 @@ function BlogTools({ editor }: { editor: Editor }) {
       <ToolbarButton title={bx.image} disabled={uploading} onClick={() => fileInput.current?.click()}>
         {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
       </ToolbarButton>
+      <ToolbarButton title={dict.admin.imageUpload.library} onClick={() => setLibraryOpen(true)}>
+        <Images className="h-4 w-4" />
+      </ToolbarButton>
+      <MediaPickerDialog open={libraryOpen} onOpenChange={setLibraryOpen} onPick={(m) => insertFromLibrary(m.url)} />
       <ToolbarButton title={bx.quote} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
         <Quote className="h-4 w-4" />
       </ToolbarButton>
