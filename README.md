@@ -12,7 +12,7 @@ git switch ferramentas-locais      # ou: git worktree add ../ferramentas origin/
 ## Ferramentas
 | Pasta | O que faz |
 |---|---|
-| `analise-de-arquivos/analisar_arquivo_cifrado.py` | Imprime a **estrutura** de arquivos desconhecidos (ex.: `.znin`, `.wmr`): tamanho, entropia, primeiros/últimos bytes, assinaturas conhecidas, palpite de XOR. Não decifra nada e não imprime o conteúdo. Só Python 3. |
+| `analise-de-arquivos/analisar_arquivo_cifrado.py` | Procura `.znin` e `.wmr` na pasta e em todas as subpastas e imprime a **estrutura** de arquivos desconhecidos (ex.: `.znin`, `.wmr`): tamanho, entropia, primeiros/últimos bytes, assinaturas conhecidas, palpite de XOR. Não decifra nada e não imprime o conteúdo. Só Python 3. |
 
 ## Regras desta branch
 - Nunca faça PR/merge desta branch na `main`.

@@ -4,8 +4,12 @@ palpite de XOR - para descobrir COMO o arquivo foi gerado. NAO decifra nada e NA
 colar a saida no chat.
 
 Roda no SEU computador (so' Python 3, sem instalar nada):
-    python scripts/analisar_arquivo_cifrado.py  C:\\pasta\\exemplo.znin  C:\\pasta\\exemplo.wmr
-    python scripts/analisar_arquivo_cifrado.py  C:\\pasta\\amostras        (analisa todos os .znin/.wmr da pasta e compara os cabecalhos)
+    python analisar_arquivo_cifrado.py  .                      (a pasta onde voce esta: procura .znin e .wmr nela e em TODAS as subpastas)
+    python analisar_arquivo_cifrado.py  exemplo.znin exemplo.wmr   (ou arquivos especificos)
+    python analisar_arquivo_cifrado.py  . --max 5 --ext .znin      (ate' 5 arquivos por extensao; so' .znin)
+    python analisar_arquivo_cifrado.py  . > resultado.txt          (salva a saida num arquivo para colar no chat)
+Se "python" nao funcionar no Windows, tente "py" no lugar. Em pastas grandes o script NAO analisa tudo: pega por extensao o menor, o maior e alguns do meio
+(padrao --max 3).
 
 Mande a saida inteira. Dicas: use 2 ou 3 arquivos de cada tipo (um pequeno e um grande), e, se puder, o MESMO conteudo salvo duas vezes
 (ajuda a ver se ha' IV/sal aleatorio).
@@ -106,10 +110,37 @@ def main() -> None:
     """Analisa os arquivos (ou a pasta) indicados na linha de comando."""
     if len(sys.argv) < 2:
         sys.exit(__doc__)
+    args = sys.argv[1:]
+    max_per_ext, exts = 3, {".znin", ".wmr"}
+    if "--max" in args:
+        i = args.index("--max")
+        max_per_ext = max(1, int(args[i + 1]))
+        del args[i:i + 2]
+    custom = set()
+    while "--ext" in args:
+        i = args.index("--ext")
+        custom.add(args[i + 1].lower() if args[i + 1].startswith(".") else "." + args[i + 1].lower())
+        del args[i:i + 2]
+    exts = custom or exts
     files: list[Path] = []
-    for arg in sys.argv[1:]:
+    for arg in args:
         p = Path(arg)
-        files += sorted(f for f in p.iterdir() if f.suffix.lower() in {".znin", ".wmr"}) if p.is_dir() else [p]
+        if p.is_dir():
+            found = [f for f in p.rglob("*") if f.is_file() and f.suffix.lower() in exts]   # recursivo: entra nas subpastas
+            by_ext: dict[str, list[Path]] = {}
+            for f in found:
+                by_ext.setdefault(f.suffix.lower(), []).append(f)
+            for ext, group in by_ext.items():
+                group.sort(key=lambda f: f.stat().st_size)
+                step = max(1, len(group) // max_per_ext)
+                pick = {group[0], group[-1], *group[::step][:max_per_ext]}   # menor, maior e alguns do meio
+                chosen = sorted(pick, key=lambda f: f.stat().st_size)[:max_per_ext + 1]
+                print(f"{ext}: {len(group)} arquivo(s) em {p}; analisando {len(chosen)}")
+                files += chosen
+            if not found:
+                print(f"! nenhum arquivo {', '.join(sorted(exts))} encontrado em {p} (nem nas subpastas)")
+        else:
+            files.append(p)
     heads: dict[str, list[bytes]] = {}
     for f in files:
         if f.is_file():
