@@ -237,7 +237,7 @@ export default function MasteryEditorPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.image}</label>
             <Controller
               name="image"
@@ -245,7 +245,7 @@ export default function MasteryEditorPage({ params }: { params: Promise<{ id: st
               render={({ field }) => <ImageUploadField value={field.value} onChange={field.onChange} />}
             />
           </div>
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.gifLabel}</label>
             <Controller
               name="gif"

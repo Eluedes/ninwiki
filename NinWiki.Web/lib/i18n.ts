@@ -130,7 +130,7 @@ export interface Dictionary {
       editTitle: string; newTitle: string; back: string; save: string; saving: string; saveError: string;
       idSlug: string; idSlugLocked: string; idHint: string;
       name: string; emblem: string; element: string; accentColor: string; leader: string; climate: string; motto: string; image: string;
-      mapX: string; mapY: string; mapHint: string; shortDescription: string; longDescription: string;
+      shortDescription: string; longDescription: string;
       clansTitle: string; addClan: string; clanName: string; clanId: string; clanImage: string; clanImageHint: string; clanDescription: string;
       removeClan: string; noClans: string;
       orgsTitle: string; orgsSubtitle: string; newOrg: string; orgName: string; orgDescription: string; orgVillages: string;
@@ -579,7 +579,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         editTitle: 'Editar vila', newTitle: 'Nova vila', back: 'Voltar', save: 'Salvar', saving: 'Salvando...', saveError: 'Erro ao salvar a vila.',
         idSlug: 'ID / slug', idSlugLocked: '(não pode ser alterado)', idHint: 'Só letras minúsculas, números e hífen. Ex: leaf-village',
         name: 'Nome', emblem: 'Emblema (emoji)', element: 'Elemento', accentColor: 'Cor de destaque', leader: 'Líder', climate: 'Clima', motto: 'Lema', image: 'Imagem',
-        mapX: 'Mapa X (0-100)', mapY: 'Mapa Y (0-100)', mapHint: 'Posição no mapa, em % da imagem.',
+        
         shortDescription: 'Descrição curta (aparece no cartão)', longDescription: 'Descrição completa',
         clansTitle: 'Clãs', addClan: 'Adicionar clã', clanName: 'Nome', clanId: 'ID', clanImage: 'Imagem do clã', clanImageHint: 'Envie uma imagem com a logo e a roupa que o clã usa.', clanDescription: 'Descrição',
         removeClan: 'Remover clã', noClans: 'Nenhum clã. Clique em "Adicionar clã".',
@@ -1255,7 +1255,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         editTitle: 'Edit village', newTitle: 'New village', back: 'Back', save: 'Save', saving: 'Saving...', saveError: 'Error saving the village.',
         idSlug: 'ID / slug', idSlugLocked: '(cannot be changed)', idHint: 'Lowercase letters, numbers and hyphens only. E.g. leaf-village',
         name: 'Name', emblem: 'Emblem (emoji)', element: 'Element', accentColor: 'Accent color', leader: 'Leader', climate: 'Climate', motto: 'Motto', image: 'Image',
-        mapX: 'Map X (0-100)', mapY: 'Map Y (0-100)', mapHint: 'Position on the map, as % of the image.',
+        
         shortDescription: 'Short description (shown on the card)', longDescription: 'Full description',
         clansTitle: 'Clans', addClan: 'Add clan', clanName: 'Name', clanId: 'ID', clanImage: 'Clan image', clanImageHint: 'Upload one image with the clan logo and the outfit its members wear.', clanDescription: 'Description',
         removeClan: 'Remove clan', noClans: 'No clans. Click "Add clan".',
