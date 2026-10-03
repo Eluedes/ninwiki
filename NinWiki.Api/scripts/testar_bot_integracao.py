@@ -600,14 +600,18 @@ async def testar() -> None:
     class _Tree:
         """Arvore de comandos de mentira: so' anota o que o bot pediu."""
         def __init__(self, fail=()):
+            """`fail` = ids de servidor em que o sync deve dar erro."""
             self.calls, self.fail = [], set(fail)
         def copy_global_to(self, guild):
+            """Anota que os comandos globais foram copiados para o servidor."""
             self.calls.append(("copy", guild))
         async def sync(self, guild=None):
+            """Anota o sync (ou falha como o Discord faria sem permissao)."""
             if guild in self.fail:
                 raise RuntimeError("Missing Access")
             self.calls.append(("sync", guild))
         def clear_commands(self, guild=None):
+            """Anota que os comandos globais foram apagados."""
             self.calls.append(("clear", guild))
 
     check("servidores alvo = permitidos + servidor de testes, sem repetir", target_guilds({3, 1}, 2) == [1, 2, 3] and target_guilds({1}, 1) == [1] and target_guilds(set(), None) == [])

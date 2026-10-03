@@ -48,6 +48,7 @@ class EncryptingWriter:
     """Arquivo "de escrita" que cifra em blocos de 1 MB tudo o que recebe e grava em `dst` (cabecalho com o sal na criacao)."""
 
     def __init__(self, dst: BinaryIO, passphrase: str) -> None:
+        """Sorteia o sal, deriva a chave da senha e grava o cabecalho (assinatura + sal) em `dst`."""
         salt = os.urandom(16)
         self._fernet = Fernet(_derive_key(passphrase, salt))
         self._dst, self._buf = dst, bytearray()

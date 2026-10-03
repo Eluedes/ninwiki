@@ -51,15 +51,15 @@ cd NinWiki.Bot
 .\venv\Scripts\Activate.ps1
 python main.py
 ```
-Coloque `DEV_GUILD_ID=<id do seu servidor de testes>` no `.env` do bot para os comandos aparecerem na hora
-(sem isso, comandos globais podem levar até 1 hora). Para achar o ID: Modo Desenvolvedor ligado → botão
+Os comandos são registrados **na hora** em cada servidor de `ALLOWED_GUILD_IDS` (+ `DEV_GUILD_ID`, o servidor de testes) e os comandos **globais antigos são apagados** (some o `/team` velho e nada aparece em servidor fora da lista). Sem nenhum dos dois preenchidos, o registro é global e pode levar até 1 hora. Para achar o ID: Modo Desenvolvedor ligado → botão
 direito no servidor → Copiar ID.
 
 ## Segurança
 - `BOT_API_TOKEN` equivale a uma senha de administrador (quem tem consegue agir como qualquer staff): só no
   `.env`, nunca no Git, nunca em print. O `.gitignore` já ignora `.env`.
 - `DISCORD_BOT_TOKEN` idem. Se vazar: Developer Portal → Reset Token.
-- `ALLOWED_GUILD_IDS` (opcional, recomendado) limita os comandos aos seus servidores.
+- `ALLOWED_GUILD_IDS` (opcional, recomendado) limita os comandos aos seus servidores: eles só são registrados lá e o bot recusa os outros.
+- `BACKUP_CHANNEL_ID` + `BACKUP_PASSPHRASE` (na API): backup cifrado a cada 3 h no canal **privado**; `VERSION_WEBHOOK_URL` (segredo) para a mensagem de versão. Detalhes e passo a passo no README da raiz.
 - O bot não lê mensagens, não usa intents privilegiadas e responde só de forma efêmera.
 - Discord IDs sempre trafegam como **texto**.
 
@@ -99,4 +99,4 @@ estão no ar. Mensagens em inglês; um problema que se repete só gera novo avis
 - Os comandos agora são `/team ...` (antes `/equipe ...`): `/team list`, `/team add user role`, `/team role user role`, `/team deactivate user`, `/team reactivate user`.
 
 
-> **Comando não aparece / `CommandNotFound: Application command 'status' not found`:** com `DEV_GUILD_ID` preenchido os comandos são registrados **só nesse servidor**. Em qualquer outro servidor (ou com comandos antigos que sobraram) o Discord chama um comando que o bot não tem. Em produção deixe `DEV_GUILD_ID` **vazio**, reinicie o bot e aguarde até 1 h para os comandos globais aparecerem; use `ALLOWED_GUILD_IDS` para limitar os servidores.
+> **Comando não aparece / `CommandNotFound: Application command 'status' not found`:** com versões antigas do bot e `DEV_GUILD_ID` preenchido os comandos eram registrados **só nesse servidor**; hoje o bot registra em todos os de `ALLOWED_GUILD_IDS` e apaga os globais. Se ainda ver o erro: confira o `ALLOWED_GUILD_IDS` e se o bot foi convidado com o escopo `applications.commands` (o log mostra "Nao consegui registrar os comandos no servidor ..."). Em qualquer outro servidor (ou com comandos antigos que sobraram) o Discord chama um comando que o bot não tem. Em produção deixe `DEV_GUILD_ID` **vazio**, reinicie o bot e aguarde até 1 h para os comandos globais aparecerem; use `ALLOWED_GUILD_IDS` para limitar os servidores.
