@@ -249,30 +249,42 @@ async def _patch_tag(db: AsyncSession) -> Tag:
     return tag
 
 
-async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | None = None, max_new: int | None = None) -> dict:
+def parse_post_ref(value: str) -> str | None:
+    """O gid de um post da Steam a partir do LINK (.../news/app/1674010/view/532654232345) ou do proprio numero; None se nao achar um numero valido."""
+    m = re.search(r"(\d{6,25})\s*/?\s*$", value.strip().split("?")[0].split("#")[0])
+    return m.group(1) if m else None
+
+
+async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | None = None, max_new: int | None = None, only_gid: str | None = None) -> dict:
     """
     Confere a Steam e cria os posts novos. Devolve o resumo {"at", "fetched", "matched", "imported", "skipped", "errors", "titles"}.
     Nunca levanta por causa da Steam/DeepL: o erro vai em `errors` (e no log) e o proximo ciclo tenta de novo.
+    `only_gid` = importa SO' esse post (mesmo antigo, mesmo sem a tag exigida): procura nos ultimos 300 posts da Steam.
     """
-    run = {"at": datetime.now(timezone.utc).isoformat(), "fetched": 0, "matched": 0, "imported": 0, "skipped": 0, "errors": [], "titles": []}
+    run = {"at": datetime.now(timezone.utc).isoformat(), "fetched": 0, "matched": 0, "imported": 0, "skipped": 0, "errors": [], "titles": [], "seen": []}
     global last_run
     try:
-        items = await fetch_news(settings.steam_news_app_id, 20, transport)
+        items = await fetch_news(settings.steam_news_app_id, 300 if only_gid else 20, transport)
     except Exception as exc:  # noqa: BLE001
         run["errors"].append(f"Steam request failed: {type(exc).__name__}")
         log.warning("Steam news: %s", exc)
         last_run = run
         return run
     run["fetched"] = len(items)
-    need = settings.steam_news_require_tag.strip().lower()
-    wanted = [i for i in items if not need or need in [str(t).lower() for t in (i.get("tags") or [])]]
+    # Diagnostico: titulo + tags dos primeiros posts que a Steam devolveu (o painel mostra, para entender por que algo nao foi importado)
+    run["seen"] = [{"title": " ".join(str(i.get("title") or "?").split())[:80],
+                    "tags": [str(t) for t in (i.get("tags") or [])][:6], "date": int(i.get("date") or 0)} for i in items[:8]]
+    need = "" if only_gid else settings.steam_news_require_tag.strip().lower()   # post escolhido a dedo: nao exige a tag
+    wanted = [i for i in items if (str(i.get("gid")) == only_gid if only_gid else (not need or need in [str(t).lower() for t in (i.get("tags") or [])]))]
+    if only_gid and not wanted:
+        run["errors"].append(f"Post {only_gid} was not found among the latest {len(items)} Steam news of this game")
     run["matched"] = len(wanted)
     known = set((await db.execute(select(Post.source_id).where(Post.source_id.in_([str(i.get("gid")) for i in wanted])))).scalars().all()) if wanted else set()
     fresh = sorted((i for i in wanted if str(i.get("gid")) not in known), key=lambda i: int(i.get("date") or 0), reverse=True)
     run["skipped"] = len(wanted) - len(fresh)
     status = ContentStatus.DRAFT if settings.steam_news_status.strip().lower() == "draft" else ContentStatus.PUBLISHED
     tag = await _patch_tag(db) if fresh else None
-    for item in sorted(fresh[: (max_new if max_new is not None else settings.steam_news_max_per_run)], key=lambda i: int(i.get("date") or 0)):
+    for item in sorted(fresh[: (len(fresh) if only_gid else (max_new if max_new is not None else settings.steam_news_max_per_run))], key=lambda i: int(i.get("date") or 0)):
         gid, title = str(item.get("gid")), " ".join(str(item.get("title") or "Patch Notes").split())[:200]
         try:
             author = (settings.steam_news_author_name or str(item.get("author") or "") or "Steam").strip()[:100]
@@ -306,5 +318,8 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
             await db.rollback()
             run["errors"].append(f"{title[:60]}: {type(exc).__name__}: {str(exc)[:120]}")
             log.warning("Steam news: could not import %s: %s", gid, exc)
+    if only_gid and wanted and not fresh:
+        run["errors"].append("That post was already imported")
     last_run = run
+    log.info("Steam news: %s lidos, %s com a tag '%s', %s importados, %s ja existiam, erros: %s", run["fetched"], run["matched"], need, run["imported"], run["skipped"], run["errors"] or "nenhum")
     return run

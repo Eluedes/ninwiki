@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/providers/language-provider';
 import { ApiError, getSteamNewsStatus, runSteamNewsImport, type ApiSteamStatus } from '@/lib/api-client';
 
@@ -16,6 +17,7 @@ export function SteamImportCard({ onImported }: { onImported?: () => void }) {
   const [status, setStatus] = useState<ApiSteamStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [post, setPost] = useState('');   // link (ou numero) de um post especifico da Steam
 
   useEffect(() => {
     getSteamNewsStatus().then(setStatus).catch(() => setStatus(null));
@@ -25,13 +27,13 @@ export function SteamImportCard({ onImported }: { onImported?: () => void }) {
   const run = status.lastRun;
 
   /** Pede a' API para conferir a Steam agora e atualiza o cartao (e a lista de posts, se algo foi importado). */
-  async function handleRun() {
+  async function handleRun(specific?: string) {
     setBusy(true);
     setError(null);
     try {
-      const next = await runSteamNewsImport();
+      const next = await runSteamNewsImport(specific);
       setStatus(next);
-      if (next.lastRun?.imported) onImported?.();
+      if (next.lastRun?.imported) { onImported?.(); setPost(''); }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : '?');
     } finally {
@@ -51,10 +53,23 @@ export function SteamImportCard({ onImported }: { onImported?: () => void }) {
             {run.titles.length > 0 && <> ({run.titles.join(', ')})</>}
           </p>
         )}
+        {run && run.imported === 0 && run.seen && run.seen.length > 0 && (
+          <div className="rounded border border-border bg-secondary/30 p-2 text-xs text-muted-foreground">
+            <p className="mb-1 font-semibold">{t.seenTitle}</p>
+            {run.seen.map((s, i) => <p key={i} className="truncate">• {s.title} · {s.tags.length ? s.tags.join(', ') : t.noTags}</p>)}
+          </div>
+        )}
         {run?.errors.map((e) => <p key={e} className="text-xs text-destructive">{e}</p>)}
         {error && <p className="text-xs text-destructive">{error}</p>}
+        <div className="pt-2">
+          <p className="mb-1 text-xs font-semibold">{t.importPost}</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input value={post} onChange={(e) => setPost(e.target.value)} placeholder={t.postPlaceholder} className="h-8 text-xs" />
+            <Button size="sm" variant="secondary" disabled={busy || !post.trim()} onClick={() => handleRun(post)} className="shrink-0">{t.importThis}</Button>
+          </div>
+        </div>
       </div>
-      <Button variant="outline" onClick={handleRun} disabled={busy} className="shrink-0">
+      <Button variant="outline" onClick={() => handleRun()} disabled={busy} className="shrink-0">
         {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1.5 h-4 w-4" />}
         {busy ? t.running : t.run}
       </Button>

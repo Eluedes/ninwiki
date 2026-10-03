@@ -3,8 +3,9 @@ Importador de noticias da Steam (ver app/core/steam_news.py).
 
   GET  /steam-news/status   esta ligado? qual jogo, a cada quantos minutos, modo (publica/rascunho) e o resultado da ultima conferencia   posts.publish
   POST /steam-news/import   confere a Steam AGORA e importa os posts novos (botao "Importar agora" do painel do blog)                    posts.publish
+                            ?post=<link ou numero>: importa SO' esse post da Steam (mesmo antigo ou sem a tag patchnotes)
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import steam_news
@@ -46,12 +47,18 @@ async def steam_status(staff: User = Depends(require_permission(Permission.POST_
 
 @router.post("/import", response_model=SteamNewsStatus)
 async def steam_import(
+    post: str | None = Query(None, max_length=300, description="Link (ou numero) de UM post especifico da Steam para importar, mesmo antigo ou sem a tag"),
     staff: User = Depends(require_permission(Permission.POST_PUBLISH)), db: AsyncSession = Depends(get_db),
 ) -> SteamNewsStatus:
-    """Confere a Steam agora. 404 se o importador estiver desligado (STEAM_NEWS_APP_ID vazio)."""
+    """Confere a Steam agora. Com `post` importa so' esse post (link ou numero). 404 se o importador estiver desligado (STEAM_NEWS_APP_ID vazio)."""
     if not settings.steam_news_app_id:
         raise HTTPException(status_code=404, detail="Steam news import is not enabled")
-    run = await steam_news.import_news(db)
+    gid = None
+    if post is not None and post.strip():
+        gid = steam_news.parse_post_ref(post)
+        if gid is None:
+            raise HTTPException(status_code=422, detail="Paste the post link from Steam (…/news/app/<game>/view/<number>) or just its number")
+    run = await steam_news.import_news(db, only_gid=gid)
     await log_action(db, action="steam-import", entity_type="post", entity_id="steam",
                      diff={"imported": run["imported"], "matched": run["matched"], "errors": len(run["errors"])}, actor=staff)
     await db.commit()
