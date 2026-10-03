@@ -22,3 +22,4 @@ from app.models.errors import ErrorEvent  # noqa: F401
 from app.models.posts import Tag, post_tag_links  # noqa: F401
 from app.models.readers import PostComment, PostLike, Reader  # noqa: F401
 from app.models.traffic import TrafficDaily, TrafficPage, TrafficVisitor  # noqa: F401
+from app.models.announcement import SiteAnnouncement  # noqa: F401

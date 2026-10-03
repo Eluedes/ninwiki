@@ -1,96 +1,98 @@
-/* Guima - pagina unica "em construcao". Sem fontes nem scripts externos (a CSP do servidor so' aceita arquivos do proprio site). */
+/* Guima Company - pagina unica "em construcao", tema tecnologia/programacao. Sem fontes nem scripts externos (a CSP so' aceita o proprio site). */
 :root {
-  --bg: #0b1020;
-  --bg2: #151b3a;
-  --gold: #ffd166;
-  --orange: #ff7a3d;
-  --pink: #ff4d8d;
-  --ink: #f5f6fb;
-  --muted: #a9b0d3;
+  --bg: #050914;
+  --panel: rgba(12, 18, 38, .72);
+  --cyan: #22d3ee;
+  --violet: #a78bfa;
+  --green: #34d399;
+  --pink: #f472b6;
+  --ink: #e8ecf8;
+  --muted: #8b95b8;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", "Fira Code", Menlo, Consolas, "Liberation Mono", monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
-  min-height: 100vh;
-  overflow: hidden;
-  background: radial-gradient(120% 90% at 50% 100%, #2a1a4a 0%, var(--bg2) 38%, var(--bg) 75%);
-  color: var(--ink);
+  min-height: 100vh; overflow-x: hidden; background: var(--bg); color: var(--ink);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-#sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
-.glow {
-  position: fixed; left: 50%; bottom: -30vh; width: 90vw; height: 70vh; transform: translateX(-50%);
-  background: radial-gradient(closest-side, rgba(255, 122, 61, .35), rgba(255, 77, 141, .12) 55%, transparent 75%);
-  filter: blur(20px); z-index: 0; animation: breathe 6s ease-in-out infinite;
+#code { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: .38; }
+.grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(34, 211, 238, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 211, 238, .06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse at 50% 40%, #000 20%, transparent 75%);
+}
+.aurora {
+  position: fixed; z-index: 0; left: 50%; top: 30%; width: 80vw; height: 60vh; transform: translate(-50%, -50%); pointer-events: none;
+  background: radial-gradient(closest-side, rgba(167, 139, 250, .28), rgba(34, 211, 238, .12) 55%, transparent 75%); filter: blur(30px); animation: breathe 7s ease-in-out infinite;
 }
 .hero {
-  position: relative; z-index: 2; min-height: 100vh;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-  padding: 2rem 1.25rem 24vh; gap: 1.1rem;
+  position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 2rem 1.1rem; gap: 1.15rem;
 }
 .badge {
-  display: inline-flex; align-items: center; gap: .55rem; padding: .45rem 1rem; border-radius: 999px;
-  background: rgba(255, 209, 102, .1); border: 1px solid rgba(255, 209, 102, .35); color: var(--gold);
-  font-size: .8rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; backdrop-filter: blur(6px);
+  display: inline-flex; align-items: center; gap: .6rem; padding: .45rem 1rem; border-radius: 999px; font-family: var(--mono);
+  font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--green);
+  background: rgba(52, 211, 153, .08); border: 1px solid rgba(52, 211, 153, .35); backdrop-filter: blur(6px);
 }
-.dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px var(--gold); animation: blink 1.4s ease-in-out infinite; }
-.brand {
-  font-size: clamp(4.2rem, 17vw, 11rem); line-height: .95; font-weight: 900; letter-spacing: -.04em; text-transform: uppercase;
-  background: linear-gradient(100deg, var(--gold) 0%, var(--orange) 35%, var(--pink) 60%, var(--gold) 100%);
-  background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
-  padding: 0 .08em .06em 0; animation: shine 6s linear infinite; filter: drop-shadow(0 8px 40px rgba(255, 122, 61, .35));
+.dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); animation: blink 1.2s ease-in-out infinite; }
+
+.brand { display: flex; flex-direction: column; align-items: center; line-height: .9; }
+.glitch {
+  position: relative; font-size: clamp(3.6rem, 16vw, 10rem); font-weight: 900; letter-spacing: -.045em; padding-right: .06em;
+  background: linear-gradient(100deg, var(--cyan), var(--violet) 55%, var(--pink)); background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 7s linear infinite; filter: drop-shadow(0 6px 40px rgba(34, 211, 238, .3));
 }
-.tagline { font-size: clamp(1.25rem, 4vw, 2.3rem); font-weight: 300; letter-spacing: .02em; color: var(--ink); }
-.tagline em { font-style: normal; font-weight: 800; color: var(--gold); position: relative; white-space: nowrap; }
-.tagline em::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: -.12em; height: .12em; border-radius: 4px;
-  background: linear-gradient(90deg, var(--gold), var(--pink)); transform-origin: left; animation: underline 3.2s ease-in-out infinite;
+.glitch::before, .glitch::after {
+  content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; height: 100%; padding-right: .06em;
+  background: inherit; -webkit-background-clip: text; background-clip: text; color: transparent; opacity: 0; pointer-events: none;
 }
-.phrase { min-height: 1.6em; max-width: 34rem; font-size: clamp(.95rem, 2.4vw, 1.15rem); color: var(--muted); transition: opacity .6s ease; }
-.phrase.out { opacity: 0; }
-.progress { width: min(26rem, 82vw); height: .6rem; margin-top: .8rem; border-radius: 999px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.glitch::before { animation: glitch-a 6s steps(1) infinite; }
+.glitch::after { animation: glitch-b 6s steps(1) infinite; }
+.company {
+  margin-top: .25em; font-family: var(--mono); font-size: clamp(1rem, 4.4vw, 2rem); font-weight: 600; letter-spacing: .6em; padding-left: .6em; color: var(--cyan);
+  text-shadow: 0 0 18px rgba(34, 211, 238, .55);
+}
+.tagline { font-size: clamp(1.15rem, 3.6vw, 2rem); font-weight: 300; color: var(--ink); }
+.tagline em { font-style: normal; font-weight: 800; color: var(--cyan); text-shadow: 0 0 22px rgba(34, 211, 238, .5); white-space: nowrap; }
+
+.terminal {
+  width: min(34rem, 92vw); text-align: left; border-radius: 12px; overflow: hidden; background: var(--panel);
+  border: 1px solid rgba(167, 139, 250, .28); box-shadow: 0 20px 60px rgba(0, 0, 0, .45), 0 0 0 1px rgba(34, 211, 238, .06); backdrop-filter: blur(8px);
+}
+.term-bar { display: flex; align-items: center; gap: .4rem; padding: .55rem .8rem; background: rgba(255, 255, 255, .04); border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.term-bar i { width: .65rem; height: .65rem; border-radius: 50%; background: #ff5f57; }
+.term-bar i:nth-child(2) { background: #febc2e; }
+.term-bar i:nth-child(3) { background: #28c840; }
+.term-bar span { margin-left: .6rem; font-family: var(--mono); font-size: .72rem; color: var(--muted); }
+.term-body { min-height: 8.2rem; padding: .9rem 1rem; font-family: var(--mono); font-size: clamp(.74rem, 2.5vw, .88rem); line-height: 1.7; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+.term-body .line { display: block; }
+.prompt { color: var(--green); font-weight: 700; }
+.ok { color: var(--green); }
+.info { color: var(--cyan); }
+.warn { color: var(--violet); }
+.cursor { display: inline-block; width: .55em; height: 1.05em; margin-left: 2px; vertical-align: text-bottom; background: var(--cyan); animation: blink 1s steps(1) infinite; }
+
+.progress { position: relative; width: min(34rem, 92vw); height: 1.05rem; margin-top: .4rem; border-radius: 999px; background: rgba(255, 255, 255, .08); overflow: hidden; border: 1px solid rgba(255, 255, 255, .06); }
 .bar {
-  display: block; height: 100%; width: 0; border-radius: 999px;
-  background: repeating-linear-gradient(-45deg, var(--gold) 0 12px, var(--orange) 12px 24px);
-  background-size: 34px 100%; animation: stripes 1s linear infinite; transition: width 2.4s cubic-bezier(.2, .8, .2, 1);
-  box-shadow: 0 0 18px rgba(255, 150, 60, .55);
+  position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 999px; transition: width 2.6s cubic-bezier(.2, .8, .2, 1);
+  background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink)); box-shadow: 0 0 20px rgba(167, 139, 250, .6);
 }
-.soon { font-size: .85rem; color: var(--muted); letter-spacing: .08em; }
+.bar::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .5), transparent); transform: translateX(-100%); animation: sweep 2.2s ease-in-out infinite; }
+.pct { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-size: .68rem; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
+.soon { font-family: var(--mono); font-size: .8rem; color: var(--muted); letter-spacing: .06em; }
+.noscript { position: fixed; bottom: 1rem; left: 0; right: 0; text-align: center; z-index: 3; color: var(--muted); font-family: var(--mono); font-size: .8rem; }
 
-/* Cidade subindo: predios que crescem um por um, com janelas acesas e um guindaste */
-.city { position: fixed; left: 0; right: 0; bottom: 0; height: 30vh; z-index: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; padding: 0 2vw; pointer-events: none; }
-.b {
-  position: relative; flex: 1 1 0; max-width: 5.5vw; height: 0; border-radius: 3px 3px 0 0;
-  background: linear-gradient(180deg, #232a52, #10152e); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04);
-  animation: rise 1.8s cubic-bezier(.2, .9, .2, 1) forwards; animation-delay: var(--d);
-}
-.b::before {
-  content: ""; position: absolute; inset: 8% 14% 0; opacity: .9;
-  background-image: radial-gradient(circle, var(--gold) 0 1.4px, transparent 1.8px);
-  background-size: 9px 11px; animation: twinkle 3s ease-in-out infinite; animation-delay: var(--d);
-  -webkit-mask-image: linear-gradient(#000, transparent 92%); mask-image: linear-gradient(#000, transparent 92%);
-}
-.crane { position: relative; flex: 0 0 auto; width: 9vw; max-width: 90px; height: 0; animation: rise 2.2s ease forwards; animation-delay: 1.6s; }
-.crane::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 3px; height: 100%; background: #ffb454; transform: translateX(-50%); }
-.crane::after {
-  content: ""; position: absolute; left: -35%; top: 6%; width: 170%; height: 3px; background: #ffb454;
-  transform-origin: 38% 50%; animation: sway 5s ease-in-out infinite;
-}
-.noscript { position: fixed; bottom: 1rem; left: 0; right: 0; text-align: center; z-index: 3; color: var(--muted); }
-
-@keyframes rise { to { height: var(--h, 40%); } }
-@keyframes shine { to { background-position: 220% 0; } }
-@keyframes stripes { to { background-position: 34px 0; } }
-@keyframes blink { 50% { opacity: .35; } }
-@keyframes breathe { 50% { opacity: .65; transform: translateX(-50%) scale(1.06); } }
-@keyframes twinkle { 0%, 100% { opacity: .95; } 45% { opacity: .35; } 70% { opacity: .8; } }
-@keyframes underline { 0%, 100% { transform: scaleX(.15); } 50% { transform: scaleX(1); } }
-@keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes shine { to { background-position: 200% 0; } }
+@keyframes blink { 50% { opacity: .25; } }
+@keyframes breathe { 50% { opacity: .6; transform: translate(-50%, -50%) scale(1.07); } }
+@keyframes sweep { to { transform: translateX(100%); } }
+@keyframes glitch-a { 0%, 92%, 100% { opacity: 0; } 93% { opacity: .8; transform: translate(-4px, 1px); clip-path: inset(10% 0 55% 0); } 95% { opacity: .8; transform: translate(3px, -2px); clip-path: inset(60% 0 8% 0); } 97% { opacity: 0; } }
+@keyframes glitch-b { 0%, 93%, 100% { opacity: 0; } 94% { opacity: .7; transform: translate(4px, -1px); clip-path: inset(45% 0 30% 0); } 96% { opacity: .7; transform: translate(-3px, 2px); clip-path: inset(5% 0 70% 0); } 98% { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  .b, .crane { height: var(--h, 40%); }
   .bar { width: 72%; }
 }
-@media (max-width: 640px) { .city { height: 24vh; } .b { max-width: 9vw; } }

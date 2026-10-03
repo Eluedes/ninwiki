@@ -1,5 +1,5 @@
-DISPLAY_NAME=Guima Site
-DESCRIPTION=Pagina unica "em construcao" do Guima (servidor Node sem dependencias)
+DISPLAY_NAME=Guima Company
+DESCRIPTION=Site em construcao da Guima Company (servidor Node sem dependencias)
 MAIN=server.js
 MEMORY=256
 VERSION=recommended

@@ -56,6 +56,9 @@ class Permission(str, Enum):
     NOTICE_VIEW = "notices.view"          # ler avisos e baixar os arquivos anexados
     NOTICE_MANAGE = "notices.manage"      # postar/editar/apagar avisos e anexar arquivos
 
+    # --- Anuncio da pagina inicial do site (aparece para todos os visitantes) ---
+    ANNOUNCEMENT_MANAGE = "announcement.manage"
+
     # --- Cargos e permissoes (so' S.Adm: edita o que cada cargo pode) ---
     ROLES_MANAGE = "roles.manage"
 
@@ -108,6 +111,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.LORE_EDIT,
     Permission.LORE_DELETE,
     Permission.NOTICE_MANAGE,
+    Permission.ANNOUNCEMENT_MANAGE,
     Permission.COMMENTS_MODERATE,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,

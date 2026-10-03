@@ -2,7 +2,7 @@
   "name": "guima-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Pagina unica em construcao do Guima",
+  "description": "Guima Company - pagina unica em construcao",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
