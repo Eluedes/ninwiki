@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/providers/language-provider';
+import { useAuth } from '@/components/providers/auth-provider';
 import { ApiError, listMedia, type ApiMedia } from '@/lib/api-client';
 import { DropZone } from '@/components/admin/drop-zone';
 import { useMediaUpload } from '@/components/admin/use-media-upload';
@@ -28,6 +29,8 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const { state: up, upload } = useMediaUpload();
+  const { can } = useAuth();
+  const canUpload = can('media.upload');   // enviar pelo banco de imagens: so' quem tem media.upload (padrao S.Adm); escolher uma imagem existente e' livre
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -70,17 +73,21 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{t.pickTitle}</DialogTitle></DialogHeader>
-        <DropZone onFiles={sendFiles} label={t.dropHere} disabled={up.busy} className="space-y-4">
+        <DropZone onFiles={sendFiles} label={t.dropHere} disabled={up.busy || !canUpload} className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[12rem] flex-1">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.search} className="pl-8" />
           </div>
-          <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleUpload} />
-          <Button type="button" variant="outline" disabled={up.busy} onClick={() => fileRef.current?.click()}>
-            {up.busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
-            {up.busy ? t.progress.replace('{done}', String(up.done)).replace('{total}', String(up.total)) : t.upload}
-          </Button>
+          {canUpload && (
+            <>
+              <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleUpload} />
+              <Button type="button" variant="outline" disabled={up.busy} onClick={() => fileRef.current?.click()}>
+                {up.busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
+                {up.busy ? t.progress.replace('{done}', String(up.done)).replace('{total}', String(up.total)) : t.upload}
+              </Button>
+            </>
+          )}
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         {up.errors.map((e) => <p key={e} className="text-sm text-destructive">{e}</p>)}

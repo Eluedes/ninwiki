@@ -46,7 +46,8 @@ class Permission(str, Enum):
     UPLOAD_CREATE = "uploads.create"
     TRANSLATION_RETRANSLATE = "translation.retranslate"
     MEDIA_UPLOAD = "media.upload"          # enviar imagens PELO BANCO DE IMAGENS (lote, arrastar e soltar). Padrao: so' S.Adm; o S.Adm pode liberar a Adm/Creator em /admin/permissions
-    MEDIA_MANAGE = "media.manage"          # renomear/apagar imagens do banco de imagens e sincronizar a pasta (ver e enviar = uploads.create)
+    MEDIA_RESET_IDS = "media.reset_ids"    # renumerar os IDs do banco de imagens (1, 2, 3...) - so' S.Adm (SUPER_ONLY)
+    MEDIA_MANAGE = "media.manage"          # renomear, escolher categoria, apagar imagens do banco de imagens e sincronizar a pasta. Padrao: so' S.Adm (pode ser liberada em /admin/permissions)
 
     # --- Equipe ---
     STAFF_VIEW = "staff.view"
@@ -94,6 +95,7 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.STAFF_DELETE,
     Permission.ROLES_MANAGE,
     Permission.ERRORS_VIEW,
+    Permission.MEDIA_RESET_IDS,
 })
 
 _CREATOR: frozenset[Permission] = frozenset({
@@ -116,7 +118,6 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.LORE_DELETE,
     Permission.NOTICE_MANAGE,
     Permission.ANNOUNCEMENT_MANAGE,
-    Permission.MEDIA_MANAGE,
     Permission.COMMENTS_MODERATE,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,
