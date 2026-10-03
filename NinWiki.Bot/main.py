@@ -162,6 +162,8 @@ class NinWikiBot(discord.Client):
         if self.settings.site_url:
             t0 = time.monotonic()
             results["Website"] = await self.api.site_ok(self.settings.site_url)
+            if not results["Website"]:
+                log.warning("Site fora do ar na checagem (%s): %s", self.settings.site_url, self.api.last_site_detail or "sem detalhe")
             timings["Website"] = int((time.monotonic() - t0) * 1000)
         return results, timings
 
@@ -182,7 +184,8 @@ class NinWikiBot(discord.Client):
             if ok is None:
                 continue
             msg = update_status(self.statuses[name], ok, now, self.settings.status_down_after)
-            if msg:
+            # O painel ja' mostra o estado atual (editado a cada checagem): mensagens novas de "caiu/voltou" so' com STATUS_ALERTS=true.
+            if msg and self.settings.status_alerts:
                 messages.append(msg)
         panel = self.settings.status_panel
         if not self._health_announced:

@@ -575,6 +575,18 @@ async def testar() -> None:
     check("ERROR_CHANNEL_ID proprio tem prioridade", BotSettings(**cfg, log_channel_id="55", error_channel_id="66").errors_channel == 66)
     check("sem nenhum canal o feed de erros fica desligado", BotSettings(**cfg).errors_channel is None)
     check("monitor sem canal proprio usa o de erros (e depois o de log)", BotSettings(**cfg, error_channel_id="66").status_channel == 66 and BotSettings(**cfg, log_channel_id="55").status_channel == 55)
+    check("avisos novos de caiu/voltou vem DESLIGADOS (so' o painel)", BotSettings(**cfg).status_alerts is False and BotSettings(**cfg, status_alerts="true").status_alerts is True)
+    # checagem do site: 'respondeu' = no ar; 5xx/erro/loop = fora do ar (com o motivo)
+    def _site(handler):
+        """NinWikiApi so' para testar site_ok com um servidor de mentira."""
+        return NinWikiApi("http://x", "t" * 20, client=httpx.AsyncClient(base_url="http://x")), httpx.MockTransport(handler)
+    for codigo, esperado in [(200, True), (301, True), (403, True), (429, True), (404, True), (500, False), (502, False), (503, False), (522, False)]:
+        a_, t_ = _site(lambda r, c=codigo: httpx.Response(c, headers={"location": "/"} if c == 301 else {}) if c != 301 else httpx.Response(200))
+        check(f"site: HTTP {codigo} -> {'no ar' if esperado else 'fora do ar'}", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is esperado)
+    a_, t_ = _site(lambda r: httpx.Response(302, headers={"location": "https://wiki.exemplo.com/"}))
+    check("site: redirecionamento em loop = fora do ar, com o motivo", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is False and "TooManyRedirects" in a_.last_site_detail, a_.last_site_detail)
+    a_, t_ = _site(lambda r: (_ for _ in ()).throw(httpx.ConnectError("sem rede")))
+    check("site: erro de conexao = fora do ar", await a_.site_ok("https://wiki.exemplo.com", transport=t_) is False and "ConnectError" in a_.last_site_detail)
     check("STATUS_CHANNEL_ID separa o monitor dos erros", BotSettings(**cfg, error_channel_id="66", status_channel_id="77").status_channel == 77 and BotSettings(**cfg, error_channel_id="66", status_channel_id="77").errors_channel == 66)
     check("STATUS_CHANNEL_ID vazio no .env vale como 'nao definido'", BotSettings(**cfg, status_channel_id="").status_channel_id is None)
     try:
