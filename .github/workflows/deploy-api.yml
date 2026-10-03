@@ -1,13 +1,13 @@
 name: Deploy API
 
 # Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
-# O .env NÃO fica no repositório: vem dos Secrets do GitHub e é gravado só dentro do zip enviado.
+# O .env NÃO fica no repositório nem no pacote: as variáveis vivem no painel da SquareCloud (Variáveis de Ambiente) do app da API.
 #
 # Secrets necessários:
 #   SQUARE_API_KEY   chave da API da SquareCloud
 #   SQUARE_APP_ID_API   ID do app API na SquareCloud
 #   DB_SSL_CA / DB_SSL_CERT / DB_SSL_KEY   (opcionais) conteudo dos 3 arquivos do banco da SquareCloud (.crt, .pem, .key)
-#   API_ENV   conteúdo COMPLETO do NinWiki.Api/.env (DATABASE_URL, JWT_SECRET_KEY...)
+#   (API_ENV/BOT_ENV não são mais usados: cadastre as variáveis no painel do app)
 
 on:
   workflow_dispatch:
@@ -33,7 +33,6 @@ jobs:
         env:
           SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
           APP_ID: ${{ secrets.SQUARE_APP_ID_API }}
-          APP_ENV: ${{ secrets.API_ENV }}
           # Certificados do banco da SquareCloud (conteudo de cada arquivo); opcionais se o banco nao usar TLS com certificado
           DB_SSL_CA: ${{ secrets.DB_SSL_CA }}
           DB_SSL_CERT: ${{ secrets.DB_SSL_CERT }}

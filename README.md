@@ -322,15 +322,21 @@ Depois pegue sua **chave da API da SquareCloud**: painel → seu perfil/conta �
 ### 3.6 GitHub Secrets (onde ficam o `.env` e os certificados)
 GitHub → o repositório → **Settings → Secrets and variables → Actions → New repository secret**. Crie um por linha:
 
+> **Migração (`.env` → Variáveis de Ambiente da SquareCloud).** O deploy **não grava mais `.env`** no pacote (e a trava barra qualquer `.env` no zip), então
+> ninguém que abrir os arquivos do app vê as senhas. **Antes do primeiro deploy novo**, em cada app (API, Bot, Web) abra *Variáveis de Ambiente* → **Importar**,
+> cole o conteúdo do antigo `API_ENV`/`BOT_ENV`/`WEB_ENV` e salve. Para o Web, o `WEB_ENV` continua no GitHub só para o build. Depois do deploy, apague o
+> `.env` antigo que ficou no File Manager do app. Os certificados do banco (`certs/`) continuam indo como arquivos.
+
+
 | Secret | Valor | Obrigatório |
 |---|---|---|
 | `SQUARE_API_KEY` | chave da API da SquareCloud (3.5) | sim |
 | `SQUARE_APP_ID_API` | ID do app da API (3.5) | sim |
 | `SQUARE_APP_ID_WEB` | ID do app do site (3.5) | sim |
 | `SQUARE_APP_ID_BOT` | ID do app do bot (3.5) | só se usar o bot |
-| `API_ENV` | conteúdo **inteiro** do `.env` da API (modelo abaixo) | sim |
+| `API_ENV` | **não é mais enviado.** Use como rascunho/modelo e cole o conteúdo em *Variáveis de Ambiente* do app da API na SquareCloud (botão **Importar**) | não |
 | `WEB_ENV` | conteúdo **inteiro** do `.env` do site (modelo abaixo) | sim |
-| `BOT_ENV` | conteúdo **inteiro** do `.env` do bot (modelo abaixo) | só se usar o bot |
+| `BOT_ENV` | **não é mais enviado.** Cole o conteúdo em *Variáveis de Ambiente* do app do bot (botão **Importar**) | não |
 | `DB_SSL_CA` | texto completo do arquivo `.crt` (`-----BEGIN CERTIFICATE-----` até o `END`) | se o banco usa certificado |
 | `DB_SSL_CERT` | texto completo do arquivo `.pem` | idem |
 | `DB_SSL_KEY` | texto completo do arquivo `.key` | idem |
@@ -425,7 +431,7 @@ Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o 
 ### 3.10 No dia a dia
 - **Publicar uma atualização:** *commit/push* no GitHub → Actions → rode **só** o workflow do que mudou (API, site ou bot). A API reinicia e
   aplica migrações novas sozinha; se a migração falhar, **a API não sobe** (o banco nunca fica desatualizado em silêncio).
-- **Mudar uma configuração:** edite o Secret (`API_ENV`/`WEB_ENV`/`BOT_ENV`) e rode o workflow de novo. Você pode desmarcar *Reiniciar o app* se quiser reiniciar depois.
+- **Mudar uma configuração:** edite em *Variáveis de Ambiente* do app na SquareCloud (API/bot/web: salve e reinicie). `WEB_ENV` só vale para o build do site: mudou um `NEXT_PUBLIC_*`, edite o Secret e rode o **Deploy Web**. Você pode desmarcar *Reiniciar o app* se quiser reiniciar depois.
 - **Voltar uma versão:** em *Run workflow* escolha outra branch/tag (ou faça *revert* no Git e rode de novo). Migrações **não** voltam sozinhas: se a versão antiga for incompatível com o banco, restaure um backup.
 - **Backup do banco:** `python scripts/migrar_banco.py exportar --url "postgresql://..." --ssl-ca ... --ssl-cert ... --ssl-key ...` (no seu computador, com Docker). Faça antes de mudanças grandes.
 - **Backup das imagens:** painel do app da API → *Files* → baixe `uploads/` e `staff_files/` (um redeploy do app inteiro pelo painel pode apagá-las; o workflow não mexe nelas).

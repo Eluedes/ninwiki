@@ -37,9 +37,6 @@ jobs:
         env:
           SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
           APP_ID: ${{ secrets.SQUARE_APP_ID_GUIMA }}
-          APP_ENV: |
-            PORT=80
-            TRUST_PROXY=true
           RESTART: ${{ inputs.restart }}
           GIT_SHA: ${{ github.sha }}
         run: bash .github/scripts/deploy-squarecloud.sh Guima.Site guima-site.zip

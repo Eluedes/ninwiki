@@ -1,12 +1,12 @@
 name: Deploy Bot
 
 # Só roda quando você clica em "Run workflow" (aba Actions). Nunca roda sozinho.
-# O .env NÃO fica no repositório: vem dos Secrets do GitHub e é gravado só dentro do zip enviado.
+# O .env NÃO fica no repositório nem no pacote: as variáveis vivem no painel da SquareCloud (Variáveis de Ambiente) do app do bot.
 #
 # Secrets necessários:
 #   SQUARE_API_KEY   chave da API da SquareCloud
 #   SQUARE_APP_ID_BOT   ID do app bot na SquareCloud
-#   BOT_ENV   conteúdo COMPLETO do NinWiki.Bot/.env (DISCORD_BOT_TOKEN...)
+#   (BOT_ENV não é mais usado: cadastre as variáveis no painel do app)
 
 on:
   workflow_dispatch:
@@ -32,7 +32,6 @@ jobs:
         env:
           SQUARE_API_KEY: ${{ secrets.SQUARE_API_KEY }}
           APP_ID: ${{ secrets.SQUARE_APP_ID_BOT }}
-          APP_ENV: ${{ secrets.BOT_ENV }}
           RESTART: ${{ inputs.restart }}
           GIT_SHA: ${{ github.sha }}
         run: bash .github/scripts/deploy-squarecloud.sh NinWiki.Bot ninwiki-bot.zip
