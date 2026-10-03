@@ -9,7 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ApiError, listMedia, uploadMedia, type ApiMedia } from '@/lib/api-client';
+import { ApiError, listMedia, type ApiMedia } from '@/lib/api-client';
+import { DropZone } from '@/components/admin/drop-zone';
+import { useMediaUpload } from '@/components/admin/use-media-upload';
 
 const PAGE = 48;
 
@@ -25,7 +27,7 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
   const [items, setItems] = useState<ApiMedia[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const { state: up, upload } = useMediaUpload();
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -51,38 +53,38 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
     return () => clearTimeout(timer);
   }, [open, q, load]);
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
-    setUploading(true);
+  /** Envia as imagens escolhidas no seletor ou soltas na janela (varias de uma vez) e recarrega a grade. */
+  async function sendFiles(files: File[]) {
     setError(null);
-    try {
-      for (const f of files) await uploadMedia(f);
-      await load(q, 0);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : t.actionError);
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
-    }
+    const created = await upload(files);
+    if (created.length) await load(q, 0);
+  }
+
+  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (fileRef.current) fileRef.current.value = '';
+    if (files.length) void sendFiles(files);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>{t.pickTitle}</DialogTitle></DialogHeader>
+        <DropZone onFiles={sendFiles} label={t.dropHere} disabled={up.busy} className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[12rem] flex-1">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.search} className="pl-8" />
           </div>
           <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleUpload} />
-          <Button type="button" variant="outline" disabled={uploading} onClick={() => fileRef.current?.click()}>
-            {uploading ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
-            {uploading ? t.uploading : t.upload}
+          <Button type="button" variant="outline" disabled={up.busy} onClick={() => fileRef.current?.click()}>
+            {up.busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
+            {up.busy ? t.progress.replace('{done}', String(up.done)).replace('{total}', String(up.total)) : t.upload}
           </Button>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
+        {up.errors.map((e) => <p key={e} className="text-sm text-destructive">{e}</p>)}
+        {up.skipped > 0 && <p className="text-sm text-amber-400">{t.skipped.replace('{n}', String(up.skipped))}</p>}
 
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
           {items.map((m) => (
@@ -109,6 +111,7 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
             <Button type="button" variant="outline" size="sm" onClick={() => load(q, items.length)}>{t.loadMore}</Button>
           )}
         </div>
+        </DropZone>
       </DialogContent>
     </Dialog>
   );

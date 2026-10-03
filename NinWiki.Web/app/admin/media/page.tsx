@@ -10,8 +10,10 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ApiError, bulkDeleteMedia, deleteMedia, getMediaUsage, listMedia, renameMedia, syncMedia, uploadMedia, type ApiMedia,
+  ApiError, bulkDeleteMedia, deleteMedia, getMediaUsage, listMedia, renameMedia, syncMedia, type ApiMedia,
 } from '@/lib/api-client';
+import { DropZone } from '@/components/admin/drop-zone';
+import { useMediaUpload } from '@/components/admin/use-media-upload';
 
 const PAGE = 60;
 
@@ -35,6 +37,7 @@ export default function MediaPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set()); // imagens marcadas para apagar em massa
   const fileRef = useRef<HTMLInputElement>(null);
+  const { state: up, upload } = useMediaUpload();
   const manage = can('media.manage');
 
   /** Carrega a primeira pagina da busca (ou acrescenta a proxima). */
@@ -58,20 +61,18 @@ export default function MediaPage() {
     return () => clearTimeout(timer);
   }, [q, load, t.title]);
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
-    setBusy('upload');
+  /** Envia as imagens escolhidas no seletor ou soltas na tela (varias de uma vez) e recarrega a lista. */
+  async function sendFiles(files: File[]) {
     setError(null);
-    try {
-      for (const f of files) await uploadMedia(f);
-      await load(q, 0);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : t.actionError);
-    } finally {
-      setBusy(null);
-      if (fileRef.current) fileRef.current.value = '';
-    }
+    setInfo(null);
+    const created = await upload(files);
+    if (created.length) await load(q, 0);
+  }
+
+  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (fileRef.current) fileRef.current.value = '';
+    if (files.length) void sendFiles(files);
   }
 
   async function handleSync() {
@@ -167,7 +168,7 @@ export default function MediaPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <DropZone onFiles={sendFiles} label={t.dropHere} disabled={up.busy} className="min-h-[70vh] space-y-5">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Images className="h-6 w-6 text-primary" />{t.title}</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{t.subtitle}</p>
@@ -179,9 +180,9 @@ export default function MediaPage() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.search} className="pl-8" />
         </div>
         <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp" className="hidden" onChange={handleUpload} />
-        <Button onClick={() => fileRef.current?.click()} disabled={busy === 'upload'}>
-          {busy === 'upload' ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
-          {busy === 'upload' ? t.uploading : t.upload}
+        <Button onClick={() => fileRef.current?.click()} disabled={up.busy}>
+          {up.busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
+          {up.busy ? t.progress.replace('{done}', String(up.done)).replace('{total}', String(up.total)) : t.upload}
         </Button>
         {manage && (
           <Button variant="outline" onClick={handleSync} disabled={busy === 'sync'}>
@@ -196,6 +197,12 @@ export default function MediaPage() {
           <AlertTriangle className="h-4 w-4 shrink-0" />{error}
         </div>
       )}
+      {up.errors.length > 0 && (
+        <div className="space-y-0.5 rounded-lg border border-red-900/40 bg-red-900/20 px-3 py-2 text-sm text-red-300">
+          {up.errors.map((e) => <p key={e}>{e}</p>)}
+        </div>
+      )}
+      {up.skipped > 0 && <p className="text-sm text-amber-400">{t.skipped.replace('{n}', String(up.skipped))}</p>}
       {info && <p className="text-sm text-emerald-400">{info}</p>}
 
       {/* Barra de selecao em massa (so' quem pode apagar) */}
@@ -260,6 +267,6 @@ export default function MediaPage() {
       {!loading && items.length < total && (
         <div className="flex justify-center"><Button variant="outline" onClick={() => load(q, items.length)}>{t.loadMore}</Button></div>
       )}
-    </div>
+    </DropZone>
   );
 }

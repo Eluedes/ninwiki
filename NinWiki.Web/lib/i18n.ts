@@ -178,9 +178,9 @@ export interface Dictionary {
     mediaPage: {
       title: string; subtitle: string; upload: string; uploading: string; search: string; empty: string; sync: string; syncing: string; syncDone: string;
       rename: string; renamePrompt: string; delete: string; confirmDelete: string; confirmForce: string; copyId: string; copyUrl: string; copied: string;
-      selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
+      dropHere: string; progress: string; skipped: string; failedFile: string; selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
     };
-    imageUpload: { library: string; idResolved: string; idNotFound: string; uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
+    imageUpload: { dropHere: string; library: string; idResolved: string; idNotFound: string; uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
     dataTable: { noResults: string; selected: string; selectedPlural: string; itemsPerPage: string; pageOf: string; items: string };
     auditLog: {
       title: string; subtitle: string; loading: string; loadError: string; empty: string;
@@ -540,6 +540,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sync: 'Importar da pasta de uploads', syncing: 'Importando...', syncDone: '{n} imagem(ns) importada(s).',
         rename: 'Renomear', renamePrompt: 'Nome da imagem #{id}:', delete: 'Apagar', confirmDelete: 'Apagar a imagem #{id}? O arquivo some do servidor.',
         confirmForce: 'A imagem #{id} está em uso ({uses}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.', copyId: 'Copiar ID', copyUrl: 'Copiar endereço', copied: 'Copiado!',
+        dropHere: 'Solte as imagens aqui para enviar', progress: 'Enviando {done}/{total}...', skipped: '{n} arquivo(s) ignorado(s): só PNG, JPG, GIF e WEBP.', failedFile: '{name}: {error}',
         selected: '{n} selecionada(s)', selectAll: 'Selecionar todas desta página', clearSel: 'Limpar seleção', deleteSelected: 'Apagar selecionadas',
         confirmBulk: 'Apagar {n} imagem(ns)? Os arquivos somem do servidor.', confirmBulkForce: '{n} imagem(ns) estão em uso (ex.: {where}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.',
         bulkDone: '{n} imagem(ns) apagada(s).', select: 'Selecionar',
@@ -730,7 +731,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         created: 'Criada', updated: 'Editada', deleted: 'Apagada',
       },
       imageUpload: {
-        library: 'Banco de imagens', idResolved: 'Imagem #{id} do banco', idNotFound: 'Não existe imagem #{id} no banco.',
+        dropHere: 'Solte a imagem aqui', library: 'Banco de imagens', idResolved: 'Imagem #{id} do banco', idNotFound: 'Não existe imagem #{id} no banco.',
         uploading: 'Enviando...',
         chooseFile: 'Escolher arquivo',
         removeImage: 'Remover imagem',
@@ -1215,6 +1216,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sync: 'Import from the uploads folder', syncing: 'Importing...', syncDone: '{n} image(s) imported.',
         rename: 'Rename', renamePrompt: 'Name of image #{id}:', delete: 'Delete', confirmDelete: 'Delete image #{id}? The file is removed from the server.',
         confirmForce: 'Image #{id} is in use ({uses}). Delete anyway? Those places will end up with a broken image.', copyId: 'Copy ID', copyUrl: 'Copy address', copied: 'Copied!',
+        dropHere: 'Drop the images here to upload', progress: 'Uploading {done}/{total}...', skipped: '{n} file(s) skipped: only PNG, JPG, GIF and WEBP.', failedFile: '{name}: {error}',
         selected: '{n} selected', selectAll: 'Select all on this page', clearSel: 'Clear selection', deleteSelected: 'Delete selected',
         confirmBulk: 'Delete {n} image(s)? The files are removed from the server.', confirmBulkForce: '{n} image(s) are in use (e.g. {where}). Delete anyway? Those places will end up with a broken image.',
         bulkDone: '{n} image(s) deleted.', select: 'Select',
@@ -1405,7 +1407,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         created: 'Created', updated: 'Updated', deleted: 'Deleted',
       },
       imageUpload: {
-        library: 'Image library', idResolved: 'Library image #{id}', idNotFound: 'There is no image #{id} in the library.',
+        dropHere: 'Drop the image here', library: 'Image library', idResolved: 'Library image #{id}', idNotFound: 'There is no image #{id} in the library.',
         uploading: 'Uploading...',
         chooseFile: 'Choose file',
         removeImage: 'Remove image',

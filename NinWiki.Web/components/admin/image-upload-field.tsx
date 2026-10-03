@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
 import { uploadImage, getMedia, parseImageRef, ApiError } from '@/lib/api-client';
 import { MediaPickerDialog } from '@/components/admin/media-picker-dialog';
+import { DropZone } from '@/components/admin/drop-zone';
 import { Upload, Loader2, X, ImageOff, Images } from 'lucide-react';
 
 /** Campo de imagem: escolher arquivo (upload) ou colar uma URL, com previa. */
@@ -50,9 +51,20 @@ export function ImageUploadField({
     }
   }
 
+  /** Solta um arquivo na area do campo: usa a primeira imagem (este campo guarda UMA imagem; para varias use o banco de imagens). */
+  function handleDrop(files: File[]) {
+    const image = files.find((f) => /^image\/(png|jpeg|gif|webp)$/.test(f.type));
+    if (image) void sendFile(image);
+  }
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    await sendFile(file);
+  }
+
+  /** Envia o arquivo (escolhido ou solto) e poe o endereco no campo. */
+  async function sendFile(file: File) {
     setUploading(true);
     setError(null);
     try {
@@ -71,7 +83,7 @@ export function ImageUploadField({
   }
 
   return (
-    <div className="space-y-2">
+    <DropZone onFiles={handleDrop} label={t.dropHere} disabled={uploading} className="space-y-2">
       <div className="flex items-center gap-3">
         {/* Preview: mostra a imagem atual, ou um icone de "sem imagem"
             se o campo estiver vazio ou a URL nao carregar. */}
@@ -128,6 +140,6 @@ export function ImageUploadField({
         placeholder={t.manualPlaceholder}
         className="text-xs"
       />
-    </div>
+    </DropZone>
   );
 }
