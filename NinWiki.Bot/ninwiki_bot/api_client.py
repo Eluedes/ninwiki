@@ -123,9 +123,11 @@ class NinWikiApi:
 
     async def site_ok(self, url: str, transport: httpx.AsyncBaseTransport | None = None) -> bool:
         """
-        True se o site publico RESPONDEU (qualquer status abaixo de 500). Usa uma conexao propria, nao a da API.
-        403/429 contam como no ar: o site (ou a Cloudflare na frente) respondeu - so' nao deixou ESTE robo passar; 5xx (inclui os 52x
-        da Cloudflare), timeout, erro de conexao e redirecionamento em loop contam como fora do ar. O motivo fica em last_site_detail.
+        True se o SITE respondeu de verdade. Usa uma conexao propria, nao a da API.
+        No ar: 2xx/3xx; 429; e 401/403 SO' quando quem respondeu foi a Cloudflare (cabecalho cf-mitigated ou server: cloudflare) -
+        e' o desafio/WAF dela barrando ESTE robo, o site existe. Fora do ar: 404/410 e demais 4xx (ex.: app apagado, dominio sem app -
+        a hospedagem responde 404), 5xx (inclui os 52x da Cloudflare), timeout, erro de conexao e redirecionamento em loop.
+        O motivo fica em last_site_detail.
         """
         self.last_site_detail = ""
         try:
@@ -137,6 +139,11 @@ class NinWikiApi:
         except httpx.HTTPError as e:
             self.last_site_detail = f"{type(e).__name__}: {e}"[:200]
             return False
-        if res.status_code >= 400:
-            self.last_site_detail = f"HTTP {res.status_code}"
-        return res.status_code < 500
+        code = res.status_code
+        if code >= 400:
+            self.last_site_detail = f"HTTP {code}"
+        if code < 400 or code == 429:
+            return True
+        if code in (401, 403):
+            return "cf-mitigated" in res.headers or "cloudflare" in res.headers.get("server", "").lower()
+        return False
