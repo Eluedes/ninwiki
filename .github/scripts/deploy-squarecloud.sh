@@ -39,15 +39,7 @@ printf '%s\n' "${GIT_SHA:-unknown}" > "$DIR/VERSION"
 # Nenhum .env e' gravado aqui: as variaveis vivem no painel da SquareCloud (Variaveis de Ambiente) e persistem entre deploys.
 rm -f "$DIR/.env"
 
-# Certificados do banco da SquareCloud (TLS com certificado de cliente) - só para a API, vindos dos Secrets.
-# O conteúdo de cada arquivo fica num Secret; aqui eles viram NinWiki.Api/certs/* DENTRO do zip enviado.
-if [ -n "${DB_SSL_CA:-}${DB_SSL_CERT:-}${DB_SSL_KEY:-}" ]; then
-  mkdir -p "$DIR/certs"
-  [ -n "${DB_SSL_CA:-}" ]   && printf '%s\n' "$DB_SSL_CA"   | tr -d '\r' > "$DIR/certs/ca.crt"
-  [ -n "${DB_SSL_CERT:-}" ] && printf '%s\n' "$DB_SSL_CERT" | tr -d '\r' > "$DIR/certs/client.pem"
-  [ -n "${DB_SSL_KEY:-}" ]  && printf '%s\n' "$DB_SSL_KEY"  | tr -d '\r' > "$DIR/certs/client.key"
-  chmod 600 "$DIR/certs/"* 2>/dev/null || true
-fi
+# Certificados do banco: NAO vao mais como arquivos. O texto de cada um fica nas Variaveis de Ambiente do app da API (DATABASE_SSL_CA/CERT/KEY).
 
 # Banco de paises (DB-IP Lite, gratis, CC-BY 4.0) para o grafico de acessos da Visao Geral - so' para a API e so' se ainda nao
 # houver o arquivo. Melhor esforco: se o download falhar o deploy segue normal e os acessos ficam como "Desconhecido"
@@ -68,21 +60,21 @@ fi
 rm -f "$ZIP"
 # PREBUILT=true: a pasta ja' e' o pacote final (site compilado: node_modules e .next sao justamente o que deve ir).
 if [ "${PREBUILT:-false}" = "true" ]; then
-  ( cd "$DIR" && zip -qr "$ZIP" . -x ".git/*" ".env" ".env.*" "*.md" "*.example" "*.map" "CONTEXTO_PARA_IA*" "ROADMAP*" "FASE2*" )
+  ( cd "$DIR" && zip -qr "$ZIP" . -x ".git/*" ".env" ".env.*" "certs/*" "*.pem" "*.key" "*.crt" "*.md" "*.example" "*.map" "CONTEXTO_PARA_IA*" "ROADMAP*" "FASE2*" )
 else
   ( cd "$DIR" && zip -qr "$ZIP" . \
       -x "node_modules/*" ".next/*" "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" \
-         ".env" ".env.*" "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" "status_state.json" "language_state.json" ".git/*" \
+         ".env" ".env.*" "certs/*" "*.pem" "*.key" "*.crt" "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" "status_state.json" "language_state.json" ".git/*" \
          `# so' desenvolvimento/documentacao - nao e' necessario para rodar na SquareCloud:` \
          "*.md" "*.example" "docker-compose*.yml" "scripts/*" "diagnostico_conexao.py" ".squarecloudignore" )
 fi
 
 # TRAVA DE SEGURANCA: documentacao, exemplos, scripts de teste e dumps NUNCA podem ir para a SquareCloud (se alguem extrair o pacote,
 # nao deve achar os .md nem o jeito de rodar o projeto). Se algum escapar das exclusoes acima, o deploy para aqui, antes de enviar.
-LEAKS=$(unzip -Z1 "$ZIP" | grep -Ev '(^|/)node_modules/' | grep -Ei '(^|/)\.env(\..*)?$|\.md$|\.example$|\.map$|\.dump$|(^|/)scripts/|docker-compose|CONTEXTO_PARA_IA|ROADMAP|FASE2|diagnostico_conexao|\.git/' || true)
+LEAKS=$(unzip -Z1 "$ZIP" | grep -Ev '(^|/)node_modules/' | grep -Ei '(^|/)\.env(\..*)?$|(^|/)certs/|\.(pem|key|crt|p12|pfx)$|\.md$|\.example$|\.map$|\.dump$|(^|/)scripts/|docker-compose|CONTEXTO_PARA_IA|ROADMAP|FASE2|diagnostico_conexao|\.git/' || true)
 if [ -n "$LEAKS" ]; then
   echo "::error::Arquivos que NAO devem ir para a producao estao no pacote:"; echo "$LEAKS" | head -20
-  rm -rf "$ZIP" "$DIR/certs"; exit 1
+  rm -f "$ZIP"; exit 1
 fi
 
 [ -f "$DIR/squarecloud.app" ] || { echo "::error::squarecloud.app não encontrado em $DIR"; exit 1; }
@@ -101,7 +93,7 @@ HTTP=$(curl -sS -o resp.json -w '%{http_code}' -X POST \
 echo "HTTP ${HTTP}"
 # Mostra a resposta da SquareCloud (nao contem segredos).
 cat resp.json; echo
-cp resp.json /tmp/square-resp.json; rm -rf resp.json "$ZIP" "$DIR/certs"
+cp resp.json /tmp/square-resp.json; rm -rf resp.json "$ZIP"
 RESP=/tmp/square-resp.json
 
 [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || { echo "::error::Deploy falhou (HTTP $HTTP). Veja a resposta da SquareCloud acima."; exit 1; }

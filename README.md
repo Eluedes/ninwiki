@@ -299,7 +299,7 @@ python scripts/migrar_banco.py importar backups/NOME-DO-SEU-ARQUIVO.dump --url "
 - O script usa o próprio Docker para rodar `pg_dump`/`pg_restore` e já ajusta a permissão da chave; nada a instalar.
 - **Imagens do blog/wiki** (`NinWiki.Api/uploads/`): o workflow **não** envia essa pasta (para nunca sobrescrever o que está
   em produção). Depois de criar o app da API (3.5), envie as imagens pelo painel do app → *Files* → pasta `uploads/`.
-- Banco sem certificado de cliente (Neon, Supabase…)? Pule os `--ssl-*`, use `?sslmode=require` no `--url` e deixe `DB_SSL_*` vazio na 3.6.
+- Banco sem certificado de cliente (Neon, Supabase…)? Pule os `--ssl-*`, use `?sslmode=require` no `--url` e deixe `DATABASE_SSL_*` vazio.
 
 ### 3.5 Criar os apps na SquareCloud (uma vez só) e anotar os IDs
 O workflow **atualiza** um app que já existe, então cada app precisa ser criado uma vez. Truque para não ter de zipar o projeto:
@@ -337,20 +337,23 @@ GitHub → o repositório → **Settings → Secrets and variables → Actions �
 | `API_ENV` | **não é mais enviado.** Use como rascunho/modelo e cole o conteúdo em *Variáveis de Ambiente* do app da API na SquareCloud (botão **Importar**) | não |
 | `WEB_ENV` | conteúdo **inteiro** do `.env` do site (modelo abaixo) | sim |
 | `BOT_ENV` | **não é mais enviado.** Cole o conteúdo em *Variáveis de Ambiente* do app do bot (botão **Importar**) | não |
-| `DB_SSL_CA` | texto completo do arquivo `.crt` (`-----BEGIN CERTIFICATE-----` até o `END`) | se o banco usa certificado |
-| `DB_SSL_CERT` | texto completo do arquivo `.pem` | idem |
-| `DB_SSL_KEY` | texto completo do arquivo `.key` | idem |
 
-Para colar um certificado: abra o arquivo no Bloco de Notas, selecione **tudo** (Ctrl+A), copie e cole no campo do Secret.
+**Certificados do banco (passo a passo).** Eles **não** vão no repositório nem no pacote (o deploy barra `certs/`, `.pem`, `.key`, `.crt`). Em produção, o **texto** de cada arquivo vai nas *Variáveis de Ambiente* do app da API:
+1. Baixe os 3 arquivos no painel do banco da SquareCloud (`.crt`, `.pem`, `.key`).
+2. Abra cada um no Bloco de Notas, selecione tudo (Ctrl+A) e copie (começa em `-----BEGIN` e termina em `-----END ...-----`).
+3. No app da API → *Variáveis de Ambiente* → crie `DATABASE_SSL_CA` (texto do `.crt`), `DATABASE_SSL_CERT` (texto do `.pem`) e `DATABASE_SSL_KEY` (texto do `.key`). Se o painel não aceitar quebra de linha no valor, cole tudo em **uma linha** trocando cada quebra por `\n`.
+4. Salve e reinicie. A API grava esse texto num arquivo temporário (permissão 0600, fora da pasta do app, apagado ao sair), só para o TLS conseguir ler.
+5. Apague a pasta `certs/` antiga no File Manager do app e, no GitHub, os Secrets `DB_SSL_CA/CERT/KEY` (não são mais usados).
+6. Localmente o `.env` pode continuar apontando para arquivos (`certs/ca.crt`...): os dois formatos funcionam.
 
 **Modelo do `API_ENV`** (troque tudo que está em MAIÚSCULAS/`seudominio`):
 ```env
 ENVIRONMENT=production
 # ATENÇÃO: começa com postgresql+asyncpg:// (com o +asyncpg) e TERMINA com /NOME_DO_BANCO (o nome do banco do painel; costuma ser igual ao usuário)
 DATABASE_URL=postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/NOME_DO_BANCO
-DATABASE_SSL_CA=certs/ca.crt
-DATABASE_SSL_CERT=certs/client.pem
-DATABASE_SSL_KEY=certs/client.key
+DATABASE_SSL_CA=-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----   # texto do .crt (veja o passo a passo acima)
+DATABASE_SSL_CERT=-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----  # texto do .pem
+DATABASE_SSL_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----       # texto do .key
 JWT_SECRET_KEY=COLE_O_PRIMEIRO_SEGREDO_GERADO
 FRONTEND_ORIGIN=https://wiki.seudominio.com
 API_BASE_URL=https://api.seudominio.com
@@ -367,7 +370,7 @@ DEEPL_API_KEY=
 # MAX_NOTICE_FILE_MB=200
 # MAX_UPLOAD_SIZE_MB=5
 ```
-- Os 3 `DATABASE_SSL_*` apontam para os arquivos que o workflow cria a partir dos Secrets `DB_SSL_*` (não mude os caminhos). Sem
+- Os 3 `DATABASE_SSL_*` recebem o **texto** dos certificados (ou, localmente, o caminho do arquivo). Sem
   certificado de cliente: apague essas 3 linhas e use `?ssl=require` no fim da `DATABASE_URL`.
 - `ENVIRONMENT=production` desliga `/docs`, liga cookie `Secure`/HSTS, e a API **recusa iniciar** com `JWT_SECRET_KEY` fraco ou `DEV_LOGIN_ENABLED=true`.
 - `TRUST_PROXY_HEADERS=true` é necessário atrás da SquareCloud/Cloudflare (senão todos os visitantes parecem ter o mesmo IP).
@@ -445,7 +448,7 @@ Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o 
 | Workflow: `HTTP 404` | `SQUARE_APP_ID_*` errado (ID de outro app ou digitado errado) |
 | Workflow verde, mas o app não funciona | olhe os **Logs do app** na SquareCloud — o erro real aparece lá |
 | API não inicia: `JWT_SECRET_KEY` / `DEV_LOGIN_ENABLED` | `.env` inseguro com `ENVIRONMENT=production` — corrija o `API_ENV` |
-| API: `Arquivo de certificado do banco nao encontrado` | Secrets `DB_SSL_CA/CERT/KEY` não criados (ou o `API_ENV` aponta para outro caminho) |
+| API: `Arquivo de certificado do banco nao encontrado` | variáveis `DATABASE_SSL_CA/CERT/KEY` ausentes no painel (ou `DATABASE_SSL_*` aponta para um arquivo que não existe: em produção cole o texto do certificado) |
 | API: `Can't load plugin: sqlalchemy.dialects:driver` ou `DATABASE_URL nao esta definida` | o `API_ENV` não tem a linha `DATABASE_URL` (ou o Secret está vazio/em *Environment secrets*) |
 | API: `Can't load plugin ... postgresql`, `No module named psycopg2` ou banco não encontrado | `DATABASE_URL` sem `+asyncpg` ou sem `/NOME_DO_BANCO` no final — use `postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/NOME_DO_BANCO` |
 | API: `SSL error`, `certificate verify failed`, `connection refused` | `DATABASE_URL`/porta errada, certificado trocado ou colado incompleto (precisa do `BEGIN`/`END`) |
@@ -479,7 +482,7 @@ novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses tr
 |---|---|---|
 | `ENVIRONMENT` | `development` | `production` liga cookie `Secure`/HSTS, desliga `/docs` e recusa segredos fracos |
 | `DATABASE_URL` | — (obrigatória) | `postgresql+asyncpg://USUARIO:SENHA@HOST:PORTA/BANCO` |
-| `DATABASE_SSL_CA` / `_CERT` / `_KEY` | vazio | caminhos dos certificados do banco (`certs/...`, criados pelo workflow a partir de `DB_SSL_*`) |
+| `DATABASE_SSL_CA` / `_CERT` / `_KEY` | vazio | certificados do banco: texto `-----BEGIN...` (produção) ou caminho do arquivo (local) |
 | `DATABASE_SSL_VERIFY_HOSTNAME` | `false` | confere também o nome do host do certificado |
 | `JWT_SECRET_KEY` | — (obrigatória) | segredo longo e aleatório da sessão (em produção a API recusa um fraco) |
 | `JWT_ALGORITHM` / `ACCESS_TOKEN_EXPIRE_MINUTES` / `SESSION_HOURS` | `HS256` / `15` / `12` | duração do login |
