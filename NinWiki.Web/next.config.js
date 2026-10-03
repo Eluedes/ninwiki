@@ -44,6 +44,7 @@ const nextConfig = {
   // de clickjacking, MIME sniffing e vazamento de dados pelo navegador.
   async headers() {
     const base = [
+      { key: 'X-NinWiki-Web', value: '1' },   // marca "veio deste site": o Worker da Cloudflare (Cloudflare/maintenance-worker.mjs) mostra a pagina de manutencao quando ele some
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'X-Frame-Options', value: 'DENY' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

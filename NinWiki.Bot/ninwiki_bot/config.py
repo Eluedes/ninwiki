@@ -21,6 +21,16 @@ class BotSettings(BaseSettings):
     # (opcional) Endereco SO para a checagem de saude (ex: https://ninwiki.squareweb.app, o endereco direto da hospedagem, sem Cloudflare/cache na frente).
     # Vazio = checa o proprio SITE_URL. Os links dos botoes do /search continuam usando o SITE_URL.
     site_health_url: str = ""
+    # BACKUP: canal PRIVADO do Discord onde o bot guarda o backup cifrado (banco + imagens) a cada BACKUP_INTERVAL_MINUTES (padrao 180 = 3 h), em partes
+    # (o Discord limita o tamanho de cada arquivo) e apagando os mais antigos (mantem os BACKUP_KEEP mais recentes). Vazio = sem backup.
+    # Exige BACKUP_PASSPHRASE na API (sem ela a API recusa gerar). O bot precisa de "Anexar arquivos" nesse canal.
+    backup_channel_id: int | None = None
+    backup_interval_minutes: int = 180
+    backup_keep: int = 8
+    backup_part_mb: int = 9
+    # WEBHOOK (URL do Discord: Configuracoes do canal > Integracoes > Webhooks) onde o bot mantem UMA mensagem "Latest updates" com a versao mais recente
+    # da API e do site, EDITANDO a mesma mensagem a cada deploy (nao enche o chat). A URL e' um segredo: so' no .env. Vazio = desligado.
+    version_webhook_url: str = ""
     # Manda tambem uma mensagem NOVA a cada "caiu" / "voltou" (alem do painel que se edita sozinho). Padrao false: o painel basta e nao enche o canal.
     status_alerts: bool = False
     # Mantem UMA mensagem 'NinWiki status' no canal de erros, editada a cada checagem (estado ao vivo, tempo de resposta, uptime). false = so' avisa quando cai/volta.
@@ -38,7 +48,7 @@ class BotSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
-    @field_validator("dev_guild_id", "log_channel_id", "error_channel_id", "status_channel_id", mode="before")
+    @field_validator("dev_guild_id", "log_channel_id", "error_channel_id", "status_channel_id", "backup_channel_id", mode="before")
     @classmethod
     def _empty_guild_is_none(cls, v):
         """Campo de ID vazio no .env vira None (recurso desligado)."""
@@ -51,6 +61,22 @@ class BotSettings(BaseSettings):
         """Recusa intervalo de consulta do log menor que 10 segundos."""
         if v < 10:
             raise ValueError("LOG_POLL_SECONDS minimum is 10")
+        return v
+
+    @field_validator("backup_interval_minutes")
+    @classmethod
+    def _backup_interval_minimo(cls, v: int) -> int:
+        """Recusa backup mais frequente que a cada 30 minutos (cada um le' o banco inteiro e manda arquivos ao Discord)."""
+        if v < 30:
+            raise ValueError("BACKUP_INTERVAL_MINUTES minimum is 30")
+        return v
+
+    @field_validator("backup_keep", "backup_part_mb")
+    @classmethod
+    def _backup_limites(cls, v: int, info) -> int:
+        """BACKUP_KEEP >= 1 e BACKUP_PART_MB entre 1 e 24 (limite de arquivo do Discord)."""
+        if v < 1 or (info.field_name == "backup_part_mb" and v > 24):
+            raise ValueError(f"{info.field_name.upper()} out of range")
         return v
 
     @field_validator("status_down_after")

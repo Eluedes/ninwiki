@@ -14,6 +14,7 @@ erro que da' brecha de seguranca sem ninguem perceber.
 import asyncio
 import json
 import random
+import re
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -2030,6 +2031,52 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         async with _Sess() as db:
             await db.execute(text("DELETE FROM posts WHERE source_id LIKE 'teste-steam-%'"))
             await db.commit()
+
+    secao("31) Backup cifrado (banco + imagens) e versao publicada: so' o bot, nunca sem senha")
+    import gzip as _gz, io as _io, tarfile as _tar
+    from app.core import backup as _bk
+    settings.bot_api_token = "token-de-teste-do-bot-1234567890"
+    BK = {"X-Bot-Token": settings.bot_api_token}
+    orig_pass = settings.backup_passphrase
+    try:
+        settings.backup_passphrase = ""
+        check("backup sem token do bot: 401", (await c.post("/bot/backup")).status_code == 401)
+        r = await c.post("/bot/backup", headers=BK)
+        check("sem BACKUP_PASSPHRASE o backup NAO e' gerado (503)", r.status_code == 503, r.text[:100])
+        check("Adm logado (sem token do bot) nao cria backup (401)", (await c.post("/bot/backup", headers=A)).status_code == 401)
+        r = await c.get("/bot/version", headers=BK)
+        check("/bot/version devolve sha, mensagem e data da atualizacao", r.status_code == 200 and {"sha", "message", "date"} <= set(r.json()), r.text[:100])
+        check("/bot/version exige o token do bot (401)", (await c.get("/bot/version")).status_code == 401)
+        settings.backup_passphrase = "senha-de-teste-do-backup"
+        r = await c.post("/bot/backup", headers=BK)
+        info = r.json()
+        check("com senha: backup criado (id, tamanho, linhas)", r.status_code == 200 and info["size"] > 100 and info["rows"] > 0 and re.fullmatch(r"[0-9a-f]{32}", info["id"]), r.text[:150])
+        r = await c.get(f"/bot/backup/{info['id']}", params={"part": 1, "size": 1024}, headers=BK)
+        check("baixa a parte 1 (comeca com a assinatura NINBK2 e NAO e' texto legivel)", r.status_code == 200 and r.content.startswith(b"NINBK2") and len(r.content) == 1024 and b"audit" not in r.content)
+        total = info["size"]
+        partes = (total + 1023) // 1024
+        buf = b"".join([(await c.get(f"/bot/backup/{info['id']}", params={"part": n, "size": 1024}, headers=BK)).content for n in range(1, partes + 1)])
+        check("as partes juntas somam o arquivo inteiro", len(buf) == total)
+        check("parte alem do fim: 404", (await c.get(f"/bot/backup/{info['id']}", params={"part": partes + 1, "size": 1024}, headers=BK)).status_code == 404)
+        check("id estranho (../) e' 404", (await c.get("/bot/backup/..%2F..%2Fetc%2Fpasswd", headers=BK)).status_code == 404)
+        plain = _io.BytesIO()
+        _bk.decrypt_to(_io.BytesIO(buf), plain, "senha-de-teste-do-backup")
+        plain.seek(0)
+        with _tar.open(fileobj=plain, mode="r:gz") as t:
+            nomes = t.getnames()
+            linhas = t.extractfile("db.ndjson").read().decode().splitlines()
+        check("o arquivo decifrado tem db.ndjson com cabecalho e linhas de tabelas", "db.ndjson" in nomes and '"format": 1' in linhas[0] and len(linhas) - 1 == info["rows"])
+        check("tabelas descartaveis (traffic_visitors, error_events) ficam fora", '"t": "traffic_visitors"' not in "\n".join(linhas) and '"t": "error_events"' not in "\n".join(linhas))
+        try:
+            _bk.decrypt_to(_io.BytesIO(buf), _io.BytesIO(), "senha-errada")
+            ok_errada = False
+        except ValueError:
+            ok_errada = True
+        check("senha errada nao abre o backup", ok_errada)
+        check("o bot apaga o temporario (204) e ele some", (await c.delete(f"/bot/backup/{info['id']}", headers=BK)).status_code == 204
+              and (await c.get(f"/bot/backup/{info['id']}", headers=BK)).status_code == 404)
+    finally:
+        settings.backup_passphrase = orig_pass
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []

@@ -179,7 +179,7 @@ A Visão Geral mostra um **gráfico de acessos** (7/30/90 dias: visualizações 
   O envio pelos **campos de imagem** dos formulários (`uploads.create`) não mudou: Creator/Adm continuam enviando a imagem do próprio conteúdo.
 - **Botão "Convidar o bot"** (rodapé de todas as páginas + cartão na Home): abre o convite do Discord com as **permissões mínimas**. Para aparecer, ponha o *Application ID* do bot
   em `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID` (Secret `WEB_ENV`; Discord Developer Portal → sua aplicação do bot → *General Information*) e rode o **Deploy Web**.
-  O link gerado é `https://discord.com/oauth2/authorize?client_id=ID&permissions=84992&scope=bot%20applications.commands`. As permissões (**84992**) são:
+  O link gerado é `https://discord.com/oauth2/authorize?client_id=ID&permissions=117760&scope=bot%20applications.commands`. As permissões (**117760**) são:
   *View Channels*, *Send Messages*, *Embed Links* e *Read Message History* — nada de Administrator, gerenciar mensagens/cargos/canais nem @everyone.
   Se o bot for **privado**, desmarque *Public Bot* no Portal (só você o adiciona; o botão do site passa a servir só para você).
 - **Anúncio da Home** (`/admin/announcement`, permissão `announcement.manage`, Adm por padrão): uma faixa no topo da página inicial, com estilo (informação, novidade, aviso, evento),
@@ -571,3 +571,21 @@ Todo arquivo começa com um comentário-resumo do que faz e toda função tem um
 - **Se der problema:** troque `STEAM_NEWS_STATUS=draft` e reinicie: os próximos entram como rascunho. Se nada for importado, o cartão mostra "N lidos · 0 de atualização": a Steam não marcou os posts como `patchnotes` — esvazie `STEAM_NEWS_REQUIRE_TAG` para importar todos (e apague os que não servirem).
 - **Direitos autorais:** o texto é da desenvolvedora; o crédito e o link do original ficam no topo de cada post. Confirme que você pode republicar.
 - Na primeira ativação importa no máximo 5 posts (`STEAM_NEWS_MAX_PER_RUN`); clique em *Importar agora* de novo para trazer mais.
+
+
+## Backup automático (banco + imagens) pelo bot
+- **O que faz:** a cada 3 h (`BACKUP_INTERVAL_MINUTES=180`; mínimo 30) o bot pede à API um backup, recebe em partes e posta num **canal privado** do Discord, apagando os mais antigos (mantém `BACKUP_KEEP=8`). O backup leva **o banco inteiro** (menos `traffic_visitors` e `error_events`, descartáveis) **e todas as imagens da pasta `uploads/`**, num arquivo **criptografado com senha** (AES + HMAC; chave derivada por scrypt). Reiniciar o bot (deploy) **não** dispara backup extra: a hora do último fica em `backup_state.json`.
+- **Ligar (passo a passo):**
+  1. Gere uma senha: `python -c "import secrets; print(secrets.token_urlsafe(32))"` e **guarde num gerenciador de senhas** — sem ela o backup não abre e **não há como recuperá-la**.
+  2. API (SquareCloud → *Variáveis de Ambiente*): `BACKUP_PASSPHRASE=<a senha>`. Rode o **Deploy API** (instala `cryptography`) e reinicie. Sem a senha a API recusa gerar (503).
+  3. Crie um **canal privado** (só você/S.Adm) no Discord. Dê ao bot, **nesse canal**: *Ver canal, Enviar mensagens, Anexar arquivos, Ler histórico*. (O convite novo já inclui "Anexar arquivos"; o bot que já está no servidor precisa dessa permissão no canal.)
+  4. Bot (SquareCloud → *Variáveis de Ambiente*): `BACKUP_CHANNEL_ID=<id do canal>`. Reinicie o bot: o primeiro backup sai em seguida.
+- **Partes:** o Discord limita cada arquivo (10 MB em servidor comum), então o backup vem em partes `ninwiki-AAAAMMDD-HHMM.nbk.01-of-03`, `.02-of-03`... — a primeira mensagem diz quantas linhas, imagens e partes são.
+- **Restaurar:** baixe **todas as partes** da mesma data para uma pasta; num banco novo rode `alembic upgrade head`; depois, na pasta `NinWiki.Api` com o `.env` apontando para o banco de destino: `python scripts/restaurar_backup.py C:\pasta\ninwiki-AAAAMMDD-HHMM.nbk.01-of-03 --confirmo` (pede a senha). Ele **apaga o conteúdo das tabelas** do destino, insere o do backup e copia as imagens para `uploads/`.
+- **Cuidados:** o canal guarda dados pessoais (IDs do Discord, IPs do log) — mantenha-o privado; o arquivo só abre com a senha, mas quem tem acesso ao canal tem uma cópia dele. O backup **não** inclui os arquivos do quadro de avisos (`staff_files/`) nem segredos (`.env`). Testei o ciclo completo (criar, cifrar, decifrar, restaurar em outro banco, senha errada recusada) com dados de teste, não com a SquareCloud nem com o Discord de verdade.
+
+## Mensagem "Latest updates" (webhook)
+O bot mantém **uma** mensagem num canal com a versão mais recente da **API** e do **Web** (hash, título da atualização e "no ar desde"), e a **edita** a cada deploy (confere a cada 2 min; só edita quando o hash muda). Passo a passo: (1) no canal desejado, *Editar canal → Integrações → Webhooks → Novo webhook → Copiar URL*; (2) no bot, `VERSION_WEBHOOK_URL=<a URL>` (é segredo: só nas variáveis do bot); (3) rode **Deploy API**, **Deploy Web** e reinicie o bot. O deploy grava `VERSION.json` (hash, título do PR e data) e o site o expõe em `/version`; a API em `GET /bot/version`. Se apagarem a mensagem, o bot cria outra.
+
+## Página de manutenção quando o Web é reenviado
+Veja `Cloudflare/README.md`: um Worker da Cloudflare mostra uma página "Estamos atualizando a wiki" (que se recarrega sozinha) quando o app do Web está fora do ar, e some quando o deploy termina.

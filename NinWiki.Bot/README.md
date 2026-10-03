@@ -16,7 +16,7 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 | `/team manage [user]` | abre um **formulário (modal)** que faz tudo: **adicionar**, **trocar cargo**, **renomear**, **desativar** (tira o acesso na hora) e **reativar**. Campos: ação (lista), pessoa (seletor de usuário), cargo (lista, opcional) e nome (texto, opcional). Cada ação usa só o que precisa; `user` é opcional e já deixa a pessoa selecionada |
 | `/team clearlog where [older_than_days]` | **limpa o log antigo** (só S.Adm, com confirmação): o log do painel, as mensagens do canal de log do Discord, ou os dois. Sem `older_than_days` apaga tudo; com ele, só o mais antigo. O bot apaga só as **próprias** mensagens do canal (não precisa de permissão extra), até 1000 por vez. A limpeza fica registrada como a primeira linha do log novo |
 
-**Convidar o bot:** use o link `https://discord.com/oauth2/authorize?client_id=SEU_APPLICATION_ID&permissions=84992&scope=bot%20applications.commands` (permissões: ver canais, enviar mensagens, links incorporados e histórico). O site já tem o botão pronto (`NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID`).
+**Convidar o bot:** use o link `https://discord.com/oauth2/authorize?client_id=SEU_APPLICATION_ID&permissions=117760&scope=bot%20applications.commands` (permissões: ver canais, enviar mensagens, links incorporados, anexar arquivos para o backup e histórico). O site já tem o botão pronto (`NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID`).
 
 **Comandos públicos (Components V2):** `/status` (API, banco e site agora) e `/search <termo>` (busca no wiki, cartões com botão *Open*). Qualquer pessoa usa; 1 uso a cada 5–10 s por pessoa.
 
