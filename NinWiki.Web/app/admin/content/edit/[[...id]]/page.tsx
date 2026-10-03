@@ -572,7 +572,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-card-foreground">{t.description}</label>
+          <label className="text-sm font-semibold text-card-foreground">{t.description}{category === 'mobs' ? ` ${t.optionalSuffix}` : ''}</label>
           <Controller
             name="description"
             control={control}

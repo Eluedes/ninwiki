@@ -10,7 +10,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { DetailSidebar } from '@/components/wiki/detail-sidebar';
 import { CatalogCard } from '@/components/wiki/catalog-card';
 import { WikiImage } from '@/components/wiki/wiki-image';
-import { RichText } from '@/components/lore/rich-text';
+import { RichText, extractPlainText } from '@/components/lore/rich-text';
 import { cn, shouldShowLevel } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { ArrowLeft, Heart, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
@@ -159,9 +159,12 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
             </>
           )}
 
-          <div className="rounded-lg border border-border bg-card p-6">
-            <RichText content={description} className="text-card-foreground leading-relaxed" />
-          </div>
+          {/* Descricao e' opcional em mobs: sem texto, nao renderiza o card vazio. */}
+          {(extractPlainText(description).trim() || /<img/i.test(description)) && (
+            <div className="rounded-lg border border-border bg-card p-6">
+              <RichText content={description} className="text-card-foreground leading-relaxed" />
+            </div>
+          )}
 
           {/* Lore/Synergy: REMOVIDOS DE VEZ do site (decisao final do
               Rafael, 27/09 - nao usamos isso em nenhuma categoria).

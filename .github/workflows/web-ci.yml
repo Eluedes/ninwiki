@@ -1,3 +1,4 @@
+# CI do frontend: npm ci, lint, typecheck e build do NinWiki.Web a cada push/PR que mexe nele.
 name: Verificação do frontend
 
 on:

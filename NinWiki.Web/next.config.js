@@ -1,3 +1,4 @@
+// Configuracao do Next.js (NinWiki.Web): opcoes de build, imagens remotas e cabecalhos.
 /** @type {import('next').NextConfig} */
 
 // Endereco da API: entra na politica de seguranca (CSP) para o navegador so' conversar com ele.

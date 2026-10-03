@@ -1,3 +1,4 @@
+# CI da API: instala as dependencias, roda os testes e o pip-audit a cada push/PR que mexe em NinWiki.Api.
 name: Verificação da API
 
 on:
