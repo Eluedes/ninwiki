@@ -51,6 +51,12 @@ export function SteamImportCard({ onImported }: { onImported?: () => void }) {
             {run.titles.length > 0 && <> ({run.titles.join(', ')})</>}
           </p>
         )}
+        {run && run.imported === 0 && run.seen && run.seen.length > 0 && (
+          <div className="rounded border border-border bg-secondary/30 p-2 text-xs text-muted-foreground">
+            <p className="mb-1 font-semibold">{t.seenTitle}</p>
+            {run.seen.map((s, i) => <p key={i} className="truncate">• {s.title} · {s.tags.length ? s.tags.join(', ') : t.noTags}</p>)}
+          </div>
+        )}
         {run?.errors.map((e) => <p key={e} className="text-xs text-destructive">{e}</p>)}
         {error && <p className="text-xs text-destructive">{error}</p>}
       </div>

@@ -1991,6 +1991,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         r = await c.post("/steam-news/import", headers=A)
         run = r.json()["lastRun"]
         check("Adm importa: 4 lidos, 2 com a tag patchnotes, 2 importados", r.status_code == 200 and run["fetched"] == 4 and run["matched"] == 2 and run["imported"] == 2 and not run["errors"], str(run)[:200])
+        check("o resultado traz o diagnostico: titulo e tags do que a Steam devolveu", len(run["seen"]) == 4 and run["seen"][0]["tags"] == ["patchnotes"] and run["seen"][3]["tags"] == [], str(run["seen"])[:160])
         async with _Sess() as db:
             posts = (await db.execute(text("SELECT p.title, p.status, p.author_label, p.source_url, p.cover_image, p.content, p.published_at FROM posts p WHERE p.source_id LIKE 'teste-steam-%' ORDER BY p.source_id"))).all()
             tags = (await db.execute(text("SELECT t.id FROM post_tag_links l JOIN tags t ON t.id = l.tag_id JOIN posts p ON p.id = l.post_id WHERE p.source_id LIKE 'teste-steam-%'"))).scalars().all()

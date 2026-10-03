@@ -254,7 +254,7 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
     Confere a Steam e cria os posts novos. Devolve o resumo {"at", "fetched", "matched", "imported", "skipped", "errors", "titles"}.
     Nunca levanta por causa da Steam/DeepL: o erro vai em `errors` (e no log) e o proximo ciclo tenta de novo.
     """
-    run = {"at": datetime.now(timezone.utc).isoformat(), "fetched": 0, "matched": 0, "imported": 0, "skipped": 0, "errors": [], "titles": []}
+    run = {"at": datetime.now(timezone.utc).isoformat(), "fetched": 0, "matched": 0, "imported": 0, "skipped": 0, "errors": [], "titles": [], "seen": []}
     global last_run
     try:
         items = await fetch_news(settings.steam_news_app_id, 20, transport)
@@ -264,6 +264,9 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
         last_run = run
         return run
     run["fetched"] = len(items)
+    # Diagnostico: titulo + tags dos primeiros posts que a Steam devolveu (o painel mostra, para entender por que algo nao foi importado)
+    run["seen"] = [{"title": " ".join(str(i.get("title") or "?").split())[:80],
+                    "tags": [str(t) for t in (i.get("tags") or [])][:6], "date": int(i.get("date") or 0)} for i in items[:8]]
     need = settings.steam_news_require_tag.strip().lower()
     wanted = [i for i in items if not need or need in [str(t).lower() for t in (i.get("tags") or [])]]
     run["matched"] = len(wanted)
@@ -307,4 +310,5 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
             run["errors"].append(f"{title[:60]}: {type(exc).__name__}: {str(exc)[:120]}")
             log.warning("Steam news: could not import %s: %s", gid, exc)
     last_run = run
+    log.info("Steam news: %s lidos, %s com a tag '%s', %s importados, %s ja existiam, erros: %s", run["fetched"], run["matched"], need, run["imported"], run["skipped"], run["errors"] or "nenhum")
     return run

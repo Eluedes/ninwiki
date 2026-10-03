@@ -1452,6 +1452,7 @@ export interface ApiSteamRun {
   skipped: number;
   errors: string[];
   titles: string[];
+  seen?: { title: string; tags: string[]; date: number }[];   // o que a Steam devolveu (diagnostico)
 }
 
 export interface ApiSteamStatus {
