@@ -5,7 +5,7 @@
 
 // Raridade de um item/drop. Usado tanto para exibir cor/selo quanto
 // para ordenar visualmente do mais comum ao mais raro.
-export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'enchanted';
 
 // Categorias do catalogo publico (aparecem no menu e nas rotas /catalog/[category]).
 // "masteries" tem pagina propria em /masteries (nao usa mais o catalogo
@@ -26,7 +26,7 @@ export type MobType = 'monster' | 'boss' | 'npc' | 'mount';
 // (anel) ficaria indistinguível de uma poção ou material de crafting
 // na listagem - o valor por padrao (quando ausente) e' tratado como
 // 'general' no catalogo, entao entries antigas nao precisam de migracao.
-export type ItemType = 'general' | 'ring' | 'consumable' | 'material' | 'currency' | 'cast';
+export type ItemType = 'general' | 'ring' | 'consumable' | 'material' | 'currency' | 'cast' | 'authority';
 
 // Um item que pode "dropar" (cair) de um mob ao ser derrotado.
 export interface DropEntry {

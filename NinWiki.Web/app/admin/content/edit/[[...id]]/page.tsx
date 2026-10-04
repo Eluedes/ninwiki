@@ -40,7 +40,7 @@ import {
 } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
-import { shouldShowLevel } from '@/lib/utils';
+import { itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { contentItemSchema, type ContentItemFormValues } from '@/lib/validation';
 import type { Category, ItemType, MobType, Rarity } from '@/lib/types';
 import type { Dictionary } from '@/lib/i18n';
@@ -79,11 +79,12 @@ function getItemTypeOptions(t: Dictionary['admin']['contentEditor']): { value: I
     { value: 'material', label: t.itemMaterial },
     { value: 'currency', label: t.itemCurrency },
     { value: 'cast', label: t.itemCast },
+    { value: 'authority', label: t.itemAuthority },
   ];
 }
 
-// Raridade fica de fora de proposito: os 5 nomes (Common/Uncommon/Rare/
-// Epic/Legendary) sao termos de jogo em ingles ja' usados como convencao
+// Raridade fica de fora de proposito: os 6 nomes (Common/Uncommon/Rare/
+// Epic/Legendary/Enchanted) sao termos de jogo em ingles ja' usados como convencao
 // em toda a interface (ver badges do site publico) - traduzir so' esses
 // 5 pra portugues destoaria do resto, sem ganho real de clareza.
 const rarityOptions: { value: Rarity; label: string }[] = [
@@ -92,6 +93,7 @@ const rarityOptions: { value: Rarity; label: string }[] = [
   { value: 'rare', label: 'Rare' },
   { value: 'epic', label: 'Epic' },
   { value: 'legendary', label: 'Legendary' },
+  { value: 'enchanted', label: 'Enchanted' },
 ];
 
 const emptyForm: ContentItemFormValues = {
@@ -335,7 +337,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         weaponBaseDamage: values.category === 'weapons' ? values.weaponBaseDamage : null,
         weaponSpecialAbility: values.category === 'weapons' ? values.weaponSpecialAbility : null,
         weaponKnockbackDistance: values.category === 'weapons' ? values.weaponKnockbackDistance : null,
-        maxStack: values.category === 'items' && values.itemType === 'currency' ? values.maxStack : null,
+        maxStack: itemHasStack(values.category, values.itemType) ? values.maxStack : null,
         castVillageId: values.category === 'items' && values.itemType === 'cast' ? values.castVillageId : null,
         attributes,
         drops: values.category === 'mobs' ? drops : [],
@@ -497,8 +499,8 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             </>
           )}
 
-          {/* Item tipo Moeda: so' o Max Stack. */}
-          {category === 'items' && itemType === 'currency' && (
+          {/* Itens que empilham (Moeda, Autoridade, Consumivel, Material): Max Stack. */}
+          {itemHasStack(category, itemType) && (
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.maxStack}</label>
               <Input type="number" {...register('maxStack')} placeholder={t.maxStackPlaceholder} />

@@ -14,6 +14,7 @@ import { useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
+import { UploadProgressBar } from '@/components/admin/upload-progress';
 import { uploadImage, getMedia, parseImageRef, ApiError } from '@/lib/api-client';
 import { MediaPickerDialog } from '@/components/admin/media-picker-dialog';
 import { DropZone } from '@/components/admin/drop-zone';
@@ -30,6 +31,7 @@ export function ImageUploadField({
   const { dict } = useLanguage();
   const t = dict.admin.imageUpload;
   const [uploading, setUploading] = useState(false);
+  const [sent, setSent] = useState<{ loaded: number; total: number } | null>(null);   // andamento do envio (barra)
   const [error, setError] = useState<string | null>(null);
   const [previewFailed, setPreviewFailed] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -68,14 +70,16 @@ export function ImageUploadField({
   async function sendFile(file: File) {
     setUploading(true);
     setError(null);
+    setSent({ loaded: 0, total: file.size });
     try {
-      const url = await uploadImage(file);
+      const url = await uploadImage(file, (p) => setSent({ loaded: p.loaded, total: p.total }));
       onChange(url);
       setPreviewFailed(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t.uploadError);
     } finally {
       setUploading(false);
+      setSent(null);
       // Limpa o <input type="file"> depois do envio - sem isso, escolher
       // o MESMO arquivo de novo (ex: depois de um erro) nao dispara o
       // evento onChange, porque o navegador ve' que "nada mudou".
@@ -114,7 +118,7 @@ export function ImageUploadField({
               </button>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">{t.formatsHint}</p>
+          {sent ? <UploadProgressBar loaded={sent.loaded} total={sent.total} /> : <p className="text-xs text-muted-foreground">{t.formatsHint}</p>}
         </div>
       </div>
 

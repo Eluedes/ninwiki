@@ -20,13 +20,15 @@ import type { CategoryInfo, WikiEntry, Rarity } from './types';
 // por raridade, em vez de cada componente decidir por conta propria.
 export const rarityConfig: Record<
   Rarity,
-  { label: string; color: string; barColor: string }
+  // glow = cor (rgb "r,g,b") do brilho atras da imagem na pagina do item; chip = selo da raridade (fundo + borda + texto)
+  { label: string; color: string; barColor: string; glow: string; chip: string }
 > = {
-  common: { label: 'Common', color: 'text-slate-400', barColor: 'bg-slate-400' },
-  uncommon: { label: 'Uncommon', color: 'text-emerald-500', barColor: 'bg-emerald-500' },
-  rare: { label: 'Rare', color: 'text-sky-500', barColor: 'bg-sky-500' },
-  epic: { label: 'Epic', color: 'text-violet-500', barColor: 'bg-violet-500' },
-  legendary: { label: 'Legendary', color: 'text-amber-500', barColor: 'bg-amber-500' },
+  common: { label: 'Common', color: 'text-slate-400', barColor: 'bg-slate-400', glow: '148,163,184', chip: 'border-slate-400/30 bg-slate-400/10 text-slate-300' },
+  uncommon: { label: 'Uncommon', color: 'text-emerald-500', barColor: 'bg-emerald-500', glow: '16,185,129', chip: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' },
+  rare: { label: 'Rare', color: 'text-sky-500', barColor: 'bg-sky-500', glow: '14,165,233', chip: 'border-sky-500/30 bg-sky-500/10 text-sky-400' },
+  epic: { label: 'Epic', color: 'text-violet-500', barColor: 'bg-violet-500', glow: '139,92,246', chip: 'border-violet-500/30 bg-violet-500/10 text-violet-400' },
+  legendary: { label: 'Legendary', color: 'text-amber-500', barColor: 'bg-amber-500', glow: '245,158,11', chip: 'border-amber-500/30 bg-amber-500/10 text-amber-400' },
+  enchanted: { label: 'Enchanted', color: 'text-cyan-400', barColor: 'bg-cyan-400', glow: '34,211,238', chip: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-300' },
 };
 
 // Cards de areas exibidos na home. A chave `key` tem que bater exatamente

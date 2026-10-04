@@ -463,23 +463,11 @@ export function bulkDeleteJutsus(ids: string[]): Promise<void> {
 
 // ---- Upload de imagem ----
 
-export async function uploadImage(file: File): Promise<string> {
+/** Envia uma imagem (campo de imagem, editor do blog) e devolve o endereco dela; `onProgress` alimenta a barra de envio. */
+export async function uploadImage(file: File, onProgress?: (p: UploadProgress) => void): Promise<string> {
   const formData = new FormData();
   formData.append('file', file);
-
-  // Nao usa apiFetch() aqui de proposito: upload de arquivo usa
-  // FormData, nao JSON, entao o header "Content-Type: application/json"
-  // que apiFetch() sempre manda quebraria a requisicao (o navegador
-  // precisa definir o Content-Type de multipart/form-data sozinho,
-  // com o "boundary" certo - se a gente forcar outro valor, o FastAPI
-  // nao consegue interpretar o arquivo).
-  const res = await fetch(`${API_URL}/uploads/image`, { method: 'POST', body: formData, credentials: 'include' });
-  if (res.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new ApiError(res.status, body?.detail ?? `Erro ${res.status} ao enviar imagem`);
-  }
-  const data: { url: string } = await res.json();
+  const data = await xhrUpload<{ url: string }>('/uploads/image', formData, onProgress);
   return data.url;
 }
 
@@ -1151,21 +1139,27 @@ export function deleteNotice(id: string): Promise<void> {
   return apiFetch(`/notices/${id}`, { method: 'DELETE' });
 }
 
+/** Andamento de um envio: bytes mandados, total e porcentagem (0-100). */
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  percent: number;
+}
+
 /**
- * Anexa um arquivo a um aviso (multipart) com PROGRESSO (0-100) e limite de tempo. Usa XMLHttpRequest (e nao fetch) porque so'
- * ele informa o andamento do envio - arquivo grande (.zip/.rar) leva tempo e a tela nao pode ficar "girando" sem dizer nada.
- * Sempre termina: ou devolve o aviso atualizado, ou lanca ApiError com o motivo (inclusive queda de conexao e tempo esgotado).
+ * Envio multipart (arquivo) com PROGRESSO e limite de tempo. Usa XMLHttpRequest (e nao fetch) porque so' ele informa o andamento do envio -
+ * arquivo grande (GIF, .zip) leva tempo e a tela nao pode ficar "girando" sem dizer nada. Todos os envios do site passam por aqui.
+ * Sempre termina: ou devolve o JSON da resposta, ou lanca ApiError com o motivo (inclusive queda de conexao e tempo esgotado).
+ * Nao usa apiFetch() de proposito: ele forca "Content-Type: application/json", o que quebraria o multipart (o navegador define o boundary sozinho).
  */
-export function uploadNoticeFile(noticeId: string, file: File, onProgress?: (percent: number) => void): Promise<ApiNotice> {
+function xhrUpload<T>(path: string, formData: FormData, onProgress?: (p: UploadProgress) => void): Promise<T> {
   return new Promise((resolve, reject) => {
-    const formData = new FormData();
-    formData.append('file', file);
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${API_URL}/notices/${noticeId}/files`);
-    xhr.withCredentials = true; // manda o cookie de sessao; o Content-Type multipart o navegador define sozinho
+    xhr.open('POST', `${API_URL}${path}`);
+    xhr.withCredentials = true; // manda o cookie de sessao
     xhr.timeout = 10 * 60 * 1000; // 10 minutos
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+      if (e.lengthComputable && onProgress) onProgress({ loaded: e.loaded, total: e.total, percent: Math.round((e.loaded / e.total) * 100) });
     };
     xhr.onload = () => {
       let body: { detail?: string } | null = null;
@@ -1175,15 +1169,22 @@ export function uploadNoticeFile(noticeId: string, file: File, onProgress?: (per
         // resposta que nao e' JSON (ex: erro de um proxy no meio do caminho)
       }
       if (xhr.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
-      if (xhr.status >= 200 && xhr.status < 300 && body) return resolve(body as unknown as ApiNotice);
+      if (xhr.status >= 200 && xhr.status < 300 && body) return resolve(body as unknown as T);
       const hint = xhr.status === 413 ? ' (file too large for the server)' : '';
-      reject(new ApiError(xhr.status, body?.detail ?? `Erro ${xhr.status}${hint}`));
+      reject(new ApiError(xhr.status, body?.detail ?? `Error ${xhr.status}${hint}`));
     };
     xhr.onerror = () => reject(new ApiError(0, 'Connection lost while sending the file (it may be too large for the server).'));
     xhr.ontimeout = () => reject(new ApiError(0, 'The upload took too long and was cancelled.'));
     xhr.onabort = () => reject(new ApiError(0, 'Upload cancelled.'));
     xhr.send(formData);
   });
+}
+
+/** Anexa um arquivo a um aviso (multipart) com progresso; devolve o aviso atualizado. */
+export function uploadNoticeFile(noticeId: string, file: File, onProgress?: (p: UploadProgress) => void): Promise<ApiNotice> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return xhrUpload<ApiNotice>(`/notices/${noticeId}/files`, formData, onProgress);
 }
 
 /** Remove um arquivo anexado de um aviso. */
@@ -1375,19 +1376,12 @@ export function getMedia(id: number): Promise<ApiMedia> {
 }
 
 /** Envia uma imagem para o banco de imagens (multipart) e devolve o ID dela. */
-export async function uploadMedia(file: File, name = '', category = ''): Promise<ApiMedia> {
+export function uploadMedia(file: File, name = '', category = '', onProgress?: (p: UploadProgress) => void): Promise<ApiMedia> {
   const formData = new FormData();
   formData.append('file', file);
   if (name) formData.append('name', name);
   if (category) formData.append('category', category);
-  // Sem apiFetch (ele forca JSON): o navegador define o multipart sozinho.
-  const res = await fetch(`${API_URL}/media`, { method: 'POST', body: formData, credentials: 'include' });
-  if (res.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new ApiError(res.status, body?.detail ?? `Error ${res.status} while uploading the image`);
-  }
-  return res.json();
+  return xhrUpload<ApiMedia>('/media', formData, onProgress);
 }
 
 /** Muda o rotulo de uma imagem (so' quem tem media.manage). */

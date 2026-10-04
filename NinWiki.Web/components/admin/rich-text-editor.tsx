@@ -151,6 +151,7 @@ function BlogTools({ editor }: { editor: Editor }) {
   const bx = dict.blogx.editor;
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [sentPct, setSentPct] = useState(0);   // % do envio da imagem (mostrado ao lado do botao)
   const [libraryOpen, setLibraryOpen] = useState(false);
 
   /** Insere no texto uma imagem escolhida no banco de imagens (pede o texto alternativo, para acessibilidade). */
@@ -163,8 +164,9 @@ function BlogTools({ editor }: { editor: Editor }) {
   async function handleImage(file: File | undefined) {
     if (!file) return;
     setUploading(true);
+    setSentPct(0);
     try {
-      const url = await uploadImage(file);
+      const url = await uploadImage(file, (p) => setSentPct(p.percent));
       const alt = window.prompt(bx.imageAlt, '') ?? '';
       editor.chain().focus().setImage({ src: url, alt: alt.trim() }).run();
     } catch (err) {
@@ -194,6 +196,7 @@ function BlogTools({ editor }: { editor: Editor }) {
       <ToolbarButton title={bx.image} disabled={uploading} onClick={() => fileInput.current?.click()}>
         {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
       </ToolbarButton>
+      {uploading && <span className="px-1 text-xs tabular-nums text-muted-foreground" role="status">{sentPct >= 100 ? '…' : `${sentPct}%`}</span>}
       <ToolbarButton title={dict.admin.imageUpload.library} onClick={() => setLibraryOpen(true)}>
         <Images className="h-4 w-4" />
       </ToolbarButton>

@@ -76,7 +76,7 @@ export interface Dictionary {
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterSpecial: string };
-  detail: { attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
+  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
   masteryDetail: {
     notFound: string; backToMasteries: string; elemental: string; nonElemental: string;
     aboutMastery: string; masteryPaths: string; noJutsusInPath: string; jutsusOfMastery: string;
@@ -181,6 +181,7 @@ export interface Dictionary {
       rename: string; renamePrompt: string; delete: string; confirmDelete: string; confirmForce: string; copyId: string; copyUrl: string; copied: string;
       dropHere: string; progress: string; skipped: string; failedFile: string; retryFailed: string; allCategories: string; uncategorized: string; categoryOf: string; newUploadCategory: string; setCategory: string; applyCategory: string; pageOf: string; prev: string; next: string; noUploadPermission: string; restrictedNotice: string; closedDenied: string; searchingAll: string; resetIds: string; resetIdsConfirm: string; resetIdsDone: string; categories: Record<string, string>; selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
     };
+    uploadProgress: { sending: string; processing: string; files: string };
     imageUpload: { dropHere: string; library: string; idResolved: string; idNotFound: string; uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
     dataTable: { noResults: string; selected: string; selectedPlural: string; itemsPerPage: string; pageOf: string; items: string };
     auditLog: {
@@ -236,7 +237,7 @@ export interface Dictionary {
     contentEditor: {
       catMobs: string; catItems: string; catWeapons: string; catMissions: string; catGuides: string;
       mobMonster: string; mobBoss: string; mobNpc: string; mobMount: string;
-      itemGeneral: string; itemRing: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string;
+      itemGeneral: string; itemRing: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string;
       editTitle: string; newTitle: string;
       name: string; category: string; mobType: string; itemType: string; slugLabel: string; back: string; icon: string;
       speed: string; speedPlaceholder: string; requirement: string; requirementPlaceholder: string;
@@ -351,6 +352,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       spawnLocation: 'Onde encontrar',
       attacks: 'Jutsu / Attacks',
       noAttacks: 'Nenhum',
+      itemDetails: 'Detalhes', itemType: 'Tipo',
       maxStack: 'Max Stack',
       castVillage: 'Vila',
       speed: 'Speed',
@@ -736,6 +738,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         bySystem: 'por Sistema',
         created: 'Criada', updated: 'Editada', deleted: 'Apagada',
       },
+      uploadProgress: { sending: 'Enviando', processing: 'Enviado! O servidor está processando…', files: 'arquivos' },
       imageUpload: {
         dropHere: 'Solte a imagem aqui', library: 'Banco de imagens', idResolved: 'Imagem #{id} do banco', idNotFound: 'Não existe imagem #{id} no banco.',
         uploading: 'Enviando...',
@@ -892,7 +895,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         catMobs: 'Mobs', catItems: 'Itens', catWeapons: 'Armas', catMissions: 'Missões', catGuides: 'Guias',
         mobMonster: 'Monstro comum', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Montaria',
         itemGeneral: 'Geral', itemRing: 'Ring', itemConsumable: 'Consumível', itemMaterial: 'Material',
-        itemCurrency: 'Moeda', itemCast: 'Cast',
+        itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade',
         editTitle: 'Editar entry', newTitle: 'Nova entry',
         name: 'Nome', category: 'Categoria', mobType: 'Tipo de mob', itemType: 'Tipo de item',
         slugLabel: 'Slug (identificador na URL)',
@@ -1032,6 +1035,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       spawnLocation: 'Where to find',
       attacks: 'Jutsu / Attacks',
       noAttacks: 'None',
+      itemDetails: 'Details', itemType: 'Type',
       maxStack: 'Max Stack',
       castVillage: 'Village',
       speed: 'Speed',
@@ -1417,6 +1421,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         bySystem: 'by System',
         created: 'Created', updated: 'Updated', deleted: 'Deleted',
       },
+      uploadProgress: { sending: 'Uploading', processing: 'Sent! The server is processing…', files: 'files' },
       imageUpload: {
         dropHere: 'Drop the image here', library: 'Image library', idResolved: 'Library image #{id}', idNotFound: 'There is no image #{id} in the library.',
         uploading: 'Uploading...',
@@ -1573,7 +1578,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         catMobs: 'Mobs', catItems: 'Items', catWeapons: 'Weapons', catMissions: 'Missions', catGuides: 'Guides',
         mobMonster: 'Common monster', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Mount',
         itemGeneral: 'General', itemRing: 'Ring', itemConsumable: 'Consumable', itemMaterial: 'Material',
-        itemCurrency: 'Currency', itemCast: 'Cast',
+        itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority',
         editTitle: 'Edit entry', newTitle: 'New entry',
         name: 'Name', category: 'Category', mobType: 'Mob type', itemType: 'Item type',
         slugLabel: 'Slug (URL identifier)',

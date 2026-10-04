@@ -34,7 +34,7 @@ const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   consumables: ['consumable'],
   materials: ['material'],
   equipment: ['ring'],
-  special: ['general', 'currency', 'cast'],
+  special: ['general', 'currency', 'cast', 'authority'],
 };
 
 interface EntryGroup {

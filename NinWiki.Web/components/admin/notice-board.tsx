@@ -5,6 +5,7 @@
 //   - Quem tem notices.manage (Adm / S.Adm por padrao) posta, edita, apaga e anexa arquivos.
 // A API e' quem decide: esconder os botoes aqui e' so' experiencia de uso.
 
+import { UploadProgressBar } from '@/components/admin/upload-progress';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Download, FileText, Loader2, Megaphone, Paperclip, Pencil, Pin, Plus, Trash2, X } from 'lucide-react';
 import {
@@ -46,7 +47,7 @@ export function NoticeBoard() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState<string | null>(null); // "nome.zip (45%)" enquanto um arquivo sobe
+  const [progress, setProgress] = useState<{ name: string; loaded: number; total: number } | null>(null); // arquivo que esta' subindo (barra de envio)
   const fileInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
@@ -84,9 +85,9 @@ export function NoticeBoard() {
       const saved = form.id ? await updateNotice(form.id, payload) : await createNotice(payload);
       load(); // o aviso ja' aparece na lista, mesmo que os anexos demorem
       for (const file of form.newFiles) {
-        setProgress(`${file.name} (0%)`);
+        setProgress({ name: file.name, loaded: 0, total: file.size });
         try {
-          await uploadNoticeFile(saved.id, file, (pct) => setProgress(`${file.name} (${pct}%)`));
+          await uploadNoticeFile(saved.id, file, (p) => setProgress({ name: file.name, loaded: p.loaded, total: p.total }));
         } catch (err) {
           failures.push(`${file.name}: ${err instanceof ApiError ? err.message : t.uploadError}`);
         }
@@ -197,10 +198,11 @@ export function NoticeBoard() {
           <div className="flex gap-2">
             <Button size="sm" disabled={busy || !form.title.trim()} onClick={submit}>
               {busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              {busy ? (progress ? `${t.uploading} ${progress}` : t.saving) : t.save}
+              {busy ? (progress ? `${t.uploading} ${progress.name}` : t.saving) : t.save}
             </Button>
             <Button size="sm" variant="outline" disabled={busy} onClick={() => setForm(null)}>{t.cancel}</Button>
           </div>
+          {progress && <UploadProgressBar loaded={progress.loaded} total={progress.total} className="max-w-sm" />}
         </div>
       )}
 

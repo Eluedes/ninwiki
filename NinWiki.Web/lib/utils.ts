@@ -32,6 +32,12 @@ export function shouldShowLevel(category: string, itemType: string | null): bool
   return true;
 }
 
+// Tipos de item que empilham (tem "Max Stack" na ficha do jogo: "Can hold max 500 per Stack"): Moeda, Autoridade, Consumivel e Material.
+// Ring e Cast sao pecas unicas; o tipo Geral fica de fora (nao e' certo que empilhe).
+export function itemHasStack(category: string, itemType: string | null | undefined): boolean {
+  return category === 'items' && ['currency', 'authority', 'consumable', 'material'].includes(itemType ?? '');
+}
+
 // Gera um id/slug a partir de um texto: "Leaf Village!" -> "leaf-village". Sem acentos,
 // so' minusculas, numeros e hifen (o formato que a API exige nos ids).
 export function slugify(text: string): string {

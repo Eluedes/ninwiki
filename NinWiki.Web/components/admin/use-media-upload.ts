@@ -34,11 +34,12 @@ function waitFromMessage(message: string): number {
 }
 
 /** Envia uma imagem; 429 (limite) espera o tempo que a API pediu, e falha de rede/5xx tenta de novo com espera crescente. */
-async function uploadWithRetry(file: File, fallbackCategory: string): Promise<ApiMedia> {
+async function uploadWithRetry(file: File, fallbackCategory: string, onSent?: (loaded: number) => void): Promise<ApiMedia> {
   const { name, category } = describeFile(file, fallbackCategory);
   for (let attempt = 0; ; attempt++) {
     try {
-      return await uploadMedia(file, name, category);
+      onSent?.(0);   // nova tentativa: o contador deste arquivo recomeca
+      return await uploadMedia(file, name, category, (p) => onSent?.(p.loaded));
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 0;
       const transient = status === 429 || status === 0 || status === 502 || status === 503 || status === 504;
@@ -55,6 +56,8 @@ export interface UploadState {
   total: number;
   errors: string[];
   skipped: number;
+  loaded: number;       // bytes ja' enviados (todos os arquivos do lote)
+  totalBytes: number;   // bytes do lote inteiro (para a barra de envio)
   failed: File[];   // arquivos que falharam mesmo apos as tentativas (para o botao 'Tentar de novo')
 }
 
@@ -62,16 +65,27 @@ export interface UploadState {
 export function useMediaUpload() {
   const { dict } = useLanguage();
   const t = dict.admin.mediaPage;
-  const [state, setState] = useState<UploadState>({ busy: false, done: 0, total: 0, errors: [], skipped: 0, failed: [] });
+  const [state, setState] = useState<UploadState>({ busy: false, done: 0, total: 0, loaded: 0, totalBytes: 0, errors: [], skipped: 0, failed: [] });
 
   const upload = useCallback(async (files: File[], defaultCategory = ''): Promise<ApiMedia[]> => {
     const images = files.filter((f) => ACCEPTED.test(f.type));
     const skipped = files.length - images.length;
     if (images.length === 0) {
-      setState({ busy: false, done: 0, total: 0, errors: [], skipped, failed: [] });
+      setState({ busy: false, done: 0, total: 0, loaded: 0, totalBytes: 0, errors: [], skipped, failed: [] });
       return [];
     }
-    setState({ busy: true, done: 0, total: images.length, errors: [], skipped, failed: [] });
+    const totalBytes = images.reduce((sum, f) => sum + f.size, 0);
+    const sentBytes = new Map<File, number>();   // bytes ja' enviados de cada arquivo (soma = andamento do lote)
+    let lastPaint = 0;
+    /** Atualiza a barra (no maximo ~7x por segundo: milhares de arquivos nao podem redesenhar a tela a cada evento). */
+    const paint = (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastPaint < 150) return;
+      lastPaint = now;
+      const loaded = [...sentBytes.values()].reduce((a, b) => a + b, 0);
+      setState((s) => ({ ...s, loaded }));
+    };
+    setState({ busy: true, done: 0, total: images.length, loaded: 0, totalBytes, errors: [], skipped, failed: [] });
     const created: ApiMedia[] = [];
     const errors: string[] = [];
     const failed: File[] = [];
@@ -88,19 +102,22 @@ export function useMediaUpload() {
         nextStart = startAt + MIN_GAP_MS;
         if (startAt > now) await new Promise((r) => setTimeout(r, startAt - now));
         try {
-          created.push(await uploadWithRetry(file, defaultCategory));
+          created.push(await uploadWithRetry(file, defaultCategory, (loaded) => { sentBytes.set(file, loaded); paint(); }));
+          sentBytes.set(file, file.size);
         } catch (err) {
           failed.push(file);
           if (err instanceof ApiError && (err.status === 401 || err.status === 403)) aborted = true;
           errors.push(t.failedFile.replace('{name}', file.name).replace('{error}', err instanceof ApiError ? err.message : '?'));
         }
         done += 1;
+        sentBytes.set(file, file.size);   // terminou (ou falhou): conta como 'passou' para a barra nao ficar parada
         setState((s) => ({ ...s, done }));
+        paint(true);
       }
     }
     await Promise.all(Array.from({ length: Math.min(PARALLEL, images.length) }, worker));
     if (aborted) failed.push(...images.slice(next));   // o que nem foi tentado tambem fica para 'Tentar de novo'
-    setState({ busy: false, done, total: images.length, errors, skipped, failed });
+    setState({ busy: false, done, total: images.length, loaded: totalBytes, totalBytes, errors, skipped, failed });
     return created;
   }, [t.failedFile]);
 

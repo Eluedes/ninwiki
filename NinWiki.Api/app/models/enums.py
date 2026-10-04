@@ -16,6 +16,7 @@ class Rarity(str, enum.Enum):
     RARE = "rare"
     EPIC = "epic"
     LEGENDARY = "legendary"
+    ENCHANTED = "enchanted"   # itens encantados do jogo (ex.: Hokuto Sphere, Authority)
 
 
 class ContentCategory(str, enum.Enum):
@@ -63,6 +64,7 @@ class ItemType(str, enum.Enum):
     # cabiam em nenhum dos 4 tipos existentes.
     CURRENCY = "currency"
     CAST = "cast"
+    AUTHORITY = "authority"   # itens de Autoridade do cla (ex.: Hokuto Sphere I): levados ao Altar da Casa do Cla
 
 
 class ContentStatus(str, enum.Enum):
