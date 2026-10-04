@@ -2028,7 +2028,9 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
             velho = (await db.execute(text("SELECT published_at, status FROM posts WHERE source_id = '777000001'"))).first()
         check("o post antigo entra com a DATA ORIGINAL da Steam (2017)", velho is not None and velho[0].year == 2017, str(velho))
         r = await c.post("/steam-news/import", params={"post": "777000001"}, headers=A)
-        check("importar o mesmo post de novo avisa que ja' existe (nao duplica)", r.json()["lastRun"]["imported"] == 0 and "already imported" in r.json()["lastRun"]["errors"][0])
+        async with _Sess() as db:
+            qtd = (await db.execute(text("SELECT count(*) FROM posts WHERE source_id = '777000001'"))).scalar()
+        check("importar o mesmo post de novo ATUALIZA o conteudo (nao duplica)", qtd == 1 and r.json()["lastRun"]["imported"] == 1 and "(updated)" in r.json()["lastRun"]["titles"][0], str(r.json()["lastRun"])[:200])
         check("so' quem publica importa por link (Creator 403)", (await c.post("/steam-news/import", params={"post": "777000001"}, headers=C)).status_code == 403)
         _cfg.steam_news_app_id = ""
         check("desligado (sem STEAM_NEWS_APP_ID): importar da' 404", (await c.post("/steam-news/import", headers=A)).status_code == 404)

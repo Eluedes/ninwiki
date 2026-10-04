@@ -198,7 +198,7 @@
     @apply text-ink-200 leading-relaxed;
   }
   .prose-shinobi strong {
-    @apply text-chakra-300 font-semibold;
+    @apply font-semibold text-ink-100;
   }
 }
 
@@ -299,7 +299,7 @@
    ============================================================================ */
 .ProseMirror img.post-image,
 .prose-shinobi img.post-image {
-  @apply my-4 h-auto max-w-full rounded-lg border border-border;
+  @apply my-5 h-auto max-w-full rounded-lg border border-border shadow-lg shadow-black/30;
 }
 .ProseMirror .video-embed,
 .prose-shinobi .video-embed {
@@ -381,17 +381,28 @@
   @apply mb-3 mt-6 text-3xl font-bold tracking-tight text-card-foreground;
 }
 .prose-shinobi h2 {
-  @apply mb-2 mt-6 text-2xl font-bold tracking-tight text-card-foreground;
+  @apply mb-3 mt-8 border-b border-border pb-2 text-2xl font-bold tracking-tight text-card-foreground;
 }
 .prose-shinobi h3 {
   @apply mb-2 mt-5 text-xl font-semibold tracking-tight text-card-foreground;
 }
 .prose-shinobi p {
-  @apply my-2;
+  @apply my-3 leading-7;
+}
+.prose-shinobi li {
+  @apply my-1.5 leading-7;
 }
 .prose-shinobi ul {
   @apply my-2 list-disc pl-6;
 }
 .prose-shinobi ol {
   @apply my-2 list-decimal pl-6;
+}
+
+/* Texto do post em pagina larga (blog): letra um pouco maior e mais espacada, como as noticias da Steam. */
+.prose-shinobi-lg {
+  @apply text-base leading-8 sm:text-[1.0625rem];
+}
+.prose-shinobi-lg .prose-shinobi {
+  @apply leading-8;
 }
