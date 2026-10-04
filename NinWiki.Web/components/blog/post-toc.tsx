@@ -6,12 +6,12 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
 import type { TocItem } from '@/lib/blog-utils';
 
-/** Indice (TOC) do post; some se houver menos de 2 titulos. */
-export function PostToc({ items }: { items: TocItem[] }) {
+/** Indice (TOC) do post; some se houver menos de 2 titulos. `className` ajusta a posicao (no desktop fica numa coluna lateral fixa). */
+export function PostToc({ items, className }: { items: TocItem[]; className?: string }) {
   const { dict } = useLanguage();
   if (items.length < 2) return null;
   return (
-    <nav aria-label={dict.blogx.public.contents} className="mt-6 rounded-xl border border-border bg-card p-4">
+    <nav aria-label={dict.blogx.public.contents} className={cn('rounded-xl border border-border bg-card p-4', className)}>
       <p className="mb-2 text-sm font-bold text-card-foreground">{dict.blogx.public.contents}</p>
       <ul className="space-y-1 text-sm">
         {items.map((item) => (

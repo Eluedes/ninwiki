@@ -5,7 +5,7 @@
 
 import { useLanguage } from '@/components/providers/language-provider';
 import { PageHeader } from '@/components/lore/page-header';
-import { PostCard } from '@/components/blog/post-card';
+import { PostCardLarge } from '@/components/blog/post-card';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { localizedText } from '@/lib/localized';
@@ -20,7 +20,7 @@ export function BlogPageClient({
   const { dict, locale } = useLanguage();
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 animate-fade-in">
+    <div className="mx-auto max-w-5xl px-4 py-8 animate-fade-in">
       <PageHeader
         title={dict.blog.title}
         subtitle={dict.blog.subtitle}
@@ -48,9 +48,9 @@ export function BlogPageClient({
       ) : posts.length === 0 ? (
         <p className="text-muted-foreground">{dict.blog.empty}</p>
       ) : (
-        <div className="space-y-3">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+        <div className="grid gap-5 sm:grid-cols-2">
+          {posts.map((post, i) => (
+            <PostCardLarge key={post.id} post={post} featured={i === 0 && !activeTag} />
           ))}
         </div>
       )}

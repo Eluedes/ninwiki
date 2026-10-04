@@ -398,3 +398,11 @@
 .prose-shinobi ol {
   @apply my-2 list-decimal pl-6;
 }
+
+/* Texto do post em pagina larga (blog): letra um pouco maior e mais espacada, como as noticias da Steam. */
+.prose-shinobi-lg {
+  @apply text-base leading-8 sm:text-[1.0625rem];
+}
+.prose-shinobi-lg .prose-shinobi {
+  @apply leading-8;
+}
