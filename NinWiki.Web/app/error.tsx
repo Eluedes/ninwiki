@@ -7,12 +7,13 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
-import { reportClientError } from '@/lib/report-error';
+import { reloadOnStaleChunk, reportClientError } from '@/lib/report-error';
 
 /** Mensagem de erro de pagina, com "tentar de novo" e "voltar ao inicio". */
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const { dict } = useLanguage();
   useEffect(() => {
+    if (reloadOnStaleChunk(error)) return; // versao antiga do site apos deploy: recarrega em vez de reportar
     reportClientError(`${error.name}: ${error.message}`, 'render', error.digest);
   }, [error]);
 

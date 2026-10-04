@@ -9,6 +9,9 @@ Nao le' nem grava nada: recebe os campos do problema e devolve texto (facil de t
 
 # (trecho do titulo em minusculas, explicacao) - vale a primeira regra que casar
 _BY_TITLE: list[tuple[str, str]] = [
+    ("chunkloaderror", "O navegador abriu uma página ANTIGA do site (aberta antes de um deploy) e tentou baixar um arquivo de código que já foi "
+     "trocado pela versão nova. Não é bug: acontece logo depois de cada deploy/reinício do Web. O site já recarrega sozinho uma vez; se o aviso "
+     "continuar muito tempo depois do deploy, confira se os arquivos .next foram enviados por completo para o app Web."),
     ("rate limit exceeded", "Alguém (um IP) mandou pedidos demais num minuto e a API respondeu 429 para segurar. Se foi você enviando muitas "
      "imagens, copiando conteúdo ou usando o painel rapido demais, é normal e nada foi perdido: o que foi barrado pode ser reenviado. Se o IP é desconhecido "
      "e as ocorrencias não param, pode ser robô/flood: bloqueie o IP na Cloudflare. O limite pode ser ajustado nas variáveis da API "

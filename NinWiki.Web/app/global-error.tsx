@@ -5,11 +5,12 @@
 // fixo em ingles, o idioma padrao do site). O erro tambem e' reportado para a equipe.
 
 import { useEffect } from 'react';
-import { reportClientError } from '@/lib/report-error';
+import { reloadOnStaleChunk, reportClientError } from '@/lib/report-error';
 
 /** Tela de erro total do site (quando nem o layout raiz funciona). */
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
+    if (reloadOnStaleChunk(error)) return; // versao antiga do site apos deploy: recarrega em vez de reportar
     reportClientError(`${error.name}: ${error.message}`, 'render', error.digest);
   }, [error]);
 
