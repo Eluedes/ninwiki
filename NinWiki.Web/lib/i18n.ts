@@ -245,7 +245,7 @@ export interface Dictionary {
       weaponBaseDamage: string; weaponBaseDamagePlaceholder: string;
       weaponSpecialAbility: string; weaponSpecialAbilityPlaceholder: string;
       weaponKnockbackDistance: string; weaponKnockbackDistancePlaceholder: string;
-      maxStack: string; maxStackPlaceholder: string; castVillage: string;
+      levelZeroHint: string; maxStack: string; maxStackPlaceholder: string; castVillage: string;
       rarity: string; level: string; image: string;
       description: string; descriptionPlaceholder: string; optionalSuffix: string;
       lore: string; loreOptional: string; lorePlaceholder: string;
@@ -908,7 +908,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         weaponBaseDamage: 'Dano Base', weaponBaseDamagePlaceholder: '',
         weaponSpecialAbility: 'Habilidade Especial', weaponSpecialAbilityPlaceholder: '',
         weaponKnockbackDistance: 'Distância de Knockback', weaponKnockbackDistancePlaceholder: '',
-        maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Vila que pode usar',
+        levelZeroHint: 'Nível 0 = item sem nível (nada aparece no site).', maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Vila que pode usar',
         rarity: 'Raridade', level: 'Nível', image: 'Imagem',
         description: 'Descrição', descriptionPlaceholder: 'Descrição curta, sempre visível na página...', optionalSuffix: '(opcional)',
         lore: 'Lore', loreOptional: 'Lore (opcional)', lorePlaceholder: 'História, contexto...',
@@ -1591,7 +1591,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         weaponBaseDamage: 'Base Damage', weaponBaseDamagePlaceholder: '',
         weaponSpecialAbility: 'Special Ability', weaponSpecialAbilityPlaceholder: '',
         weaponKnockbackDistance: 'Knockback Distance', weaponKnockbackDistancePlaceholder: '',
-        maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Village that can use it',
+        levelZeroHint: 'Level 0 = item without a level (nothing is shown on the site).', maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Village that can use it',
         rarity: 'Rarity', level: 'Level', image: 'Image',
         description: 'Description', descriptionPlaceholder: 'Short description, always visible on the page...', optionalSuffix: '(optional)',
         lore: 'Lore', loreOptional: 'Lore (optional)', lorePlaceholder: 'History, context...',

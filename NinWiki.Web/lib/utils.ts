@@ -26,7 +26,9 @@ export function cn(...inputs: ClassValue[]) {
 // Material ou Consumable, por exemplo), so' Ring, Accessory e Cast entre os tipos
 // de Item. Mob/Missao/Guia sempre mostram (nunca chamam esta funcao -
 // so' Weapons e Items passam por ela).
-export function shouldShowLevel(category: string, itemType: string | null): boolean {
+// `level` (opcional): em itens e armas, NIVEL 0 significa "sem nivel" (pedido do Rafael) - a ficha e o card nao mostram nada.
+export function shouldShowLevel(category: string, itemType: string | null, level?: number): boolean {
+  if ((category === 'weapons' || category === 'items') && level === 0) return false;
   if (category === 'weapons') return true;
   if (category === 'items') return itemType === 'ring' || itemType === 'accessory' || itemType === 'cast';
   return true;

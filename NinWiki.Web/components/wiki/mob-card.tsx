@@ -46,9 +46,11 @@ export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary;
         <div className="min-w-0 flex-1 space-y-1.5">
           <p className="truncate text-base font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">{name}</p>
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">
-              {kind === 'weapon' ? dict.detail.levelReq : dict.detail.level} {entry.level}
-            </span>
+            {!(kind === 'weapon' && entry.level === 0) && (
+              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">
+                {kind === 'weapon' ? dict.detail.levelReq : dict.detail.level} {entry.level}
+              </span>
+            )}
             {type && (
               <span className={cn('rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase', type.className)}>
                 {locale === 'pt' ? type.pt : type.en}

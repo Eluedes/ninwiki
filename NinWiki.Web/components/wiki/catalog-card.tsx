@@ -73,7 +73,7 @@ export function CatalogCard({ entry }: CatalogCardProps) {
               </span>
             )}
           </div>
-          {shouldShowLevel(entry.category, entry.itemType) && (
+          {shouldShowLevel(entry.category, entry.itemType, entry.level) && (
             <p className="text-xs italic text-muted-foreground">
               {dict.detail.level} {entry.level}
             </p>
