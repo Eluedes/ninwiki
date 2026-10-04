@@ -5,7 +5,7 @@
 
 // Raridade de um item/drop. Usado tanto para exibir cor/selo quanto
 // para ordenar visualmente do mais comum ao mais raro.
-export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'enchanted';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'enchanted' | 'unique';
 
 // Categorias do catalogo publico (aparecem no menu e nas rotas /catalog/[category]).
 // "masteries" tem pagina propria em /masteries (nao usa mais o catalogo

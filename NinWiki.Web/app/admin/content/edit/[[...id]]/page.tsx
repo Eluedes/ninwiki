@@ -111,6 +111,7 @@ const rarityOptions: { value: Rarity; label: string }[] = [
   { value: 'epic', label: 'Epic' },
   { value: 'legendary', label: 'Legendary' },
   { value: 'enchanted', label: 'Enchanted' },
+  { value: 'unique', label: 'Unique' },
 ];
 
 // Atributos que um item/arma pode dar (lista fixa do jogo): escolhidos num seletor no editor.
