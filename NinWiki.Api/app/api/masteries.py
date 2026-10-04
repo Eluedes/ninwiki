@@ -224,6 +224,26 @@ async def get_jutsu(jutsu_id: str, db: AsyncSession = Depends(get_db)):
     return await _get_jutsu_or_404(jutsu_id, db)
 
 
+async def _translate_level_names(en: list[str], old_en: list[str], old_pt: list[str], given: list[str], force: bool = False) -> list[str]:
+    """
+    Traducao (PT) do nome por nivel, na mesma ordem de `en`. Para cada nivel com nome:
+    1) valor digitado a mao (`given`) vale; 2) se o nome em ingles NAO mudou desde a ultima vez, mantem a traducao que ja' existe;
+    3) senao pede a' DeepL (sem chave/falha = fica vazio e o site mostra o nome em ingles). `force` (botao Retraduzir) ignora 1 e 2.
+    So' vazios = lista vazia.
+    """
+    out: list[str] = []
+    for i, name in enumerate(en):
+        if not name:
+            out.append("")
+        elif not force and i < len(given) and given[i]:
+            out.append(given[i])
+        elif not force and i < len(old_en) and old_en[i] == name and i < len(old_pt) and old_pt[i]:
+            out.append(old_pt[i])
+        else:
+            out.append(await translate_field(name) or "")
+    return out if any(out) else []
+
+
 @router.post("/jutsus", response_model=JutsuRead, status_code=201)
 async def create_jutsu(payload: JutsuWrite, staff: User = Depends(require_permission(Permission.LORE_EDIT)), db: AsyncSession = Depends(get_db)):
     """Cria um jutsu (exige lore.edit); valida mastery/caminho e registra no log."""
@@ -237,6 +257,7 @@ async def create_jutsu(payload: JutsuWrite, staff: User = Depends(require_permis
     jutsu = Jutsu(**payload.model_dump())
     db.add(jutsu)
     await fill_missing_translations(jutsu, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")])
+    jutsu.name_by_level_pt = await _translate_level_names(jutsu.name_by_level, [], [], payload.name_by_level_pt)
     await db.commit()
     await log_action(db, actor=staff, action="create", entity_type="jutsu", entity_id=jutsu.id, diff={"name": jutsu.name})
     await db.commit()
@@ -255,9 +276,11 @@ async def update_jutsu(jutsu_id: str, payload: JutsuWrite, staff: User = Depends
     await _validate_mastery_and_path(payload, db)
 
     before_name = jutsu.name
+    old_level_names, old_level_names_pt = list(jutsu.name_by_level or []), list(jutsu.name_by_level_pt or [])
     apply_scalar_fields(jutsu, payload)
 
     await fill_missing_translations(jutsu, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")])
+    jutsu.name_by_level_pt = await _translate_level_names(jutsu.name_by_level, old_level_names, old_level_names_pt, payload.name_by_level_pt)
 
     await db.commit()
     await log_action(db, actor=staff, action="update", entity_type="jutsu", entity_id=jutsu_id,
@@ -275,6 +298,9 @@ async def retranslate_jutsu(jutsu_id: str, staff: User = Depends(require_permiss
         translated = await translate_field(getattr(jutsu, field_en))
         if translated:
             setattr(jutsu, field_pt, translated)
+    translated_names = await _translate_level_names(jutsu.name_by_level, [], [], [], force=True)
+    if translated_names:   # sem chave/falha da DeepL, a traducao que ja' existe e' preservada
+        jutsu.name_by_level_pt = translated_names
     await db.commit()
     await db.refresh(jutsu)
     return jutsu

@@ -1489,6 +1489,22 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["x" * 101]}, headers=A)
     check("nome por nivel acima de 100 caracteres e' recusado", r.status_code == 422)
     check("jutsu sem nome por nivel volta lista vazia", (await c.get(f"/jutsus/{SLUG}-jg")).json()["nameByLevel"] == [])
+
+    async def deepl_nivel(textos: list[str], reverse: bool = False) -> list[str]:
+        """DeepL de mentira: poe 'PT:' na frente."""
+        return [("EN:" if reverse else "PT:") + t for t in textos]
+
+    with patch("app.core.translation._deepl_translate_batch", new=deepl_nivel):
+        r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "", "", "Triple Phoenix Fireball Technique"]}, headers=A)
+        check("nome por nivel e' traduzido pela DeepL ao salvar", r.status_code == 200 and r.json()["nameByLevelPt"] == ["", "", "", "PT:Triple Phoenix Fireball Technique"], r.text[:240])
+        r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "", "", "Triple Phoenix Fireball Technique"], "nameByLevelPt": ["", "", "", "Tecnica Manual"]}, headers=A)
+        check("traducao digitada a mao vale", r.json()["nameByLevelPt"][3] == "Tecnica Manual", r.text[:240])
+        r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "", "", "Triple Phoenix Fireball Technique"]}, headers=A)
+        check("salvar de novo SEM mexer no nome mantem a traducao que ja' existe", r.json()["nameByLevelPt"][3] == "Tecnica Manual", r.text[:240])
+        r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "", "", "Great Fireball"]}, headers=A)
+        check("trocar o nome em ingles retraduz", r.json()["nameByLevelPt"][3] == "PT:Great Fireball", r.text[:240])
+        r = await c.post(f"/jutsus/{SLUG}-jf/retranslate", headers=A)
+        check("Retraduzir tambem refaz o nome por nivel", r.status_code == 200 and r.json()["nameByLevelPt"][3] == "PT:Great Fireball", r.text[:200])
     await c.delete(f"/jutsus/{SLUG}-jf", headers=A)
     await c.delete(f"/jutsus/{SLUG}-jg", headers=A)
 
