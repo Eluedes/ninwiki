@@ -1,5 +1,6 @@
 // Utilitarios compartilhados. `cn` junta nomes de classe CSS e resolve conflitos do Tailwind (a ultima classe vence).
 
+import { isEquipmentType } from '@/lib/item-types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -30,7 +31,7 @@ export function cn(...inputs: ClassValue[]) {
 export function shouldShowLevel(category: string, itemType: string | null, level?: number): boolean {
   if ((category === 'weapons' || category === 'items') && level === 0) return false;
   if (category === 'weapons') return true;
-  if (category === 'items') return itemType === 'ring' || itemType === 'accessory' || itemType === 'cast';
+  if (category === 'items') return isEquipmentType(itemType) || itemType === 'cast';
   return true;
 }
 

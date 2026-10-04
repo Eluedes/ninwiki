@@ -10,6 +10,7 @@
 
 import { cn, itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
+import { itemTypeLabels } from '@/lib/item-types';
 import { useLanguage } from '@/components/providers/language-provider';
 import { DropRow } from '@/components/wiki/drop-row';
 import { WikiImage } from '@/components/wiki/wiki-image';
@@ -203,10 +204,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   // A imagem grande ja' aparece no topo da pagina (com o brilho da raridade), entao aqui nao se repete.
   // So' entra a linha que tiver valor (um item sem stack nao mostra "Max Stack: ").
   const ce = dict.admin.contentEditor;
-  const typeLabels: Record<string, string> = {
-    general: ce.itemGeneral, ring: ce.itemRing, accessory: ce.itemAccessory, consumable: ce.itemConsumable, material: ce.itemMaterial,
-    currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority,
-  };
+  const typeLabels = itemTypeLabels(ce);
   const rarity = rarityConfig[entry.rarity];
   const detailRows: { icon: LucideIcon; label: string; value: string; tone?: string }[] = [];
   if (entry.category === 'items') {

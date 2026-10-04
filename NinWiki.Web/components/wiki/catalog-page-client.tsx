@@ -6,6 +6,7 @@
 // pai (app/(wiki)/catalog/[category]/page.tsx). Precisa ser Client
 // Component porque usa useState (texto da busca, secoes recolhidas).
 
+import { EQUIPMENT_TYPES } from '@/lib/item-types';
 import { useState, useMemo } from 'react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { CatalogCard } from '@/components/wiki/catalog-card';
@@ -33,7 +34,7 @@ type ItemsFilterKey = 'consumables' | 'materials' | 'equipment' | 'special';
 const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   consumables: ['consumable'],
   materials: ['currency', 'material'],   // Moeda (currency) fica em Materials; 'material' so' existe em itens antigos
-  equipment: ['ring', 'accessory'],   // Accessory fica junto com os Rings
+  equipment: [...EQUIPMENT_TYPES],   // Ring, Accessory e as pecas de roupa ficam juntos
   special: ['general', 'cast', 'authority'],
 };
 

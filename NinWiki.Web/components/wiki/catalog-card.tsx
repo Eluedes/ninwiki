@@ -25,6 +25,12 @@ const mobTypeBadge: Record<string, { label: string; className: string }> = {
 const itemTypeBadge: Record<string, { label: string; className: string }> = {
   ring: { label: 'Ring', className: 'bg-violet-500/15 text-violet-400' },
   accessory: { label: 'Accessory', className: 'bg-fuchsia-500/15 text-fuchsia-400' },
+  shirt: { label: 'Shirt', className: 'bg-rose-500/15 text-rose-400' },
+  vest: { label: 'Vest', className: 'bg-orange-500/15 text-orange-400' },
+  pant: { label: 'Pant', className: 'bg-indigo-500/15 text-indigo-400' },
+  hat: { label: 'Hat', className: 'bg-teal-500/15 text-teal-400' },
+  mask: { label: 'Mask', className: 'bg-purple-500/15 text-purple-400' },
+  shoe: { label: 'Shoe', className: 'bg-lime-500/15 text-lime-400' },
   authority: { label: 'Authority', className: 'bg-cyan-400/15 text-cyan-300' },
 };
 
