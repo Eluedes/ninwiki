@@ -50,16 +50,16 @@ const emptyForm: JutsuFormValues = {
   requiredStat: '',
   scrollType: '',
   shop: '',
-  levels: [{ damage: '', cooldown: '' }],
+  levels: [{ name: '', damage: '', cooldown: '' }],
   castType: '',
   jutsuClass: '',
   debuff: '',
 };
 
 /** Tabela de niveis a partir do jutsu salvo (uma linha por nivel; pelo menos uma). */
-function levelsFromApi(j: JutsuInput): { damage: string; cooldown: string }[] {
-  const count = Math.min(10, Math.max(1, j.maxLevel ?? 1, j.damageByLevel?.length ?? 0, j.cooldownByLevel?.length ?? 0));
-  return Array.from({ length: count }, (_, i) => ({ damage: j.damageByLevel?.[i] ?? '', cooldown: j.cooldownByLevel?.[i] ?? '' }));
+function levelsFromApi(j: JutsuInput): { name: string; damage: string; cooldown: string }[] {
+  const count = Math.min(10, Math.max(1, j.maxLevel ?? 1, j.damageByLevel?.length ?? 0, j.cooldownByLevel?.length ?? 0, j.nameByLevel?.length ?? 0));
+  return Array.from({ length: count }, (_, i) => ({ name: j.nameByLevel?.[i] ?? '', damage: j.damageByLevel?.[i] ?? '', cooldown: j.cooldownByLevel?.[i] ?? '' }));
 }
 
 /** Uma coluna da tabela de niveis como lista para a API (tudo vazio vira lista vazia). */
@@ -159,6 +159,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         maxLevel: values.levels.length,
         damageByLevel: levelColumn(values.levels.map((l) => l.damage)),
         cooldownByLevel: levelColumn(values.levels.map((l) => l.cooldown)),
+        nameByLevel: levelColumn(values.levels.map((l) => l.name)),   // nome do jutsu em cada nivel (tudo vazio = o nome nao muda)
         namePt: values.namePt ?? null,
         descriptionPt: values.descriptionPt ?? null,
         longDescriptionPt: values.longDescriptionPt ?? null,
@@ -345,8 +346,9 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <p className="text-xs text-muted-foreground">{jf.levelsHint}</p>
             <div className="space-y-2">
               {levelRows.fields.map((field, i) => (
-                <div key={field.id} className="grid grid-cols-[4.5rem_1fr_1fr_auto] items-center gap-2">
+                <div key={field.id} className="grid grid-cols-[4.5rem_1fr_auto] sm:grid-cols-[4.5rem_1.4fr_1fr_1fr_auto] items-center gap-2">
                   <span className="text-sm font-medium text-muted-foreground">{jf.levelN.replace('{n}', String(i + 1))}</span>
+                  <Input {...register(`levels.${i}.name` as const)} placeholder={jf.levelNamePlaceholder} maxLength={100} className="col-span-2 sm:col-span-1" />
                   <Input {...register(`levels.${i}.damage` as const)} placeholder={jf.baseDamage} maxLength={40} />
                   <Input {...register(`levels.${i}.cooldown` as const)} placeholder={jf.cooldown} maxLength={40} />
                   <button type="button" title={jf.removeLevel} disabled={levelRows.fields.length <= 1} onClick={() => levelRows.remove(i)}
@@ -355,7 +357,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
               ))}
             </div>
             {levelRows.fields.length < 10 && (
-              <Button type="button" variant="outline" size="sm" onClick={() => levelRows.append({ damage: '', cooldown: '' })}>
+              <Button type="button" variant="outline" size="sm" onClick={() => levelRows.append({ name: '', damage: '', cooldown: '' })}>
                 <Plus className="mr-1.5 h-4 w-4" />{jf.addLevel}
               </Button>
             )}

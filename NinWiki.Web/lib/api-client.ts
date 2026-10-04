@@ -335,6 +335,7 @@ export interface ApiJutsu {
   maxLevel: number;
   damageByLevel: string[];
   cooldownByLevel: string[];
+  nameByLevel?: string[];   // nome do jutsu em cada nivel (vazio = igual ao nome principal)
   castType: string;
   jutsuClass: string;
   debuff: string;
