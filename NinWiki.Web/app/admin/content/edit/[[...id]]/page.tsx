@@ -40,6 +40,7 @@ import {
 } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
+import { EQUIPMENT_GROUP, isEquipmentType } from '@/lib/item-types';
 import { SignedStepperInput } from '@/components/admin/signed-stepper-input';
 import { JutsuPicker } from '@/components/admin/jutsu-picker';
 import { EmojiPicker } from '@/components/admin/emoji-picker';
@@ -74,26 +75,29 @@ function getMobTypeOptions(t: Dictionary['admin']['contentEditor']): { value: Mo
 }
 
 /** Opcoes do campo 'tipo de item' no idioma atual. */
-function getItemTypeOptions(t: Dictionary['admin']['contentEditor'], current?: ItemType | null): { value: ItemType; label: string }[] {
-  // 'Material' saiu da lista (pedido do Rafael: o que era material agora e' Moeda/Currency, que fica na categoria Materials do catalogo);
-  // so' aparece se o item JA' for desse tipo (itens antigos continuam editaveis e nao perdem o tipo ao salvar).
-  const all: { value: ItemType; label: string }[] = [
+function getItemTypeOptions(t: Dictionary['admin']['contentEditor'], current?: ItemType | null): { value: string; label: string }[] {
+  // O 1o seletor tem "Equipment" (grupo) em vez de cada peca: a peca (Ring, Hat...) escolhe-se num 2o seletor logo abaixo (ver getEquipmentOptions).
+  // 'Material' saiu da lista (o que era material agora e' Moeda/Currency); so' aparece se o item JA' for desse tipo (itens antigos nao perdem o tipo).
+  const all: { value: string; label: string }[] = [
     { value: 'general', label: t.itemGeneral },
-    { value: 'ring', label: t.itemRing },
-    { value: 'accessory', label: t.itemAccessory },
-    { value: 'shirt', label: t.itemShirt },
-    { value: 'vest', label: t.itemVest },
-    { value: 'pant', label: t.itemPant },
-    { value: 'hat', label: t.itemHat },
-    { value: 'mask', label: t.itemMask },
-    { value: 'shoe', label: t.itemShoe },
+    { value: EQUIPMENT_GROUP, label: t.itemEquipment },
     { value: 'consumable', label: t.itemConsumable },
     { value: 'material', label: t.itemMaterial },
     { value: 'currency', label: t.itemCurrency },
     { value: 'cast', label: t.itemCast },
     { value: 'authority', label: t.itemAuthority },
+    { value: 'pack', label: t.itemPack },
   ];
   return all.filter((o) => o.value !== 'material' || current === 'material');
+}
+
+/** As pecas do grupo Equipment (2o seletor): Ring, Accessory, Shirt, Vest, Pant, Hat, Mask e Shoe. */
+function getEquipmentOptions(t: Dictionary['admin']['contentEditor']): { value: ItemType; label: string }[] {
+  return [
+    { value: 'ring', label: t.itemRing }, { value: 'accessory', label: t.itemAccessory }, { value: 'shirt', label: t.itemShirt },
+    { value: 'vest', label: t.itemVest }, { value: 'pant', label: t.itemPant }, { value: 'hat', label: t.itemHat },
+    { value: 'mask', label: t.itemMask }, { value: 'shoe', label: t.itemShoe },
+  ];
 }
 
 // Raridade fica de fora de proposito: os 6 nomes (Common/Uncommon/Rare/
@@ -204,6 +208,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   const category = useWatch({ control, name: 'category' });
   const itemType = useWatch({ control, name: 'itemType' });
   const itemTypeOptions = getItemTypeOptions(t, itemType);
+  const equipmentOptions = getEquipmentOptions(t);
 
   useEffect(() => {
     if (!isEdit || !rawId) return;
@@ -463,14 +468,33 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
                 name="itemType"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value ?? undefined} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent>
-                      {itemTypeOptions.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <>
+                    {/* 1o seletor: tipo do item. "Equipment" e' um grupo: ao escolher, aparece o 2o seletor com a peca. */}
+                    <Select
+                      value={isEquipmentType(field.value) ? EQUIPMENT_GROUP : (field.value ?? undefined)}
+                      onValueChange={(v) => field.onChange(v === EQUIPMENT_GROUP ? (isEquipmentType(field.value) ? field.value : 'ring') : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        {itemTypeOptions.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {isEquipmentType(field.value) && (
+                      <div className="space-y-2 pt-2">
+                        <label className="text-sm font-semibold text-card-foreground">{t.equipmentKind}</label>
+                        <Select value={field.value ?? undefined} onValueChange={field.onChange}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {equipmentOptions.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </>
                 )}
               />
             </div>

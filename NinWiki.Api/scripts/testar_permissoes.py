@@ -257,6 +257,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}, headers=A)
     r = await c.get(f"/content-items/{mob_id}", headers=C)
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
+    r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
+    check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("rar-ruim"), "rarity": "mitico"}, headers=C)
     check("raridade inexistente continua recusada (422)", r.status_code == 422)
     r = await c.get(f"/content-items/{rasc_id}")

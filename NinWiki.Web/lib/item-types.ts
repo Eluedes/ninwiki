@@ -10,11 +10,14 @@ export function isEquipmentType(itemType: string | null | undefined): boolean {
   return (EQUIPMENT_TYPES as readonly string[]).includes(itemType ?? '');
 }
 
+/** Valor do seletor "Item type" que representa o GRUPO Equipment (o tipo gravado e' a peca escolhida no 2o seletor: ring, hat...). */
+export const EQUIPMENT_GROUP = 'equipment';
+
 /** Rotulo de cada tipo de item no idioma atual (Geral, Ring, Camisa...). */
 export function itemTypeLabels(ce: Dictionary['admin']['contentEditor']): Record<string, string> {
   return {
     general: ce.itemGeneral, ring: ce.itemRing, accessory: ce.itemAccessory, shirt: ce.itemShirt, vest: ce.itemVest, pant: ce.itemPant,
     hat: ce.itemHat, mask: ce.itemMask, shoe: ce.itemShoe, consumable: ce.itemConsumable, material: ce.itemMaterial,
-    currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority,
+    currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority, pack: ce.itemPack,
   };
 }

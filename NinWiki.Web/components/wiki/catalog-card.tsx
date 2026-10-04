@@ -31,6 +31,7 @@ const itemTypeBadge: Record<string, { label: string; className: string }> = {
   hat: { label: 'Hat', className: 'bg-teal-500/15 text-teal-400' },
   mask: { label: 'Mask', className: 'bg-purple-500/15 text-purple-400' },
   shoe: { label: 'Shoe', className: 'bg-lime-500/15 text-lime-400' },
+  pack: { label: 'Pack', className: 'bg-amber-500/15 text-amber-400' },
   authority: { label: 'Authority', className: 'bg-cyan-400/15 text-cyan-300' },
 };
 

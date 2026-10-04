@@ -72,6 +72,7 @@ class ItemType(str, enum.Enum):
     HAT = "hat"
     MASK = "mask"
     SHOE = "shoe"
+    PACK = "pack"   # pacotes (catalogo "Pack" da pagina de itens)
     AUTHORITY = "authority"   # itens de Autoridade do cla (ex.: Hokuto Sphere I): levados ao Altar da Casa do Cla
 
 
