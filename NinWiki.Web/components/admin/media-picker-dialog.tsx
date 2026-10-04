@@ -3,6 +3,7 @@
 // Janela "Escolher imagem do banco de imagens": grade com miniaturas, busca por nome ou ID, envio de imagens novas e clique para escolher.
 // Usada pelo campo de imagem (ImageUploadField) e pelo botao de imagem do editor do blog.
 
+import { UploadProgressBar } from '@/components/admin/upload-progress';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, Search, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -89,6 +90,7 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
             </>
           )}
         </div>
+        {up.busy && <UploadProgressBar loaded={up.loaded} total={up.totalBytes} detail={`${up.done}/${up.total} ${dict.admin.uploadProgress.files}`} />}
         {error && <p className="text-sm text-destructive">{error}</p>}
         {up.errors.map((e) => <p key={e} className="text-sm text-destructive">{e}</p>)}
         {up.skipped > 0 && <p className="text-sm text-amber-400">{t.skipped.replace('{n}', String(up.skipped))}</p>}

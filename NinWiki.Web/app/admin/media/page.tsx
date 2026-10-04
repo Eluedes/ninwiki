@@ -4,6 +4,7 @@
 // Ver: uploads.create. Enviar (lote/arrastar e soltar): media.upload (padrao so' S.Adm). Renomear, categoria, apagar e importar da pasta: media.manage (a API confere de novo).
 // 100 imagens por pagina, com filtro por categoria (weapon, clothing...).
 
+import { UploadProgressBar } from '@/components/admin/upload-progress';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, Copy, FolderSync, Images, Loader2, Pencil, Search, Trash2, Upload } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -278,6 +279,8 @@ export default function MediaPage() {
           </Button>
         )}
       </div>
+
+      {up.busy && <UploadProgressBar loaded={up.loaded} total={up.totalBytes} detail={`${up.done}/${up.total} ${dict.admin.uploadProgress.files}`} />}
 
       {/* Filtro por categoria (com a quantidade de cada uma) */}
       <div className="flex flex-wrap gap-1.5">

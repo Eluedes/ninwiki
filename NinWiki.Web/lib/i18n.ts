@@ -181,6 +181,7 @@ export interface Dictionary {
       rename: string; renamePrompt: string; delete: string; confirmDelete: string; confirmForce: string; copyId: string; copyUrl: string; copied: string;
       dropHere: string; progress: string; skipped: string; failedFile: string; retryFailed: string; allCategories: string; uncategorized: string; categoryOf: string; newUploadCategory: string; setCategory: string; applyCategory: string; pageOf: string; prev: string; next: string; noUploadPermission: string; restrictedNotice: string; closedDenied: string; searchingAll: string; resetIds: string; resetIdsConfirm: string; resetIdsDone: string; categories: Record<string, string>; selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
     };
+    uploadProgress: { sending: string; processing: string; files: string };
     imageUpload: { dropHere: string; library: string; idResolved: string; idNotFound: string; uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
     dataTable: { noResults: string; selected: string; selectedPlural: string; itemsPerPage: string; pageOf: string; items: string };
     auditLog: {
@@ -736,6 +737,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         bySystem: 'por Sistema',
         created: 'Criada', updated: 'Editada', deleted: 'Apagada',
       },
+      uploadProgress: { sending: 'Enviando', processing: 'Enviado! O servidor está processando…', files: 'arquivos' },
       imageUpload: {
         dropHere: 'Solte a imagem aqui', library: 'Banco de imagens', idResolved: 'Imagem #{id} do banco', idNotFound: 'Não existe imagem #{id} no banco.',
         uploading: 'Enviando...',
@@ -1417,6 +1419,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         bySystem: 'by System',
         created: 'Created', updated: 'Updated', deleted: 'Deleted',
       },
+      uploadProgress: { sending: 'Uploading', processing: 'Sent! The server is processing…', files: 'files' },
       imageUpload: {
         dropHere: 'Drop the image here', library: 'Image library', idResolved: 'Library image #{id}', idNotFound: 'There is no image #{id} in the library.',
         uploading: 'Uploading...',
