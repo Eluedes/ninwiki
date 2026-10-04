@@ -32,9 +32,9 @@ type ItemsFilterKey = 'consumables' | 'materials' | 'equipment' | 'special';
 
 const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   consumables: ['consumable'],
-  materials: ['material'],
+  materials: ['currency', 'material'],   // Moeda (currency) fica em Materials; 'material' so' existe em itens antigos
   equipment: ['ring'],
-  special: ['general', 'currency', 'cast', 'authority'],
+  special: ['general', 'cast', 'authority'],
 };
 
 interface EntryGroup {

@@ -71,8 +71,10 @@ function getMobTypeOptions(t: Dictionary['admin']['contentEditor']): { value: Mo
 }
 
 /** Opcoes do campo 'tipo de item' no idioma atual. */
-function getItemTypeOptions(t: Dictionary['admin']['contentEditor']): { value: ItemType; label: string }[] {
-  return [
+function getItemTypeOptions(t: Dictionary['admin']['contentEditor'], current?: ItemType | null): { value: ItemType; label: string }[] {
+  // 'Material' saiu da lista (pedido do Rafael: o que era material agora e' Moeda/Currency, que fica na categoria Materials do catalogo);
+  // so' aparece se o item JA' for desse tipo (itens antigos continuam editaveis e nao perdem o tipo ao salvar).
+  const all: { value: ItemType; label: string }[] = [
     { value: 'general', label: t.itemGeneral },
     { value: 'ring', label: t.itemRing },
     { value: 'consumable', label: t.itemConsumable },
@@ -81,6 +83,7 @@ function getItemTypeOptions(t: Dictionary['admin']['contentEditor']): { value: I
     { value: 'cast', label: t.itemCast },
     { value: 'authority', label: t.itemAuthority },
   ];
+  return all.filter((o) => o.value !== 'material' || current === 'material');
 }
 
 // Raridade fica de fora de proposito: os 6 nomes (Common/Uncommon/Rare/
@@ -184,9 +187,9 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   const t = dict.admin.contentEditor;
   const categoryOptions = getCategoryOptions(t);
   const mobTypeOptions = getMobTypeOptions(t);
-  const itemTypeOptions = getItemTypeOptions(t);
   const category = useWatch({ control, name: 'category' });
   const itemType = useWatch({ control, name: 'itemType' });
+  const itemTypeOptions = getItemTypeOptions(t, itemType);
 
   useEffect(() => {
     if (!isEdit || !rawId) return;
