@@ -60,6 +60,13 @@ export function SteamImportCard({ onImported }: { onImported?: () => void }) {
           </div>
         )}
         {run?.errors.map((e) => <p key={e} className="text-xs text-destructive">{e}</p>)}
+        {/* O que a Steam respondeu ao buscar a miniatura (capsule) de cada post: ajuda a entender por que ficou a imagem do texto */}
+        {run?.notes && run.notes.length > 0 && (
+          <div className="rounded border border-border bg-secondary/30 p-2 text-xs text-muted-foreground">
+            <p className="mb-1 font-semibold">{t.capsuleNotes}</p>
+            {run.notes.slice(0, 8).map((n) => <p key={n} className="truncate">• {n}</p>)}
+          </div>
+        )}
         {error && <p className="text-xs text-destructive">{error}</p>}
         <div className="pt-2">
           <p className="mb-1 text-xs font-semibold">{t.importPost}</p>
