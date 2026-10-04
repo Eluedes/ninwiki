@@ -43,9 +43,12 @@ export function DropRow({ drop }: DropRowProps) {
           {drop.itemName}
           <span className="text-muted-foreground">{qtyLabel}</span>
         </span>
-        <span className={cn('shrink-0 text-xs font-semibold', rarity.color)}>
-          {rarity.label}
-        </span>
+        {/* Raridade = a do ITEM ligado (nao e' mais escolhida no drop). Drop so' com texto nao tem raridade para mostrar. */}
+        {drop.droppedItemId && (
+          <span className={cn('shrink-0 text-xs font-semibold', rarity.color)}>
+            {rarity.label}
+          </span>
+        )}
       </div>
       <div className="mt-1 flex items-center gap-2">
         {/* Barra de progresso simples: a largura em % representa
@@ -53,7 +56,7 @@ export function DropRow({ drop }: DropRowProps) {
             contra um valor de `chance` maior que 100 quebrar o layout. */}
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className={cn('h-full rounded-full transition-all', rarity.barColor)}
+            className={cn('h-full rounded-full transition-all', (drop.droppedItemId ? rarity.barColor : 'bg-slate-400'))}
             style={{ width: `${Math.min(drop.chance, 100)}%` }}
           />
         </div>

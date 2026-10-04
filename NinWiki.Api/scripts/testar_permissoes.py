@@ -245,6 +245,18 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     for i, roupa in enumerate(["shirt", "vest", "pant", "hat", "mask", "shoe"]):
         r = await c.post("/content-items", json={**novo_conteudo(f"roupa{i}"), "category": "items", "itemType": roupa, "level": 5}, headers=C)
         check(f"item tipo {roupa} (pecas de roupa, junto com os Rings) e' criado", r.status_code == 201 and r.json()["itemType"] == roupa, r.text[:160])
+    r = await c.post("/content-items", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "epic"}, headers=C)
+    drop_item_id = r.json()["id"]
+    r = await c.post("/content-items", json={**novo_conteudo("drop-mob"), "category": "mobs", "drops": [
+        {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id, "rarity": "common"},
+        {"itemName": "So texto", "chance": 5}]}, headers=C)
+    check("drop sem raridade e' aceito; com item ligado vale a raridade DO ITEM (epic), mesmo se mandarem outra", r.status_code == 201
+          and r.json()["drops"][0]["rarity"] == "epic", r.text[:240])
+    check("drop so' texto (sem item ligado) fica Common", r.json()["drops"][1]["rarity"] == "common")
+    mob_id = r.json()["id"]
+    r = await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}, headers=A)
+    r = await c.get(f"/content-items/{mob_id}", headers=C)
+    check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
     r = await c.post("/content-items", json={**novo_conteudo("rar-ruim"), "rarity": "mitico"}, headers=C)
     check("raridade inexistente continua recusada (422)", r.status_code == 422)
     r = await c.get(f"/content-items/{rasc_id}")
