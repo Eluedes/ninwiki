@@ -40,6 +40,7 @@ import {
 } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
+import { SignedStepperInput } from '@/components/admin/signed-stepper-input';
 import { EmojiPicker } from '@/components/admin/emoji-picker';
 import { itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { contentItemSchema, type ContentItemFormValues } from '@/lib/validation';
@@ -169,7 +170,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   // useState puro. Juntar os dois na hora de salvar (ver onValid).
   const [attributes, setAttributes] = useState<{ label: string; value: string }[]>([]);
   const [drops, setDrops] = useState<
-    { itemName: string; rarity: Rarity; chance: number; chanceQualifier?: 'over' | 'below' | null; droppedItemId?: string | null }[]
+    { itemName: string; chance: number; chanceQualifier?: 'over' | 'below' | null; droppedItemId?: string | null }[]
   >([]);
   // attacks: mesmo padrao de attributes/drops - lista dinamica fora do
   // Zod, so' usada quando category === 'mobs'.
@@ -245,7 +246,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           itemType: item.itemType,
         });
         setAttributes(item.attributes.map((a) => ({ ...a, label: a.label || ATTRIBUTE_NAMES[0] })));
-        setDrops(item.drops);
+        setDrops(item.drops.map(({ rarity: _rarity, ...rest }) => rest));   // a raridade do drop vem do item ligado (nao e' mais editada aqui)
         setAttacks(item.attacks);
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : 'Error loading the entry.'))
@@ -253,7 +254,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   }, [isEdit, rawId, reset]);
 
   function addAttribute() {
-    setAttributes((prev) => [...prev, { label: ATTRIBUTE_NAMES[0], value: '' }]);   // ja' nasce com um atributo escolhido (o seletor nunca fica vazio)
+    setAttributes((prev) => [...prev, { label: ATTRIBUTE_NAMES[0], value: '0' }]);   // ja' nasce com um atributo escolhido (o seletor nunca fica vazio)
   }
   function updateAttribute(index: number, field: 'label' | 'value', value: string) {
     setAttributes((prev) => prev.map((a, i) => (i === index ? { ...a, [field]: value } : a)));
@@ -263,7 +264,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   }
 
   function addDrop() {
-    setDrops((prev) => [...prev, { itemName: '', rarity: 'common', chance: 10 }]);
+    setDrops((prev) => [...prev, { itemName: '', chance: 10 }]);
   }
   function updateDrop(index: number, patch: Partial<(typeof drops)[number]>) {
     setDrops((prev) => prev.map((d, i) => (i === index ? { ...d, ...patch } : d)));
@@ -700,7 +701,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <div key={i} className="flex items-center gap-2">
               {/* Valor primeiro (ex.: +2) e, ao lado, o ATRIBUTO escolhido numa lista fixa. Um atributo antigo com outro nome continua
                   aparecendo como opcao extra (nao se perde ao editar). */}
-              <Input placeholder={t.attributeValuePlaceholder} value={attr.value} onChange={(e) => updateAttribute(i, 'value', e.target.value)} />
+              <SignedStepperInput placeholder={t.attributeValuePlaceholder} value={attr.value} onChange={(v) => updateAttribute(i, 'value', v)} />
               <Select value={attr.label || ATTRIBUTE_NAMES[0]} onValueChange={(v) => updateAttribute(i, 'label', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -727,21 +728,13 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             </Button>
           </div>
           {drops.map((drop, i) => (
-            <div key={i} className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-2">
+            <div key={i} className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2">
               <Input placeholder={t.dropNamePlaceholder} value={drop.itemName} onChange={(e) => updateDrop(i, { itemName: e.target.value })} />
               <DropItemPicker
                 linkedId={drop.droppedItemId}
                 onLink={(item) => updateDrop(i, { droppedItemId: item.id, itemName: item.name })}
                 onUnlink={() => updateDrop(i, { droppedItemId: null })}
               />
-              <Select value={drop.rarity} onValueChange={(v) => updateDrop(i, { rarity: v as Rarity })}>
-                <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {rarityOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               {/* Exato/Over/Below: como a % vai aparecer na ficha
                   publica - "Exato" (chanceQualifier null) mostra o
                   numero cru, igual sempre foi. Over/Below espelham a

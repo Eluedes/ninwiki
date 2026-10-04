@@ -27,6 +27,9 @@ export interface ApiAttributeRow {
   value: string;
 }
 
+/** Drop enviado ao salvar: igual ao lido, mas a raridade e' opcional (a API a tira do item ligado). */
+export type DropInput = Omit<ApiDropEntry, 'rarity' | 'droppedItemSlug'> & { rarity?: Rarity; droppedItemSlug?: string | null };
+
 export interface ApiDropEntry {
   itemName: string;
   rarity: Rarity;
@@ -161,7 +164,7 @@ export interface ContentItemInput {
   mobType?: MobType | null;
   itemType?: ItemType | null;
   attributes: ApiAttributeRow[];
-  drops: ApiDropEntry[];
+  drops: DropInput[];   // sem raridade: a API usa a do item ligado (ou Common se o drop for so' texto)
   status?: 'draft' | 'published'; // so' usado no update
 }
 

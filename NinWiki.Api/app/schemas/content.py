@@ -57,7 +57,9 @@ class DropEntrySchema(CamelModel):
     ver nota de design em app/models/content.py::ContentItemDrop).
     """
     item_name: str
-    rarity: Rarity
+    # Raridade do drop: NAO se escolhe mais no editor - vem do item ligado (dropped_item_id). Sem item ligado fica Common. Se o cliente
+    # mandar um valor ele e' aceito mas, com item ligado, a raridade do item vence (ver content_items.py e DropEntryRead).
+    rarity: Rarity | None = None
     chance: float = Field(ge=0, le=100)  # ge/le: valida que fica entre 0 e 100
     # Ver DropChanceQualifier em app/models/enums.py - None mostra o
     # numero exato, "over"/"below" mostra "Over X%"/"Below X%" na
@@ -98,10 +100,13 @@ class DropEntryRead(DropEntrySchema):
         if hasattr(data, "dropped_item") and not isinstance(data, dict):
             linked = data.dropped_item
             slug = linked.slug if (linked is not None and linked.status == ContentStatus.PUBLISHED) else None
-            return {
+            out = {
                 **{f: getattr(data, f, None) for f in cls.model_fields if f != "dropped_item_slug"},
                 "dropped_item_slug": slug,
             }
+            if linked is not None:   # raridade "ao vivo": acompanha o item ligado (mudou a raridade do item, o drop muda junto)
+                out["rarity"] = linked.rarity
+            return out
         return data
 
 

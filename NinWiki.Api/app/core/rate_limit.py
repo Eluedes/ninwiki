@@ -33,10 +33,12 @@ class RateLimiter:
     def __init__(self, time_fn: Callable[[], float] = time.monotonic):
         self._time = time_fn
         self._hits: dict[tuple[str, str], deque[float]] = {}
+        self._windows: dict[tuple[str, str], float] = {}   # janela de cada balde (para a limpeza periodica saber o que ja' expirou)
 
     def _window(self, bucket: str, key: str, window: float) -> deque[float]:
         """Devolve a fila de instantes do balde, ja' sem os que sairam da janela."""
         dq = self._hits.setdefault((bucket, key), deque())
+        self._windows[(bucket, key)] = window
         cutoff = self._time() - window
         while dq and dq[0] <= cutoff:
             dq.popleft()
@@ -48,6 +50,19 @@ class RateLimiter:
         if len(self._hits) > 5000:
             for k in [k for k, dq in self._hits.items() if not dq]:
                 del self._hits[k]
+
+    def sweep(self) -> int:
+        """Limpeza periodica (chamada pela manutencao): tira de cada balde o que saiu da janela e apaga os baldes vazios. Devolve quantos apagou."""
+        now, removed = self._time(), 0
+        for k in list(self._hits):
+            dq, window = self._hits[k], self._windows.get(k, 3600.0)
+            while dq and dq[0] <= now - window:
+                dq.popleft()
+            if not dq:
+                del self._hits[k]
+                self._windows.pop(k, None)
+                removed += 1
+        return removed
 
     def hit(self, bucket: str, key: str, limit: int, window: float) -> int | None:
         """Registra uma requisicao. Devolve None se PODE passar, ou os segundos de espera se estourou o limite."""
@@ -75,6 +90,7 @@ class RateLimiter:
     def reset(self) -> None:
         """Zera todos os contadores (usado nos testes)."""
         self._hits.clear()
+        self._windows.clear()
 
 
 limiter = RateLimiter()

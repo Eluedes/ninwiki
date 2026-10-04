@@ -300,14 +300,30 @@ async def _validate_dropped_item_ids(drops: list, db: AsyncSession) -> None:
     vez de uma mensagem clara. Mesma ideia de _validate_mastery_and_path
     em app/api/masteries.py.
     """
+    await _drop_rarities(drops, db)
+
+
+async def _drop_rarities(drops: list, db: AsyncSession) -> dict:
+    """
+    Valida os dropped_item_id (ver acima) e devolve {id do item ligado: raridade dele}. A raridade de um drop vem do item ligado;
+    drop so' com texto (sem item ligado) usa a raridade mandada ou Common.
+    """
     ids = {d.dropped_item_id for d in drops if d.dropped_item_id is not None}
     if not ids:
-        return
-    result = await db.execute(select(ContentItem.id).where(ContentItem.id.in_(ids)))
-    found = set(result.scalars().all())
-    missing = ids - found
+        return {}
+    result = await db.execute(select(ContentItem.id, ContentItem.rarity).where(ContentItem.id.in_(ids)))
+    found = {row[0]: row[1] for row in result.all()}
+    missing = ids - set(found)
     if missing:
         raise HTTPException(status_code=400, detail=f"Item(s) linked to the drop do not exist: {', '.join(str(i) for i in missing)}")
+    return found
+
+
+def _rarity_of_drop(drop, linked_rarities: dict) -> Rarity:
+    """Raridade gravada no drop: a do item ligado; sem ligacao, a enviada (ou Common)."""
+    if drop.dropped_item_id is not None and drop.dropped_item_id in linked_rarities:
+        return linked_rarities[drop.dropped_item_id]
+    return drop.rarity or Rarity.COMMON
 
 
 async def _validate_cast_village_id(cast_village_id: str | None, db: AsyncSession) -> None:
@@ -371,7 +387,7 @@ async def create_content_item(
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail=f"An entry with the slug '{payload.slug}' already exists")
 
-    await _validate_dropped_item_ids(payload.drops, db)
+    linked_rarities = await _drop_rarities(payload.drops, db)
     await _validate_cast_village_id(payload.cast_village_id, db)
 
     item = ContentItem(
@@ -395,7 +411,7 @@ async def create_content_item(
         item.attacks.append(ContentItemAttack(name=attack.name, sort_order=i))
     for drop in payload.drops:
         item.drops.append(ContentItemDrop(
-            item_name=drop.item_name, rarity=drop.rarity, chance=drop.chance,
+            item_name=drop.item_name, rarity=_rarity_of_drop(drop, linked_rarities), chance=drop.chance,
             chance_qualifier=drop.chance_qualifier, min_qty=drop.min_qty, max_qty=drop.max_qty,
             dropped_item_id=drop.dropped_item_id,
         ))
@@ -430,7 +446,7 @@ async def update_content_item(
     _guard_edit(staff, item, payload.status)
     before = {"name": item.name, "status": item.status.value}
 
-    await _validate_dropped_item_ids(payload.drops, db)
+    linked_rarities = await _drop_rarities(payload.drops, db)
     await _validate_cast_village_id(payload.cast_village_id, db)
 
     item.category = payload.category
@@ -486,7 +502,7 @@ async def update_content_item(
     item.drops.clear()
     for drop in payload.drops:
         item.drops.append(ContentItemDrop(
-            item_name=drop.item_name, rarity=drop.rarity, chance=drop.chance,
+            item_name=drop.item_name, rarity=_rarity_of_drop(drop, linked_rarities), chance=drop.chance,
             chance_qualifier=drop.chance_qualifier, min_qty=drop.min_qty, max_qty=drop.max_qty,
             dropped_item_id=drop.dropped_item_id,
         ))
