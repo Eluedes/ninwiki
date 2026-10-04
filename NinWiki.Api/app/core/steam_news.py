@@ -238,6 +238,37 @@ async def fetch_news(app_id: str, count: int = 20, transport: httpx.AsyncBaseTra
         return (res.json().get("appnews") or {}).get("newsitems") or []
 
 
+_OG_IMAGE = re.compile(r"""<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["']""", re.IGNORECASE)
+_OG_IMAGE_REV = re.compile(r"""<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["'](?:og:image|twitter:image)["']""", re.IGNORECASE)
+
+
+def capsule_from_html(page: str) -> str | None:
+    """
+    Miniatura (capsule) de um post a partir da pagina dele na Steam: a imagem de compartilhamento (og:image) - a mesma arte "PATCH NOTES"
+    que aparece na lista de noticias. So' aceita imagem hospedada no clan da Steam (a imagem generica de compartilhamento da loja e' ignorada).
+    """
+    for pattern in (_OG_IMAGE, _OG_IMAGE_REV):
+        for m in pattern.finditer(page):
+            url = html.unescape(m.group(1)).strip()
+            if url.startswith("//"):
+                url = "https:" + url
+            if url.startswith("https://") and len(url) <= 500 and ("clan." in url.split("/")[2] or "/clans/" in url):
+                return url
+    return None
+
+
+async def fetch_capsule(app_id: str, gid: str, transport: httpx.AsyncBaseTransport | None = None) -> str | None:
+    """Miniatura do post (ver capsule_from_html), ou None se a Steam nao devolver/nao achar (quem chama usa a primeira imagem do texto no lugar)."""
+    try:
+        async with httpx.AsyncClient(timeout=15.0, transport=transport, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; NinWikiNewsImporter/1.0)", "Accept-Language": "en"}) as client:
+            res = await client.get(f"https://store.steampowered.com/news/app/{app_id}/view/{gid}")
+            res.raise_for_status()
+            return capsule_from_html(res.text)
+    except Exception as exc:  # noqa: BLE001 - a miniatura e' opcional: qualquer falha = sem capsule
+        log.info("Steam news: sem capsule para %s (%s)", gid, type(exc).__name__)
+        return None
+
+
 def _is_update(item: dict, need: str) -> bool:
     """O post conta como atualizacao? Sem tag exigida (`need` vazio): todos. Senao: tem a tag da Steam OU o titulo bate com STEAM_NEWS_TITLE_PATTERN (a Steam nem sempre marca como `patchnotes`)."""
     if not need:
@@ -285,7 +316,8 @@ async def _refresh_existing(db: AsyncSession, item: dict, run: dict) -> None:
         doc = bbcode_to_doc(str(item.get("contents") or ""), credit)
         post.content = validate_rich_content(json.dumps(doc, ensure_ascii=False))
         post.excerpt = plain_excerpt(doc) or title
-        post.cover_image = first_image(doc)
+        post.cover_image = await fetch_capsule(settings.steam_news_app_id, gid) or first_image(doc)   # miniatura = capsule da Steam; sem ela, a 1a imagem do texto
+        post.banner_image = settings.steam_news_banner_image.strip() or None                          # banner do topo: o mesmo para todos os posts da Steam
         post.content_pt = post.excerpt_pt = None
         try:
             await fill_missing_translations(post, POST_TRANSLATABLE)
@@ -361,7 +393,8 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
             slug = f"{_slugify(title)[:120] or 'patch-notes'}-{gid[-6:]}"
             if (await db.execute(select(Post.id).where(Post.slug == slug))).first():
                 slug = f"{slug}-{gid[-3:]}"
-            post = Post(slug=slug, title=title, excerpt=plain_excerpt(doc) or title, content=content, cover_image=first_image(doc),
+            post = Post(slug=slug, title=title, excerpt=plain_excerpt(doc) or title, content=content, cover_image=await fetch_capsule(settings.steam_news_app_id, gid) or first_image(doc),
+                        banner_image=settings.steam_news_banner_image.strip() or None,
                         author_id=None, author_label=author, source_id=gid, source_url=url or None, status=status, published_at=when)
             post.tags = [tag]
             db.add(post)

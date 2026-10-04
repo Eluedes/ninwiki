@@ -93,6 +93,8 @@ class Settings(BaseSettings):
     error_retention_days_resolved: int = 30        # problemas JA' resolvidos somem depois de N dias sem voltar
     error_retention_days: int = 90                 # qualquer problema (mesmo nao resolvido) some depois de N dias sem ocorrer
     audit_retention_days: int = 365                # log geral (quem fez o que): linhas com mais de N dias somem (0 = nunca apaga)
+    # Banner do topo dos posts importados da Steam: o mesmo para todos (a arte do jogo). Caminho do site ou endereco https; vazio = sem banner (usa a capa).
+    steam_news_banner_image: str = "/images/blog/steam-banner.webp"
     steam_news_title_pattern: str = r"update|patch|hotfix|\bv?\d+\.\d+(\.\d+)*[a-z]?\b"
     steam_news_max_per_run: int = 5                # teto de posts novos por conferencia (evita inundar o blog na 1a vez)
 

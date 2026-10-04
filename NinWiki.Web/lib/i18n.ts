@@ -118,7 +118,7 @@ export interface Dictionary {
       published: string; draft: string; edit: string; delete: string; confirmDelete: string; empty: string;
       loading: string; loadError: string; deleteError: string;
       editTitle: string; newTitle: string; back: string; titleLabel: string; titlePlaceholder: string;
-      slugLabel: string; slugHint: string; excerptLabel: string; excerptHint: string; coverLabel: string;
+      slugLabel: string; slugHint: string; excerptLabel: string; excerptHint: string; coverLabel: string; bannerLabel: string; bannerHint: string;
       contentLabel: string; contentPlaceholder: string; saveDraft: string; publish: string; saving: string; saveError: string;
       lockedNote: string; unpublishNote: string;
     };
@@ -575,7 +575,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loading: 'Carregando posts...', loadError: 'Erro ao carregar os posts.', deleteError: 'Não foi possível apagar.',
         editTitle: 'Editar post', newTitle: 'Novo post', back: 'Voltar', titleLabel: 'Título', titlePlaceholder: 'Título do post',
         slugLabel: 'Slug (endereço na URL)', slugHint: 'Gerado a partir do título; só letras minúsculas, números e hífen.',
-        excerptLabel: 'Resumo', excerptHint: 'Texto curto que aparece na lista de posts.', coverLabel: 'Imagem de capa',
+        excerptLabel: 'Resumo', excerptHint: 'Texto curto que aparece na lista de posts.', coverLabel: 'Imagem de capa (miniatura)', bannerLabel: 'Banner do topo do post', bannerHint: 'Imagem larga (ideal ~5:1) no topo da página do post. Vazio = usa a capa.',
         contentLabel: 'Conteúdo', contentPlaceholder: 'Escreva o post...', saveDraft: 'Salvar rascunho', publish: 'Publicar',
         saving: 'Salvando...', saveError: 'Erro ao salvar o post.',
         lockedNote: 'Este post já está publicado: só um Adm pode alterá-lo.',
@@ -1260,7 +1260,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loading: 'Loading posts...', loadError: 'Error loading posts.', deleteError: 'Could not delete.',
         editTitle: 'Edit post', newTitle: 'New post', back: 'Back', titleLabel: 'Title', titlePlaceholder: 'Post title',
         slugLabel: 'Slug (URL address)', slugHint: 'Generated from the title; lowercase letters, numbers and hyphens only.',
-        excerptLabel: 'Excerpt', excerptHint: 'Short text shown in the post list.', coverLabel: 'Cover image',
+        excerptLabel: 'Excerpt', excerptHint: 'Short text shown in the post list.', coverLabel: 'Cover image (thumbnail)', bannerLabel: 'Post banner', bannerHint: 'Wide image (about 5:1) at the top of the post page. Empty = uses the cover.',
         contentLabel: 'Content', contentPlaceholder: 'Write the post...', saveDraft: 'Save draft', publish: 'Publish',
         saving: 'Saving...', saveError: 'Error saving the post.',
         lockedNote: 'This post is already published: only an Adm can change it.',

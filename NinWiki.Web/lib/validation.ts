@@ -177,6 +177,7 @@ export const postSchema = z.object({
   excerptPt: z.string().nullable().optional(),
   contentPt: z.string().nullable().optional(),
   coverImage: z.string().nullable().optional(),
+  bannerImage: z.string().nullable().optional(),
   tags: z.array(z.string()).max(8, 'Maximum of 8 tags.'),
   // SEO e agendamento (vazio = automatico / publicar agora)
   metaTitle: z.string().max(70, 'Maximum of 70 characters.').nullable().optional(),

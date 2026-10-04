@@ -17,7 +17,7 @@ from app.models.media import MediaImage
 CLOSED_MESSAGE = "Access denied: this image is in a closed (restricted) category and you are not allowed to view it."
 
 REF_RE = re.compile(r"^\s*(?:img\s*[:\-_ ]\s*|id\s*:\s*|#\s*)?(\d{1,9})\s*$", re.IGNORECASE)
-IMAGE_FIELDS = frozenset({"image", "gif", "cover_image"})
+IMAGE_FIELDS = frozenset({"image", "gif", "cover_image", "banner_image"})
 
 
 def parse_ref(value: str | None) -> int | None:

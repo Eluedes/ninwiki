@@ -47,7 +47,8 @@ class Post(Base, TimestampMixin):
     title_pt: Mapped[str | None] = mapped_column(String(200), nullable=True)
     excerpt_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     content_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
-    cover_image: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    cover_image: Mapped[str | None] = mapped_column(String(500), nullable=True)   # miniatura (lista do blog, redes sociais)
+    banner_image: Mapped[str | None] = mapped_column(String(500), nullable=True)   # banner largo no topo do post (vazio = usa a capa)
     # SEO: titulo e descricao das tags <meta> (vazio = usa o titulo e o resumo do post). Tamanhos ideais pro Google: ~60 e ~160.
     meta_title: Mapped[str | None] = mapped_column(String(70), nullable=True)
     meta_description: Mapped[str | None] = mapped_column(String(200), nullable=True)

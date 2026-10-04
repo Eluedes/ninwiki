@@ -293,7 +293,7 @@ async def _usage(db: AsyncSession, filename: str) -> list[MediaUse]:
     like = f"%/uploads/{filename}%"
     places = [
         (ContentItem, [ContentItem.image, ContentItem.description, ContentItem.lore, ContentItem.synergy, ContentItem.description_pt, ContentItem.lore_pt, ContentItem.synergy_pt], ContentItem.name, "content"),
-        (Post, [Post.cover_image, Post.content, Post.content_pt], Post.title, "blog post"),
+        (Post, [Post.cover_image, Post.banner_image, Post.content, Post.content_pt], Post.title, "blog post"),
         (Mastery, [Mastery.image, Mastery.gif], Mastery.name, "mastery"),
         (Jutsu, [Jutsu.gif], Jutsu.name, "jutsu"),
         (Village, [Village.image], Village.name, "village"),
