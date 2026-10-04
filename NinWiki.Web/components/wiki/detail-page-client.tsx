@@ -13,6 +13,7 @@ import { WikiImage } from '@/components/wiki/wiki-image';
 import { RichText, extractPlainText } from '@/components/lore/rich-text';
 import { cn, itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
+import { itemTypeLabels } from '@/lib/item-types';
 import { ArrowLeft, Heart, Layers, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem, ApiContentItemSummary } from '@/lib/api-client';
 
@@ -53,7 +54,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
   const mobType = entry.mobType ? MOB_TYPE_LABEL[entry.mobType] : undefined;
   /** Nome do tipo de item no idioma atual (Geral, Ring, Consumivel, Material, Moeda, Cast, Autoridade). */
   const ce = dict.admin.contentEditor;
-  const itemTypeLabel = (type: string) => ({ general: ce.itemGeneral, ring: ce.itemRing, accessory: ce.itemAccessory, consumable: ce.itemConsumable, material: ce.itemMaterial, currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority } as Record<string, string>)[type] ?? type;
+  const itemTypeLabel = (type: string) => itemTypeLabels(ce)[type] ?? type;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">

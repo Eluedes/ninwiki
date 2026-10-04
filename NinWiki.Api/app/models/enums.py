@@ -65,6 +65,13 @@ class ItemType(str, enum.Enum):
     CURRENCY = "currency"
     CAST = "cast"
     ACCESSORY = "accessory"   # acessorios (ficam junto com os Rings no catalogo; mostram nivel como o Ring)
+    # Pecas de roupa (equipamento, como o Ring/Accessory: mostram nivel e ficam juntas no filtro Equipment)
+    SHIRT = "shirt"
+    VEST = "vest"
+    PANT = "pant"
+    HAT = "hat"
+    MASK = "mask"
+    SHOE = "shoe"
     AUTHORITY = "authority"   # itens de Autoridade do cla (ex.: Hokuto Sphere I): levados ao Altar da Casa do Cla
 
 

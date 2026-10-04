@@ -8,6 +8,10 @@ const config: Config = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    // lib/ TAMBEM: as cores de raridade (rarityConfig em lib/data.ts) e outras classes ficam la'. Sem esta linha o Tailwind nao gerava
+    // essas classes e as barras de drop (e as cores de raridade) ficavam invisiveis, salvo as que por acaso apareciam em outro arquivo.
+    './lib/**/*.{js,ts,jsx,tsx}',
+    './hooks/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
