@@ -1,7 +1,7 @@
 // Testes do Worker de manutencao (sem bibliotecas): node --test Cloudflare/testar_worker.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import worker, { PAGE } from './maintenance-worker.mjs';
+import worker, { PAGE, isStaticAsset } from './maintenance-worker.mjs';
 
 const req = (accept = 'text/html', method = 'GET') => new Request('https://wiki.example/x', { method, headers: { accept } });
 const withFetch = async (impl, fn) => { const old = globalThis.fetch; globalThis.fetch = impl; try { return await fn(); } finally { globalThis.fetch = old; } };
@@ -55,4 +55,16 @@ test('a pagina se recarrega quando o site volta (confere o cabecalho) e tem PT e
   assert.ok(PAGE.includes("r.headers.get('x-ninwiki-web')") && PAGE.includes('location.reload()'));
   assert.ok(PAGE.includes('Estamos atualizando a wiki') && PAGE.includes('We are updating the wiki'));
   assert.ok(!/https?:\/\/(?!www\.w3)/.test(PAGE.replace(/\$\{MARKER\}/g, '')), 'a pagina nao pode depender de nada externo');
+});
+
+test('imagem/fonte/CSS/JS respondidos com sucesso passam mesmo SEM o cabecalho do site (arquivo da pasta public)', async () => {
+  for (const type of ['image/png', 'image/svg+xml', 'font/woff2', 'text/css', 'application/javascript']) {
+    const res = await withFetch(async () => new Response('bin', { status: 200, headers: { 'content-type': type } }), () => worker.fetch(req('image/png'), {}));
+    assert.equal(res.status, 200, type);
+  }
+});
+test('erro da hospedagem continua virando manutencao (HTML/texto/JSON, ou erro com tipo de imagem)', async () => {
+  for (const [status, type] of [[200, 'text/html'], [502, 'text/plain'], [200, 'application/json'], [502, 'image/png'], [404, 'image/png']]) {
+    assert.equal(isStaticAsset(new Response('x', { status, headers: { 'content-type': type } })), false, `${status} ${type}`);
+  }
 });
