@@ -28,12 +28,12 @@ export function stepSigned(value: string, delta: number): string {
 /** Campo de texto com as setinhas de sinal (cima = +1, baixo = -1). */
 export function SignedStepperInput({ value, onChange, placeholder, className }: { value: string; onChange: (value: string) => void; placeholder?: string; className?: string }) {
   return (
-    <div className={`relative flex-1 ${className ?? ''}`}>
+    <div className={`relative w-32 shrink-0 ${className ?? ''}`}>   {/* largura fixa: o numero com sinal (ex.: +12) sempre cabe, o seletor ao lado ocupa o resto */}
       <Input
         value={value}
         placeholder={placeholder}
         inputMode="text"
-        className="pr-8"
+        className="pr-8 text-center tabular-nums"
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {

@@ -732,7 +732,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
                   aparecendo como opcao extra (nao se perde ao editar). */}
               <SignedStepperInput placeholder={t.attributeValuePlaceholder} value={attr.value} onChange={(v) => updateAttribute(i, 'value', v)} />
               <Select value={attr.label || ATTRIBUTE_NAMES[0]} onValueChange={(v) => updateAttribute(i, 'label', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="min-w-0 flex-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {[...ATTRIBUTE_NAMES, ...(attr.label && !(ATTRIBUTE_NAMES as readonly string[]).includes(attr.label) ? [attr.label] : [])].map((name) => (
                     <SelectItem key={name} value={name}>{name}</SelectItem>
