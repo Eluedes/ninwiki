@@ -182,7 +182,7 @@ class ContentItemBase(CamelModel):
     attacks: list[AttackEntrySchema] = []
     # ---- Fixos so' de ARMAS (categoria WEAPONS) ----
     weapon_speed: str | None = None
-    weapon_requirement: str | None = None
+    weapon_requirement: str | None = None   # ate' 3 requisitos para usar, um por LINHA (ver _clean_requirements)
     weapon_npc: str | None = None
     weapon_type: str | None = None
     weapon_base_damage: str | None = None
@@ -195,6 +195,20 @@ class ContentItemBase(CamelModel):
     item_type: ItemType | None = None
     attributes: list[AttributeRowSchema] = []
     drops: list[DropEntrySchema] = []
+
+    @field_validator("weapon_requirement")
+    @classmethod
+    def _clean_requirements(cls, value: str | None) -> str | None:
+        """Ate' 3 requisitos (um por linha, ex.: "60 Agility" e "20 Chakra"), sem espacos extras nem linhas vazias; cada um com no maximo 100 caracteres."""
+        if value is None:
+            return None
+        lines = [" ".join(line.split()) for line in value.splitlines()]
+        lines = [line for line in lines if line]
+        if len(lines) > 3:
+            raise ValueError("A weapon can have at most 3 requirements to use")
+        if any(len(line) > 100 for line in lines):
+            raise ValueError("Each requirement can have at most 100 characters")
+        return "\n".join(lines) or None
 
     @field_validator("description", "lore", "synergy")
     @classmethod

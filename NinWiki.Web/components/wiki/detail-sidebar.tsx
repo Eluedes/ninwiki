@@ -67,7 +67,8 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   // simplesmente nao mostra a secao "Como conseguir" vazia.
   if (entry.category === 'weapons') {
     const requirementsRows: StatRow[] = shouldShowLevel(entry.category, entry.itemType, entry.level) ? [{ label: dict.detail.levelReq, value: String(entry.level) }] : [];
-    if (entry.weaponRequirement) requirementsRows.push({ label: dict.detail.statReq, value: entry.weaponRequirement });
+    // ate' 3 requisitos (um por linha): cada um vira uma linha da ficha
+    for (const req of (entry.weaponRequirement ?? '').split('\n').map((r) => r.trim()).filter(Boolean)) requirementsRows.push({ label: dict.detail.statReq, value: req });
 
     const acquisitionRows: StatRow[] = [];
     if (entry.weaponNpc) acquisitionRows.push({ label: dict.detail.npc, value: entry.weaponNpc });
