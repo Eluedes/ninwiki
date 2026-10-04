@@ -29,11 +29,30 @@ function Row({ label, value }: SheetRow) {
   );
 }
 
-/** Valores por nivel, um por linha ("Level 1 - 6"), inclusive quando so' existe o nivel 1. */
-function PerLevel({ values, word }: { values: string[]; word: string }) {
+/**
+ * Valores por nivel, um por linha ("Level 1 - 6"), inclusive quando so' existe o nivel 1.
+ * Quando o jutsu muda de nome em algum nivel (`names`), entra uma linha-divisoria ANTES desse nivel avisando o nome novo
+ * ("From level 4: Great Fireball") - da' para ver de relance que dali em diante a skill passa a se chamar assim.
+ */
+function PerLevel({ values: raw, word, names = [], nameFrom }: { values: string[]; word: string; names?: string[]; nameFrom?: string }) {
+  const values = Array.from({ length: Math.max(raw.length, names.length) }, (_, i) => raw[i] ?? '');   // nome no nivel 4 aparece mesmo se a lista de valores for mais curta
+  // nome que passa a valer em cada nivel (so' marca o nivel quando o nome MUDA em relacao ao anterior)
+  const cleaned = names.map((n) => (n ?? '').trim());
+  const changesAt = values.map((_, i) => Boolean(nameFrom && cleaned[i] && cleaned[i] !== cleaned.slice(0, i).filter(Boolean).pop()));
   return (
     <ul className="space-y-0.5">
-      {values.map((v, i) => (v.trim() ? <li key={i}>{`${word} ${i + 1} - ${v.trim()}`}</li> : null))}
+      {values.map((v, i) => {
+        const changes = changesAt[i];
+        if (!v.trim() && !changes) return null;
+        return (
+          <li key={i} className="list-none">
+            {changes && nameFrom && (
+              <div className="my-1.5 border-t border-border pt-1.5 text-xs font-bold text-primary">{nameFrom.replace('{n}', String(i + 1)).replace('{name}', cleaned[i])}</div>
+            )}
+            {v.trim() ? `${word} ${i + 1} - ${v.trim()}` : null}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -46,7 +65,7 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
   const has = (v: string | undefined | null) => Boolean(v && v.trim());
   const dmg = (jutsu.damageByLevel ?? []).filter((v) => has(v));
   const cds = (jutsu.cooldownByLevel ?? []).filter((v) => has(v));
-  const names = (jutsu.nameByLevel ?? []).filter((v) => has(v));   // so' aparece se o jutsu muda de nome em algum nivel
+  const names = jutsu.nameByLevel ?? [];   // nome por nivel: vira linha-divisoria dentro das listas de dano e recarga
 
   const requirements: SheetRow[] = [
     ...(mastery ? [{ label: t.mastery, value: <Link href={`/masteries/${mastery.id}`} className="hover:underline" style={{ color }}>{masteryName}</Link> }] : []),
@@ -59,11 +78,10 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
   ];
   const details: SheetRow[] = [
     { label: t.maxLevel, value: String(jutsu.maxLevel ?? 1) },
-    ...(names.length ? [{ label: t.nameByLevel, value: <PerLevel values={jutsu.nameByLevel ?? []} word={t.levelWord} /> }] : []),
-    ...(dmg.length ? [{ label: t.baseDamage, value: <PerLevel values={jutsu.damageByLevel} word={t.levelWord} /> }] : []),
+    ...(dmg.length ? [{ label: t.baseDamage, value: <PerLevel values={jutsu.damageByLevel} word={t.levelWord} names={names} nameFrom={t.nameFromLevel} /> }] : []),
     { label: t.chakraCost, value: `${jutsu.chakraCost} ${t.cpUnit}` },
     ...(cds.length
-      ? [{ label: t.cooldown, value: <PerLevel values={jutsu.cooldownByLevel} word={t.levelWord} /> }]
+      ? [{ label: t.cooldown, value: <PerLevel values={jutsu.cooldownByLevel} word={t.levelWord} names={names} nameFrom={t.nameFromLevel} /> }]
       : has(jutsu.cooldown) ? [{ label: t.cooldown, value: jutsu.cooldown }] : []),
     ...(has(jutsu.castTime) ? [{ label: t.castTime, value: jutsu.castTime }] : []),
     ...(has(jutsu.castType) ? [{ label: t.castType, value: jutsu.castType }] : []),
