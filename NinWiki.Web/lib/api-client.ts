@@ -323,7 +323,7 @@ export interface ApiJutsu {
   id: string;
   name: string;
   namePt: string | null;
-  masteryId: string;
+  masteryId: string | null;   // null = jutsu de Utilidade (Utility): nao pertence a nenhuma mastery
   pathId: string | null;
   tier: number;
   chakraCost: number;
@@ -383,6 +383,11 @@ export function listAttributes(): Promise<ApiAttribute[]> {
 }
 
 /** Lista jutsus, opcionalmente so' os de uma mastery. */
+/** So' os jutsus de Utilidade (sem mastery). */
+export function listUtilityJutsus(): Promise<ApiJutsu[]> {
+  return apiFetch('/jutsus?utility=true');
+}
+
 export function listJutsus(masteryId?: string): Promise<ApiJutsu[]> {
   const query = masteryId ? `?masteryId=${masteryId}` : '';
   return apiFetch(`/jutsus${query}`);

@@ -4,6 +4,7 @@
 // de Conteudo (ver app/admin/content/page.tsx pros comentarios
 // detalhados do padrao usado).
 
+import { UTILITY_ID } from '@/lib/utility-category';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { type ColumnDef } from '@tanstack/react-table';
@@ -49,10 +50,10 @@ export default function JutsusListPage() {
       .finally(() => setLoading(false));
   }, [t.loadError]);
 
-  const masteryName = (id: string) => masteries.find((m) => m.id === id)?.name ?? id;
+  const masteryName = (id: string | null) => (id === null ? 'Utility' : masteries.find((m) => m.id === id)?.name ?? id);   // sem mastery = Utility
 
   const filtered = jutsus
-    .filter((j) => masteryFilter === 'all' || j.masteryId === masteryFilter)
+    .filter((j) => masteryFilter === 'all' || (masteryFilter === UTILITY_ID ? j.masteryId === null : j.masteryId === masteryFilter))
     .filter((j) => j.name.toLowerCase().includes(search.toLowerCase()));
 
   async function handleDelete(id: string, name: string) {
@@ -168,6 +169,15 @@ export default function JutsusListPage() {
             {m.name}
           </button>
         ))}
+        <button
+          onClick={() => setMasteryFilter(UTILITY_ID)}
+          className={cn(
+            'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+            masteryFilter === UTILITY_ID ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+          )}
+        >
+          Utility
+        </button>
       </div>
 
       <div className="relative max-w-md">

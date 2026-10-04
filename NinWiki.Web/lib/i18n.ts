@@ -221,7 +221,7 @@ export interface Dictionary {
     jutsuEditor: {
       back: string; editTitle: string; newTitle: string; loading: string; loadError: string; saveError: string; save: string;
       name: string; englishName: string; idSlug: string; idSlugLocked: string; idPlaceholder: string;
-      mastery: string; path: string; pathNone: string;
+      mastery: string; masteryUtility: string; path: string; pathNone: string;
       tier: string; chakraCost: string; icon: string;
       range: string; rangePlaceholder: string; castTime: string; castTimePlaceholder: string;
       cooldown: string; cooldownPlaceholder: string; effect: string; effectPlaceholder: string;
@@ -860,6 +860,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         mastery: 'Mastery',
         path: 'Caminho (opcional)',
         pathNone: 'Nenhum',
+        masteryUtility: 'Utility (sem mastery — qualquer pessoa pode usar)',
         tier: 'Tier (1-5)',
         chakraCost: 'Custo de chakra',
         icon: 'Ícone',
@@ -898,7 +899,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       },
       contentEditor: {
         catMobs: 'Mobs', catItems: 'Itens', catWeapons: 'Armas', catMissions: 'Missões', catGuides: 'Guias',
-        mobMonster: 'Monstro comum', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Montaria',
+        mobMonster: 'Monstro', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Montaria',
         itemGeneral: 'Geral', itemRing: 'Ring', itemAccessory: 'Acessório', itemShirt: 'Camisa', itemVest: 'Colete', itemPant: 'Calça', itemHat: 'Chapéu', itemMask: 'Máscara', itemShoe: 'Sapato', itemConsumable: 'Consumível', itemMaterial: 'Material',
         itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade', itemPack: 'Pack', itemEquipment: 'Equipamento', equipmentKind: 'Tipo de equipamento',
         editTitle: 'Editar entry', newTitle: 'Nova entry',
@@ -1546,6 +1547,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         mastery: 'Mastery',
         path: 'Path (optional)',
         pathNone: 'None',
+        masteryUtility: 'Utility (no mastery — anyone can use it)',
         tier: 'Tier (1-5)',
         chakraCost: 'Chakra cost',
         icon: 'Icon',
@@ -1584,7 +1586,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       },
       contentEditor: {
         catMobs: 'Mobs', catItems: 'Items', catWeapons: 'Weapons', catMissions: 'Missions', catGuides: 'Guides',
-        mobMonster: 'Common monster', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Mount',
+        mobMonster: 'Monster', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Mount',
         itemGeneral: 'General', itemRing: 'Ring', itemAccessory: 'Accessory', itemShirt: 'Shirt', itemVest: 'Vest', itemPant: 'Pant', itemHat: 'Hat', itemMask: 'Mask', itemShoe: 'Shoe', itemConsumable: 'Consumable', itemMaterial: 'Material',
         itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority', itemPack: 'Pack', itemEquipment: 'Equipment', equipmentKind: 'Equipment type',
         editTitle: 'Edit entry', newTitle: 'New entry',

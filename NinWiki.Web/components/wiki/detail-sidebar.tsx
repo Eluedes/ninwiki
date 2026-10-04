@@ -24,7 +24,7 @@ interface DetailSidebarProps {
 
 interface StatRow {
   label: string;
-  value: string;
+  value: React.ReactNode;   // texto ou varias linhas (ex.: os requisitos da arma empilhados)
 }
 
 /**
@@ -67,8 +67,9 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   // simplesmente nao mostra a secao "Como conseguir" vazia.
   if (entry.category === 'weapons') {
     const requirementsRows: StatRow[] = shouldShowLevel(entry.category, entry.itemType, entry.level) ? [{ label: dict.detail.levelReq, value: String(entry.level) }] : [];
-    // ate' 3 requisitos (um por linha): cada um vira uma linha da ficha
-    for (const req of (entry.weaponRequirement ?? '').split('\n').map((r) => r.trim()).filter(Boolean)) requirementsRows.push({ label: dict.detail.statReq, value: req });
+    // ate' 3 requisitos (um por linha): UMA so' linha "Stat Req." com todos empilhados no mesmo bloco
+    const reqs = (entry.weaponRequirement ?? '').split('\n').map((r) => r.trim()).filter(Boolean);
+    if (reqs.length) requirementsRows.push({ label: dict.detail.statReq, value: reqs.map((r, i) => <span key={i} className="block">{r}</span>) });
 
     const acquisitionRows: StatRow[] = [];
     if (entry.weaponNpc) acquisitionRows.push({ label: dict.detail.npc, value: entry.weaponNpc });

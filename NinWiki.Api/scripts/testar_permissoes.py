@@ -1535,6 +1535,22 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         r = await c.post(f"/jutsus/{SLUG}-jf/retranslate", headers=A)
         check("Retraduzir tambem refaz o nome por nivel", r.status_code == 200 and r.json()["nameByLevelPt"][3] == "PT:Great Fireball", r.text[:200])
 
+    # categoria Utility: jutsu SEM mastery (qualquer pessoa pode usar)
+    util = {**base_j, "id": f"{SLUG}-util", "name": "TESTE Utility", "masteryId": None}
+    r = await c.post("/jutsus", json=util, headers=A)
+    check("jutsu de Utilidade (sem mastery) e' criado", r.status_code == 201 and r.json()["masteryId"] is None, r.text[:200])
+    r = await c.post("/jutsus", json={**util, "id": f"{SLUG}-util2", "pathId": "qualquer"}, headers=A)
+    check("jutsu de Utilidade nao pode ter caminho (400)", r.status_code == 400, r.text[:160])
+    sem_campo = {k: v for k, v in util.items() if k != "masteryId"}
+    r = await c.post("/jutsus", json={**sem_campo, "id": f"{SLUG}-util3"}, headers=A)
+    check("esquecer o masteryId no corpo continua sendo erro (422): so' null explicito vira Utilidade", r.status_code == 422)
+    lista = (await c.get("/jutsus", params={"utility": "true"})).json()
+    check("filtro ?utility=true lista so' os jutsus sem mastery", any(j["id"] == f"{SLUG}-util" for j in lista) and all(j["masteryId"] is None for j in lista), str(lista)[:160])
+    todos_fire = (await c.get("/jutsus", params={"masteryId": "fire"})).json()
+    check("o filtro por mastery nao traz os de Utilidade", not any(j["id"] == f"{SLUG}-util" for j in todos_fire))
+    r = await c.put(f"/jutsus/{SLUG}-util", json={**util, "name": "TESTE Utility 2"}, headers=A)
+    check("editar jutsu de Utilidade funciona", r.status_code == 200 and r.json()["masteryId"] is None, r.text[:160])
+
     # ataques do mob ligados a um jutsu do catalogo
     jf = (await c.get(f"/jutsus/{SLUG}-jf")).json()
     r = await c.post("/content-items", json={**novo_conteudo("mob-atk"), "category": "mobs", "attacks": [

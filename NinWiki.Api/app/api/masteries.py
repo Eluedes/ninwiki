@@ -208,11 +208,14 @@ async def retranslate_mastery(mastery_id: str, staff: User = Depends(require_per
 @router.get("/jutsus", response_model=list[JutsuRead])
 async def list_jutsus(
     mastery_id: str | None = Query(None, alias="masteryId", description="Filtra por mastery"),
+    utility: bool = Query(False, description="So' os jutsus de Utilidade (sem mastery)"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Lista jutsus, opcionalmente so' os de uma mastery (publico)."""
+    """Lista jutsus, opcionalmente so' os de uma mastery ou so' os de Utilidade (publico)."""
     stmt = select(Jutsu).order_by(Jutsu.name)
-    if mastery_id:
+    if utility:
+        stmt = stmt.where(Jutsu.mastery_id.is_(None))
+    elif mastery_id:
         stmt = stmt.where(Jutsu.mastery_id == mastery_id)
     result = await db.execute(stmt)
     return result.scalars().all()
@@ -331,6 +334,10 @@ async def _validate_mastery_and_path(payload: JutsuWrite, db: AsyncSession) -> N
     sem isso, um jutsu podia apontar pra' uma mastery/caminho inexistente
     e so' quebrar silenciosamente quando o front tentasse mostrar ele.
     """
+    if payload.mastery_id is None:   # Utilidade: sem mastery, e' claro que tambem nao tem caminho
+        if payload.path_id:
+            raise HTTPException(status_code=400, detail="A Utility jutsu (no mastery) cannot have a path")
+        return
     mastery = await db.get(Mastery, payload.mastery_id)
     if mastery is None:
         raise HTTPException(status_code=400, detail=f"Mastery '{payload.mastery_id}' does not exist")

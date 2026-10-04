@@ -126,7 +126,8 @@ class Jutsu(Base):
     id: Mapped[str] = mapped_column(String(80), primary_key=True)  # ex: "katon-goukakyuu"
     name: Mapped[str] = mapped_column(String(150))
     name_pt: Mapped[str | None] = mapped_column(String(150), nullable=True)
-    mastery_id: Mapped[str] = mapped_column(ForeignKey("masteries.id", ondelete="CASCADE"))
+    # Nullable = jutsu de UTILIDADE (categoria "Utility"): nao pertence a nenhuma mastery, qualquer pessoa pode usar.
+    mastery_id: Mapped[str | None] = mapped_column(ForeignKey("masteries.id", ondelete="CASCADE"), nullable=True)
     # Nullable: nem toda mastery tem caminhos (ver MAESTRIAS.md/comentarios
     # do front) - um jutsu de uma mastery SEM caminhos deixa isso vazio.
     path_id: Mapped[str | None] = mapped_column(ForeignKey("mastery_paths.id", ondelete="SET NULL"), nullable=True)

@@ -6,6 +6,7 @@
 
 import { getJutsu, getMastery, ApiError } from '@/lib/api-client';
 import { LoreNotFound } from '@/components/lore/lore-not-found';
+import { UTILITY_MASTERY } from '@/lib/utility-category';
 import { JutsuPageClient } from '@/components/lore/jutsu-page-client';
 import type { Metadata } from 'next';
 
@@ -42,7 +43,8 @@ export default async function JutsuPage({
   // mastery e' opcional aqui de proposito (mesmo motivo de antes: se
   // por algum motivo a mastery do jutsu nao carregar, a pagina ainda
   // mostra o jutsu em si, so' sem a cor de destaque/link da mastery).
-  const mastery = await getMastery(jutsu.masteryId).catch(() => undefined);
+  // sem mastery = categoria Utility (usa a mastery "virtual" de lib/utility-category.ts para mostrar a cor e o link)
+  const mastery = jutsu.masteryId ? await getMastery(jutsu.masteryId).catch(() => undefined) : UTILITY_MASTERY;
 
   return <JutsuPageClient jutsu={jutsu} mastery={mastery} />;
 }

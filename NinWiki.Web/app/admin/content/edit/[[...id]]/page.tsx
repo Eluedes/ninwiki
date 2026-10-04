@@ -325,6 +325,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
     try {
       const payload: ContentItemInput = {
         ...values,
+        rarity: values.category === 'mobs' ? 'common' : values.rarity,   // mob nao tem raridade: grava Common por baixo
         // Zera o nivel se a categoria/tipo atual nao usa nivel (ver
         // shouldShowLevel em lib/utils.ts) - evita um numero antigo
         // ficar "escondido" mas ainda salvo, de uma epoca em que a
@@ -600,7 +601,8 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             </div>
           )}
 
-          <div className="space-y-2">
+          {/* Mobs nao tem raridade (o banco guarda Common por baixo e o site nao mostra) */}
+          {category !== 'mobs' && <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.rarity}</label>
             <Controller
               name="rarity"
@@ -616,7 +618,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
                 </Select>
               )}
             />
-          </div>
+          </div>}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

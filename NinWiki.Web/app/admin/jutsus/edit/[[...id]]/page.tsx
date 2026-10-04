@@ -3,6 +3,7 @@
 // Editor de Jutsu - agora com validacao via React Hook Form + Zod
 // (ver lib/validation.ts). Mesmo padrao usado no editor de Conteudo.
 
+import { UTILITY_ID } from '@/lib/utility-category';
 import { useEffect, useRef, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -120,7 +121,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
     Promise.all([loadMasteries, loadJutsu])
       .then(([m, j]) => {
         setMasteries(m);
-        if (j) reset({ ...emptyForm, ...j, levels: levelsFromApi(j) });
+        if (j) reset({ ...emptyForm, ...j, masteryId: j.masteryId ?? UTILITY_ID, levels: levelsFromApi(j) });   // sem mastery = categoria Utility
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : loadErrorRef.current))
       .finally(() => setLoading(false));
@@ -151,9 +152,11 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
     try {
       const { levels: _levels, ...rest } = values; // `levels` e' so' do formulario; a API recebe maxLevel/damageByLevel/cooldownByLevel
       void _levels;
+      const isUtility = values.masteryId === UTILITY_ID;   // Utility = jutsu sem mastery (masteryId null) e sem caminho
       const payload: JutsuInput = {
         ...rest,
-        pathId: values.pathId ?? null,
+        masteryId: isUtility ? null : values.masteryId,
+        pathId: isUtility ? null : (values.pathId ?? null),
         gif: values.gif || null,
         // cada linha da tabela de niveis e' um nivel: o nivel maximo e' a quantidade de linhas
         maxLevel: values.levels.length,
@@ -232,6 +235,8 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
                     {masteries.map((m) => (
                       <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                     ))}
+                    {/* Categoria Utility: jutsu que nao e' de nenhuma mastery (qualquer pessoa pode usar) */}
+                    <SelectItem value={UTILITY_ID}>{t.masteryUtility}</SelectItem>
                   </SelectContent>
                 </Select>
               )}

@@ -34,7 +34,7 @@ export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary;
         )}
       >
         {/* faixa da raridade na lateral */}
-        <span className={cn('absolute inset-y-0 left-0 w-1', rarity.barColor)} aria-hidden />
+        <span className={cn('absolute inset-y-0 left-0 w-1', kind === 'mob' ? 'bg-primary/40' : rarity.barColor)} aria-hidden />
         <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-[radial-gradient(circle_at_50%_40%,hsl(var(--primary)/0.18),transparent_70%)] bg-secondary/40">
           <WikiImage
             src={entry.image}
@@ -56,7 +56,7 @@ export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary;
                 {locale === 'pt' ? type.pt : type.en}
               </span>
             )}
-            <span className={cn('text-[11px] font-semibold', rarity.color)}>{rarity.label}</span>
+            {kind === 'weapon' && <span className={cn('text-[11px] font-semibold', rarity.color)}>{rarity.label}</span>}   {/* mobs nao tem raridade */}
           </div>
         </div>
       </div>
