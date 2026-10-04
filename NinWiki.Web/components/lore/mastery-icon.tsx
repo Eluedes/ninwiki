@@ -15,6 +15,7 @@ import {
   Swords,
   Hand,
   Wrench,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -27,6 +28,7 @@ const iconMap: Record<string, LucideIcon> = {
   'heart-pulse': HeartPulse,
   swords: Swords,
   fist: Hand,
+  users: Users,     // secao NPC (lib/utility-category.ts)
   wrench: Wrench,   // categoria Utility (lib/utility-category.ts)
 };
 

@@ -3,6 +3,7 @@
 // Editor de Jutsu - agora com validacao via React Hook Form + Zod
 // (ver lib/validation.ts). Mesmo padrao usado no editor de Conteudo.
 
+import { Checkbox } from '@/components/ui/checkbox';
 import { UTILITY_ID } from '@/lib/utility-category';
 import { useEffect, useRef, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -55,6 +56,8 @@ const emptyForm: JutsuFormValues = {
   castType: '',
   jutsuClass: '',
   debuff: '',
+  isNpc: false,
+  allowedWeapons: '',
 };
 
 /** Tabela de niveis a partir do jutsu salvo (uma linha por nivel; pelo menos uma). */
@@ -243,6 +246,17 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             />
           </div>
 
+          {/* Jutsu NPC: versao do jutsu ensinada/usada por NPC - aparece numa secao propria do site (card NPC em Masteries) */}
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <Controller
+              name="isNpc"
+              control={control}
+              render={({ field }) => <Checkbox id="jutsu-is-npc" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />}
+            />
+            <label htmlFor="jutsu-is-npc" className="text-sm font-semibold">{jf.isNpc}</label>
+            <span className="text-xs text-muted-foreground">{jf.isNpcHint}</span>
+          </div>
+
           {availablePaths.length > 0 && (
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.path}</label>
@@ -342,6 +356,10 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.debuff}</label>
               <Input {...register('debuff')} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">{jf.allowedWeapons}</label>
+              <Input {...register('allowedWeapons')} placeholder="Blunt" maxLength={100} />
             </div>
           </div>
 

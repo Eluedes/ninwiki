@@ -24,3 +24,25 @@ export const UTILITY_MASTERY: ApiMastery = {
   paths: [],
   attributeIds: [],
 };
+
+/** Id usado na URL (/masteries/npc) da secao "NPC": os Jutsus NPC (versoes dos jutsus ensinadas/usadas por NPC). */
+export const NPC_ID = 'npc';
+
+/** Mastery "virtual" da secao NPC (nao existe no banco): reaproveita o card e a pagina de lista das masteries. */
+export const NPC_MASTERY: ApiMastery = {
+  id: NPC_ID,
+  name: 'NPC Jutsu',
+  namePt: 'Jutsu NPC',
+  type: 'non-elemental',
+  element: 'NPC',
+  description: 'Versions of the jutsus taught and used by NPCs. They share names with the mastery and Utility jutsus, but have small differences.',
+  longDescription: 'NPC jutsus are the versions of the techniques that NPCs teach and use. They look like the player versions, but have small differences.',
+  descriptionPt: 'Versões dos jutsus ensinadas e usadas por NPCs. Têm os mesmos nomes dos jutsus de mastery e de Utilidade, mas com pequenas diferenças.',
+  longDescriptionPt: 'Os Jutsus NPC são as versões das técnicas que os NPCs ensinam e usam. Parecem as versões dos jogadores, mas têm pequenas diferenças.',
+  icon: 'users',
+  color: '#f59e0b',
+  image: null,
+  gif: null,
+  paths: [],
+  attributeIds: [],
+};

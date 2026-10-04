@@ -1551,6 +1551,16 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/jutsus/{SLUG}-util", json={**util, "name": "TESTE Utility 2"}, headers=A)
     check("editar jutsu de Utilidade funciona", r.status_code == 200 and r.json()["masteryId"] is None, r.text[:160])
 
+    # Jutsu NPC: versao do jutsu usada por NPC (secao propria)
+    npc_j = {**base_j, "id": f"{SLUG}-npc", "name": "TESTE Jutsu NPC", "isNpc": True, "allowedWeapons": " Blunt "}
+    r = await c.post("/jutsus", json=npc_j, headers=A)
+    check("Jutsu NPC e' criado, com 'armas permitidas' limpas", r.status_code == 201 and r.json()["isNpc"] is True and r.json()["allowedWeapons"] == "Blunt", r.text[:200])
+    check("jutsu comum nasce com isNpc=false e sem armas permitidas", (await c.get(f"/jutsus/{SLUG}-jf")).json()["isNpc"] is False)
+    so_npc = (await c.get("/jutsus", params={"npc": "true"})).json()
+    sem_npc = (await c.get("/jutsus", params={"npc": "false"})).json()
+    check("?npc=true lista so' os de NPC e ?npc=false tira eles da lista", any(j["id"] == f"{SLUG}-npc" for j in so_npc) and all(j["isNpc"] for j in so_npc)
+          and not any(j["id"] == f"{SLUG}-npc" for j in sem_npc) and any(j["id"] == f"{SLUG}-jf" for j in sem_npc))
+
     # ataques do mob ligados a um jutsu do catalogo
     jf = (await c.get(f"/jutsus/{SLUG}-jf")).json()
     r = await c.post("/content-items", json={**novo_conteudo("mob-atk"), "category": "mobs", "attacks": [

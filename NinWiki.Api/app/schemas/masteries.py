@@ -169,6 +169,8 @@ class JutsuRead(CamelModel):
     cast_type: str = ""
     jutsu_class: str = ""
     debuff: str = ""
+    is_npc: bool = False          # Jutsu NPC: versao do jutsu ensinada/usada por NPC (secao propria no site)
+    allowed_weapons: str = ""    # "Allowed weapons" (ex.: Blunt)
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
@@ -205,9 +207,11 @@ class JutsuWrite(CamelModel):
     cast_type: str = Field(default="", max_length=100)
     jutsu_class: str = Field(default="", max_length=100)
     debuff: str = Field(default="", max_length=150)
+    is_npc: bool = False
+    allowed_weapons: str = Field(default="", max_length=100)
 
     @field_validator("effect", "range", "cast_time", "cooldown", "required_level", "required_stat", "scroll_type", "shop",
-                     "cast_type", "jutsu_class", "debuff")
+                     "cast_type", "jutsu_class", "debuff", "allowed_weapons")
     @classmethod
     def _clean_text(cls, value: str) -> str:
         """Tira espacos extras e quebras de linha dos textos curtos da ficha."""

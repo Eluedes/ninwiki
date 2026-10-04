@@ -56,7 +56,7 @@ export function JutsuPicker({ linkedId, onLink, onUnlink }: { linkedId: string |
               onClick={() => { onLink(j); setQuery(''); setOpen(false); }}
               className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-xs hover:bg-secondary"
             >
-              <span className="truncate text-popover-foreground">{j.name}</span>
+              <span className="truncate text-popover-foreground">{j.name}{j.isNpc ? ' (NPC)' : ''}</span>
               <span className="shrink-0 text-muted-foreground">{j.masteryId ?? 'utility'}</span>
             </button>
           ))}
