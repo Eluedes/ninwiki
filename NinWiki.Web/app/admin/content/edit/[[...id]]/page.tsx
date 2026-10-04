@@ -40,6 +40,7 @@ import {
 } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
+import { EmojiPicker } from '@/components/admin/emoji-picker';
 import { itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { contentItemSchema, type ContentItemFormValues } from '@/lib/validation';
 import type { Category, ItemType, MobType, Rarity } from '@/lib/types';
@@ -176,6 +177,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
     control,
     handleSubmit,
     getValues,
+    setValue,
     reset,
     formState: { errors },
   } = useForm<ContentItemFormValues>({
@@ -564,7 +566,10 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           )}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.icon}</label>
-            <Input {...register('icon')} placeholder="🦠" />
+            <div className="flex gap-2">
+              <Input {...register('icon')} placeholder="🦠" />
+              <EmojiPicker onPick={(emoji) => setValue('icon', emoji, { shouldDirty: true, shouldValidate: true })} />
+            </div>
             <FieldError message={errors.icon?.message} />
           </div>
         </div>

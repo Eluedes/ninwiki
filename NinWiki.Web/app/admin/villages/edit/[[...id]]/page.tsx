@@ -4,6 +4,7 @@
 // CLAS (editados aqui dentro; a lista salva SUBSTITUI a atual). Organizacoes
 // (ligadas a uma ou mais vilas) ficam em /admin/organizations.
 
+import { EmojiPicker } from '@/components/admin/emoji-picker';
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -221,7 +222,10 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <label className={label}>{t.emblem}</label>
-            <Input {...register('emblem')} />
+            <div className="flex gap-2">
+              <Input {...register('emblem')} />
+              <EmojiPicker onPick={(emoji) => setValue('emblem', emoji, { shouldDirty: true, shouldValidate: true })} />
+            </div>
             <FieldError message={errors.emblem?.message} />
           </div>
           <div className="space-y-2">
