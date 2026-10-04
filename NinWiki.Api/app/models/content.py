@@ -98,7 +98,7 @@ class ContentItem(Base, TimestampMixin):
     # nome do atributo + valor juntos, igual aparece na ficha do jogo,
     # em vez de duas colunas separadas pra' algo que so' e' mostrado
     # junto mesmo.
-    weapon_requirement: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    weapon_requirement: Mapped[str | None] = mapped_column(String(320), nullable=True)   # ate' 3 requisitos, um por LINHA (separados por \n)
     # Campos novos da ficha de Arma redesenhada (26/09), pra' bater com
     # a ficha do proprio jogo (secoes Requirements/Acquisition/Weapon
     # Details/Battle Data - ver DetailSidebar no front pro layout

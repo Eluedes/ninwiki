@@ -111,6 +111,7 @@ const rarityOptions: { value: Rarity; label: string }[] = [
   { value: 'epic', label: 'Epic' },
   { value: 'legendary', label: 'Legendary' },
   { value: 'enchanted', label: 'Enchanted' },
+  { value: 'unique', label: 'Unique' },
 ];
 
 // Atributos que um item/arma pode dar (lista fixa do jogo): escolhidos num seletor no editor.
@@ -531,7 +532,35 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.requirement}</label>
-                <Input {...register('weaponRequirement')} placeholder={t.requirementPlaceholder} />
+                {/* Ate' 3 requisitos: cada campo e' uma linha do mesmo valor ("60 Agility" / "20 Chakra" / ...). */}
+                <Controller
+                  control={control}
+                  name="weaponRequirement"
+                  render={({ field }) => {
+                    const lines = (field.value ?? '').split('\n');
+                    const rows = lines.length ? lines : [''];
+                    const update = (next: string[]) => field.onChange(next.join('\n'));
+                    return (
+                      <div className="space-y-2">
+                        {rows.map((line, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <Input value={line} placeholder={t.requirementPlaceholder} onChange={(e) => update(rows.map((l, j) => (j === i ? e.target.value.replace(/\n/g, ' ') : l)))} />
+                            {rows.length > 1 && (
+                              <button type="button" onClick={() => update(rows.filter((_, j) => j !== i))} className="shrink-0 rounded-md p-2 text-muted-foreground hover:bg-red-900/20 hover:text-red-400">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {rows.length < 3 && (
+                          <Button type="button" variant="outline" size="sm" onClick={() => update([...rows, ''])}>
+                            <Plus className="mr-1 h-3.5 w-3.5" /> {t.addRequirement}
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.weaponKnockbackDistance}</label>

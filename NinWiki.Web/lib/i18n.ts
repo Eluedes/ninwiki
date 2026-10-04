@@ -242,7 +242,7 @@ export interface Dictionary {
       itemGeneral: string; itemRing: string; itemAccessory: string; itemShirt: string; itemVest: string; itemPant: string; itemHat: string; itemMask: string; itemShoe: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string; itemPack: string; itemEquipment: string; equipmentKind: string;
       editTitle: string; newTitle: string;
       name: string; category: string; mobType: string; itemType: string; slugLabel: string; back: string; icon: string;
-      speed: string; speedPlaceholder: string; requirement: string; requirementPlaceholder: string;
+      speed: string; speedPlaceholder: string; requirement: string; requirementPlaceholder: string; addRequirement: string;
       weaponNpc: string; weaponNpcPlaceholder: string; weaponType: string; weaponTypePlaceholder: string;
       weaponBaseDamage: string; weaponBaseDamagePlaceholder: string;
       weaponSpecialAbility: string; weaponSpecialAbilityPlaceholder: string;
@@ -907,7 +907,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         back: 'Voltar',
         icon: 'Ícone (emoji)',
         speed: 'Speed', speedPlaceholder: '',
-        requirement: 'Requisito pra usar', requirementPlaceholder: '',
+        requirement: 'Requisito pra usar', requirementPlaceholder: 'Ex.: 60 Agility', addRequirement: 'Adicionar requisito',
         weaponNpc: 'NPC (onde conseguir)', weaponNpcPlaceholder: '',
         weaponType: 'Tipo', weaponTypePlaceholder: '',
         weaponBaseDamage: 'Dano Base', weaponBaseDamagePlaceholder: '',
@@ -1593,7 +1593,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         back: 'Back',
         icon: 'Icon (emoji)',
         speed: 'Speed', speedPlaceholder: '',
-        requirement: 'Requirement to use', requirementPlaceholder: '',
+        requirement: 'Requirement to use', requirementPlaceholder: 'e.g. 60 Agility', addRequirement: 'Add requirement',
         weaponNpc: 'NPC (where to get)', weaponNpcPlaceholder: '',
         weaponType: 'Type', weaponTypePlaceholder: '',
         weaponBaseDamage: 'Base Damage', weaponBaseDamagePlaceholder: '',
