@@ -40,6 +40,7 @@ import {
 } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
+import { SignedStepperInput } from '@/components/admin/signed-stepper-input';
 import { EmojiPicker } from '@/components/admin/emoji-picker';
 import { itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { contentItemSchema, type ContentItemFormValues } from '@/lib/validation';
@@ -253,7 +254,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   }, [isEdit, rawId, reset]);
 
   function addAttribute() {
-    setAttributes((prev) => [...prev, { label: ATTRIBUTE_NAMES[0], value: '' }]);   // ja' nasce com um atributo escolhido (o seletor nunca fica vazio)
+    setAttributes((prev) => [...prev, { label: ATTRIBUTE_NAMES[0], value: '0' }]);   // ja' nasce com um atributo escolhido (o seletor nunca fica vazio)
   }
   function updateAttribute(index: number, field: 'label' | 'value', value: string) {
     setAttributes((prev) => prev.map((a, i) => (i === index ? { ...a, [field]: value } : a)));
@@ -700,7 +701,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <div key={i} className="flex items-center gap-2">
               {/* Valor primeiro (ex.: +2) e, ao lado, o ATRIBUTO escolhido numa lista fixa. Um atributo antigo com outro nome continua
                   aparecendo como opcao extra (nao se perde ao editar). */}
-              <Input placeholder={t.attributeValuePlaceholder} value={attr.value} onChange={(e) => updateAttribute(i, 'value', e.target.value)} />
+              <SignedStepperInput placeholder={t.attributeValuePlaceholder} value={attr.value} onChange={(v) => updateAttribute(i, 'value', v)} />
               <Select value={attr.label || ATTRIBUTE_NAMES[0]} onValueChange={(v) => updateAttribute(i, 'label', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>

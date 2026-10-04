@@ -8,7 +8,7 @@
 // print com o Rafael, 24/09): stats -> Jutsu/Attacks (so' Mob) ->
 // Drops.
 
-import { cn, itemHasStack, shouldShowLevel } from '@/lib/utils';
+import { cn, itemHasStack, shouldShowLevel, signedValue } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -109,7 +109,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
                 <div className="flex flex-wrap gap-1.5">
                   {entry.attributes.map((attr, i) => (
                     <span key={i} className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-400">
-                      +{attr.value} {attr.label}
+                      {signedValue(attr.value)} {attr.label}
                     </span>
                   ))}
                 </div>
@@ -243,7 +243,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
           <div className="flex flex-wrap gap-1.5 px-4 py-3">
             {entry.attributes.map((attr, i) => (
               <span key={i} className="rounded-md border border-border bg-secondary/60 px-2 py-1 text-xs font-medium text-card-foreground">
-                <span className="text-muted-foreground">{attr.label}</span> <span className="font-bold">{attr.value}</span>
+                <span className="text-muted-foreground">{attr.label}</span> <span className="font-bold">{signedValue(attr.value)}</span>
               </span>
             ))}
           </div>

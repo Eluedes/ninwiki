@@ -52,3 +52,9 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 50);
 }
+
+// Valor de atributo para exibir: "+2" e "-1" ja' trazem sinal e ficam como estao; "0" tambem; numero puro ("5") ganha "+" na frente.
+export function signedValue(value: string): string {
+  const v = value.trim();
+  return /^\d/.test(v) && Number.parseFloat(v) !== 0 ? `+${v}` : v;
+}

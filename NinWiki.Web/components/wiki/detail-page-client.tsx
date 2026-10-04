@@ -11,7 +11,7 @@ import { DetailSidebar } from '@/components/wiki/detail-sidebar';
 import { CatalogCard } from '@/components/wiki/catalog-card';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import { RichText, extractPlainText } from '@/components/lore/rich-text';
-import { cn, itemHasStack, shouldShowLevel } from '@/lib/utils';
+import { cn, itemHasStack, shouldShowLevel, signedValue } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
 import { ArrowLeft, Heart, Layers, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
@@ -105,7 +105,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
                   <div className="flex flex-wrap gap-2">
                     {entry.attributes.map((attr, i) => (
                       <span key={i} className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-400">
-                        +{attr.value} {attr.label}
+                        {signedValue(attr.value)} {attr.label}
                       </span>
                     ))}
                   </div>
