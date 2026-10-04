@@ -152,7 +152,7 @@ export interface Dictionary {
     noticeBoard: { title: string; subtitle: string; empty: string; newNotice: string; titleLabel: string; bodyLabel: string; pin: string; pinned: string; save: string; saving: string; cancel: string; edit: string; delete: string; confirmDelete: string; attachFiles: string; files: string; download: string; removeFile: string; uploading: string; by: string; loadError: string; saveError: string; uploadError: string; maxInfo: string; fileTooBig: string };
     rolesPage: { customTitle: string; customSubtitle: string; newRole: string; editRole: string; roleName: string; roleColor: string; roleDescription: string; createRole: string; saveRole: string; deleteRole: string; confirmDeleteRole: string; membersCount: string; noCustomRoles: string; presetHint: string; selectAll: string; clearAll: string; nameRequired: string; baseNote: string; title: string; subtitle: string; permission: string; locked: string; lockedHint: string; save: string; saving: string; saved: string; reset: string; confirmReset: string; loadError: string; saveError: string; unsavedChanges: string; alwaysAll: string; groups: Record<string, string>; names: Record<string, string> };
     header: { role: { admin: string; mod: string } };
-    analytics: { title: string; subtitle: string; views: string; visitors: string; last: string; days: string; countries: string; pages: string; noData: string; noDataHint: string; unknown: string; loadError: string; other: string; credit: string };
+    analytics: { title: string; subtitle: string; views: string; visitors: string; last: string; days: string; countries: string; places: string; placesHint: string; pages: string; noData: string; noDataHint: string; unknown: string; loadError: string; other: string; credit: string };
     overview: {
       title: string; totalPosts: string; totalPages: string; totalUsers: string; recentActivity: string;
       viewAll: string; noActivity: string; system: string;
@@ -661,7 +661,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'audit.clear': 'Limpar o log', 'analytics.view': 'Ver os acessos ao site',
         },
       },
-      analytics: { title: 'Acessos ao site', subtitle: 'Contagem anônima: sem cookies e sem guardar IP.', views: 'Visualizações', visitors: 'Visitantes', last: 'Últimos', days: 'dias', countries: 'Países que mais acessam', pages: 'Páginas mais vistas', noData: 'Ainda sem acessos registrados', noDataHint: 'Os números aparecem assim que alguém abrir o site público.', unknown: 'Desconhecido', loadError: 'Não foi possível carregar os acessos.', other: 'Outras', credit: 'Países via Cloudflare ou DB-IP.' },
+      analytics: { title: 'Acessos ao site', subtitle: 'Contagem anônima: sem cookies e sem guardar IP.', views: 'Visualizações', visitors: 'Visitantes', last: 'Últimos', days: 'dias', countries: 'Países que mais acessam', places: 'Cidades e estados', placesHint: 'Sem dados ainda. Para aparecer cidade e estado, ligue na Cloudflare: Rules → Settings → Managed Transforms → “Add visitor location headers”.', pages: 'Páginas mais vistas', noData: 'Ainda sem acessos registrados', noDataHint: 'Os números aparecem assim que alguém abrir o site público.', unknown: 'Desconhecido', loadError: 'Não foi possível carregar os acessos.', other: 'Outras', credit: 'Países via Cloudflare ou DB-IP; cidade e estado via Cloudflare.' },
       header: {
         role: { admin: 'Admin', mod: 'Mod' },
       },
@@ -1345,7 +1345,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'audit.clear': 'Clear the log', 'analytics.view': 'View site traffic',
         },
       },
-      analytics: { title: 'Site traffic', subtitle: 'Anonymous counts: no cookies and no stored IPs.', views: 'Views', visitors: 'Visitors', last: 'Last', days: 'days', countries: 'Top countries', pages: 'Most viewed pages', noData: 'No visits recorded yet', noDataHint: 'Numbers show up as soon as someone opens the public site.', unknown: 'Unknown', loadError: 'Could not load the traffic numbers.', other: 'Other', credit: 'Countries via Cloudflare or DB-IP.' },
+      analytics: { title: 'Site traffic', subtitle: 'Anonymous counts: no cookies and no stored IPs.', views: 'Views', visitors: 'Visitors', last: 'Last', days: 'days', countries: 'Top countries', places: 'Cities and states', placesHint: 'No data yet. To get city and state, turn on in Cloudflare: Rules → Settings → Managed Transforms → “Add visitor location headers”.', pages: 'Most viewed pages', noData: 'No visits recorded yet', noDataHint: 'Numbers show up as soon as someone opens the public site.', unknown: 'Unknown', loadError: 'Could not load the traffic numbers.', other: 'Other', credit: 'Countries via Cloudflare or DB-IP; city and state via Cloudflare.' },
       header: {
         role: { admin: 'Admin', mod: 'Mod' },
       },

@@ -1267,6 +1267,7 @@ export function deleteError(id: string): Promise<void> {
 
 export interface ApiTrafficDay { day: string; views: number; visitors: number }
 export interface ApiTrafficCountry { code: string; views: number; visitors: number; share: number }
+export interface ApiTrafficPlace { country: string; region: string; city: string; views: number; visitors: number; share: number }
 export interface ApiTrafficPage { path: string; views: number }
 export interface ApiTrafficSummary {
   days: number;
@@ -1274,6 +1275,7 @@ export interface ApiTrafficSummary {
   totalVisitors: number;
   series: ApiTrafficDay[];
   countries: ApiTrafficCountry[];
+  places: ApiTrafficPlace[];   // cidade/estado/pais (so' com os cabecalhos de localizacao da Cloudflare ligados)
   pages: ApiTrafficPage[];
 }
 

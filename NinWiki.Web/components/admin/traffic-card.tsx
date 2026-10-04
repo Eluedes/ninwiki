@@ -114,12 +114,28 @@ export function TrafficCard() {
                   <div key={c.code} className="text-sm">
                     <div className="flex items-center justify-between gap-2">
                       <span className="flex min-w-0 items-center gap-2"><span className="text-base leading-none">{flagOf(c.code)}</span><span className="truncate">{countryName(c.code, locale, t.unknown)}</span></span>
-                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{c.views.toLocaleString(locale)} · {Math.round(c.share)}%</span>
+                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{c.views.toLocaleString(locale)} · {Math.round(c.share * 100)}%</span>
                     </div>
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary" style={{ width: `${(c.share / maxShare) * 100}%` }} /></div>
                   </div>
                 ))}
                 {data.countries.length === 0 && <p className="text-xs text-muted-foreground">{t.noData}</p>}
+              </div>
+            </div>
+            {/* Cidades e estados: so' aparecem se a Cloudflare estiver mandando a localizacao (Managed Transform "Add visitor location headers") */}
+            <div>
+              <h3 className="mb-2 text-sm font-semibold">{t.places}</h3>
+              <div className="space-y-1">
+                {data.places.slice(0, 8).map((p) => (
+                  <div key={`${p.country}|${p.region}|${p.city}`} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="text-sm leading-none">{flagOf(p.country)}</span>
+                      <span className="truncate">{[p.city, p.region].filter(Boolean).join(' — ') || countryName(p.country, locale, t.unknown)}</span>
+                    </span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">{p.views.toLocaleString(locale)} · {Math.round(p.share * 100)}%</span>
+                  </div>
+                ))}
+                {data.places.length === 0 && <p className="text-xs text-muted-foreground">{t.placesHint}</p>}
               </div>
             </div>
             {data.pages.length > 0 && (
