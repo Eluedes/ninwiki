@@ -24,6 +24,22 @@ class TrafficDaily(Base):
     visitors: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
 
+class TrafficPlace(Base):
+    """
+    Visualizacoes de um dia vindas de um LUGAR (pais + estado + cidade), so' contagem (nunca IP). Estado e cidade vem dos cabecalhos
+    que a Cloudflare manda (cf-region / cf-ipcity: ligue "Add visitor location headers" em Rules > Managed Transforms); sem eles
+    a visita nao entra aqui (so' em TrafficDaily, por pais). Vazio ("") = nao informado.
+    """
+    __tablename__ = "traffic_places"
+
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    country: Mapped[str] = mapped_column(String(2), primary_key=True)
+    region: Mapped[str] = mapped_column(String(100), primary_key=True, default="", server_default="")
+    city: Mapped[str] = mapped_column(String(100), primary_key=True, default="", server_default="")
+    views: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    visitors: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+
+
 class TrafficPage(Base):
     """Visualizacoes de uma pagina (caminho) em um dia."""
     __tablename__ = "traffic_pages"

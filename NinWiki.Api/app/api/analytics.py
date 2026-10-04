@@ -11,6 +11,7 @@ import hashlib
 import random
 import re
 from datetime import date, datetime, timedelta, timezone
+from urllib.parse import unquote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
@@ -25,7 +26,7 @@ from app.core.geoip import country_of
 from app.core.permissions import Permission
 from app.core.rate_limit import client_key, limiter, retry_message
 from app.core.security import ensure_same_origin
-from app.models.traffic import TrafficDaily, TrafficPage, TrafficVisitor
+from app.models.traffic import TrafficDaily, TrafficPage, TrafficPlace, TrafficVisitor
 from app.models.users import User
 from app.schemas.content import CamelModel
 
@@ -58,6 +59,16 @@ class CountryRow(CamelModel):
     share: float   # fracao das visualizacoes do periodo (0 a 1)
 
 
+class PlaceRow(CamelModel):
+    """Um lugar (cidade, estado e pais) no ranking; region/city vazios = nao informado."""
+    country: str
+    region: str
+    city: str
+    views: int
+    visitors: int
+    share: float   # fracao das visualizacoes COM localizacao no periodo (0 a 1)
+
+
 class PageRow(CamelModel):
     """Uma pagina no ranking das mais vistas."""
     path: str
@@ -71,6 +82,7 @@ class TrafficSummary(CamelModel):
     total_visitors: int
     series: list[DayPoint]
     countries: list[CountryRow]
+    places: list[PlaceRow]
     pages: list[PageRow]
 
 
@@ -83,6 +95,14 @@ def clean_path(raw: str) -> str | None:
     if any(path == p or path.startswith(p + "/") for p in IGNORED_PREFIXES):
         return None
     return path[:200]
+
+
+def place_part(raw: str | None) -> str:
+    """Nome de estado/cidade vindo do cabecalho da Cloudflare: decodifica %xx, tira controles e limita a 100 caracteres ("" se vazio)."""
+    if not raw:
+        return ""
+    text = unquote(raw)
+    return " ".join("".join(ch for ch in text if ch.isprintable()).split())[:100]
 
 
 def _visitor_hash(day: date, ip: str, ua: str) -> str:
@@ -105,6 +125,10 @@ async def record_hit(payload: HitIn, request: Request, db: AsyncSession = Depend
     today = datetime.now(timezone.utc).date()
     country = country_of(ip, request.headers.get("cf-ipcountry"), settings.trust_proxy_headers)
 
+    # estado e cidade: so' vem da Cloudflare (cabecalhos cf-region / cf-ipcity, "Add visitor location headers") e so' se a API confia nela
+    region = place_part(request.headers.get("cf-region")) if settings.trust_proxy_headers else ""
+    city = place_part(request.headers.get("cf-ipcity")) if settings.trust_proxy_headers else ""
+
     # visitante novo hoje? (a linha so' entra se ainda nao existia)
     new_visitor = (await db.execute(
         insert(TrafficVisitor).values(day=today, visitor_hash=_visitor_hash(today, ip, ua))
@@ -114,6 +138,11 @@ async def record_hit(payload: HitIn, request: Request, db: AsyncSession = Depend
         index_elements=["day", "country"],
         set_={"views": TrafficDaily.views + 1, "visitors": TrafficDaily.visitors + (1 if new_visitor else 0)}))
 
+    if country != "ZZ" and (region or city):
+        await db.execute(insert(TrafficPlace).values(day=today, country=country, region=region, city=city, views=1, visitors=1 if new_visitor else 0)
+                         .on_conflict_do_update(index_elements=["day", "country", "region", "city"],
+                                                set_={"views": TrafficPlace.views + 1, "visitors": TrafficPlace.visitors + (1 if new_visitor else 0)}))
+
     known = (await db.execute(select(func.count()).select_from(TrafficPage).where(TrafficPage.day == today))).scalar_one()
     exists = (await db.get(TrafficPage, (today, path))) is not None
     stored = path if (exists or known < MAX_PAGES_PER_DAY) else "/other"
@@ -122,6 +151,7 @@ async def record_hit(payload: HitIn, request: Request, db: AsyncSession = Depend
 
     if random.random() < 0.02:  # faxina ocasional: hashes de visitantes com mais de 2 dias nao servem mais
         await db.execute(delete(TrafficVisitor).where(TrafficVisitor.day < today - timedelta(days=2)))
+        await db.execute(delete(TrafficPlace).where(TrafficPlace.day < today - timedelta(days=400)))   # a tela mostra no maximo 365 dias
     await db.commit()
     return None
 
@@ -149,8 +179,15 @@ async def traffic_summary(
         .order_by(func.sum(TrafficDaily.views).desc()).limit(15))).all()
     countries = [CountryRow(code=c, views=int(v), visitors=int(u), share=(int(v) / total_views if total_views else 0))
                  for c, v, u in country_rows]
+    place_rows = (await db.execute(
+        select(TrafficPlace.country, TrafficPlace.region, TrafficPlace.city, func.sum(TrafficPlace.views), func.sum(TrafficPlace.visitors))
+        .where(TrafficPlace.day >= start).group_by(TrafficPlace.country, TrafficPlace.region, TrafficPlace.city)
+        .order_by(func.sum(TrafficPlace.views).desc()).limit(20))).all()
+    placed_views = (await db.execute(select(func.coalesce(func.sum(TrafficPlace.views), 0)).where(TrafficPlace.day >= start))).scalar_one()
+    places = [PlaceRow(country=c, region=r, city=ct, views=int(v), visitors=int(u), share=(int(v) / int(placed_views) if placed_views else 0))
+              for c, r, ct, v, u in place_rows]
     page_rows = (await db.execute(
         select(TrafficPage.path, func.sum(TrafficPage.views)).where(TrafficPage.day >= start)
         .group_by(TrafficPage.path).order_by(func.sum(TrafficPage.views).desc()).limit(8))).all()
     return TrafficSummary(days=days, total_views=total_views, total_visitors=total_visitors, series=series,
-                          countries=countries, pages=[PageRow(path=p, views=int(v)) for p, v in page_rows])
+                          countries=countries, places=places, pages=[PageRow(path=p, views=int(v)) for p, v in page_rows])

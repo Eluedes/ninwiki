@@ -185,6 +185,8 @@ async def limpar(inicio: datetime) -> None:
         await db.execute(text("DELETE FROM posts WHERE slug LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM tags WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM traffic_daily WHERE country = 'QQ'"))
+        await db.execute(text("DELETE FROM traffic_places WHERE country = 'QR'"))   # lugares do teste (estado/cidade)
+        await db.execute(text("DELETE FROM traffic_daily WHERE country = 'QR'"))
         await db.execute(text("DELETE FROM traffic_pages WHERE path LIKE :p"), {"p": f"/{SLUG}%"})
         await db.execute(text("DELETE FROM traffic_visitors WHERE visitor_hash = :h"), {"h": _hash_visitante_teste()})
         await db.execute(text("DELETE FROM readers WHERE discord_id BETWEEN :a AND :b"), {"a": BASE + 30, "b": BASE + 40})
@@ -1954,9 +1956,14 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.post("/analytics/hit", json={"path": pagina + "?utm=x#topo"}, headers={**H, "CF-IPCountry": "qq"})
     check("visita e' contada (204)", r.status_code == 204, r.text)
     await c.post("/analytics/hit", json={"path": pagina}, headers={**H, "CF-IPCountry": "QQ"})
+    await c.post("/analytics/hit", json={"path": pagina + "-lugar"}, headers={**H, "CF-IPCountry": "QR", "CF-Region": "S%C3%A3o%20Paulo", "CF-IPCity": "Campinas\n"})
     settings.trust_proxy_headers = False
+    await c.post("/analytics/hit", json={"path": pagina + "-lugar"}, headers={**H, "CF-IPCountry": "QR", "CF-Region": "Falso", "CF-IPCity": "Forjada"})   # sem proxy confiavel: ignorado
     r = await c.get("/analytics/summary?days=7", headers=A)
     resumo = r.json()
+    lugar = next((x for x in resumo["places"] if x["country"] == "QR" and x["city"] == "Campinas"), None)
+    check("estado e cidade da Cloudflare entram no ranking de lugares (decodificados e limpos)", lugar is not None and lugar["region"] == "São Paulo" and lugar["views"] == 1, str(resumo["places"][:3]))
+    check("estado/cidade FORJADOS (sem proxy confiavel) sao ignorados", not any(x["city"] == "Forjada" for x in resumo["places"]))
     pais = next((x for x in resumo["countries"] if x["code"] == "QQ"), None)
     pag = next((x for x in resumo["pages"] if x["path"] == pagina), None)
     check("Adm ve o resumo (200) com 7 dias na serie", r.status_code == 200 and len(resumo["series"]) == 7 and resumo["days"] == 7, r.text[:150])
