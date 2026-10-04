@@ -27,11 +27,11 @@ export function SteamImportCard({ onImported }: { onImported?: () => void }) {
   const run = status.lastRun;
 
   /** Pede a' API para conferir a Steam agora e atualiza o cartao (e a lista de posts, se algo foi importado). */
-  async function handleRun(specific?: string) {
+  async function handleRun(specific?: string, refresh = false) {
     setBusy(true);
     setError(null);
     try {
-      const next = await runSteamNewsImport(specific);
+      const next = await runSteamNewsImport(specific, refresh);
       setStatus(next);
       if (next.lastRun?.imported) { onImported?.(); setPost(''); }
     } catch (err) {
@@ -67,6 +67,7 @@ export function SteamImportCard({ onImported }: { onImported?: () => void }) {
             <Input value={post} onChange={(e) => setPost(e.target.value)} placeholder={t.postPlaceholder} className="h-8 text-xs" />
             <Button size="sm" variant="secondary" disabled={busy || !post.trim()} onClick={() => handleRun(post)} className="shrink-0">{t.importThis}</Button>
           </div>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => handleRun(undefined, true)} className="mt-2">{t.refreshAll}</Button>
         </div>
       </div>
       <Button variant="outline" onClick={() => handleRun()} disabled={busy} className="shrink-0">

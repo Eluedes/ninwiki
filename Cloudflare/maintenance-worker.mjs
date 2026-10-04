@@ -57,6 +57,16 @@ export function maintenance(request) {
   return new Response(request.method === 'HEAD' ? null : PAGE, { status: 503, headers: { ...headers, 'Content-Type': 'text/html; charset=utf-8' } });
 }
 
+/**
+ * Arquivo estatico de verdade (imagem, fonte, CSS, JS, video, audio) respondido com sucesso: passa mesmo sem o cabecalho do site.
+ * Motivo: o Next nem sempre coloca `x-ninwiki-web` ao servir um arquivo da pasta public; sem isto a figura (ou a URL aberta no navegador)
+ * virava a pagina de manutencao. Erro da hospedagem NUNCA tem esse tipo de conteudo (e' texto/HTML/JSON), entao a protecao continua valendo.
+ */
+export function isStaticAsset(response) {
+  if (response.status !== 200 && response.status !== 304) return false;
+  return /^(image|font|video|audio)\/|^text\/css|javascript|^application\/(octet-stream|wasm)/i.test(response.headers.get('content-type') || '');
+}
+
 export default {
   /** Repassa o pedido ao site; se o site nao responder "como o NinWiki" (ou cair), mostra a pagina de manutencao. */
   async fetch(request, env) {
@@ -68,6 +78,6 @@ export default {
     } catch {
       return maintenance(request);
     }
-    return response.headers.has(MARKER) ? response : maintenance(request);
+    return response.headers.has(MARKER) || isStaticAsset(response) ? response : maintenance(request);
   },
 };
