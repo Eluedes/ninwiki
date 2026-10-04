@@ -1461,6 +1461,7 @@ export interface ApiSteamRun {
   imported: number;
   skipped: number;
   errors: string[];
+  notes?: string[];   // avisos da busca de miniaturas (capsule) na Steam
   titles: string[];
   seen?: { title: string; tags: string[]; date: number }[];   // o que a Steam devolveu (diagnostico)
 }

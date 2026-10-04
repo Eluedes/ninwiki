@@ -2048,7 +2048,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         """Substitui a chamada real a' Steam por uma lista fixa."""
         return feed
 
-    async def _fake_capsule(app_id, gid, transport=None):
+    async def _fake_capsule(app_id, gid, transport=None, **_ignored):
         """Substitui a pagina do post na Steam: so' o post 001 tem miniatura (capsule); os outros caem na 1a imagem do texto."""
         return "https://clan.akamai.steamstatic.com/images/1/capsule-001.png" if gid.endswith("001") else None
 
@@ -2082,6 +2082,13 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         html_ok = '<html><head><meta property="og:image" content="https://clan.akamai.steamstatic.com/images/40800315/abc.jpg"></head></html>'
         html_generico = '<meta property="og:image" content="https://store.akamai.steamstatic.com/public/shared/images/share.jpg">'
         html_inverso = '<meta content="//clan.akamai.steamstatic.com/images/9/x.png" name="twitter:image">'
+        evento = {"events": [{"gid": "123", "jsondata": json.dumps({"localized_capsule_image": [None, "x.png"], "localized_title_image": ["t.png"]})},
+                             {"gid": "999", "announcement_body": {"gid": "456"}, "jsondata": {"localized_capsule_image": ["40800315/cap.jpg"]}}]}
+        check("capsule_from_event_json: acha o evento pelo gid, monta o endereco com o numero do clan e aceita caminho ja' completo",
+              sn.capsule_from_event_json(evento, "123", "40800315") == "https://clan.akamai.steamstatic.com/images/40800315/x.png"
+              and sn.capsule_from_event_json(evento, "456") == "https://clan.akamai.steamstatic.com/images/40800315/cap.jpg"
+              and sn.capsule_from_event_json(evento, "123") is None and sn.capsule_from_event_json(evento, "000") is None
+              and sn.clan_account_of({"x": "https://clan.akamai.steamstatic.com/images/40800315/a.png"}) == "40800315")
         check("capsule_from_html: pega a og:image do clan, ignora a generica da loja e entende a ordem inversa dos atributos",
               sn.capsule_from_html(html_ok).endswith("40800315/abc.jpg") and sn.capsule_from_html(html_generico) is None
               and sn.capsule_from_html(html_inverso) == "https://clan.akamai.steamstatic.com/images/9/x.png" and sn.capsule_from_html("<html></html>") is None)

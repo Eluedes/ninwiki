@@ -257,16 +257,81 @@ def capsule_from_html(page: str) -> str | None:
     return None
 
 
-async def fetch_capsule(app_id: str, gid: str, transport: httpx.AsyncBaseTransport | None = None) -> str | None:
-    """Miniatura do post (ver capsule_from_html), ou None se a Steam nao devolver/nao achar (quem chama usa a primeira imagem do texto no lugar)."""
+EVENTS_URL = "https://store.steampowered.com/events/ajaxgetadjacentpartnerevents/"
+
+
+def capsule_from_event_json(data: dict, gid: str, account: str | None = None) -> str | None:
+    """
+    Miniatura a partir do JSON dos eventos da Steam (ajaxgetadjacentpartnerevents): acha o evento de `gid` e le `localized_capsule_image`
+    (ou `localized_title_image`) do `jsondata`. O arquivo vem so' com o nome ("abc.png"): o endereco completo usa o numero do clan
+    (`account`, tirado das imagens do proprio post).
+    """
+    for event in data.get("events") or []:
+        body = event.get("announcement_body") or {}
+        if gid not in (str(event.get("gid")), str(body.get("gid"))):
+            continue
+        meta = event.get("jsondata")
+        if isinstance(meta, str):
+            try:
+                meta = json.loads(meta)
+            except ValueError:
+                meta = {}
+        for key in ("localized_capsule_image", "localized_title_image"):
+            values = (meta or {}).get(key) or []
+            name = next((v for v in values if isinstance(v, str) and v.strip()), None)
+            if not name:
+                continue
+            name = name.strip()
+            if name.startswith("https://"):
+                return name[:500]
+            if "/" in name.strip("/"):
+                return (CLAN_IMAGE + name.lstrip("/"))[:500]
+            if account:
+                return f"{CLAN_IMAGE}{account}/{name}"[:500]
+    return None
+
+
+async def fetch_capsule(app_id: str, gid: str, transport: httpx.AsyncBaseTransport | None = None, notes: list[str] | None = None,
+                        account: str | None = None) -> str | None:
+    """
+    Miniatura do post, ou None (quem chama usa a primeira imagem do texto no lugar). Tenta, em ordem: (1) a pagina do post na loja (og:image),
+    (2) a pagina do anuncio na comunidade (og:image), (3) o JSON dos eventos. Cada tentativa que falha deixa uma linha em `notes`
+    (aparece no cartao da Steam do painel) - assim da' para ver o que a Steam respondeu.
+    """
+    note = (lambda text: notes.append(f"capsule {gid[-6:]}: {text}")) if notes is not None else (lambda text: None)
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; NinWikiNewsImporter/1.0)", "Accept-Language": "en"}
+    pages = [("store", f"https://store.steampowered.com/news/app/{app_id}/view/{gid}"),
+             ("community", f"https://steamcommunity.com/games/{app_id}/announcements/detail/{gid}")]
     try:
-        async with httpx.AsyncClient(timeout=15.0, transport=transport, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; NinWikiNewsImporter/1.0)", "Accept-Language": "en"}) as client:
-            res = await client.get(f"https://store.steampowered.com/news/app/{app_id}/view/{gid}")
-            res.raise_for_status()
-            return capsule_from_html(res.text)
+        async with httpx.AsyncClient(timeout=15.0, transport=transport, follow_redirects=True, headers=headers) as client:
+            for label, url in pages:
+                try:
+                    res = await client.get(url)
+                    res.raise_for_status()
+                    found = capsule_from_html(res.text)
+                    if found:
+                        return found
+                    note(f"{label} page has no clan og:image")
+                except Exception as exc:  # noqa: BLE001
+                    note(f"{label} page failed ({type(exc).__name__})")
+            try:
+                res = await client.get(EVENTS_URL, params={"appid": app_id, "count_before": 0, "count_after": 50, "event_gid": gid, "l": "english"})
+                res.raise_for_status()
+                found = capsule_from_event_json(res.json(), gid, account)
+                if found:
+                    return found
+                note("events json has no capsule for this post")
+            except Exception as exc:  # noqa: BLE001
+                note(f"events json failed ({type(exc).__name__})")
     except Exception as exc:  # noqa: BLE001 - a miniatura e' opcional: qualquer falha = sem capsule
-        log.info("Steam news: sem capsule para %s (%s)", gid, type(exc).__name__)
-        return None
+        note(f"failed ({type(exc).__name__})")
+    return None
+
+
+def clan_account_of(doc: dict, raw: str = "") -> str | None:
+    """Numero do clan (ex.: 40800315) das imagens do proprio post (.../images/40800315/arquivo.png), usado para montar o endereco da miniatura."""
+    m = re.search(r"/images/(\d{5,12})/", json.dumps(doc, ensure_ascii=False) + raw)
+    return m.group(1) if m else None
 
 
 def _is_update(item: dict, need: str) -> bool:
@@ -316,7 +381,7 @@ async def _refresh_existing(db: AsyncSession, item: dict, run: dict) -> None:
         doc = bbcode_to_doc(str(item.get("contents") or ""), credit)
         post.content = validate_rich_content(json.dumps(doc, ensure_ascii=False))
         post.excerpt = plain_excerpt(doc) or title
-        post.cover_image = await fetch_capsule(settings.steam_news_app_id, gid) or first_image(doc)   # miniatura = capsule da Steam; sem ela, a 1a imagem do texto
+        post.cover_image = await fetch_capsule(settings.steam_news_app_id, gid, notes=run.setdefault("notes", []), account=clan_account_of(doc, str(item.get("contents") or ""))) or first_image(doc)   # miniatura = capsule da Steam; sem ela, a 1a imagem do texto
         post.banner_image = settings.steam_news_banner_image.strip() or None                          # banner do topo: o mesmo para todos os posts da Steam
         post.content_pt = post.excerpt_pt = None
         try:
@@ -339,7 +404,7 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
     `refresh_all` = reconverte TODOS os posts ja' importados que ainda aparecem no feed da Steam (nao cria posts novos).
     `only_gid` = importa SO' esse post (mesmo antigo, mesmo sem a tag exigida): procura nos ultimos 300 posts da Steam.
     """
-    run = {"at": datetime.now(timezone.utc).isoformat(), "fetched": 0, "matched": 0, "imported": 0, "skipped": 0, "errors": [], "titles": [], "seen": []}
+    run = {"at": datetime.now(timezone.utc).isoformat(), "fetched": 0, "matched": 0, "imported": 0, "skipped": 0, "errors": [], "notes": [], "titles": [], "seen": []}
     global last_run
     try:
         items = await fetch_news(settings.steam_news_app_id, 300 if (only_gid or refresh_all) else 20, transport)
@@ -393,7 +458,7 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
             slug = f"{_slugify(title)[:120] or 'patch-notes'}-{gid[-6:]}"
             if (await db.execute(select(Post.id).where(Post.slug == slug))).first():
                 slug = f"{slug}-{gid[-3:]}"
-            post = Post(slug=slug, title=title, excerpt=plain_excerpt(doc) or title, content=content, cover_image=await fetch_capsule(settings.steam_news_app_id, gid) or first_image(doc),
+            post = Post(slug=slug, title=title, excerpt=plain_excerpt(doc) or title, content=content, cover_image=await fetch_capsule(settings.steam_news_app_id, gid, notes=run.setdefault("notes", []), account=clan_account_of(doc, str(item.get("contents") or ""))) or first_image(doc),
                         banner_image=settings.steam_news_banner_image.strip() or None,
                         author_id=None, author_label=author, source_id=gid, source_url=url or None, status=status, published_at=when)
             post.tags = [tag]

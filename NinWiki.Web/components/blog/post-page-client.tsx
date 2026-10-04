@@ -45,7 +45,7 @@ export function PostPageClient({
       {banner ? (
         <header className="relative mb-6 overflow-hidden rounded-2xl border border-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={banner} alt={title} className="min-h-[13rem] w-full object-cover sm:aspect-[4/1]" />
+          <img src={banner} alt={title} className="min-h-[13rem] w-full object-cover sm:aspect-[3/1]" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>
