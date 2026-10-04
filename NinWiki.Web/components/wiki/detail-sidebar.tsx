@@ -64,7 +64,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   // pelo menos uma linha - uma arma sem NPC cadastrado, por exemplo,
   // simplesmente nao mostra a secao "Como conseguir" vazia.
   if (entry.category === 'weapons') {
-    const requirementsRows: StatRow[] = [{ label: dict.detail.levelReq, value: String(entry.level) }];
+    const requirementsRows: StatRow[] = shouldShowLevel(entry.category, entry.itemType, entry.level) ? [{ label: dict.detail.levelReq, value: String(entry.level) }] : [];
     if (entry.weaponRequirement) requirementsRows.push({ label: dict.detail.statReq, value: entry.weaponRequirement });
 
     const acquisitionRows: StatRow[] = [];
@@ -204,7 +204,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   // So' entra a linha que tiver valor (um item sem stack nao mostra "Max Stack: ").
   const ce = dict.admin.contentEditor;
   const typeLabels: Record<string, string> = {
-    general: ce.itemGeneral, ring: ce.itemRing, consumable: ce.itemConsumable, material: ce.itemMaterial,
+    general: ce.itemGeneral, ring: ce.itemRing, accessory: ce.itemAccessory, consumable: ce.itemConsumable, material: ce.itemMaterial,
     currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority,
   };
   const rarity = rarityConfig[entry.rarity];
@@ -212,7 +212,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   if (entry.category === 'items') {
     if (entry.itemType) detailRows.push({ icon: Tag, label: dict.detail.itemType, value: typeLabels[entry.itemType] ?? entry.itemType });
     detailRows.push({ icon: Gem, label: ce.rarity, value: rarity.label, tone: rarity.color });
-    if (shouldShowLevel(entry.category, entry.itemType)) detailRows.push({ icon: Star, label: dict.detail.level, value: String(entry.level), tone: 'text-amber-400' });
+    if (shouldShowLevel(entry.category, entry.itemType, entry.level)) detailRows.push({ icon: Star, label: dict.detail.level, value: String(entry.level), tone: 'text-amber-400' });
     if (itemHasStack(entry.category, entry.itemType) && entry.maxStack != null) {
       detailRows.push({ icon: Layers, label: dict.detail.maxStack, value: entry.maxStack.toLocaleString(isPt ? 'pt-BR' : 'en-US'), tone: 'text-sky-400' });
     }

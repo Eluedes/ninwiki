@@ -53,7 +53,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
   const mobType = entry.mobType ? MOB_TYPE_LABEL[entry.mobType] : undefined;
   /** Nome do tipo de item no idioma atual (Geral, Ring, Consumivel, Material, Moeda, Cast, Autoridade). */
   const ce = dict.admin.contentEditor;
-  const itemTypeLabel = (type: string) => ({ general: ce.itemGeneral, ring: ce.itemRing, consumable: ce.itemConsumable, material: ce.itemMaterial, currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority } as Record<string, string>)[type] ?? type;
+  const itemTypeLabel = (type: string) => ({ general: ce.itemGeneral, ring: ce.itemRing, accessory: ce.itemAccessory, consumable: ce.itemConsumable, material: ce.itemMaterial, currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority } as Record<string, string>)[type] ?? type;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -73,7 +73,9 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.levelReq} {entry.level}</span>
+                  {shouldShowLevel(entry.category, entry.itemType, entry.level) && (
+                    <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.levelReq} {entry.level}</span>
+                  )}
                   {entry.weaponType && <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold uppercase text-card-foreground">{entry.weaponType}</span>}
                   <span className={cn('text-xs font-semibold', rarityConfig[entry.rarity].color)}>{rarityConfig[entry.rarity].label}</span>
                 </div>
@@ -152,7 +154,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
                   {entry.category === 'items' && (
                     <span className={cn('rounded-md border px-2 py-0.5 text-xs font-bold uppercase', rarityConfig[entry.rarity].chip)}>{rarityConfig[entry.rarity].label}</span>
                   )}
-                  {shouldShowLevel(entry.category, entry.itemType) && (
+                  {shouldShowLevel(entry.category, entry.itemType, entry.level) && (
                     <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.level} {entry.level}</span>
                   )}
                 </div>

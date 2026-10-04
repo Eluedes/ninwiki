@@ -150,6 +150,7 @@ class Jutsu(Base):
     max_level: Mapped[int] = mapped_column(Integer, default=1, server_default="1")             # nivel maximo do jutsu (1-10)
     damage_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")    # um valor de dano por nivel
     cooldown_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")  # um valor de recarga por nivel
+    name_by_level_pt: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")   # traducao (DeepL) do nome por nivel, mesma ordem de name_by_level
     name_by_level: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")      # nome do jutsu em cada nivel (vazio = igual ao nome principal; ex.: muda no nivel 4)
     cast_type: Mapped[str] = mapped_column(String(100), default="", server_default="")         # tipo de conjuracao (texto livre)
     jutsu_class: Mapped[str] = mapped_column(String(100), default="", server_default="")       # classe do jutsu (texto livre)

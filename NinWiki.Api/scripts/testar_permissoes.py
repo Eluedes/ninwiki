@@ -238,6 +238,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
           r.status_code == 201 and r.json().get("status") == "draft", f"veio {r.status_code} {r.text[:80]}")
     r = await c.post("/content-items", json={**novo_conteudo("auth"), "category": "items", "itemType": "authority", "rarity": "enchanted", "maxStack": 500}, headers=C)
     check("item tipo Authority com raridade Enchanted e stack 500 e' criado", r.status_code == 201 and r.json()["itemType"] == "authority" and r.json()["rarity"] == "enchanted" and r.json()["maxStack"] == 500, r.text[:200])
+    r = await c.post("/content-items", json={**novo_conteudo("acess"), "category": "items", "itemType": "accessory", "level": 12}, headers=C)
+    check("item tipo Accessory (junto com os Rings) e' criado", r.status_code == 201 and r.json()["itemType"] == "accessory", r.text[:200])
     r = await c.post("/content-items", json={**novo_conteudo("rar-ruim"), "rarity": "mitico"}, headers=C)
     check("raridade inexistente continua recusada (422)", r.status_code == 422)
     r = await c.get(f"/content-items/{rasc_id}")
@@ -1489,6 +1491,22 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["x" * 101]}, headers=A)
     check("nome por nivel acima de 100 caracteres e' recusado", r.status_code == 422)
     check("jutsu sem nome por nivel volta lista vazia", (await c.get(f"/jutsus/{SLUG}-jg")).json()["nameByLevel"] == [])
+
+    async def deepl_nivel(textos: list[str], reverse: bool = False) -> list[str]:
+        """DeepL de mentira: poe 'PT:' na frente."""
+        return [("EN:" if reverse else "PT:") + t for t in textos]
+
+    with patch("app.core.translation._deepl_translate_batch", new=deepl_nivel):
+        r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "", "", "Triple Phoenix Fireball Technique"]}, headers=A)
+        check("nome por nivel e' traduzido pela DeepL ao salvar", r.status_code == 200 and r.json()["nameByLevelPt"] == ["", "", "", "PT:Triple Phoenix Fireball Technique"], r.text[:240])
+        r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "", "", "Triple Phoenix Fireball Technique"], "nameByLevelPt": ["", "", "", "Tecnica Manual"]}, headers=A)
+        check("traducao digitada a mao vale", r.json()["nameByLevelPt"][3] == "Tecnica Manual", r.text[:240])
+        r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "", "", "Triple Phoenix Fireball Technique"]}, headers=A)
+        check("salvar de novo SEM mexer no nome mantem a traducao que ja' existe", r.json()["nameByLevelPt"][3] == "Tecnica Manual", r.text[:240])
+        r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "", "", "Great Fireball"]}, headers=A)
+        check("trocar o nome em ingles retraduz", r.json()["nameByLevelPt"][3] == "PT:Great Fireball", r.text[:240])
+        r = await c.post(f"/jutsus/{SLUG}-jf/retranslate", headers=A)
+        check("Retraduzir tambem refaz o nome por nivel", r.status_code == 200 and r.json()["nameByLevelPt"][3] == "PT:Great Fireball", r.text[:200])
     await c.delete(f"/jutsus/{SLUG}-jf", headers=A)
     await c.delete(f"/jutsus/{SLUG}-jg", headers=A)
 

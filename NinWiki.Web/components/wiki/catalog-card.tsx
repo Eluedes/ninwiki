@@ -24,6 +24,7 @@ const mobTypeBadge: Record<string, { label: string; className: string }> = {
 // por enquanto (categoria nova, ainda pouco povoada).
 const itemTypeBadge: Record<string, { label: string; className: string }> = {
   ring: { label: 'Ring', className: 'bg-violet-500/15 text-violet-400' },
+  accessory: { label: 'Accessory', className: 'bg-fuchsia-500/15 text-fuchsia-400' },
   authority: { label: 'Authority', className: 'bg-cyan-400/15 text-cyan-300' },
 };
 
@@ -72,7 +73,7 @@ export function CatalogCard({ entry }: CatalogCardProps) {
               </span>
             )}
           </div>
-          {shouldShowLevel(entry.category, entry.itemType) && (
+          {shouldShowLevel(entry.category, entry.itemType, entry.level) && (
             <p className="text-xs italic text-muted-foreground">
               {dict.detail.level} {entry.level}
             </p>

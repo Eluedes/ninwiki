@@ -64,6 +64,7 @@ class ItemType(str, enum.Enum):
     # cabiam em nenhum dos 4 tipos existentes.
     CURRENCY = "currency"
     CAST = "cast"
+    ACCESSORY = "accessory"   # acessorios (ficam junto com os Rings no catalogo; mostram nivel como o Ring)
     AUTHORITY = "authority"   # itens de Autoridade do cla (ex.: Hokuto Sphere I): levados ao Altar da Casa do Cla
 
 

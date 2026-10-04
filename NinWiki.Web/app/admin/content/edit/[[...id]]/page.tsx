@@ -40,6 +40,7 @@ import {
 } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
+import { EmojiPicker } from '@/components/admin/emoji-picker';
 import { itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { contentItemSchema, type ContentItemFormValues } from '@/lib/validation';
 import type { Category, ItemType, MobType, Rarity } from '@/lib/types';
@@ -71,16 +72,20 @@ function getMobTypeOptions(t: Dictionary['admin']['contentEditor']): { value: Mo
 }
 
 /** Opcoes do campo 'tipo de item' no idioma atual. */
-function getItemTypeOptions(t: Dictionary['admin']['contentEditor']): { value: ItemType; label: string }[] {
-  return [
+function getItemTypeOptions(t: Dictionary['admin']['contentEditor'], current?: ItemType | null): { value: ItemType; label: string }[] {
+  // 'Material' saiu da lista (pedido do Rafael: o que era material agora e' Moeda/Currency, que fica na categoria Materials do catalogo);
+  // so' aparece se o item JA' for desse tipo (itens antigos continuam editaveis e nao perdem o tipo ao salvar).
+  const all: { value: ItemType; label: string }[] = [
     { value: 'general', label: t.itemGeneral },
     { value: 'ring', label: t.itemRing },
+    { value: 'accessory', label: t.itemAccessory },
     { value: 'consumable', label: t.itemConsumable },
     { value: 'material', label: t.itemMaterial },
     { value: 'currency', label: t.itemCurrency },
     { value: 'cast', label: t.itemCast },
     { value: 'authority', label: t.itemAuthority },
   ];
+  return all.filter((o) => o.value !== 'material' || current === 'material');
 }
 
 // Raridade fica de fora de proposito: os 6 nomes (Common/Uncommon/Rare/
@@ -172,6 +177,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
     control,
     handleSubmit,
     getValues,
+    setValue,
     reset,
     formState: { errors },
   } = useForm<ContentItemFormValues>({
@@ -184,9 +190,9 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   const t = dict.admin.contentEditor;
   const categoryOptions = getCategoryOptions(t);
   const mobTypeOptions = getMobTypeOptions(t);
-  const itemTypeOptions = getItemTypeOptions(t);
   const category = useWatch({ control, name: 'category' });
   const itemType = useWatch({ control, name: 'itemType' });
+  const itemTypeOptions = getItemTypeOptions(t, itemType);
 
   useEffect(() => {
     if (!isEdit || !rawId) return;
@@ -554,12 +560,16 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.level}</label>
               <Input type="number" {...register('level')} />
+              {(category === 'items' || category === 'weapons') && <p className="text-xs text-muted-foreground">{t.levelZeroHint}</p>}
               <FieldError message={errors.level?.message} />
             </div>
           )}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.icon}</label>
-            <Input {...register('icon')} placeholder="🦠" />
+            <div className="flex gap-2">
+              <Input {...register('icon')} placeholder="🦠" />
+              <EmojiPicker onPick={(emoji) => setValue('icon', emoji, { shouldDirty: true, shouldValidate: true })} />
+            </div>
             <FieldError message={errors.icon?.message} />
           </div>
         </div>

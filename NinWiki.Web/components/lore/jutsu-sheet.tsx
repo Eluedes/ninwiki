@@ -59,13 +59,14 @@ function PerLevel({ values: raw, word, names = [], nameFrom }: { values: string[
 
 /** Ficha completa de um jutsu (Requisitos, Aquisicao, Detalhes da tecnica, Dados de batalha). */
 export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; mastery?: ApiMastery; masteryName?: string }) {
-  const { dict } = useLanguage();
+  const { dict, locale } = useLanguage();
   const t = dict.jutsuInfo;
   const color = mastery?.color ?? '#c2410c';
   const has = (v: string | undefined | null) => Boolean(v && v.trim());
   const dmg = (jutsu.damageByLevel ?? []).filter((v) => has(v));
   const cds = (jutsu.cooldownByLevel ?? []).filter((v) => has(v));
-  const names = jutsu.nameByLevel ?? [];   // nome por nivel: vira linha-divisoria dentro das listas de dano e recarga
+  // nome por nivel (vira linha-divisoria dentro das listas de dano e recarga): em portugues usa a traducao, com o ingles de reserva
+  const names = (jutsu.nameByLevel ?? []).map((n, i) => (locale === 'pt' ? jutsu.nameByLevelPt?.[i]?.trim() || n : n));
 
   const requirements: SheetRow[] = [
     ...(mastery ? [{ label: t.mastery, value: <Link href={`/masteries/${mastery.id}`} className="hover:underline" style={{ color }}>{masteryName}</Link> }] : []),

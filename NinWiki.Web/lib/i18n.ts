@@ -182,6 +182,7 @@ export interface Dictionary {
       dropHere: string; progress: string; skipped: string; failedFile: string; retryFailed: string; allCategories: string; uncategorized: string; categoryOf: string; newUploadCategory: string; setCategory: string; applyCategory: string; pageOf: string; prev: string; next: string; noUploadPermission: string; restrictedNotice: string; closedDenied: string; searchingAll: string; resetIds: string; resetIdsConfirm: string; resetIdsDone: string; categories: Record<string, string>; selected: string; selectAll: string; clearSel: string; deleteSelected: string; confirmBulk: string; confirmBulkForce: string; bulkDone: string; select: string; usedIn: string; notUsed: string; loadError: string; actionError: string; howTo: string; pickTitle: string; pick: string; total: string; loadMore: string; unnamed: string; close: string;
     };
     uploadProgress: { sending: string; processing: string; files: string };
+    emojiPicker: string;
     imageUpload: { dropHere: string; library: string; idResolved: string; idNotFound: string; uploading: string; chooseFile: string; removeImage: string; formatsHint: string; uploadError: string; manualPlaceholder: string };
     dataTable: { noResults: string; selected: string; selectedPlural: string; itemsPerPage: string; pageOf: string; items: string };
     auditLog: {
@@ -237,7 +238,7 @@ export interface Dictionary {
     contentEditor: {
       catMobs: string; catItems: string; catWeapons: string; catMissions: string; catGuides: string;
       mobMonster: string; mobBoss: string; mobNpc: string; mobMount: string;
-      itemGeneral: string; itemRing: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string;
+      itemGeneral: string; itemRing: string; itemAccessory: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string;
       editTitle: string; newTitle: string;
       name: string; category: string; mobType: string; itemType: string; slugLabel: string; back: string; icon: string;
       speed: string; speedPlaceholder: string; requirement: string; requirementPlaceholder: string;
@@ -245,7 +246,7 @@ export interface Dictionary {
       weaponBaseDamage: string; weaponBaseDamagePlaceholder: string;
       weaponSpecialAbility: string; weaponSpecialAbilityPlaceholder: string;
       weaponKnockbackDistance: string; weaponKnockbackDistancePlaceholder: string;
-      maxStack: string; maxStackPlaceholder: string; castVillage: string;
+      levelZeroHint: string; maxStack: string; maxStackPlaceholder: string; castVillage: string;
       rarity: string; level: string; image: string;
       description: string; descriptionPlaceholder: string; optionalSuffix: string;
       lore: string; loreOptional: string; lorePlaceholder: string;
@@ -738,6 +739,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         bySystem: 'por Sistema',
         created: 'Criada', updated: 'Editada', deleted: 'Apagada',
       },
+      emojiPicker: 'Escolher emoji',
       uploadProgress: { sending: 'Enviando', processing: 'Enviado! O servidor está processando…', files: 'arquivos' },
       imageUpload: {
         dropHere: 'Solte a imagem aqui', library: 'Banco de imagens', idResolved: 'Imagem #{id} do banco', idNotFound: 'Não existe imagem #{id} no banco.',
@@ -894,7 +896,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       contentEditor: {
         catMobs: 'Mobs', catItems: 'Itens', catWeapons: 'Armas', catMissions: 'Missões', catGuides: 'Guias',
         mobMonster: 'Monstro comum', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Montaria',
-        itemGeneral: 'Geral', itemRing: 'Ring', itemConsumable: 'Consumível', itemMaterial: 'Material',
+        itemGeneral: 'Geral', itemRing: 'Ring', itemAccessory: 'Acessório', itemConsumable: 'Consumível', itemMaterial: 'Material',
         itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade',
         editTitle: 'Editar entry', newTitle: 'Nova entry',
         name: 'Nome', category: 'Categoria', mobType: 'Tipo de mob', itemType: 'Tipo de item',
@@ -908,7 +910,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         weaponBaseDamage: 'Dano Base', weaponBaseDamagePlaceholder: '',
         weaponSpecialAbility: 'Habilidade Especial', weaponSpecialAbilityPlaceholder: '',
         weaponKnockbackDistance: 'Distância de Knockback', weaponKnockbackDistancePlaceholder: '',
-        maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Vila que pode usar',
+        levelZeroHint: 'Nível 0 = item sem nível (nada aparece no site).', maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Vila que pode usar',
         rarity: 'Raridade', level: 'Nível', image: 'Imagem',
         description: 'Descrição', descriptionPlaceholder: 'Descrição curta, sempre visível na página...', optionalSuffix: '(opcional)',
         lore: 'Lore', loreOptional: 'Lore (opcional)', lorePlaceholder: 'História, contexto...',
@@ -1421,6 +1423,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         bySystem: 'by System',
         created: 'Created', updated: 'Updated', deleted: 'Deleted',
       },
+      emojiPicker: 'Pick an emoji',
       uploadProgress: { sending: 'Uploading', processing: 'Sent! The server is processing…', files: 'files' },
       imageUpload: {
         dropHere: 'Drop the image here', library: 'Image library', idResolved: 'Library image #{id}', idNotFound: 'There is no image #{id} in the library.',
@@ -1577,7 +1580,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       contentEditor: {
         catMobs: 'Mobs', catItems: 'Items', catWeapons: 'Weapons', catMissions: 'Missions', catGuides: 'Guides',
         mobMonster: 'Common monster', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Mount',
-        itemGeneral: 'General', itemRing: 'Ring', itemConsumable: 'Consumable', itemMaterial: 'Material',
+        itemGeneral: 'General', itemRing: 'Ring', itemAccessory: 'Accessory', itemConsumable: 'Consumable', itemMaterial: 'Material',
         itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority',
         editTitle: 'Edit entry', newTitle: 'New entry',
         name: 'Name', category: 'Category', mobType: 'Mob type', itemType: 'Item type',
@@ -1591,7 +1594,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         weaponBaseDamage: 'Base Damage', weaponBaseDamagePlaceholder: '',
         weaponSpecialAbility: 'Special Ability', weaponSpecialAbilityPlaceholder: '',
         weaponKnockbackDistance: 'Knockback Distance', weaponKnockbackDistancePlaceholder: '',
-        maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Village that can use it',
+        levelZeroHint: 'Level 0 = item without a level (nothing is shown on the site).', maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Village that can use it',
         rarity: 'Rarity', level: 'Level', image: 'Image',
         description: 'Description', descriptionPlaceholder: 'Short description, always visible on the page...', optionalSuffix: '(optional)',
         lore: 'Lore', loreOptional: 'Lore (optional)', lorePlaceholder: 'History, context...',
