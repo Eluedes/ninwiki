@@ -2155,6 +2155,40 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     finally:
         settings.backup_passphrase = orig_pass
 
+    secao("32) Manutencao automatica: apaga o que ficou velho e inutil (erros resolvidos, log antigo, acessos antigos) e limpa a memoria")
+    from app.core import maintenance
+    from app.core.database import AsyncSessionLocal as _SessM
+    async with _SessM() as db:
+        for fp, resolvido, dias in [("teste-manut-a", True, 40), ("teste-manut-b", False, 40), ("teste-manut-c", False, 120), ("teste-manut-d", True, 1)]:
+            await db.execute(text("INSERT INTO error_events (id, fingerprint, source, level, title, message, count, first_seen, last_seen, resolved) VALUES (gen_random_uuid(), :fp, 'api', 'error', 'TESTE manutencao', 'x', 1, now(), now() - make_interval(days => :d), :r)"),
+                             {"fp": fp, "d": dias, "r": resolvido})
+        await db.execute(text("INSERT INTO audit_log (id, action, entity_type, entity_id, created_at) VALUES (gen_random_uuid(), 'teste-manut', 'teste', 'velho', now() - interval '400 days')"))
+        await db.execute(text("INSERT INTO audit_log (id, action, entity_type, entity_id, created_at) VALUES (gen_random_uuid(), 'teste-manut', 'teste', 'novo', now())"))
+        await db.execute(text("INSERT INTO traffic_daily (day, country, views, visitors) VALUES (current_date - 500, 'QM', 1, 1)"))
+        await db.commit()
+    async with _SessM() as db:
+        feito = await maintenance.prune_database(db)
+        restam = set((await db.execute(text("SELECT fingerprint FROM error_events WHERE fingerprint LIKE 'teste-manut-%'"))).scalars().all())
+        audit = set((await db.execute(text("SELECT entity_id FROM audit_log WHERE action = 'teste-manut'"))).scalars().all())
+        trafego = (await db.execute(text("SELECT count(*) FROM traffic_daily WHERE country = 'QM'"))).scalar()
+    check("erro RESOLVIDO ha' 40 dias some; nao resolvido de 40 dias fica (so' some com 90)", "teste-manut-a" not in restam and "teste-manut-b" in restam, str(restam))
+    check("erro sem ocorrencia ha' 120 dias some, mesmo nao resolvido; o recente fica", "teste-manut-c" not in restam and "teste-manut-d" in restam, str(restam))
+    check("log geral com 400 dias some; o de hoje fica", audit == {"novo"}, str(audit))
+    check("acessos com mais de 400 dias somem", trafego == 0 and feito["trafficDaily"] >= 1, str(feito))
+    check("manutencao devolve o resumo do que apagou", feito["errorsResolved"] >= 1 and feito["errorsOld"] >= 1 and feito["auditLog"] >= 1, str(feito))
+    from app.core.rate_limit import RateLimiter
+    relogio = [0.0]
+    lim = RateLimiter(time_fn=lambda: relogio[0])
+    lim.hit("b", "ip1", 5, 60)
+    lim.fail("f", "ip2", 900)
+    relogio[0] = 120.0
+    apagados = lim.sweep()
+    check("limpeza da memoria: balde de 60s vencido some; o de 15 min (ainda valendo) fica", apagados == 1 and ("f", "ip2") in lim._hits and ("b", "ip1") not in lim._hits, str(lim._hits))
+    async with _SessM() as db:
+        await db.execute(text("DELETE FROM error_events WHERE fingerprint LIKE 'teste-manut-%'"))
+        await db.execute(text("DELETE FROM audit_log WHERE action = 'teste-manut'"))
+        await db.commit()
+
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []
     total = 0

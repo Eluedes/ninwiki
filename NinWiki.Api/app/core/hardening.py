@@ -137,6 +137,15 @@ _flood_seen: dict[tuple[str, str], float] = {}
 _FLOOD_REPORT_SECONDS = 600
 
 
+def sweep_flood() -> int:
+    """Limpeza periodica: esquece IPs que ja' passaram da janela de 10 min do aviso de flood. Devolve quantos esqueceu."""
+    now = time.monotonic()
+    old = [k for k, t in _flood_seen.items() if now - t > _FLOOD_REPORT_SECONDS]
+    for k in old:
+        _flood_seen.pop(k, None)
+    return len(old)
+
+
 async def _report_flood(bucket: str, limit: int) -> None:
     """Registra (no maximo 1 vez por IP e balde a cada 10 min) que alguem estourou o limite - sinal de flood/copia em massa."""
     key, now = (bucket, client_key()), time.monotonic()

@@ -55,6 +55,16 @@ _MASKS: list[tuple[re.Pattern, str]] = [
 ]
 
 
+def sweep() -> int:
+    """Limpeza periodica da memoria do freio de escrita: esquece fingerprints sem ocorrencia ha' mais de 1 hora. Devolve quantos esqueceu."""
+    now = time.monotonic()
+    old = [k for k, t in _last_write.items() if now - t > 3600]
+    for k in old:
+        _last_write.pop(k, None)
+        _pending.pop(k, None)
+    return len(old)
+
+
 def mask(text: str | None, limit: int = MAX_MESSAGE) -> str:
     """Troca por *** tudo que parece segredo (e os valores reais dos segredos do .env) e corta no tamanho maximo."""
     value = text or ""

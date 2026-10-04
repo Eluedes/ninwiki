@@ -26,6 +26,7 @@ const SCRAPER_UA =
 
 // IP -> instantes (ms) das ultimas requisicoes dentro da janela.
 const hits = new Map<string, number[]>();
+let lastSweep = 0;   // quando foi a ultima limpeza do mapa acima
 
 /** IP de quem chamou (ver comentario do arquivo sobre confianca nos cabecalhos). */
 function clientIp(req: NextRequest): string {
@@ -45,8 +46,9 @@ function checkRate(ip: string, now: number, limit: number): number {
   }
   list.push(now);
   hits.set(ip, list);
-  // Limpeza simples para o mapa nao crescer sem fim.
-  if (hits.size > 10_000) {
+  // Limpeza para o mapa nao crescer sem fim: no maximo 1x por minuto (ou na hora, se passar de 2.000 IPs), apaga quem ja' saiu da janela.
+  if (now - lastSweep >= WINDOW_MS || hits.size > 2_000) {
+    lastSweep = now;
     for (const [key, times] of hits) if (times.every((t) => now - t >= WINDOW_MS)) hits.delete(key);
   }
   return 0;

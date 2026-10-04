@@ -57,7 +57,7 @@ from app.api.tags import router as tags_router
 from app.api.uploads import router as uploads_router
 from app.api.villages import organizations_router, router as villages_router
 from app.core.config import settings
-from app.core import steam_news
+from app.core import maintenance, steam_news
 from app.core.database import AsyncSessionLocal
 from app.core.hardening import BodyLimitMiddleware, ErrorCaptureMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware
 from app.core.security import ClientIPMiddleware
@@ -91,11 +91,13 @@ async def _steam_news_loop() -> None:
 async def lifespan(_app: FastAPI):
     """Liga a tarefa de fundo do importador da Steam (se configurado) e a desliga ao encerrar a API."""
     task = asyncio.create_task(_steam_news_loop()) if settings.steam_news_app_id else None
+    maint = asyncio.create_task(maintenance.loop()) if settings.maintenance_interval_hours > 0 else None   # limpeza automatica (app/core/maintenance.py)
     try:
         yield
     finally:
-        if task:
-            task.cancel()
+        for t in (task, maint):
+            if t:
+                t.cancel()
 
 
 # Instância principal do FastAPI. Em desenvolvimento, title/version aparecem

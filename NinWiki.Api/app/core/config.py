@@ -88,6 +88,11 @@ class Settings(BaseSettings):
     steam_news_require_tag: str = "patchnotes"     # so' importa posts com esta tag da Steam; vazio = importa todos
     # Alem da tag, aceita posts cujo TITULO bate com esta expressao (a Steam nem sempre marca os updates como `patchnotes`: o tipo "Atualizacao regular" nao e' uma tag da API).
     # Expressao regular, sem diferenciar maiusculas. Vazio = so' a tag. Padrao: update / patch / hotfix / versao tipo v6.0.0.9b.
+    # --- Manutencao automatica (app/core/maintenance.py): apaga o que ficou velho e inutil para o banco e a memoria nao incharem ---
+    maintenance_interval_hours: int = 6            # de quantas em quantas horas roda (0 = desligada)
+    error_retention_days_resolved: int = 30        # problemas JA' resolvidos somem depois de N dias sem voltar
+    error_retention_days: int = 90                 # qualquer problema (mesmo nao resolvido) some depois de N dias sem ocorrer
+    audit_retention_days: int = 365                # log geral (quem fez o que): linhas com mais de N dias somem (0 = nunca apaga)
     steam_news_title_pattern: str = r"update|patch|hotfix|\bv?\d+\.\d+(\.\d+)*[a-z]?\b"
     steam_news_max_per_run: int = 5                # teto de posts novos por conferencia (evita inundar o blog na 1a vez)
 
