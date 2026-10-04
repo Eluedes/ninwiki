@@ -65,6 +65,7 @@ class PostRead(PostSummary):
     """Ficha completa de um post (resumo + conteudo + SEO)."""
     content: str
     content_pt: str | None = None  # traducao EN -> PT (DeepL)
+    banner_image: str | None = None   # banner largo do topo do post (vazio = usa a capa)
     meta_title: str | None = None
     meta_description: str | None = None
 
@@ -80,6 +81,7 @@ class PostWrite(CamelModel):
     excerpt_pt: str | None = None
     content_pt: str | None = None
     cover_image: str | None = Field(default=None, max_length=500)
+    banner_image: str | None = Field(default=None, max_length=500)   # banner do topo do post (vazio = usa a capa)
     status: ContentStatus = ContentStatus.DRAFT
     tags: list[str] = Field(default_factory=list, max_length=MAX_TAGS_PER_POST)
     # SEO (vazio = usa titulo e resumo) e agendamento (vazio = publica quando for publicado)

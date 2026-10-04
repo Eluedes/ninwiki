@@ -75,7 +75,7 @@ def _summary(post: Post, counts: tuple[int, int] = (0, 0)) -> dict:
 
 def _read(post: Post, counts: tuple[int, int] = (0, 0)) -> PostRead:
     """Converte um Post na ficha completa."""
-    return PostRead(**_summary(post, counts), content=post.content, content_pt=post.content_pt,
+    return PostRead(**_summary(post, counts), content=post.content, content_pt=post.content_pt, banner_image=post.banner_image,
                     meta_title=post.meta_title, meta_description=post.meta_description)
 
 

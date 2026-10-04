@@ -840,6 +840,7 @@ export interface ApiPostSummary {
   titlePt?: string | null;
   excerptPt?: string | null;
   coverImage: string | null;
+  bannerImage?: string | null;   // banner largo do topo do post (vazio = usa a capa)
   status: 'draft' | 'published';
   authorName: string | null;
   tags: ApiTag[];
@@ -869,6 +870,7 @@ export interface PostInput {
   excerptPt?: string | null;
   contentPt?: string | null;
   coverImage: string | null;
+  bannerImage?: string | null;
   status: 'draft' | 'published';
   tags: string[]; // slugs
   metaTitle?: string | null;

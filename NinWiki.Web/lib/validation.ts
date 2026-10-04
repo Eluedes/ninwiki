@@ -49,7 +49,7 @@ export const contentItemSchema = z.object({
   maxStack: z.coerce.number().int().min(0).nullable().optional(),
   castVillageId: z.string().nullable().optional(),
   mobType: z.enum(['monster', 'boss', 'npc', 'mount']).nullable().optional(),
-  itemType: z.enum(['general', 'ring', 'consumable', 'material', 'currency', 'cast', 'authority', 'accessory', 'shirt', 'vest', 'pant', 'hat', 'mask', 'shoe']).nullable().optional(),
+  itemType: z.enum(['general', 'ring', 'consumable', 'material', 'currency', 'cast', 'authority', 'accessory', 'shirt', 'vest', 'pant', 'hat', 'mask', 'shoe', 'pack']).nullable().optional(),
 }).superRefine((value, ctx) => {
   // Descricao e' obrigatoria em todas as categorias, exceto mobs.
   if (value.category !== 'mobs' && !value.description.trim()) {
@@ -177,6 +177,7 @@ export const postSchema = z.object({
   excerptPt: z.string().nullable().optional(),
   contentPt: z.string().nullable().optional(),
   coverImage: z.string().nullable().optional(),
+  bannerImage: z.string().nullable().optional(),
   tags: z.array(z.string()).max(8, 'Maximum of 8 tags.'),
   // SEO e agendamento (vazio = automatico / publicar agora)
   metaTitle: z.string().max(70, 'Maximum of 70 characters.').nullable().optional(),

@@ -257,6 +257,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}, headers=A)
     r = await c.get(f"/content-items/{mob_id}", headers=C)
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
+    r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
+    check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("rar-ruim"), "rarity": "mitico"}, headers=C)
     check("raridade inexistente continua recusada (422)", r.status_code == 422)
     r = await c.get(f"/content-items/{rasc_id}")
@@ -2046,6 +2048,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         """Substitui a chamada real a' Steam por uma lista fixa."""
         return feed
 
+    async def _fake_capsule(app_id, gid, transport=None):
+        """Substitui a pagina do post na Steam: so' o post 001 tem miniatura (capsule); os outros caem na 1a imagem do texto."""
+        return "https://clan.akamai.steamstatic.com/images/1/capsule-001.png" if gid.endswith("001") else None
+
+    original_capsule = sn.fetch_capsule
+    sn.fetch_capsule = _fake_capsule
     original_fetch, original_cfg = sn.fetch_news, (_cfg.steam_news_app_id, _cfg.steam_news_author_name, _cfg.steam_news_status, _cfg.steam_news_require_tag)
     sn.fetch_news = _fake
     try:
@@ -2068,6 +2076,15 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         check("o nome da desenvolvedora aparece em por/by (autor sem usuario)", all(p[2] == "Dev Studio" for p in posts))
         check("tag Patch Notes ligada aos dois posts", tags.count("patch-notes") == 2)
         check("credito para o original (link da Steam) no topo do texto", "Originally published on Steam by Dev Studio" in posts[0][5] and "store.steampowered.com/news/app/1/view/teste-steam-001" in posts[0][5])
+        async with _Sess() as db:
+            capa = (await db.execute(text("SELECT cover_image, banner_image FROM posts WHERE source_id = 'teste-steam-001'"))).first()
+        check("miniatura do post = capsule da Steam; banner do topo = a arte padrao do jogo", capa[0] == "https://clan.akamai.steamstatic.com/images/1/capsule-001.png" and capa[1] == _cfg.steam_news_banner_image, str(capa))
+        html_ok = '<html><head><meta property="og:image" content="https://clan.akamai.steamstatic.com/images/40800315/abc.jpg"></head></html>'
+        html_generico = '<meta property="og:image" content="https://store.akamai.steamstatic.com/public/shared/images/share.jpg">'
+        html_inverso = '<meta content="//clan.akamai.steamstatic.com/images/9/x.png" name="twitter:image">'
+        check("capsule_from_html: pega a og:image do clan, ignora a generica da loja e entende a ordem inversa dos atributos",
+              sn.capsule_from_html(html_ok).endswith("40800315/abc.jpg") and sn.capsule_from_html(html_generico) is None
+              and sn.capsule_from_html(html_inverso) == "https://clan.akamai.steamstatic.com/images/9/x.png" and sn.capsule_from_html("<html></html>") is None)
         check("o texto virou documento do editor (negrito, link, lista)", '"bold"' in posts[0][5] and "https://x.test/a" in posts[0][5] and "bulletList" in posts[0][5])
         pub = (await c.get("/posts", params={"limit": 50})).json()
         check("o post importado aparece no blog publico com 'por' = desenvolvedora", any(x["title"] == f"{SLUG} Update 1" and x["authorName"] == "Dev Studio" for x in pub), str(pub)[:200] if not isinstance(pub, list) else "")
@@ -2121,6 +2138,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         check("Steam fora do ar: responde 200 e registra o erro (sem derrubar a API)", r.status_code == 200 and r.json()["lastRun"]["errors"], r.text[:160])
     finally:
         sn.fetch_news = original_fetch
+        sn.fetch_capsule = original_capsule
         _cfg.steam_news_app_id, _cfg.steam_news_author_name, _cfg.steam_news_status, _cfg.steam_news_require_tag = original_cfg
         async with _Sess() as db:
             await db.execute(text("DELETE FROM posts WHERE source_id LIKE 'teste-steam-%' OR source_id = '777000001'"))

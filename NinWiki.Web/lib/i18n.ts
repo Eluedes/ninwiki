@@ -75,7 +75,7 @@ export interface Dictionary {
   maintenance: { title: string; text: string; back: string };
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
-  catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterSpecial: string };
+  catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterPack: string; itemsFilterSpecial: string };
   detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
   masteryDetail: {
     notFound: string; backToMasteries: string; elemental: string; nonElemental: string;
@@ -118,7 +118,7 @@ export interface Dictionary {
       published: string; draft: string; edit: string; delete: string; confirmDelete: string; empty: string;
       loading: string; loadError: string; deleteError: string;
       editTitle: string; newTitle: string; back: string; titleLabel: string; titlePlaceholder: string;
-      slugLabel: string; slugHint: string; excerptLabel: string; excerptHint: string; coverLabel: string;
+      slugLabel: string; slugHint: string; excerptLabel: string; excerptHint: string; coverLabel: string; bannerLabel: string; bannerHint: string;
       contentLabel: string; contentPlaceholder: string; saveDraft: string; publish: string; saving: string; saveError: string;
       lockedNote: string; unpublishNote: string;
     };
@@ -239,7 +239,7 @@ export interface Dictionary {
     contentEditor: {
       catMobs: string; catItems: string; catWeapons: string; catMissions: string; catGuides: string;
       mobMonster: string; mobBoss: string; mobNpc: string; mobMount: string;
-      itemGeneral: string; itemRing: string; itemAccessory: string; itemShirt: string; itemVest: string; itemPant: string; itemHat: string; itemMask: string; itemShoe: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string;
+      itemGeneral: string; itemRing: string; itemAccessory: string; itemShirt: string; itemVest: string; itemPant: string; itemHat: string; itemMask: string; itemShoe: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string; itemPack: string; itemEquipment: string; equipmentKind: string;
       editTitle: string; newTitle: string;
       name: string; category: string; mobType: string; itemType: string; slugLabel: string; back: string; icon: string;
       speed: string; speedPlaceholder: string; requirement: string; requirementPlaceholder: string;
@@ -338,6 +338,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       itemsFilterConsumables: 'Consumíveis',
       itemsFilterMaterials: 'Materiais',
       itemsFilterEquipment: 'Equipamentos',
+      itemsFilterPack: 'Pack',
       itemsFilterSpecial: 'Itens Especiais',
     },
     detail: {
@@ -575,7 +576,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loading: 'Carregando posts...', loadError: 'Erro ao carregar os posts.', deleteError: 'Não foi possível apagar.',
         editTitle: 'Editar post', newTitle: 'Novo post', back: 'Voltar', titleLabel: 'Título', titlePlaceholder: 'Título do post',
         slugLabel: 'Slug (endereço na URL)', slugHint: 'Gerado a partir do título; só letras minúsculas, números e hífen.',
-        excerptLabel: 'Resumo', excerptHint: 'Texto curto que aparece na lista de posts.', coverLabel: 'Imagem de capa',
+        excerptLabel: 'Resumo', excerptHint: 'Texto curto que aparece na lista de posts.', coverLabel: 'Imagem de capa (miniatura)', bannerLabel: 'Banner do topo do post', bannerHint: 'Imagem larga (ideal ~5:1) no topo da página do post. Vazio = usa a capa.',
         contentLabel: 'Conteúdo', contentPlaceholder: 'Escreva o post...', saveDraft: 'Salvar rascunho', publish: 'Publicar',
         saving: 'Salvando...', saveError: 'Erro ao salvar o post.',
         lockedNote: 'Este post já está publicado: só um Adm pode alterá-lo.',
@@ -899,7 +900,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         catMobs: 'Mobs', catItems: 'Itens', catWeapons: 'Armas', catMissions: 'Missões', catGuides: 'Guias',
         mobMonster: 'Monstro comum', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Montaria',
         itemGeneral: 'Geral', itemRing: 'Ring', itemAccessory: 'Acessório', itemShirt: 'Camisa', itemVest: 'Colete', itemPant: 'Calça', itemHat: 'Chapéu', itemMask: 'Máscara', itemShoe: 'Sapato', itemConsumable: 'Consumível', itemMaterial: 'Material',
-        itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade',
+        itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade', itemPack: 'Pack', itemEquipment: 'Equipamento', equipmentKind: 'Tipo de equipamento',
         editTitle: 'Editar entry', newTitle: 'Nova entry',
         name: 'Nome', category: 'Categoria', mobType: 'Tipo de mob', itemType: 'Tipo de item',
         slugLabel: 'Slug (identificador na URL)',
@@ -1023,6 +1024,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       itemsFilterConsumables: 'Consumables',
       itemsFilterMaterials: 'Materials',
       itemsFilterEquipment: 'Equipment',
+      itemsFilterPack: 'Pack',
       itemsFilterSpecial: 'Special Items',
     },
     detail: {
@@ -1260,7 +1262,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loading: 'Loading posts...', loadError: 'Error loading posts.', deleteError: 'Could not delete.',
         editTitle: 'Edit post', newTitle: 'New post', back: 'Back', titleLabel: 'Title', titlePlaceholder: 'Post title',
         slugLabel: 'Slug (URL address)', slugHint: 'Generated from the title; lowercase letters, numbers and hyphens only.',
-        excerptLabel: 'Excerpt', excerptHint: 'Short text shown in the post list.', coverLabel: 'Cover image',
+        excerptLabel: 'Excerpt', excerptHint: 'Short text shown in the post list.', coverLabel: 'Cover image (thumbnail)', bannerLabel: 'Post banner', bannerHint: 'Wide image (about 5:1) at the top of the post page. Empty = uses the cover.',
         contentLabel: 'Content', contentPlaceholder: 'Write the post...', saveDraft: 'Save draft', publish: 'Publish',
         saving: 'Saving...', saveError: 'Error saving the post.',
         lockedNote: 'This post is already published: only an Adm can change it.',
@@ -1584,7 +1586,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         catMobs: 'Mobs', catItems: 'Items', catWeapons: 'Weapons', catMissions: 'Missions', catGuides: 'Guides',
         mobMonster: 'Common monster', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Mount',
         itemGeneral: 'General', itemRing: 'Ring', itemAccessory: 'Accessory', itemShirt: 'Shirt', itemVest: 'Vest', itemPant: 'Pant', itemHat: 'Hat', itemMask: 'Mask', itemShoe: 'Shoe', itemConsumable: 'Consumable', itemMaterial: 'Material',
-        itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority',
+        itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority', itemPack: 'Pack', itemEquipment: 'Equipment', equipmentKind: 'Equipment type',
         editTitle: 'Edit entry', newTitle: 'New entry',
         name: 'Name', category: 'Category', mobType: 'Mob type', itemType: 'Item type',
         slugLabel: 'Slug (URL identifier)',

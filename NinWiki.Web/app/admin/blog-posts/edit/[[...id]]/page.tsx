@@ -28,7 +28,7 @@ import { postSchema, type PostFormValues } from '@/lib/validation';
 import { slugify } from '@/lib/utils';
 
 const emptyForm: PostFormValues = {
-  title: '', slug: '', excerpt: '', content: '', titlePt: '', excerptPt: '', contentPt: '', coverImage: null,
+  title: '', slug: '', excerpt: '', content: '', titlePt: '', excerptPt: '', contentPt: '', coverImage: null, bannerImage: null,
   tags: [], metaTitle: '', metaDescription: '', publishedAt: null,
 };
 
@@ -54,7 +54,7 @@ const emptyToNull = (v: string | null | undefined) => (v && v.trim() ? v : null)
 /** Valores do formulario a partir do post vindo da API. */
 function toFormValues(p: ApiPost): PostFormValues {
   return {
-    title: p.title, slug: p.slug, excerpt: p.excerpt, content: p.content, coverImage: p.coverImage,
+    title: p.title, slug: p.slug, excerpt: p.excerpt, content: p.content, coverImage: p.coverImage, bannerImage: p.bannerImage ?? null,
     titlePt: p.titlePt ?? '', excerptPt: p.excerptPt ?? '', contentPt: p.contentPt ?? '',
     tags: p.tags.map((t) => t.id), metaTitle: p.metaTitle ?? '', metaDescription: p.metaDescription ?? '', publishedAt: p.publishedAt,
   };
@@ -165,6 +165,7 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
         excerptPt: emptyToNull(values.excerptPt),
         contentPt: emptyToNull(values.contentPt),
         coverImage: values.coverImage || null,
+        bannerImage: values.bannerImage || null,
         metaTitle: emptyToNull(values.metaTitle),
         metaDescription: emptyToNull(values.metaDescription),
         publishedAt: values.publishedAt || null,
@@ -257,6 +258,16 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
               name="coverImage"
               render={({ field }) => <ImageUploadField value={field.value} onChange={field.onChange} />}
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className={label}>{t.bannerLabel}</label>
+            <Controller
+              control={control}
+              name="bannerImage"
+              render={({ field }) => <ImageUploadField value={field.value} onChange={field.onChange} />}
+            />
+            <p className="text-xs text-muted-foreground">{t.bannerHint}</p>
           </div>
 
           <div className="space-y-2">

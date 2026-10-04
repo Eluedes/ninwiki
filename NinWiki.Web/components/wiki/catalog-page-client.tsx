@@ -29,12 +29,13 @@ import type { Category } from '@/lib/types';
 // o estado null already mostra tudo sem filtro nenhum (usado so' como
 // valor inicial e quando a pessoa clica de novo no filtro ja' ativo,
 // pra' "desligar" ele), mas nao existe um botao VISIVEL com esse nome.
-type ItemsFilterKey = 'consumables' | 'materials' | 'equipment' | 'special';
+type ItemsFilterKey = 'consumables' | 'materials' | 'equipment' | 'pack' | 'special';
 
 const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   consumables: ['consumable'],
   materials: ['currency', 'material'],   // Moeda (currency) fica em Materials; 'material' so' existe em itens antigos
   equipment: [...EQUIPMENT_TYPES],   // Ring, Accessory e as pecas de roupa ficam juntos
+  pack: ['pack'],                    // catalogo Pack
   special: ['general', 'cast', 'authority'],
 };
 
@@ -129,6 +130,7 @@ export function CatalogPageClient({
       consumables: dict.catalog.itemsFilterConsumables,
       materials: dict.catalog.itemsFilterMaterials,
       equipment: dict.catalog.itemsFilterEquipment,
+      pack: dict.catalog.itemsFilterPack,
       special: dict.catalog.itemsFilterSpecial,
     }),
     [dict]
@@ -203,7 +205,7 @@ export function CatalogPageClient({
           em vez de precisar de um botao separado pra isso. */}
       {category === 'items' && (
         <div className="mb-6 flex flex-wrap gap-1.5">
-          {(['consumables', 'materials', 'equipment', 'special'] as const).map((key) => {
+          {(['consumables', 'materials', 'equipment', 'pack', 'special'] as const).map((key) => {
             return (
               <button
                 key={key}
