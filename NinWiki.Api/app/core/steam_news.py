@@ -300,16 +300,17 @@ async def _refresh_existing(db: AsyncSession, item: dict, run: dict) -> None:
         run["errors"].append(f"{title[:60]}: {type(exc).__name__}: {str(exc)[:120]}")
 
 
-async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | None = None, max_new: int | None = None, only_gid: str | None = None) -> dict:
+async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | None = None, max_new: int | None = None, only_gid: str | None = None, refresh_all: bool = False) -> dict:
     """
     Confere a Steam e cria os posts novos. Devolve o resumo {"at", "fetched", "matched", "imported", "skipped", "errors", "titles"}.
     Nunca levanta por causa da Steam/DeepL: o erro vai em `errors` (e no log) e o proximo ciclo tenta de novo.
+    `refresh_all` = reconverte TODOS os posts ja' importados que ainda aparecem no feed da Steam (nao cria posts novos).
     `only_gid` = importa SO' esse post (mesmo antigo, mesmo sem a tag exigida): procura nos ultimos 300 posts da Steam.
     """
     run = {"at": datetime.now(timezone.utc).isoformat(), "fetched": 0, "matched": 0, "imported": 0, "skipped": 0, "errors": [], "titles": [], "seen": []}
     global last_run
     try:
-        items = await fetch_news(settings.steam_news_app_id, 300 if only_gid else 20, transport)
+        items = await fetch_news(settings.steam_news_app_id, 300 if (only_gid or refresh_all) else 20, transport)
     except Exception as exc:  # noqa: BLE001
         run["errors"].append(f"Steam request failed: {type(exc).__name__}")
         log.warning("Steam news: %s", exc)
@@ -319,6 +320,16 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
     # Diagnostico: titulo + tags dos primeiros posts que a Steam devolveu (o painel mostra, para entender por que algo nao foi importado)
     run["seen"] = [{"title": " ".join(str(i.get("title") or "?").split())[:80],
                     "tags": [str(t) for t in (i.get("tags") or [])][:6], "date": int(i.get("date") or 0)} for i in items[:8]]
+    if refresh_all:   # so' refaz o que ja' existe no wiki (por gid); nada de posts novos
+        have = set((await db.execute(select(Post.source_id).where(Post.source_id.is_not(None)))).scalars().all())
+        mine = [i for i in items if str(i.get("gid")) in have]
+        run["matched"] = len(mine)
+        for item in mine:
+            await _refresh_existing(db, item, run)
+        if not mine:
+            run["errors"].append("None of the already imported posts was found in the Steam feed")
+        last_run = run
+        return run
     need = "" if only_gid else settings.steam_news_require_tag.strip().lower()   # post escolhido a dedo: nao exige a tag
     wanted = [i for i in items if (str(i.get("gid")) == only_gid if only_gid else _is_update(i, need))]
     if only_gid and not wanted:

@@ -175,7 +175,7 @@ export interface Dictionary {
     };
     dropPicker: { linked: string; linkedTitle: string; searchPlaceholder: string; searching: string; noResults: string; categoryMobs: string; categoryItems: string; categoryWeapons: string; categoryMissions: string; categoryGuides: string };
     entryHistory: { loading: string; loadError: string; empty: string; bySystem: string; created: string; updated: string; deleted: string };
-    steamImport: { title: string; desc: string; run: string; running: string; importPost: string; postPlaceholder: string; importThis: string; last: string; seenTitle: string; noTags: string; result: string; none: string; draftMode: string; liveMode: string };
+    steamImport: { title: string; desc: string; run: string; running: string; importPost: string; postPlaceholder: string; importThis: string; refreshAll: string; last: string; seenTitle: string; noTags: string; result: string; none: string; draftMode: string; liveMode: string };
     mediaPage: {
       title: string; subtitle: string; upload: string; uploading: string; search: string; empty: string; sync: string; syncing: string; syncDone: string;
       rename: string; renamePrompt: string; delete: string; confirmDelete: string; confirmForce: string; copyId: string; copyUrl: string; copied: string;
@@ -537,7 +537,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       },
       steamImport: {
         title: 'Notícias da Steam', desc: 'Copia sozinho para o blog (tag Patch Notes) cada post de atualização novo do jogo na Steam.', run: 'Importar agora', running: 'Conferindo a Steam...',
-        importPost: 'Importar um post específico (mesmo antigo ou sem a tag)', postPlaceholder: 'Cole o link do post na Steam (…/news/app/…/view/123456789)', importThis: 'Importar este post', last: 'Última conferência', seenTitle: 'O que a Steam devolveu (título · tags) — se nenhum tem a tag de atualização, ela não marcou seus posts como patchnotes:', noTags: 'sem tags', result: '{fetched} lidos · {matched} de atualização · {imported} importados · {skipped} já existiam', none: 'Nenhum post novo.',
+        importPost: 'Importar um post específico (mesmo antigo ou sem a tag)', postPlaceholder: 'Cole o link do post na Steam (…/news/app/…/view/123456789)', importThis: 'Importar este post', refreshAll: 'Atualizar posts já importados (corrige imagens e formatação)', last: 'Última conferência', seenTitle: 'O que a Steam devolveu (título · tags) — se nenhum tem a tag de atualização, ela não marcou seus posts como patchnotes:', noTags: 'sem tags', result: '{fetched} lidos · {matched} de atualização · {imported} importados · {skipped} já existiam', none: 'Nenhum post novo.',
         draftMode: 'Modo: entra como rascunho (revise e publique)', liveMode: 'Modo: publica direto',
       },
       mediaPage: {
@@ -1218,7 +1218,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       },
       steamImport: {
         title: 'Steam news', desc: 'Automatically copies every new game update post from Steam to the blog (Patch Notes tag).', run: 'Import now', running: 'Checking Steam...',
-        importPost: 'Import a specific post (even an old one or without the tag)', postPlaceholder: 'Paste the Steam post link (…/news/app/…/view/123456789)', importThis: 'Import this post', last: 'Last check', seenTitle: 'What Steam returned (title · tags) — if none has the patch notes tag, Steam did not mark your posts as patchnotes:', noTags: 'no tags', result: '{fetched} fetched · {matched} patch notes · {imported} imported · {skipped} already there', none: 'No new posts.',
+        importPost: 'Import a specific post (even an old one or without the tag)', postPlaceholder: 'Paste the Steam post link (…/news/app/…/view/123456789)', importThis: 'Import this post', refreshAll: 'Refresh already imported posts (fixes images and formatting)', last: 'Last check', seenTitle: 'What Steam returned (title · tags) — if none has the patch notes tag, Steam did not mark your posts as patchnotes:', noTags: 'no tags', result: '{fetched} fetched · {matched} patch notes · {imported} imported · {skipped} already there', none: 'No new posts.',
         draftMode: 'Mode: imported as draft (review and publish)', liveMode: 'Mode: publishes directly',
       },
       mediaPage: {

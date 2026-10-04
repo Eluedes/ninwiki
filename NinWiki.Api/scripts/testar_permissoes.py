@@ -2031,6 +2031,14 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         async with _Sess() as db:
             qtd = (await db.execute(text("SELECT count(*) FROM posts WHERE source_id = '777000001'"))).scalar()
         check("importar o mesmo post de novo ATUALIZA o conteudo (nao duplica)", qtd == 1 and r.json()["lastRun"]["imported"] == 1 and "(updated)" in r.json()["lastRun"]["titles"][0], str(r.json()["lastRun"])[:200])
+        for it in feed:   # a Steam passou a mandar [img src="..."] (sem [/img]): o "atualizar todos" tem que consertar os posts ja' importados
+            if it["gid"] == "teste-steam-005":
+                it["contents"] = 'Texto novo.\n[img src="https://clan.akamai.steamstatic.com/images/9/novo.png"]'
+        r = await c.post("/steam-news/import", params={"refresh": "true"}, headers=A)
+        async with _Sess() as db:
+            ref = (await db.execute(text("SELECT content, cover_image FROM posts WHERE source_id = 'teste-steam-005'"))).first()
+            n005 = (await db.execute(text("SELECT count(*) FROM posts WHERE source_id = 'teste-steam-005'"))).scalar()
+        check("atualizar todos: reconverte os ja' importados (imagem no formato novo vira imagem e capa; sem duplicar)", r.json()["lastRun"]["imported"] >= 1 and n005 == 1 and "novo.png" in ref[0] and "[img" not in ref[0] and ref[1].endswith("novo.png"), str(ref)[:200] + str(r.json()["lastRun"])[:200])
         check("so' quem publica importa por link (Creator 403)", (await c.post("/steam-news/import", params={"post": "777000001"}, headers=C)).status_code == 403)
         _cfg.steam_news_app_id = ""
         check("desligado (sem STEAM_NEWS_APP_ID): importar da' 404", (await c.post("/steam-news/import", headers=A)).status_code == 404)

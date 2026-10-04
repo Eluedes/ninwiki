@@ -82,7 +82,9 @@ export function proxy(req: NextRequest) {
   return tag(NextResponse.next());
 }
 
-// Nao passa pelo proxy: arquivos internos do Next (JS/CSS/imagens do build) e o favicon.
+// Nao passa pelo proxy: arquivos internos do Next (JS/CSS do build), o favicon e os ARQUIVOS ESTATICOS da pasta public (imagens, fontes).
+// Antes as imagens (/images/...) tambem contavam no limite por IP: uma pagina com muitas imagens estourava o limite e elas
+// apareciam quebradas. O limite existe para PAGINAS (copia em massa), nao para cada figurinha.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.png|robots.txt).*)'],
+  matcher: ['/((?!_next/static|_next/image|images/|favicon.ico|icon.png|robots.txt|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff2?)$).*)'],
 };
