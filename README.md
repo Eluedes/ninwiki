@@ -98,7 +98,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
   não pode ser rebaixado. **Equipe** e **Permissões** são **só do S.Adm**.
 - **Entrar:** `/login` → "Entrar com Discord". Só entra quem foi cadastrado na equipe (ter Discord não basta).
 - **Conteúdo / Blog / Jutsus / Masteries:** rascunho ou publicado, imagem (upload), histórico, tradução automática EN→PT
-  (com `DEEPL_API_KEY`). O blog público fica em `/blog` e os 3 últimos posts aparecem na Home.
+  (com `DEEPL_API_KEY`). O blog público fica em `/blog` e os 3 últimos posts aparecem na Home. Visual estilo Steam: lista em cards grandes (o post mais novo em destaque), post com capa larga no topo e índice "Neste post" fixo na lateral (no celular vai antes do texto).
 - **Blog (editor):** tags/categorias (multi-seleção, cria tag nova na hora), imagem no texto (upload), citação, bloco de código,
   vídeo do **YouTube/Twitch**, **@menção** (busca itens e masteries e vira link), **spoiler** (abre/fecha), contador de
   palavras/caracteres, **Pré-visualizar**, SEO (título/descrição para o Google) e **data de publicação**: no futuro =
