@@ -1524,6 +1524,23 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         check("trocar o nome em ingles retraduz", r.json()["nameByLevelPt"][3] == "PT:Great Fireball", r.text[:240])
         r = await c.post(f"/jutsus/{SLUG}-jf/retranslate", headers=A)
         check("Retraduzir tambem refaz o nome por nivel", r.status_code == 200 and r.json()["nameByLevelPt"][3] == "PT:Great Fireball", r.text[:200])
+
+    # ataques do mob ligados a um jutsu do catalogo
+    jf = (await c.get(f"/jutsus/{SLUG}-jf")).json()
+    r = await c.post("/content-items", json={**novo_conteudo("mob-atk"), "category": "mobs", "attacks": [
+        {"jutsuId": f"{SLUG}-jf"}, {"name": "  Golpe   livre "}]}, headers=C)
+    check("mob com ataque ligado a um jutsu (sem digitar nome) e ataque so' texto: criado", r.status_code == 201, r.text[:200])
+    atk = r.json()["attacks"]
+    check("ataque ligado: o nome vem do jutsu e traz a mastery para o link", atk[0]["name"] == jf["name"] and atk[0]["jutsuId"] == f"{SLUG}-jf" and atk[0]["masteryId"] == jf["masteryId"], str(atk[0]))
+    check("ataque so' texto continua igual (nome limpo, sem jutsu)", atk[1]["name"] == "Golpe livre" and atk[1]["jutsuId"] is None, str(atk[1]))
+    mob_atk_id = r.json()["id"]
+    r = await c.post("/content-items", json={**novo_conteudo("mob-atk2"), "category": "mobs", "attacks": [{"name": "  "}]}, headers=C)
+    check("ataque sem nome e sem jutsu e' recusado (422)", r.status_code == 422)
+    r = await c.post("/content-items", json={**novo_conteudo("mob-atk3"), "category": "mobs", "attacks": [{"jutsuId": "nao-existe-xyz"}]}, headers=C)
+    check("ataque ligado a jutsu que nao existe e' recusado (400)", r.status_code == 400, r.text[:160])
+    r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "name": "Renomeado Ao Vivo"}, headers=A)
+    r = await c.get(f"/content-items/{mob_atk_id}", headers=C)
+    check("renomeou o jutsu: o ataque do mob acompanha (ao vivo)", r.json()["attacks"][0]["name"] == "Renomeado Ao Vivo", r.text[:200])
     await c.delete(f"/jutsus/{SLUG}-jf", headers=A)
     await c.delete(f"/jutsus/{SLUG}-jg", headers=A)
 

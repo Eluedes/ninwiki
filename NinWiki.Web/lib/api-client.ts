@@ -53,7 +53,14 @@ export interface ApiDropEntry {
 // mas com os campos que so' existem no banco: id real e status editorial).
 export interface ApiAttackEntry {
   name: string;
+  // Jutsu do catalogo ligado ao ataque: com ele, `name`/`namePt` ja' vem do jutsu e masteryId serve para o link da pagina publica.
+  jutsuId?: string | null;
+  namePt?: string | null;
+  masteryId?: string | null;
 }
+
+/** Ataque enviado ao salvar: um jutsu ligado (sem precisar de nome) ou so' o texto. */
+export type AttackInput = { name?: string; jutsuId?: string | null };
 
 export interface ApiContentItem {
   id: string;
@@ -151,7 +158,7 @@ export interface ContentItemInput {
   mobExperience?: string | null;
   mobRange?: string | null;
   mobRespawnTime?: string | null;
-  attacks: ApiAttackEntry[];
+  attacks: AttackInput[];
   weaponSpeed?: string | null;
   weaponRequirement?: string | null;
   weaponNpc?: string | null;

@@ -8,6 +8,7 @@
 // print com o Rafael, 24/09): stats -> Jutsu/Attacks (so' Mob) ->
 // Drops.
 
+import Link from 'next/link';
 import { cn, itemHasStack, shouldShowLevel, signedValue } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
@@ -170,9 +171,15 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
         <div className="px-4 py-3">
           {entry.attacks.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
-              {entry.attacks.map((atk, i) => (
-                <span key={i} className="rounded-md border border-border bg-secondary/60 px-2 py-1 text-xs font-medium text-card-foreground">{atk.name}</span>
-              ))}
+              {entry.attacks.map((atk, i) => {
+                const label = isPt ? (atk.namePt ?? atk.name) : atk.name;
+                // Jutsu ligado: o selo vira link para a pagina da skill; texto livre fica sem link.
+                return atk.jutsuId ? (
+                  <Link key={i} href={`/jutsus/${atk.jutsuId}`} className="rounded-md border border-primary/40 bg-primary/10 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20">{label}</Link>
+                ) : (
+                  <span key={i} className="rounded-md border border-border bg-secondary/60 px-2 py-1 text-xs font-medium text-card-foreground">{label}</span>
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">{dict.detail.noAttacks}</p>

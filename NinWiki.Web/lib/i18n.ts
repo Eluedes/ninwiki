@@ -173,6 +173,7 @@ export interface Dictionary {
       undo: string; redo: string; insertFicha: string; insertTable: string;
       fontSize: string; highlightColor: string; automatic: string; noFill: string; themeColors: string; standardColors: string; recentColors: string; moreColors: string; clearFormat: string; defaultFont: string;
     };
+    jutsuPicker: { linked: string; linkedTitle: string; placeholder: string; loading: string; noResults: string };
     dropPicker: { linked: string; linkedTitle: string; searchPlaceholder: string; searching: string; noResults: string; categoryMobs: string; categoryItems: string; categoryWeapons: string; categoryMissions: string; categoryGuides: string };
     entryHistory: { loading: string; loadError: string; empty: string; bySystem: string; created: string; updated: string; deleted: string };
     steamImport: { title: string; desc: string; run: string; running: string; importPost: string; postPlaceholder: string; importThis: string; refreshAll: string; last: string; seenTitle: string; noTags: string; result: string; none: string; draftMode: string; liveMode: string };
@@ -723,6 +724,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         fontSize: 'Tamanho da letra', highlightColor: 'Cor de destaque (fundo)', automatic: 'Automático', noFill: 'Sem preenchimento', themeColors: 'Cores do tema', standardColors: 'Cores padrão', recentColors: 'Usadas recentemente', moreColors: 'Mais cores...', clearFormat: 'Limpar formatação', defaultFont: 'Padrão',
         insertFicha: 'Inserir Ficha', insertTable: 'Inserir Tabela',
       },
+      jutsuPicker: { linked: 'Jutsu', linkedTitle: 'Ligado a um jutsu do catálogo — clique para desligar', placeholder: 'Ligar a um jutsu...', loading: 'Carregando...', noResults: 'Nenhum jutsu encontrado.' },
       dropPicker: {
         linked: 'Ligado',
         linkedTitle: 'Ligado a um item do catálogo — clique pra desligar',
@@ -1407,6 +1409,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         fontSize: 'Font size', highlightColor: 'Highlight color', automatic: 'Automatic', noFill: 'No fill', themeColors: 'Theme colors', standardColors: 'Standard colors', recentColors: 'Recent colors', moreColors: 'More colors...', clearFormat: 'Clear formatting', defaultFont: 'Default',
         insertFicha: 'Insert Sheet', insertTable: 'Insert Table',
       },
+      jutsuPicker: { linked: 'Jutsu', linkedTitle: 'Linked to a catalog jutsu — click to unlink', placeholder: 'Link a jutsu...', loading: 'Loading...', noResults: 'No jutsu found.' },
       dropPicker: {
         linked: 'Linked',
         linkedTitle: 'Linked to a catalog item — click to unlink',

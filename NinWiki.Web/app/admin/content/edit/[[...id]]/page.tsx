@@ -41,6 +41,7 @@ import {
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { SignedStepperInput } from '@/components/admin/signed-stepper-input';
+import { JutsuPicker } from '@/components/admin/jutsu-picker';
 import { EmojiPicker } from '@/components/admin/emoji-picker';
 import { itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { contentItemSchema, type ContentItemFormValues } from '@/lib/validation';
@@ -174,7 +175,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   >([]);
   // attacks: mesmo padrao de attributes/drops - lista dinamica fora do
   // Zod, so' usada quando category === 'mobs'.
-  const [attacks, setAttacks] = useState<{ name: string }[]>([]);
+  const [attacks, setAttacks] = useState<{ name: string; jutsuId?: string | null }[]>([]);
   // Vilas de verdade, pro seletor do item tipo Cast - busca uma vez so',
   // ja' que sao poucas (3 hoje) e raramente mudam.
   const [villages, setVillages] = useState<ApiVillage[]>([]);
@@ -247,7 +248,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         });
         setAttributes(item.attributes.map((a) => ({ ...a, label: a.label || ATTRIBUTE_NAMES[0] })));
         setDrops(item.drops.map(({ rarity: _rarity, ...rest }) => rest));   // a raridade do drop vem do item ligado (nao e' mais editada aqui)
-        setAttacks(item.attacks);
+        setAttacks(item.attacks.map((a) => ({ name: a.name, jutsuId: a.jutsuId ?? null })));
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : 'Error loading the entry.'))
       .finally(() => setLoading(false));
@@ -276,8 +277,8 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   function addAttack() {
     setAttacks((prev) => [...prev, { name: '' }]);
   }
-  function updateAttack(index: number, name: string) {
-    setAttacks((prev) => prev.map((a, i) => (i === index ? { name } : a)));
+  function updateAttack(index: number, patch: { name?: string; jutsuId?: string | null }) {
+    setAttacks((prev) => prev.map((a, i) => (i === index ? { ...a, ...patch } : a)));
   }
   function removeAttack(index: number) {
     setAttacks((prev) => prev.filter((_, i) => i !== index));
@@ -660,9 +661,8 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         </div>
       )}
 
-      {/* Jutsu/Attacks: lista de texto livre (sem ligar a um Jutsu de
-          verdade do catalogo - decisao com o Rafael, sao conceitos
-          diferentes: Jutsu e' tecnica de JOGADOR). */}
+      {/* Jutsu/Attacks: liga cada ataque a um JUTSU do catalogo (o nome vem dele e o visitante clica para ir a' skill) OU deixa
+          so' o texto livre (golpe que nao existe como jutsu). */}
       {category === 'mobs' && (
         <div className="space-y-3 rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between">
@@ -673,7 +673,12 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           </div>
           {attacks.map((attack, i) => (
             <div key={i} className="flex items-center gap-2">
-              <Input placeholder={t.attackPlaceholder} value={attack.name} onChange={(e) => updateAttack(i, e.target.value)} />
+              <Input placeholder={t.attackPlaceholder} value={attack.name} readOnly={Boolean(attack.jutsuId)} onChange={(e) => updateAttack(i, { name: e.target.value })} />
+              <JutsuPicker
+                linkedId={attack.jutsuId}
+                onLink={(jutsu) => updateAttack(i, { jutsuId: jutsu.id, name: jutsu.name })}
+                onUnlink={() => updateAttack(i, { jutsuId: null })}
+              />
               <button type="button" onClick={() => removeAttack(i)} className="shrink-0 rounded-md p-2 text-muted-foreground hover:bg-red-900/20 hover:text-red-400">
                 <Trash2 className="h-4 w-4" />
               </button>
