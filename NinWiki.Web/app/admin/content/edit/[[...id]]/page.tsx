@@ -77,6 +77,7 @@ function getItemTypeOptions(t: Dictionary['admin']['contentEditor'], current?: I
   const all: { value: ItemType; label: string }[] = [
     { value: 'general', label: t.itemGeneral },
     { value: 'ring', label: t.itemRing },
+    { value: 'accessory', label: t.itemAccessory },
     { value: 'consumable', label: t.itemConsumable },
     { value: 'material', label: t.itemMaterial },
     { value: 'currency', label: t.itemCurrency },

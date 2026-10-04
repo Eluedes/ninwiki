@@ -53,7 +53,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
   const mobType = entry.mobType ? MOB_TYPE_LABEL[entry.mobType] : undefined;
   /** Nome do tipo de item no idioma atual (Geral, Ring, Consumivel, Material, Moeda, Cast, Autoridade). */
   const ce = dict.admin.contentEditor;
-  const itemTypeLabel = (type: string) => ({ general: ce.itemGeneral, ring: ce.itemRing, consumable: ce.itemConsumable, material: ce.itemMaterial, currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority } as Record<string, string>)[type] ?? type;
+  const itemTypeLabel = (type: string) => ({ general: ce.itemGeneral, ring: ce.itemRing, accessory: ce.itemAccessory, consumable: ce.itemConsumable, material: ce.itemMaterial, currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority } as Record<string, string>)[type] ?? type;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">

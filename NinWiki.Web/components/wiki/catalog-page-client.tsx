@@ -33,7 +33,7 @@ type ItemsFilterKey = 'consumables' | 'materials' | 'equipment' | 'special';
 const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   consumables: ['consumable'],
   materials: ['currency', 'material'],   // Moeda (currency) fica em Materials; 'material' so' existe em itens antigos
-  equipment: ['ring'],
+  equipment: ['ring', 'accessory'],   // Accessory fica junto com os Rings
   special: ['general', 'cast', 'authority'],
 };
 

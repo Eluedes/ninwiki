@@ -204,7 +204,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   // So' entra a linha que tiver valor (um item sem stack nao mostra "Max Stack: ").
   const ce = dict.admin.contentEditor;
   const typeLabels: Record<string, string> = {
-    general: ce.itemGeneral, ring: ce.itemRing, consumable: ce.itemConsumable, material: ce.itemMaterial,
+    general: ce.itemGeneral, ring: ce.itemRing, accessory: ce.itemAccessory, consumable: ce.itemConsumable, material: ce.itemMaterial,
     currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority,
   };
   const rarity = rarityConfig[entry.rarity];

@@ -237,7 +237,7 @@ export interface Dictionary {
     contentEditor: {
       catMobs: string; catItems: string; catWeapons: string; catMissions: string; catGuides: string;
       mobMonster: string; mobBoss: string; mobNpc: string; mobMount: string;
-      itemGeneral: string; itemRing: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string;
+      itemGeneral: string; itemRing: string; itemAccessory: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string;
       editTitle: string; newTitle: string;
       name: string; category: string; mobType: string; itemType: string; slugLabel: string; back: string; icon: string;
       speed: string; speedPlaceholder: string; requirement: string; requirementPlaceholder: string;
@@ -894,7 +894,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       contentEditor: {
         catMobs: 'Mobs', catItems: 'Itens', catWeapons: 'Armas', catMissions: 'Missões', catGuides: 'Guias',
         mobMonster: 'Monstro comum', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Montaria',
-        itemGeneral: 'Geral', itemRing: 'Ring', itemConsumable: 'Consumível', itemMaterial: 'Material',
+        itemGeneral: 'Geral', itemRing: 'Ring', itemAccessory: 'Acessório', itemConsumable: 'Consumível', itemMaterial: 'Material',
         itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade',
         editTitle: 'Editar entry', newTitle: 'Nova entry',
         name: 'Nome', category: 'Categoria', mobType: 'Tipo de mob', itemType: 'Tipo de item',
@@ -1577,7 +1577,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       contentEditor: {
         catMobs: 'Mobs', catItems: 'Items', catWeapons: 'Weapons', catMissions: 'Missions', catGuides: 'Guides',
         mobMonster: 'Common monster', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Mount',
-        itemGeneral: 'General', itemRing: 'Ring', itemConsumable: 'Consumable', itemMaterial: 'Material',
+        itemGeneral: 'General', itemRing: 'Ring', itemAccessory: 'Accessory', itemConsumable: 'Consumable', itemMaterial: 'Material',
         itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority',
         editTitle: 'Edit entry', newTitle: 'New entry',
         name: 'Name', category: 'Category', mobType: 'Mob type', itemType: 'Item type',
