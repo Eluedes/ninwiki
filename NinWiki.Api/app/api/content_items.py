@@ -31,6 +31,7 @@ from app.core.database import get_db
 from app.models.users import User
 from app.core.translation import translate_field
 from app.models.enums import ContentStatus, ItemType, MobType, Rarity
+from app.models.masteries import Jutsu
 from app.models.content import ContentItem, ContentItemAttribute, ContentItemAttack, ContentItemDrop
 from app.models.enums import ContentCategory
 from app.schemas.content import CamelModel, ContentItemCreate, ContentItemRead, ContentItemSummary, ContentItemUpdate
@@ -319,6 +320,19 @@ async def _drop_rarities(drops: list, db: AsyncSession) -> dict:
     return found
 
 
+async def _attack_jutsu_names(attacks: list, db: AsyncSession) -> dict[str, str]:
+    """Confere que todo jutsu ligado a um ataque existe e devolve {id do jutsu: nome dele} (o ataque guarda o nome como reserva)."""
+    ids = {a.jutsu_id for a in attacks if a.jutsu_id}
+    if not ids:
+        return {}
+    result = await db.execute(select(Jutsu.id, Jutsu.name).where(Jutsu.id.in_(ids)))
+    found = {row[0]: row[1] for row in result.all()}
+    missing = ids - set(found)
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Jutsu(s) linked to the attack do not exist: {', '.join(sorted(missing))}")
+    return found
+
+
 def _rarity_of_drop(drop, linked_rarities: dict) -> Rarity:
     """Raridade gravada no drop: a do item ligado; sem ligacao, a enviada (ou Common)."""
     if drop.dropped_item_id is not None and drop.dropped_item_id in linked_rarities:
@@ -388,6 +402,7 @@ async def create_content_item(
         raise HTTPException(status_code=409, detail=f"An entry with the slug '{payload.slug}' already exists")
 
     linked_rarities = await _drop_rarities(payload.drops, db)
+    jutsu_names = await _attack_jutsu_names(payload.attacks, db)
     await _validate_cast_village_id(payload.cast_village_id, db)
 
     item = ContentItem(
@@ -408,7 +423,7 @@ async def create_content_item(
     for i, attr in enumerate(payload.attributes):
         item.attributes.append(ContentItemAttribute(label=attr.label, value=attr.value, sort_order=i))
     for i, attack in enumerate(payload.attacks):
-        item.attacks.append(ContentItemAttack(name=attack.name, sort_order=i))
+        item.attacks.append(ContentItemAttack(name=jutsu_names.get(attack.jutsu_id, attack.name.strip()), jutsu_id=attack.jutsu_id or None, sort_order=i))
     for drop in payload.drops:
         item.drops.append(ContentItemDrop(
             item_name=drop.item_name, rarity=_rarity_of_drop(drop, linked_rarities), chance=drop.chance,
@@ -447,6 +462,7 @@ async def update_content_item(
     before = {"name": item.name, "status": item.status.value}
 
     linked_rarities = await _drop_rarities(payload.drops, db)
+    jutsu_names = await _attack_jutsu_names(payload.attacks, db)
     await _validate_cast_village_id(payload.cast_village_id, db)
 
     item.category = payload.category
@@ -498,7 +514,7 @@ async def update_content_item(
         item.attributes.append(ContentItemAttribute(label=attr.label, value=attr.value, sort_order=i))
     item.attacks.clear()
     for i, attack in enumerate(payload.attacks):
-        item.attacks.append(ContentItemAttack(name=attack.name, sort_order=i))
+        item.attacks.append(ContentItemAttack(name=jutsu_names.get(attack.jutsu_id, attack.name.strip()), jutsu_id=attack.jutsu_id or None, sort_order=i))
     item.drops.clear()
     for drop in payload.drops:
         item.drops.append(ContentItemDrop(

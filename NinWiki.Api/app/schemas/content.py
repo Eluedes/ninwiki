@@ -42,8 +42,44 @@ class AttributeRowSchema(CamelModel):
 
 
 class AttackEntrySchema(CamelModel):
-    """Um ataque/jutsu de um Mob (texto livre, ex: "Katon: Bola de Fogo")."""
-    name: str = Field(min_length=1, max_length=150)
+    """
+    Um ataque/jutsu de um Mob: um jutsu do catalogo (`jutsu_id`; o nome vem dele) OU texto livre (ex: "Katon: Bola de Fogo").
+    Precisa de um dos dois.
+    """
+    name: str = Field(default="", max_length=150)
+    jutsu_id: str | None = Field(default=None, max_length=80)
+
+    @field_validator("name")
+    @classmethod
+    def _clean_name(cls, value: str) -> str:
+        """Tira espacos extras do nome digitado."""
+        return " ".join(value.split())
+
+    @model_validator(mode="after")
+    def _needs_name_or_jutsu(self):
+        """Sem jutsu ligado o nome e' obrigatorio."""
+        if not self.jutsu_id and not self.name.strip():
+            raise ValueError("An attack needs a name or a linked jutsu")
+        return self
+
+
+class AttackEntryRead(AttackEntrySchema):
+    """
+    Ataque devolvido pela API: com jutsu ligado, `name`/`name_pt` vem do jutsu (ao vivo, a ficha acompanha renomeacoes) e `mastery_id` serve
+    para o link. Mesmo padrao de DropEntryRead (a relacao do ORM vira campos planos).
+    """
+    name_pt: str | None = None
+    mastery_id: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _from_linked_jutsu(cls, data):
+        """Preenche nome/traducao/mastery a partir do jutsu ligado (carregado junto com o ataque)."""
+        if hasattr(data, "jutsu") and not isinstance(data, dict):
+            j = data.jutsu
+            return {"name": j.name if j is not None else data.name, "jutsu_id": j.id if j is not None else None,
+                    "name_pt": j.name_pt if j is not None else None, "mastery_id": j.mastery_id if j is not None else None}
+        return data
 
 
 class DropEntrySchema(CamelModel):
@@ -188,6 +224,7 @@ class ContentItemRead(ContentItemBase):
     # Sobrescreve o `drops` herdado de ContentItemBase (que so' aceita
     # escrita) pela variante de LEITURA, que inclui dropped_item_slug.
     drops: list[DropEntryRead] = []
+    attacks: list[AttackEntryRead] = []   # leitura: com o nome/traducao do jutsu ligado
     # Nome de exibicao da vila do cast_village_id (ex: "Vila da Névoa")
     # - calculado a partir da relacao `cast_village` do ORM, mesmo
     # padrao/motivo de DropEntryRead.dropped_item_slug logo acima (o

@@ -184,10 +184,7 @@ class ContentItemAttribute(Base):
 class ContentItemAttack(Base):
     """
     Um ataque/jutsu de um Mob, exibido na secao "Jutsu/Attacks" da
-    ficha - so' texto livre (decisao com o Rafael: sem ligar a uma
-    entry de Jutsu de verdade, ja' que os Jutsus do catalogo sao as
-    tecnicas dos JOGADORES, um conceito diferente do "golpe que um
-    mob usa").
+    ficha. Texto livre OU ligado a um Jutsu do catalogo (jutsu_id): ligado, o nome vem do jutsu e o visitante clica para ir a' skill.
     """
     __tablename__ = "content_item_attacks"
 
@@ -197,8 +194,12 @@ class ContentItemAttack(Base):
     )
     name: Mapped[str] = mapped_column(String(150))
     sort_order: Mapped[int] = mapped_column(default=0)
+    # Jutsu de verdade do catalogo ligado a este ataque (opcional): a pagina do monstro mostra o nome (ao vivo, nos dois idiomas) e
+    # leva para a pagina da skill. Sem jutsu ligado vale o texto livre de `name`. Apagou o jutsu: volta a ser so' texto (SET NULL).
+    jutsu_id: Mapped[str | None] = mapped_column(String(80), ForeignKey("jutsus.id", ondelete="SET NULL"), nullable=True)
 
     content_item: Mapped["ContentItem"] = relationship(back_populates="attacks")
+    jutsu = relationship("Jutsu", lazy="selectin")
 
 
 class ContentItemDrop(Base):
