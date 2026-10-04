@@ -122,7 +122,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
                   {mobType && (
                     <span className={cn('rounded-md px-2 py-0.5 text-xs font-bold uppercase', mobType.className)}>{isPt ? mobType.pt : mobType.en}</span>
                   )}
-                  <span className={cn('text-xs font-semibold', rarityConfig[entry.rarity].color)}>{rarityConfig[entry.rarity].label}</span>
+                  {/* mobs nao tem raridade */}
                 </div>
               </div>
 

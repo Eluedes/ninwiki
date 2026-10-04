@@ -452,7 +452,7 @@ def _item_hit(i: ContentItem, lang: str = "en") -> BotSearchHit:
     common = [("Rarity", i.rarity.value.title()), ("Level", i.level)]
     if cat == "mobs":
         facts = _facts(("Health", i.mob_health), ("Damage", i.mob_damage), ("XP", i.mob_experience), ("Range", i.mob_range),
-                       ("Respawn", i.mob_respawn_time), ("Spawns at", _pick(lang, i.spawn_location, i.spawn_location_pt)), *common, lang=lang)
+                       ("Respawn", i.mob_respawn_time), ("Spawns at", _pick(lang, i.spawn_location, i.spawn_location_pt)), *common[1:], lang=lang)   # mob nao tem raridade: so' o nivel
     elif cat == "weapons":
         facts = _facts(("Type", i.weapon_type), ("Base damage", i.weapon_base_damage), ("Requirement", " · ".join((i.weapon_requirement or "").splitlines()) or None),
                        ("Special", i.weapon_special_ability), ("Speed", i.weapon_speed), ("Knockback", i.weapon_knockback_distance),
