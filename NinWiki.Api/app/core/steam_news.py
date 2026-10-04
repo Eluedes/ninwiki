@@ -51,10 +51,13 @@ _SKIP_TAGS = {"hr", "noparse", "spoiler", "table", "tr", "td", "th", "th", "p", 
 def _prepare(text: str) -> str:
     """Normaliza o texto da Steam: placeholders de imagem, HTML simples (<br>, <p>...), entidades e quebras de linha."""
     text = text.replace("{STEAM_CLAN_IMAGE}", CLAN_IMAGE.rstrip("/")).replace("{STEAM_CLAN_LOC_IMAGE}", CLAN_IMAGE.rstrip("/"))
+    # Formato novo da Steam: [img src="URL" ...] (sem [/img]) -> [img]URL[/img]
+    text = re.sub(r"(?i)\[img\s+[^\]]*?src=[\"']([^\"']+)[\"'][^\]]*\](?:\s*\[/img\])?", lambda m: f"[img]{m.group(1)}[/img]", text)
     text = re.sub(r"(?i)<br\s*/?>|</p>|</li>|</h[1-6]>|</div>", "\n", text)
     text = re.sub(r"(?i)<li[^>]*>", "\n[*]", text)
     text = re.sub(r"(?i)<(/?)(b|strong)>", lambda m: f"[{m.group(1)}b]", text)
     text = re.sub(r"(?i)<(/?)(i|em)>", lambda m: f"[{m.group(1)}i]", text)
+    text = re.sub(r"(?i)<img\s[^>]*?src=[\"']([^\"']+)[\"'][^>]*>", lambda m: f"[img]{m.group(1)}[/img]", text)
     text = re.sub(r"<[^>\[]+>", "", text)   # qualquer outro HTML some (so' o texto fica)
     return html.unescape(text.replace("\r\n", "\n").replace("\r", "\n"))
 
@@ -269,6 +272,34 @@ def parse_post_ref(value: str) -> str | None:
     return m.group(1) if m else None
 
 
+async def _refresh_existing(db: AsyncSession, item: dict, run: dict) -> None:
+    """Reconverte um post JA importado (mesmo gid): atualiza conteudo, resumo e capa e retraduz. Autor, tags, status e slug ficam como estao."""
+    gid, title = str(item.get("gid")), " ".join(str(item.get("title") or "Patch Notes").split())[:200]
+    try:
+        post = (await db.execute(select(Post).where(Post.source_id == gid))).scalar_one()
+        author = post.author_label or settings.steam_news_author_name or "Steam"
+        url = str(item.get("url") or "")[:500]
+        credit = [_text_node("Originally published on Steam" + (f" by {author}" if author != "Steam" else "") + ". ", [{"type": "italic"}])]
+        if url.startswith("https://"):
+            credit.append(_text_node("View the original post", [{"type": "italic"}, {"type": "link", "attrs": {"href": url}}]))
+        doc = bbcode_to_doc(str(item.get("contents") or ""), credit)
+        post.content = validate_rich_content(json.dumps(doc, ensure_ascii=False))
+        post.excerpt = plain_excerpt(doc) or title
+        post.cover_image = first_image(doc)
+        post.content_pt = post.excerpt_pt = None
+        try:
+            await fill_missing_translations(post, POST_TRANSLATABLE)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Steam news: translation failed for %s: %s", gid, exc)
+        await log_action(db, action="update", entity_type="post", entity_id=str(post.id), diff={"name": title, "source": "steam", "refreshed": True}, source="system")
+        await db.commit()
+        run["imported"] += 1
+        run["titles"].append(title + " (updated)")
+    except Exception as exc:  # noqa: BLE001
+        await db.rollback()
+        run["errors"].append(f"{title[:60]}: {type(exc).__name__}: {str(exc)[:120]}")
+
+
 async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | None = None, max_new: int | None = None, only_gid: str | None = None) -> dict:
     """
     Confere a Steam e cria os posts novos. Devolve o resumo {"at", "fetched", "matched", "imported", "skipped", "errors", "titles"}.
@@ -294,6 +325,11 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
         run["errors"].append(f"Post {only_gid} was not found among the latest {len(items)} Steam news of this game")
     run["matched"] = len(wanted)
     known = set((await db.execute(select(Post.source_id).where(Post.source_id.in_([str(i.get("gid")) for i in wanted])))).scalars().all()) if wanted else set()
+    if only_gid and known:   # post ja importado e escolhido a dedo: refaz o conteudo (ex.: depois de melhorar o conversor)
+        await _refresh_existing(db, wanted[0], run)
+        known = set()
+        wanted = []
+        run["skipped"] = 0
     fresh = sorted((i for i in wanted if str(i.get("gid")) not in known), key=lambda i: int(i.get("date") or 0), reverse=True)
     run["skipped"] = len(wanted) - len(fresh)
     status = ContentStatus.DRAFT if settings.steam_news_status.strip().lower() == "draft" else ContentStatus.PUBLISHED
@@ -332,8 +368,6 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
             await db.rollback()
             run["errors"].append(f"{title[:60]}: {type(exc).__name__}: {str(exc)[:120]}")
             log.warning("Steam news: could not import %s: %s", gid, exc)
-    if only_gid and wanted and not fresh:
-        run["errors"].append("That post was already imported")
     last_run = run
     log.info("Steam news: %s lidos, %s com a tag '%s', %s importados, %s ja existiam, erros: %s", run["fetched"], run["matched"], need, run["imported"], run["skipped"], run["errors"] or "nenhum")
     return run
