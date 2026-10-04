@@ -221,7 +221,7 @@ export interface Dictionary {
     jutsuEditor: {
       back: string; editTitle: string; newTitle: string; loading: string; loadError: string; saveError: string; save: string;
       name: string; englishName: string; idSlug: string; idSlugLocked: string; idPlaceholder: string;
-      mastery: string; path: string; pathNone: string;
+      mastery: string; masteryUtility: string; path: string; pathNone: string;
       tier: string; chakraCost: string; icon: string;
       range: string; rangePlaceholder: string; castTime: string; castTimePlaceholder: string;
       cooldown: string; cooldownPlaceholder: string; effect: string; effectPlaceholder: string;
@@ -860,6 +860,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         mastery: 'Mastery',
         path: 'Caminho (opcional)',
         pathNone: 'Nenhum',
+        masteryUtility: 'Utility (sem mastery — qualquer pessoa pode usar)',
         tier: 'Tier (1-5)',
         chakraCost: 'Custo de chakra',
         icon: 'Ícone',
@@ -1546,6 +1547,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         mastery: 'Mastery',
         path: 'Path (optional)',
         pathNone: 'None',
+        masteryUtility: 'Utility (no mastery — anyone can use it)',
         tier: 'Tier (1-5)',
         chakraCost: 'Chakra cost',
         icon: 'Icon',

@@ -4,7 +4,8 @@
 // consciente de idioma (ver comentario la' pro motivo completo de
 // precisar ser Client Component).
 
-import { getMastery, listJutsus, listAttributes, ApiError } from '@/lib/api-client';
+import { getMastery, listJutsus, listUtilityJutsus, listAttributes, ApiError } from '@/lib/api-client';
+import { UTILITY_ID, UTILITY_MASTERY } from '@/lib/utility-category';
 import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { MasteryPageClient } from '@/components/lore/mastery-page-client';
 import type { Metadata } from 'next';
@@ -12,6 +13,7 @@ import type { Metadata } from 'next';
 /** Titulo da aba: o nome da mastery. */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  if (id === UTILITY_ID) return { title: 'Utility' };
   try {
     return { title: `${(await getMastery(id)).name} Mastery` };
   } catch {
@@ -27,6 +29,12 @@ export default async function MasteryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // /masteries/utility: categoria Utility (jutsus sem mastery) - nao existe como mastery no banco, usa a "virtual"
+  if (id === UTILITY_ID) {
+    const [utilityJutsus, attributes] = await Promise.all([listUtilityJutsus(), listAttributes()]);
+    return <MasteryPageClient mastery={UTILITY_MASTERY} masteryJutsus={utilityJutsus} attributes={attributes} />;
+  }
 
   // getMastery devolve 404 (via ApiError) quando o id da URL nao
   // existe no banco - trata isso como "nao encontrada", igual o mock

@@ -12,7 +12,7 @@ import { PageHeader } from '@/components/lore/page-header';
 import type { ApiMastery } from '@/lib/api-client';
 
 /** Listagem das masteries (elementais e nao elementais). */
-export function MasteriesPageClient({ masteries }: { masteries: ApiMastery[] }) {
+export function MasteriesPageClient({ masteries, utility }: { masteries: ApiMastery[]; utility?: ApiMastery }) {
   const { dict } = useLanguage();
   const t = dict.masteryDetail;
   const elementalCount = masteries.filter((m) => m.type === 'elemental').length;
@@ -39,6 +39,8 @@ export function MasteriesPageClient({ masteries }: { masteries: ApiMastery[] }) 
         {masteries.map((m) => (
           <MasteryCard key={m.id} mastery={m} />
         ))}
+        {/* Utility: jutsus que nao sao de nenhuma mastery (qualquer pessoa pode usar) */}
+        {utility && <MasteryCard mastery={utility} />}
       </div>
     </div>
   );

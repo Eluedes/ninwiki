@@ -142,7 +142,7 @@ class JutsuRead(CamelModel):
     id: str
     name: str
     name_pt: str | None
-    mastery_id: str
+    mastery_id: str | None = None   # None = jutsu de UTILIDADE (Utility): nao e' mastery, qualquer pessoa pode usar
     path_id: str | None
     tier: int
     chakra_cost: int
@@ -178,7 +178,7 @@ class JutsuWrite(CamelModel):
     id: str = Field(min_length=1, max_length=80, description="Slug único, ex: katon-goukakyuu")
     name: str
     name_pt: str | None = None
-    mastery_id: str
+    mastery_id: str | None   # OBRIGATORIO no corpo, mas pode ser null = jutsu de UTILIDADE (Utility: nao e' mastery, qualquer pessoa pode usar)
     path_id: str | None = None
     tier: int = Field(ge=1, le=4, description="1 a 4 (maximo 4)")
     chakra_cost: int = Field(ge=0)

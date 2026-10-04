@@ -14,6 +14,7 @@ import {
   HeartPulse,
   Swords,
   Hand,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ const iconMap: Record<string, LucideIcon> = {
   'heart-pulse': HeartPulse,
   swords: Swords,
   fist: Hand,
+  wrench: Wrench,   // categoria Utility (lib/utility-category.ts)
 };
 
 /** Icone de uma mastery com a cor dela. */

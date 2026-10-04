@@ -57,7 +57,7 @@ export function JutsuPicker({ linkedId, onLink, onUnlink }: { linkedId: string |
               className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-xs hover:bg-secondary"
             >
               <span className="truncate text-popover-foreground">{j.name}</span>
-              <span className="shrink-0 text-muted-foreground">{j.masteryId}</span>
+              <span className="shrink-0 text-muted-foreground">{j.masteryId ?? 'utility'}</span>
             </button>
           ))}
           {!loading && results.length === 0 && <p className="p-2 text-xs text-muted-foreground">{t.noResults}</p>}
