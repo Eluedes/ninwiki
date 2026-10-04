@@ -101,6 +101,9 @@ const rarityOptions: { value: Rarity; label: string }[] = [
   { value: 'enchanted', label: 'Enchanted' },
 ];
 
+// Atributos que um item/arma pode dar (lista fixa do jogo): escolhidos num seletor no editor.
+const ATTRIBUTE_NAMES = ['Fortitude', 'Chakra', 'Strength', 'Intellect', 'Agility'] as const;
+
 const emptyForm: ContentItemFormValues = {
   slug: '',
   category: 'mobs',
@@ -235,7 +238,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           mobType: item.mobType,
           itemType: item.itemType,
         });
-        setAttributes(item.attributes);
+        setAttributes(item.attributes.map((a) => ({ ...a, label: a.label || ATTRIBUTE_NAMES[0] })));
         setDrops(item.drops);
         setAttacks(item.attacks);
       })
@@ -244,7 +247,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   }, [isEdit, rawId, reset]);
 
   function addAttribute() {
-    setAttributes((prev) => [...prev, { label: '', value: '' }]);
+    setAttributes((prev) => [...prev, { label: ATTRIBUTE_NAMES[0], value: '' }]);   // ja' nasce com um atributo escolhido (o seletor nunca fica vazio)
   }
   function updateAttribute(index: number, field: 'label' | 'value', value: string) {
     setAttributes((prev) => prev.map((a, i) => (i === index ? { ...a, [field]: value } : a)));
@@ -689,8 +692,17 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           </div>
           {attributes.map((attr, i) => (
             <div key={i} className="flex items-center gap-2">
-              <Input placeholder={t.attributeLabelPlaceholder} value={attr.label} onChange={(e) => updateAttribute(i, 'label', e.target.value)} />
+              {/* Valor primeiro (ex.: +2) e, ao lado, o ATRIBUTO escolhido numa lista fixa. Um atributo antigo com outro nome continua
+                  aparecendo como opcao extra (nao se perde ao editar). */}
               <Input placeholder={t.attributeValuePlaceholder} value={attr.value} onChange={(e) => updateAttribute(i, 'value', e.target.value)} />
+              <Select value={attr.label || ATTRIBUTE_NAMES[0]} onValueChange={(v) => updateAttribute(i, 'label', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[...ATTRIBUTE_NAMES, ...(attr.label && !(ATTRIBUTE_NAMES as readonly string[]).includes(attr.label) ? [attr.label] : [])].map((name) => (
+                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <button type="button" onClick={() => removeAttribute(i)} className="shrink-0 rounded-md p-2 text-muted-foreground hover:bg-red-900/20 hover:text-red-400">
                 <Trash2 className="h-4 w-4" />
               </button>
