@@ -88,7 +88,7 @@ export const jutsuSchema = z.object({
   shop: z.string().max(100),
   // Uma linha por nivel do jutsu (a quantidade de linhas e' o nivel maximo): dano base e recarga de cada nivel.
   levels: z
-    .array(z.object({ damage: z.string().max(40, 'Maximum of 40 characters.'), cooldown: z.string().max(40, 'Maximum of 40 characters.') }))
+    .array(z.object({ name: z.string().max(100, 'Maximum of 100 characters.'), damage: z.string().max(40, 'Maximum of 40 characters.'), cooldown: z.string().max(40, 'Maximum of 40 characters.') }))
     .min(1)
     .max(10, 'Maximum of 10 levels.'),
   castType: z.string().max(100),

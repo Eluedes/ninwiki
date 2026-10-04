@@ -118,7 +118,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
 - **Log geral:** `/admin/audit-log` (quem fez o quê; o IP só o S.Adm vê). O **S.Adm pode limpar o log** (tudo, ou só o mais antigo que 7/30 dias) para a
   equipe não ver o histórico antigo; a própria limpeza fica registrada como a primeira linha do log novo.
 - **Jutsus:** a página mostra a ficha em seções que abrem e fecham (Requisitos, Aquisição, Detalhes da técnica, Dados de batalha). No editor você preenche
-  nível/atributo exigido, tipo de pergaminho + tier (**1 a 4**), nível máximo com **dano e recarga por nível**, tipo de conjuração, classe, debuff e linhas extras;
+  nível/atributo exigido, tipo de pergaminho + tier (**1 a 4**), nível máximo com **nome (opcional), dano e recarga por nível** (o nome por nível serve para jutsus que **mudam de nome** ao subir, ex.: no nível 4 — deixe vazio nos níveis em que o nome não muda; a ficha mostra a linha "Nome por nível" só se algum estiver preenchido), tipo de conjuração, classe, debuff e linhas extras;
   linha vazia some da página.
 - **Visão Geral:** quadro de avisos, contadores, **gráfico de acessos** (7/30/90 dias), **países que mais acessam** e páginas mais vistas
   (seção 2.2c; permissão `analytics.view`), atividade recente e páginas desatualizadas. No rodapé do menu lateral: **"Web x · API y"** = versão

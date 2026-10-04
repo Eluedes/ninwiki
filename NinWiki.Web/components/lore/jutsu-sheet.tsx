@@ -46,6 +46,7 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
   const has = (v: string | undefined | null) => Boolean(v && v.trim());
   const dmg = (jutsu.damageByLevel ?? []).filter((v) => has(v));
   const cds = (jutsu.cooldownByLevel ?? []).filter((v) => has(v));
+  const names = (jutsu.nameByLevel ?? []).filter((v) => has(v));   // so' aparece se o jutsu muda de nome em algum nivel
 
   const requirements: SheetRow[] = [
     ...(mastery ? [{ label: t.mastery, value: <Link href={`/masteries/${mastery.id}`} className="hover:underline" style={{ color }}>{masteryName}</Link> }] : []),
@@ -58,6 +59,7 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
   ];
   const details: SheetRow[] = [
     { label: t.maxLevel, value: String(jutsu.maxLevel ?? 1) },
+    ...(names.length ? [{ label: t.nameByLevel, value: <PerLevel values={jutsu.nameByLevel ?? []} word={t.levelWord} /> }] : []),
     ...(dmg.length ? [{ label: t.baseDamage, value: <PerLevel values={jutsu.damageByLevel} word={t.levelWord} /> }] : []),
     { label: t.chakraCost, value: `${jutsu.chakraCost} ${t.cpUnit}` },
     ...(cds.length

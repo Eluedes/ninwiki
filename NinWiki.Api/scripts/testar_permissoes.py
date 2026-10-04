@@ -1478,6 +1478,13 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("valor por nivel acima de 40 caracteres e' recusado", r.status_code == 422)
     r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "debuff": "Burn IV"}, headers=A)
     check("editar a ficha salva", r.status_code == 200 and r.json()["debuff"] == "Burn IV")
+    r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", "  ", "", "Great   Fireball"]}, headers=A)
+    check("nome por nivel (ex.: muda no nivel 4) e' salvo, com espacos limpos", r.status_code == 200 and r.json()["nameByLevel"] == ["", "", "", "Great Fireball"], r.text[:200])
+    r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["", " "]}, headers=A)
+    check("so' nomes vazios viram lista vazia (o nome nao muda)", r.status_code == 200 and r.json()["nameByLevel"] == [])
+    r = await c.put(f"/jutsus/{SLUG}-jf", json={**ficha, "nameByLevel": ["x" * 101]}, headers=A)
+    check("nome por nivel acima de 100 caracteres e' recusado", r.status_code == 422)
+    check("jutsu sem nome por nivel volta lista vazia", (await c.get(f"/jutsus/{SLUG}-jg")).json()["nameByLevel"] == [])
     await c.delete(f"/jutsus/{SLUG}-jf", headers=A)
     await c.delete(f"/jutsus/{SLUG}-jg", headers=A)
 

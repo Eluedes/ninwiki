@@ -51,7 +51,7 @@ export interface JutsuInfoDict {
   // editor
   sheetTitle: string; sheetHint: string; requiredLevel: string; requiredStat: string; scrollType: string; scrollTypeHint: string;
   maxLevelHint: string; perLevelHint: string; levelN: string; tierHint: string;
-  levelsTitle: string; levelsHint: string; addLevel: string; removeLevel: string;
+  levelsTitle: string; levelsHint: string; levelNamePlaceholder: string; nameByLevel: string; addLevel: string; removeLevel: string;
 }
 
 export interface Dictionary {
@@ -464,7 +464,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (1 a 4 vira I a IV).',
       maxLevelHint: 'De 1 a 10. Define quantos campos por nível aparecem abaixo.', perLevelHint: 'Um valor por nível; deixe vazio o que não se aplica.',
       levelN: 'Nível {n}', tierHint: 'De 1 a 4 (o máximo é 4).',
-      levelsTitle: 'Níveis: dano base e recarga', levelsHint: 'Uma linha por nível do jutsu (o nível máximo é a quantidade de linhas). Clique em "Adicionar nível" quando o jutsu subir de nível.',
+      levelsTitle: 'Níveis: nome, dano base e recarga', levelsHint: 'Uma linha por nível do jutsu (o nível máximo é a quantidade de linhas). O nome é opcional: preencha só nos níveis em que o jutsu muda de nome (ex.: nível 4). Clique em "Adicionar nível" quando o jutsu subir de nível.', levelNamePlaceholder: 'Nome neste nível (opcional)', nameByLevel: 'Nome por nível',
       addLevel: 'Adicionar nível', removeLevel: 'Remover nível',
     },
     maintenance: { title: 'Página em manutenção', text: 'Estamos construindo esta página. Volte em breve!', back: 'Voltar ao início' },
@@ -1145,7 +1145,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (1 to 4 becomes I to IV).',
       maxLevelHint: 'From 1 to 10. Sets how many per-level fields appear below.', perLevelHint: 'One value per level; leave empty what does not apply.',
       levelN: 'Level {n}', tierHint: 'From 1 to 4 (4 is the maximum).',
-      levelsTitle: 'Levels: base damage and cooldown', levelsHint: 'One row per jutsu level (the maximum level is the number of rows). Click "Add level" when the jutsu levels up.',
+      levelsTitle: 'Levels: name, base damage and cooldown', levelsHint: 'One row per jutsu level (the maximum level is the number of rows). The name is optional: fill it only on the levels where the jutsu changes name (e.g. level 4). Click "Add level" when the jutsu levels up.', levelNamePlaceholder: 'Name at this level (optional)', nameByLevel: 'Name by level',
       addLevel: 'Add level', removeLevel: 'Remove level',
     },
     maintenance: { title: 'Under maintenance', text: 'We are building this page. Please come back soon!', back: 'Back to home' },

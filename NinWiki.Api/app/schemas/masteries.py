@@ -164,6 +164,7 @@ class JutsuRead(CamelModel):
     max_level: int = 1
     damage_by_level: list[str] = []
     cooldown_by_level: list[str] = []
+    name_by_level: list[str] = []
     cast_type: str = ""
     jutsu_class: str = ""
     debuff: str = ""
@@ -198,6 +199,7 @@ class JutsuWrite(CamelModel):
     max_level: int = Field(default=1, ge=1, le=10)
     damage_by_level: list[str] = Field(default_factory=list, max_length=10)
     cooldown_by_level: list[str] = Field(default_factory=list, max_length=10)
+    name_by_level: list[str] = Field(default_factory=list, max_length=10)   # nome do jutsu em cada nivel (vazio = nao muda)
     cast_type: str = Field(default="", max_length=100)
     jutsu_class: str = Field(default="", max_length=100)
     debuff: str = Field(default="", max_length=150)
@@ -217,6 +219,15 @@ class JutsuWrite(CamelModel):
         if any(len(v) > 40 for v in out):
             raise ValueError("Each level value can have at most 40 characters")
         return out
+
+    @field_validator("name_by_level")
+    @classmethod
+    def _clean_level_names(cls, value: list[str]) -> list[str]:
+        """Um nome por nivel (ate' 10 niveis, 100 caracteres cada), sem espacos extras; so' vazios = lista vazia."""
+        out = [" ".join(v.split()) for v in value]
+        if any(len(v) > 100 for v in out):
+            raise ValueError("Each level name can have at most 100 characters")
+        return out if any(out) else []
 
     @field_validator("description", "long_description")
     @classmethod
