@@ -209,6 +209,7 @@ async def retranslate_mastery(mastery_id: str, staff: User = Depends(require_per
 async def list_jutsus(
     mastery_id: str | None = Query(None, alias="masteryId", description="Filtra por mastery"),
     utility: bool = Query(False, description="So' os jutsus de Utilidade (sem mastery)"),
+    npc: bool | None = Query(None, description="true = so' os Jutsus NPC; false = so' os jutsus normais (sem os de NPC); vazio = todos"),
     db: AsyncSession = Depends(get_db),
 ):
     """Lista jutsus, opcionalmente so' os de uma mastery ou so' os de Utilidade (publico)."""
@@ -217,6 +218,8 @@ async def list_jutsus(
         stmt = stmt.where(Jutsu.mastery_id.is_(None))
     elif mastery_id:
         stmt = stmt.where(Jutsu.mastery_id == mastery_id)
+    if npc is not None:
+        stmt = stmt.where(Jutsu.is_npc.is_(npc))
     result = await db.execute(stmt)
     return result.scalars().all()
 

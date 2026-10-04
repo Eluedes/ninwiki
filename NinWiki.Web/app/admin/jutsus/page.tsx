@@ -100,7 +100,7 @@ export default function JutsusListPage() {
       id: 'mastery',
       accessorFn: (row) => masteryName(row.masteryId),
       header: t.colMastery,
-      cell: ({ row }) => <span className="text-muted-foreground">{masteryName(row.original.masteryId)}</span>,
+      cell: ({ row }) => <span className="text-muted-foreground">{masteryName(row.original.masteryId)}{row.original.isNpc ? ' · NPC' : ''}</span>,
     },
     { accessorKey: 'tier', header: t.colTier, cell: ({ row }) => `T${row.original.tier}` },
     { accessorKey: 'chakraCost', header: t.colChakra },

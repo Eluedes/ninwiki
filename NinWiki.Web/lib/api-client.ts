@@ -350,6 +350,8 @@ export interface ApiJutsu {
   castType: string;
   jutsuClass: string;
   debuff: string;
+  isNpc: boolean;          // Jutsu NPC: versao do jutsu ensinada/usada por NPC (secao propria no site)
+  allowedWeapons: string;  // "Allowed weapons" (ex.: Blunt); vazio = nao aparece
 }
 
 // Corpo aceito em criar/editar um jutsu - igual a ApiJutsu, mas `id`
@@ -385,11 +387,17 @@ export function listAttributes(): Promise<ApiAttribute[]> {
 /** Lista jutsus, opcionalmente so' os de uma mastery. */
 /** So' os jutsus de Utilidade (sem mastery). */
 export function listUtilityJutsus(): Promise<ApiJutsu[]> {
-  return apiFetch('/jutsus?utility=true');
+  return apiFetch('/jutsus?utility=true&npc=false');   // Utilidade sem os jutsus de NPC (esses ficam na secao NPC)
 }
 
-export function listJutsus(masteryId?: string): Promise<ApiJutsu[]> {
-  const query = masteryId ? `?masteryId=${masteryId}` : '';
+/** So' os Jutsus NPC (de qualquer mastery ou de Utilidade). */
+export function listNpcJutsus(): Promise<ApiJutsu[]> {
+  return apiFetch('/jutsus?npc=true');
+}
+
+export function listJutsus(masteryId?: string, publicOnly = false): Promise<ApiJutsu[]> {
+  // publicOnly = so' jutsus normais (sem os de NPC): usado nas paginas de mastery, onde os de NPC tem secao propria
+  const query = masteryId ? `?masteryId=${masteryId}${publicOnly ? '&npc=false' : ''}` : (publicOnly ? '?npc=false' : '');
   return apiFetch(`/jutsus${query}`);
 }
 

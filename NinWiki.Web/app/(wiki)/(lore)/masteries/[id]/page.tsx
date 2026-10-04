@@ -4,8 +4,8 @@
 // consciente de idioma (ver comentario la' pro motivo completo de
 // precisar ser Client Component).
 
-import { getMastery, listJutsus, listUtilityJutsus, listAttributes, ApiError } from '@/lib/api-client';
-import { UTILITY_ID, UTILITY_MASTERY } from '@/lib/utility-category';
+import { getMastery, listJutsus, listUtilityJutsus, listNpcJutsus, listAttributes, ApiError } from '@/lib/api-client';
+import { NPC_ID, NPC_MASTERY, UTILITY_ID, UTILITY_MASTERY } from '@/lib/utility-category';
 import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { MasteryPageClient } from '@/components/lore/mastery-page-client';
 import type { Metadata } from 'next';
@@ -14,6 +14,7 @@ import type { Metadata } from 'next';
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   if (id === UTILITY_ID) return { title: 'Utility' };
+  if (id === NPC_ID) return { title: 'NPC Jutsu' };
   try {
     return { title: `${(await getMastery(id)).name} Mastery` };
   } catch {
@@ -36,6 +37,12 @@ export default async function MasteryPage({
     return <MasteryPageClient mastery={UTILITY_MASTERY} masteryJutsus={utilityJutsus} attributes={attributes} />;
   }
 
+  // /masteries/npc: secao dos Jutsus NPC (de qualquer mastery ou de Utilidade)
+  if (id === NPC_ID) {
+    const [npcJutsus, attributes] = await Promise.all([listNpcJutsus(), listAttributes()]);
+    return <MasteryPageClient mastery={NPC_MASTERY} masteryJutsus={npcJutsus} attributes={attributes} />;
+  }
+
   // getMastery devolve 404 (via ApiError) quando o id da URL nao
   // existe no banco - trata isso como "nao encontrada", igual o mock
   // fazia antes quando masteryById() devolvia undefined.
@@ -50,7 +57,7 @@ export default async function MasteryPage({
   }
 
   const [masteryJutsus, attributes] = await Promise.all([
-    listJutsus(mastery.id),
+    listJutsus(mastery.id, true),   // sem os jutsus de NPC (eles tem a secao propria /masteries/npc)
     listAttributes(),
   ]);
 

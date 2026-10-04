@@ -48,6 +48,7 @@ export interface JutsuInfoDict {
   mastery: string; level: string; stat: string; tier: string; shop: string; maxLevel: string; baseDamage: string;
   chakraCost: string; cooldown: string; castTime: string; castType: string; specialEffect: string;
   jutsuClass: string; range: string; debuff: string; levelWord: string; cpUnit: string;
+  allowedWeapons: string; isNpc: string; isNpcHint: string; source: string; npcSource: string;
   // editor
   sheetTitle: string; sheetHint: string; requiredLevel: string; requiredStat: string; scrollType: string; scrollTypeHint: string;
   maxLevelHint: string; perLevelHint: string; levelN: string; tierHint: string;
@@ -464,6 +465,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       mastery: 'Mastery', level: 'Nível', stat: 'Atributo', tier: 'Tier', shop: 'Loja', maxLevel: 'Nível máximo', baseDamage: 'Dano base',
       chakraCost: 'Custo de chakra', cooldown: 'Recarga', castTime: 'Tempo de conjuração', castType: 'Tipo de conjuração', specialEffect: 'Efeito especial',
       jutsuClass: 'Classe', range: 'Alcance', debuff: 'Debuff', levelWord: 'Nível', cpUnit: 'CP',
+      allowedWeapons: 'Armas permitidas', isNpc: 'Jutsu NPC', isNpcHint: 'Versão do jutsu ensinada/usada por NPC: fica numa seção própria (card NPC em Masteries).', source: 'Fonte', npcSource: 'NPC',
       sheetTitle: 'Ficha do jutsu', sheetHint: 'Cada linha vazia some da página. Os valores ficam em inglês (termos do jogo).',
       requiredLevel: 'Nível exigido', requiredStat: 'Atributo exigido', scrollType: 'Tipo de pergaminho',
       scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (1 a 4 vira I a IV).',
@@ -1151,6 +1153,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       mastery: 'Mastery', level: 'Level', stat: 'Stat', tier: 'Tier', shop: 'Shop', maxLevel: 'Maximum Level', baseDamage: 'Base Damage',
       chakraCost: 'Chakra Cost', cooldown: 'Cooldown', castTime: 'Cast Time', castType: 'Cast Type', specialEffect: 'Special Effect',
       jutsuClass: 'Class', range: 'Range', debuff: 'Debuff', levelWord: 'Level', cpUnit: 'CP',
+      allowedWeapons: 'Allowed weapons', isNpc: 'NPC jutsu', isNpcHint: 'Version of the jutsu taught/used by an NPC: it gets its own section (NPC card in Masteries).', source: 'Source', npcSource: 'NPC',
       sheetTitle: 'Jutsu sheet', sheetHint: 'Empty rows are hidden on the page. Values are in English (game terms).',
       requiredLevel: 'Required level', requiredStat: 'Required stat', scrollType: 'Scroll type',
       scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (1 to 4 becomes I to IV).',

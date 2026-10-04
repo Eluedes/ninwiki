@@ -11,7 +11,7 @@ decorar UUIDs. jutsus continua com esse padrao tambem, pelo mesmo motivo.
 """
 import uuid
 
-from sqlalchemy import Enum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -156,6 +156,9 @@ class Jutsu(Base):
     cast_type: Mapped[str] = mapped_column(String(100), default="", server_default="")         # tipo de conjuracao (texto livre)
     jutsu_class: Mapped[str] = mapped_column(String(100), default="", server_default="")       # classe do jutsu (texto livre)
     debuff: Mapped[str] = mapped_column(String(150), default="", server_default="")            # debuff aplicado (texto livre)
+    # Jutsu NPC: a versao do jutsu ensinada/usada por NPC (mesmo nome do jutsu de mastery ou de Utilidade, mas com detalhes um pouco diferentes). Fica numa secao propria no site.
+    is_npc: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    allowed_weapons: Mapped[str] = mapped_column(String(100), default="", server_default="")   # "Allowed weapons" da ficha (ex.: Blunt) - texto livre
     icon: Mapped[str] = mapped_column(String(50))
     # Demonstracao em GIF, opcional - ver components/lore/jutsu-gif.tsx
     # no front, que ja trata o caso desse arquivo nao existir ainda.

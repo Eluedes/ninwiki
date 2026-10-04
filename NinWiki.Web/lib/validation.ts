@@ -94,6 +94,8 @@ export const jutsuSchema = z.object({
   castType: z.string().max(100),
   jutsuClass: z.string().max(100),
   debuff: z.string().max(150),
+  isNpc: z.boolean(),
+  allowedWeapons: z.string().max(100),
 });
 
 export type JutsuFormValues = z.infer<typeof jutsuSchema>;
