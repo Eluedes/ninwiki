@@ -20,7 +20,7 @@ export const contentItemSchema = z.object({
   level: z.coerce.number().int('Level must be a whole number.').min(0, 'Level cannot be negative.'),
   icon: z.string().min(1, 'Pick an icon (emoji).').max(20),
   image: z.string().nullable().optional(),
-  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']),
+  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'enchanted']),
   // Opcional para mobs (bestiario) - validado no superRefine abaixo.
   description: z.string(),
   lore: z.string().nullable().optional(),
@@ -49,7 +49,7 @@ export const contentItemSchema = z.object({
   maxStack: z.coerce.number().int().min(0).nullable().optional(),
   castVillageId: z.string().nullable().optional(),
   mobType: z.enum(['monster', 'boss', 'npc', 'mount']).nullable().optional(),
-  itemType: z.enum(['general', 'ring', 'consumable', 'material', 'currency', 'cast']).nullable().optional(),
+  itemType: z.enum(['general', 'ring', 'consumable', 'material', 'currency', 'cast', 'authority']).nullable().optional(),
 }).superRefine((value, ctx) => {
   // Descricao e' obrigatoria em todas as categorias, exceto mobs.
   if (value.category !== 'mobs' && !value.description.trim()) {

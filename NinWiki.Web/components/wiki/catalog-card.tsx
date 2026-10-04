@@ -24,6 +24,7 @@ const mobTypeBadge: Record<string, { label: string; className: string }> = {
 // por enquanto (categoria nova, ainda pouco povoada).
 const itemTypeBadge: Record<string, { label: string; className: string }> = {
   ring: { label: 'Ring', className: 'bg-violet-500/15 text-violet-400' },
+  authority: { label: 'Authority', className: 'bg-cyan-400/15 text-cyan-300' },
 };
 
 interface CatalogCardProps {
@@ -47,15 +48,18 @@ export function CatalogCard({ entry }: CatalogCardProps) {
       <div
         className={cn(
           'flex items-center gap-3 rounded-lg border border-border bg-card p-2.5',
-          'transition-all duration-150',
-          'hover:border-primary/40 hover:shadow-sm'
+          'transition-all duration-200',
+          'hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md'
         )}
       >
+        {/* Brilho atras da imagem na cor da raridade (da' "vida" ao card) */}
         <WikiImage
           src={entry.image}
           alt={`Imagem de ${name}`}
           fallback={entry.icon}
-          className="h-16 w-16 shrink-0 rounded-md"
+          className="h-16 w-16 shrink-0 rounded-md border border-border/60"
+          imageClassName="p-1"
+          style={{ backgroundImage: `radial-gradient(circle at 50% 45%, rgba(${rarity.glow},0.28), transparent 75%)` }}
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
@@ -74,7 +78,7 @@ export function CatalogCard({ entry }: CatalogCardProps) {
             </p>
           )}
         </div>
-        <span className={cn('shrink-0 text-xs font-medium', rarity.color)}>
+        <span className={cn('shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-semibold', rarity.chip)}>
           {rarity.label}
         </span>
       </div>

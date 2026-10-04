@@ -26,6 +26,8 @@ interface WikiImageProps {
   className?: string;
   /** Classes opcionais aplicadas somente à imagem. */
   imageClassName?: string;
+  /** Estilo extra do contêiner (ex.: brilho de fundo na cor da raridade). */
+  style?: React.CSSProperties;
 }
 
 /** Imagem com icone de reserva quando nao ha' imagem ou ela falha ao carregar. */
@@ -35,6 +37,7 @@ export function WikiImage({
   fallback,
   className,
   imageClassName,
+  style,
 }: WikiImageProps) {
   const [hasError, setHasError] = useState(false);
   const showImage = Boolean(src) && !hasError;
@@ -42,7 +45,7 @@ export function WikiImage({
   // A imagem já contém seu próprio fundo/borda. Não adicionamos padding
   // padrão para ela ocupar praticamente todo o quadrado.
   return (
-    <div className={cn('relative flex items-center justify-center overflow-hidden', className)}>
+    <div className={cn('relative flex items-center justify-center overflow-hidden', className)} style={style}>
       {showImage ? (
         <Image
           src={src as string}

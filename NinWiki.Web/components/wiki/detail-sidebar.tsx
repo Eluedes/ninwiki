@@ -8,11 +8,12 @@
 // print com o Rafael, 24/09): stats -> Jutsu/Attacks (so' Mob) ->
 // Drops.
 
-import { cn } from '@/lib/utils';
+import { cn, itemHasStack, shouldShowLevel } from '@/lib/utils';
+import { rarityConfig } from '@/lib/data';
 import { useLanguage } from '@/components/providers/language-provider';
 import { DropRow } from '@/components/wiki/drop-row';
 import { WikiImage } from '@/components/wiki/wiki-image';
-import { Crosshair, Heart, MapPin, Star, Swords, Timer, type LucideIcon } from 'lucide-react';
+import { Crosshair, Gem, Heart, Layers, MapPin, Star, Swords, Tag, Timer, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem } from '@/lib/api-client';
 
 interface DetailSidebarProps {
@@ -198,74 +199,73 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
     );
   }
 
-  // Monta a lista de linhas da ficha - o CONTEUDO muda por categoria/
-  // tipo, mas a RENDERIZACAO (linhas zebradas label/valor) e' uma so',
-  // reaproveitada pra todo mundo. So' inclui uma linha se o campo
-  // correspondente tiver valor de verdade (nao mostra "Speed: " vazio
-  // pra uma arma que ainda nao teve isso preenchido).
-  const statRows: StatRow[] = [];
-  if (entry.category === 'items' && entry.itemType === 'currency' && entry.maxStack != null) {
-      statRows.push({ label: dict.detail.maxStack, value: entry.maxStack.toLocaleString('pt-BR') });
+  // ITENS (e guias/missoes): ficha no mesmo visual do bestiario/arma - secoes com barra na cor do tema e valores em destaque.
+  // A imagem grande ja' aparece no topo da pagina (com o brilho da raridade), entao aqui nao se repete.
+  // So' entra a linha que tiver valor (um item sem stack nao mostra "Max Stack: ").
+  const ce = dict.admin.contentEditor;
+  const typeLabels: Record<string, string> = {
+    general: ce.itemGeneral, ring: ce.itemRing, consumable: ce.itemConsumable, material: ce.itemMaterial,
+    currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority,
+  };
+  const rarity = rarityConfig[entry.rarity];
+  const detailRows: { icon: LucideIcon; label: string; value: string; tone?: string }[] = [];
+  if (entry.category === 'items') {
+    if (entry.itemType) detailRows.push({ icon: Tag, label: dict.detail.itemType, value: typeLabels[entry.itemType] ?? entry.itemType });
+    detailRows.push({ icon: Gem, label: ce.rarity, value: rarity.label, tone: rarity.color });
+    if (shouldShowLevel(entry.category, entry.itemType)) detailRows.push({ icon: Star, label: dict.detail.level, value: String(entry.level), tone: 'text-amber-400' });
+    if (itemHasStack(entry.category, entry.itemType) && entry.maxStack != null) {
+      detailRows.push({ icon: Layers, label: dict.detail.maxStack, value: entry.maxStack.toLocaleString(isPt ? 'pt-BR' : 'en-US'), tone: 'text-sky-400' });
+    }
+    if (entry.itemType === 'cast' && entry.castVillageName) detailRows.push({ icon: MapPin, label: dict.detail.castVillage, value: entry.castVillageName });
   }
-  if (entry.category === 'items' && entry.itemType === 'cast' && entry.castVillageName) {
-    statRows.push({ label: dict.detail.castVillage, value: entry.castVillageName });
-  }
-  // Atributos genericos - valem para toda categoria que nao seja Mob nem Arma (que tem ficha propria acima).
-  for (const attr of entry.attributes) statRows.push({ label: attr.label, value: attr.value });
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
-      <div className="border-b border-border bg-secondary/50 px-4 py-2.5">
-        <h3 className="text-sm font-bold uppercase tracking-wide text-card-foreground">
-          {dict.detail.attributes}
-        </h3>
-      </div>
-
-      <div className="flex justify-center bg-muted/20 py-6 border-b border-border">
-        <WikiImage
-          src={entry.image}
-          alt={`Imagem de ${name}`}
-          fallback={entry.icon}
-          className="h-28 w-28 rounded-lg"
-        />
-      </div>
-
-      {statRows.length > 0 && (
-        <div className="divide-y divide-border">
-          {statRows.map((row, i) => (
-            <div
-              key={i}
-              className={cn(
-                'flex items-center justify-between px-4 py-2 text-sm',
-                // efeito "zebra" - linhas pares recebem um fundo levemente diferente
-                i % 2 === 0 && 'bg-muted/30'
-              )}
-            >
-              <span className="text-muted-foreground">{row.label}</span>
-              <span className="font-semibold text-card-foreground">{row.value}</span>
-            </div>
-          ))}
-        </div>
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      {detailRows.length > 0 && (
+        <>
+          <SectionTitle>{dict.detail.itemDetails}</SectionTitle>
+          <div className="divide-y divide-border">
+            {detailRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <row.icon className={cn('h-4 w-4', row.tone ?? 'text-primary')} />
+                  {row.label}
+                </span>
+                <span className={cn('text-right font-bold', row.tone ?? 'text-card-foreground')}>{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
-      {/* Secao de drops so' renderiza se a entry tiver drops (nem toda
-          entry tem - so' faz sentido para mobs). entry.drops.length > 0
-          e nao so' "entry.drops &&" - um array vazio [] e' truthy em
-          JS, o check teria que ser no tamanho mesmo com o campo sempre
-          vindo preenchido (nunca undefined) da API. */}
-      {entry.drops.length > 0 && (
-        <div className="border-t border-border">
-          <div className="border-b border-border bg-secondary/50 px-4 py-2.5">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-card-foreground">
-              {dict.detail.drops}
-            </h3>
+      {/* Atributos cadastrados (ex.: +5 Strength) como selos, no mesmo estilo do Stat Bonus das armas */}
+      {entry.attributes.length > 0 && (
+        <>
+          <SectionTitle>{dict.detail.attributes}</SectionTitle>
+          <div className="flex flex-wrap gap-1.5 px-4 py-3">
+            {entry.attributes.map((attr, i) => (
+              <span key={i} className="rounded-md border border-border bg-secondary/60 px-2 py-1 text-xs font-medium text-card-foreground">
+                <span className="text-muted-foreground">{attr.label}</span> <span className="font-bold">{attr.value}</span>
+              </span>
+            ))}
           </div>
+        </>
+      )}
+
+      {/* Drops so' aparecem se a entry tiver (nem toda tem). */}
+      {entry.drops.length > 0 && (
+        <>
+          <SectionTitle>{dict.detail.drops}</SectionTitle>
           <div className="px-4 py-2">
             {entry.drops.map((drop, i) => (
               <DropRow key={i} drop={drop} />
             ))}
           </div>
-        </div>
+        </>
+      )}
+
+      {detailRows.length === 0 && entry.attributes.length === 0 && entry.drops.length === 0 && (
+        <p className="px-4 py-6 text-center text-sm text-muted-foreground">{name}</p>
       )}
     </div>
   );

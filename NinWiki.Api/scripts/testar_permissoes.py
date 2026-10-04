@@ -236,6 +236,10 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.post("/content-items", json=novo_conteudo("pub-creator", "published"), headers=C)
     check("criar SEMPRE gera rascunho, mesmo se pedirem 'published'",
           r.status_code == 201 and r.json().get("status") == "draft", f"veio {r.status_code} {r.text[:80]}")
+    r = await c.post("/content-items", json={**novo_conteudo("auth"), "category": "items", "itemType": "authority", "rarity": "enchanted", "maxStack": 500}, headers=C)
+    check("item tipo Authority com raridade Enchanted e stack 500 e' criado", r.status_code == 201 and r.json()["itemType"] == "authority" and r.json()["rarity"] == "enchanted" and r.json()["maxStack"] == 500, r.text[:200])
+    r = await c.post("/content-items", json={**novo_conteudo("rar-ruim"), "rarity": "mitico"}, headers=C)
+    check("raridade inexistente continua recusada (422)", r.status_code == 422)
     r = await c.get(f"/content-items/{rasc_id}")
     check("anonimo NAO ve rascunho por id (404)", r.status_code == 404)
     r = await c.get(f"/content-items/slug/{SLUG}-rasc")

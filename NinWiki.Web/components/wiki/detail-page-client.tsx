@@ -11,9 +11,9 @@ import { DetailSidebar } from '@/components/wiki/detail-sidebar';
 import { CatalogCard } from '@/components/wiki/catalog-card';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import { RichText, extractPlainText } from '@/components/lore/rich-text';
-import { cn, shouldShowLevel } from '@/lib/utils';
+import { cn, itemHasStack, shouldShowLevel } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
-import { ArrowLeft, Heart, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Heart, Layers, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem, ApiContentItemSummary } from '@/lib/api-client';
 
 /** Selo do subtipo do mob (o mob comum nao tem selo). */
@@ -51,6 +51,9 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
   const isMob = entry.category === 'mobs';
   const isWeapon = entry.category === 'weapons';
   const mobType = entry.mobType ? MOB_TYPE_LABEL[entry.mobType] : undefined;
+  /** Nome do tipo de item no idioma atual (Geral, Ring, Consumivel, Material, Moeda, Cast, Autoridade). */
+  const ce = dict.admin.contentEditor;
+  const itemTypeLabel = (type: string) => ({ general: ce.itemGeneral, ring: ce.itemRing, consumable: ce.itemConsumable, material: ce.itemMaterial, currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority } as Record<string, string>)[type] ?? type;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -138,24 +141,41 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
               )}
             </>
           ) : (
+            // ITENS (e guias/missoes): titulo com selos (tipo, raridade, nivel), imagem grande sobre um brilho na COR DA RARIDADE e cartao de Max Stack.
             <>
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
-                {shouldShowLevel(entry.category, entry.itemType) && (
-                  <p className="mt-1 text-sm italic text-muted-foreground">
-                    {dict.detail.level} {entry.level}
-                  </p>
-                )}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {entry.category === 'items' && entry.itemType && (
+                    <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold uppercase text-card-foreground">{itemTypeLabel(entry.itemType)}</span>
+                  )}
+                  {entry.category === 'items' && (
+                    <span className={cn('rounded-md border px-2 py-0.5 text-xs font-bold uppercase', rarityConfig[entry.rarity].chip)}>{rarityConfig[entry.rarity].label}</span>
+                  )}
+                  {shouldShowLevel(entry.category, entry.itemType) && (
+                    <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.level} {entry.level}</span>
+                  )}
+                </div>
               </div>
 
-              <div className="flex justify-center rounded-xl border border-border bg-muted/20 py-12">
+              <div
+                className="relative flex justify-center overflow-hidden rounded-2xl border border-border bg-secondary/30 py-14"
+                style={{ backgroundImage: `radial-gradient(circle at 50% 45%, rgba(${rarityConfig[entry.rarity].glow},0.28), transparent 62%)` }}
+              >
+                <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(hsl(var(--foreground))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px)] [background-size:24px_24px]" aria-hidden="true" />
                 <WikiImage
                   src={entry.image}
                   alt={`Imagem de ${name}`}
-                  fallback={entry.icon}
-                  className="h-40 w-40 rounded-xl"
+                  fallback={<span className="text-7xl">{entry.icon}</span>}
+                  className="relative h-44 w-44 rounded-xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.55)]"
                 />
               </div>
+
+              {itemHasStack(entry.category, entry.itemType) && entry.maxStack != null && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <StatTile icon={Layers} label={dict.detail.maxStack} value={entry.maxStack.toLocaleString(isPt ? 'pt-BR' : 'en-US')} tone="text-sky-400" />
+                </div>
+              )}
             </>
           )}
 
