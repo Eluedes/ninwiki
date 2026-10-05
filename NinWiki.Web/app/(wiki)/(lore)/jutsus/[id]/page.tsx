@@ -5,10 +5,10 @@
 // useLanguage e' um hook de React, nao funciona aqui).
 
 import { getJutsu, getMastery, ApiError } from '@/lib/api-client';
-import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { UTILITY_MASTERY } from '@/lib/utility-category';
 import { JutsuPageClient } from '@/components/lore/jutsu-page-client';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 /** Titulo da aba: o nome do jutsu (em ingles, o idioma principal do site). */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -35,7 +35,7 @@ export default async function JutsuPage({
     jutsu = await getJutsu(id);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return <LoreNotFound kind="jutsu" />;
+      notFound();
     }
     throw err;
   }

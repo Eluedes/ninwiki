@@ -63,7 +63,7 @@ export interface Dictionary {
   news: { title: string; subtitle: string; readMore: string; viewAll: string; empty: string };
   lore: {
     home: string; villagesTitle: string; villagesSubtitle: string; villagesCrumb: string; villageNotFound: string; backToVillages: string;
-    masteryNotFound: string; backToMasteries: string; jutsuNotFound: string; entryNotFound: string; back: string;
+    masteryNotFound: string; backToMasteries: string; jutsuNotFound: string; entryNotFound: string; back: string; pageNotFound: string; backHome: string;
     aboutVillage: string; clans: string; organizations: string; villageSheet: string; otherVillages: string;
     fName: string; fEnglish: string; fPortuguese: string; fElement: string; fMotto: string; fClimate: string; fLeader: string;
     emblemAlt: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapMarkerAria: string; mapHint: string;
@@ -307,7 +307,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       home: 'Início', villagesTitle: 'Vilas Ocultas', villagesSubtitle: 'As grandes potências shinobi — cada uma com sua cultura e elemento.',
       villagesCrumb: 'Vilas', villageNotFound: 'Vila não encontrada.', backToVillages: 'Voltar para Vilas',
       masteryNotFound: 'Mastery não encontrada.', backToMasteries: 'Voltar para Masteries', jutsuNotFound: 'Jutsu não encontrado.',
-      entryNotFound: 'Entry não encontrada.', back: 'Voltar',
+      entryNotFound: 'Entry não encontrada.', back: 'Voltar', pageNotFound: 'Página não encontrada.', backHome: 'Voltar ao início',
       aboutVillage: 'Sobre a Vila', clans: 'Clãs', organizations: 'Organizações', villageSheet: 'Ficha da Vila', otherVillages: 'Outras Vilas',
       fName: 'Nome', fEnglish: 'Inglês', fPortuguese: 'Português', fElement: 'Elemento', fMotto: 'Lema', fClimate: 'Clima', fLeader: 'Líder',
       emblemAlt: 'Emblema da {name}', mapTitle: 'Mapa do Mundo', mapSubtitle: 'As três grandes nações shinobi e seus territórios.', mapCrumb: 'Mapa',
@@ -995,7 +995,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       home: 'Home', villagesTitle: 'Hidden Villages', villagesSubtitle: 'The great shinobi powers — each with its own culture and element.',
       villagesCrumb: 'Villages', villageNotFound: 'Village not found.', backToVillages: 'Back to Villages',
       masteryNotFound: 'Mastery not found.', backToMasteries: 'Back to Masteries', jutsuNotFound: 'Jutsu not found.',
-      entryNotFound: 'Entry not found.', back: 'Back',
+      entryNotFound: 'Entry not found.', back: 'Back', pageNotFound: 'Page not found.', backHome: 'Back to home',
       aboutVillage: 'About the Village', clans: 'Clans', organizations: 'Organizations', villageSheet: 'Village Sheet', otherVillages: 'Other Villages',
       fName: 'Name', fEnglish: 'English', fPortuguese: 'Portuguese', fElement: 'Element', fMotto: 'Motto', fClimate: 'Climate', fLeader: 'Leader',
       emblemAlt: 'Emblem of {name}', mapTitle: 'World Map', mapSubtitle: 'The three great shinobi nations and their territories.', mapCrumb: 'Map',

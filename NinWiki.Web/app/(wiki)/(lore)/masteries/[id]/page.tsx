@@ -6,9 +6,9 @@
 
 import { getMastery, listJutsus, listUtilityJutsus, listNpcJutsus, listAttributes, ApiError } from '@/lib/api-client';
 import { NPC_ID, NPC_MASTERY, UTILITY_ID, UTILITY_MASTERY } from '@/lib/utility-category';
-import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { MasteryPageClient } from '@/components/lore/mastery-page-client';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 /** Titulo da aba: o nome da mastery. */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -51,7 +51,7 @@ export default async function MasteryPage({
     mastery = await getMastery(id);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return <LoreNotFound kind="mastery" />;
+      notFound();
     }
     throw err;
   }

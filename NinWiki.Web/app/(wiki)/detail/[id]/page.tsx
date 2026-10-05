@@ -7,9 +7,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { getContentItemBySlug, listContentItems, ApiError } from '@/lib/api-client';
-import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { DetailPageClient } from '@/components/wiki/detail-page-client';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 /** Titulo da aba: o nome da entry (mob, item, arma...). */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -35,7 +35,7 @@ export default async function DetailPage({
     entry = await getContentItemBySlug(slug);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return <LoreNotFound kind="entry" />;
+      notFound();
     }
     throw err;
   }
