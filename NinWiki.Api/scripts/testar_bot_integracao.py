@@ -31,6 +31,9 @@ from app.core.config import settings  # noqa: E402
 from app.core.database import AsyncSessionLocal  # noqa: E402
 from app.core.rate_limit import limiter  # noqa: E402
 from app.main import app  # noqa: E402
+from scripts._guarda_banco import exigir_banco_local  # noqa: E402
+
+exigir_banco_local(settings.database_url)   # nunca roda contra o banco da SquareCloud (o teste apaga dados)
 from app.models.enums import StaffRole  # noqa: E402
 from app.models.users import AuditLogEntry, User  # noqa: E402
 from ninwiki_bot.api_client import ApiError, NinWikiApi  # noqa: E402

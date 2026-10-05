@@ -33,9 +33,11 @@ from app.core.auth import get_current_user, require_permission
 from fastapi.routing import APIRoute
 from app.core.security import SESSION_COOKIE, STATE_COOKIE, create_session_token
 from app.main import app
+from scripts._guarda_banco import exigir_banco_local
 from app.models.enums import StaffRole
 from app.models.users import AuditLogEntry, User
 
+exigir_banco_local(settings.database_url)   # nunca roda contra o banco da SquareCloud (o teste apaga dados)
 PASS, FAIL = 0, 0
 FALHAS: list[str] = []
 
