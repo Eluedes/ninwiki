@@ -12,6 +12,7 @@ STEAM_NEWS_STATUS=published (padrao) publica na hora; =draft cria rascunho para 
 Roda sozinho a cada STEAM_NEWS_INTERVAL_MINUTES (ver app/main.py) e pode ser disparado pelo painel (POST /steam-news/import).
 Este arquivo NAO depende do FastAPI: a conversao (`bbcode_to_doc`) e' funcao pura, facil de testar.
 """
+import asyncio
 import html
 import json
 import logging
@@ -368,7 +369,7 @@ def parse_post_ref(value: str) -> str | None:
     return m.group(1) if m else None
 
 
-async def _refresh_existing(db: AsyncSession, item: dict, run: dict) -> None:
+async def _refresh_existing(db: AsyncSession, item: dict, run: dict, capsule: str | None = None, capsule_known: bool = False) -> None:
     """Reconverte um post JA importado (mesmo gid): atualiza conteudo, resumo e capa e retraduz. Autor, tags, status e slug ficam como estao."""
     gid, title = str(item.get("gid")), " ".join(str(item.get("title") or "Patch Notes").split())[:200]
     try:
@@ -381,7 +382,9 @@ async def _refresh_existing(db: AsyncSession, item: dict, run: dict) -> None:
         doc = bbcode_to_doc(str(item.get("contents") or ""), credit)
         post.content = validate_rich_content(json.dumps(doc, ensure_ascii=False))
         post.excerpt = plain_excerpt(doc) or title
-        post.cover_image = await fetch_capsule(settings.steam_news_app_id, gid, notes=run.setdefault("notes", []), account=clan_account_of(doc, str(item.get("contents") or ""))) or first_image(doc)   # miniatura = capsule da Steam; sem ela, a 1a imagem do texto
+        if not capsule_known:   # "atualizar todos" ja' buscou as miniaturas em paralelo (ver import_news); aqui so' busca quando e' um post so'
+            capsule = await fetch_capsule(settings.steam_news_app_id, gid, notes=run.setdefault("notes", []), account=clan_account_of(doc, str(item.get("contents") or "")))
+        post.cover_image = capsule or first_image(doc)   # miniatura = capsule da Steam; sem ela, a 1a imagem do texto
         post.banner_image = settings.steam_news_banner_image.strip() or None                          # banner do topo: o mesmo para todos os posts da Steam
         post.content_pt = post.excerpt_pt = None
         try:
@@ -421,8 +424,17 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
         have = set((await db.execute(select(Post.source_id).where(Post.source_id.is_not(None)))).scalars().all())
         mine = [i for i in items if str(i.get("gid")) in have]
         run["matched"] = len(mine)
-        for item in mine:
-            await _refresh_existing(db, item, run)
+        # miniaturas buscadas em PARALELO (no maximo 6 ao mesmo tempo): com ~140 posts, uma de cada vez passaria do limite de tempo da requisicao
+        gate = asyncio.Semaphore(6)
+
+        async def _capsule(item: dict) -> str | None:
+            async with gate:
+                doc = bbcode_to_doc(str(item.get("contents") or ""))
+                return await fetch_capsule(settings.steam_news_app_id, str(item.get("gid")), notes=run.setdefault("notes", []), account=clan_account_of(doc, str(item.get("contents") or "")))
+
+        capsules = await asyncio.gather(*(_capsule(i) for i in mine))
+        for item, capsule in zip(mine, capsules):
+            await _refresh_existing(db, item, run, capsule=capsule, capsule_known=True)
         if not mine:
             run["errors"].append("None of the already imported posts was found in the Steam feed")
         last_run = run

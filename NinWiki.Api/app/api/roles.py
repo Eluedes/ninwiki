@@ -22,7 +22,7 @@ from app.core.database import get_db
 from app.core.permissions import (
     DEFAULT_ROLE_PERMISSIONS, EDITABLE_ROLES, ROLE_LABEL, ROLE_PERMISSIONS, SUPER_ONLY_PERMISSIONS, Permission,
 )
-from app.core.permissions import custom_permissions, grantable_permissions
+from app.core.permissions import custom_permissions
 from app.models.enums import StaffRole
 from app.models.roles import CustomRole
 from app.models.users import User

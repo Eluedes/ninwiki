@@ -87,7 +87,7 @@ def normalize_path(path: str | None) -> str | None:
 def fingerprint_of(source: str, title: str, location: str | None, path: str | None) -> str:
     """Identidade estavel de um problema: origem + tipo + local no codigo + rota normalizada."""
     raw = "|".join([source, title, location or "", normalize_path(path) or ""])
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
+    return hashlib.sha1(raw.encode("utf-8"), usedforsecurity=False).hexdigest()   # so' identifica o problema (nao e' seguranca)
 
 
 def location_of(exc: BaseException) -> str | None:

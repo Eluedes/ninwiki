@@ -9,10 +9,8 @@ escolhidas a dedo pela equipe (nao criadas em volume por usuarios), e
 um id legivel facilita ler o banco direto no Adminer sem precisar
 decorar UUIDs. jutsus continua com esse padrao tambem, pelo mesmo motivo.
 """
-import uuid
-
-from sqlalchemy import Boolean, Enum, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
