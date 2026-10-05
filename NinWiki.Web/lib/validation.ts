@@ -69,7 +69,7 @@ export const jutsuSchema = z.object({
   namePt: z.string().nullable().optional(),
   masteryId: z.string().min(1, 'Escolha uma mastery.'),
   pathId: z.string().nullable().optional(),
-  tier: z.coerce.number().int().min(1, 'Minimum tier is 1.').max(4, 'Maximum tier is 4.'),
+  tier: z.coerce.number().int().min(1, 'Minimum tier is 1.').max(5, 'Maximum tier is 5.'),
   chakraCost: z.coerce.number().int().min(0, 'Chakra cost cannot be negative.'),
   description: z.string().min(1, 'The short description is required.'),
   longDescription: z.string().min(1, 'The full description is required.'),

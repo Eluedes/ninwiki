@@ -182,7 +182,7 @@ class JutsuWrite(CamelModel):
     name_pt: str | None = None
     mastery_id: str | None   # OBRIGATORIO no corpo, mas pode ser null = jutsu de UTILIDADE (Utility: nao e' mastery, qualquer pessoa pode usar)
     path_id: str | None = None
-    tier: int = Field(ge=1, le=4, description="1 a 4 (maximo 4)")
+    tier: int = Field(ge=1, le=5, description="1 a 5 (maximo 5)")
     chakra_cost: int = Field(ge=0)
     description: str
     long_description: str

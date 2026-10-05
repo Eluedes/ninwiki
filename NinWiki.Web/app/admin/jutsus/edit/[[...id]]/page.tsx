@@ -282,7 +282,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.tier}</label>
-            <Input type="number" min={1} max={4} {...register('tier')} />
+            <Input type="number" min={1} max={5} {...register('tier')} />
             <p className="text-xs text-muted-foreground">{dict.jutsuInfo.tierHint}</p>
             <FieldError message={errors.tier?.message} />
           </div>

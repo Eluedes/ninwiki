@@ -1485,11 +1485,13 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         ok = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "rename", AuditLogEntry.entity_id == str(IDS["creator2"])))).scalars().first()
     check("a troca de nome fica no log de auditoria", ok is not None and ok.diff.get("after") == "Nick Novo")
 
-    secao("23) Jutsu: ficha completa (tier maximo 4) e limpar o log (so' S.Adm)")
+    secao("23) Jutsu: ficha completa (tier maximo 5) e limpar o log (so' S.Adm)")
     base_j = {"id": f"{SLUG}-jf", "name": "TESTE Jutsu Ficha", "masteryId": "fire", "tier": 2, "chakraCost": 25,
               "description": "d", "longDescription": "l", "icon": "flame"}
-    r = await c.post("/jutsus", json={**base_j, "tier": 5}, headers=A)
-    check("tier 5 e' recusado (maximo 4)", r.status_code == 422)
+    r = await c.post("/jutsus", json={**base_j, "id": f"{SLUG}-t5", "tier": 5}, headers=A)
+    check("tier 5 e' aceito (maximo 5)", r.status_code == 201 and r.json()["tier"] == 5, r.text[:120])
+    r = await c.post("/jutsus", json={**base_j, "tier": 6}, headers=A)
+    check("tier 6 e' recusado (maximo 5)", r.status_code == 422)
     r = await c.post("/jutsus", json={**base_j, "tier": 0}, headers=A)
     check("tier 0 e' recusado", r.status_code == 422)
     ficha = {**base_j, "tier": 4, "requiredLevel": "20+", "requiredStat": "35 Intellect", "scrollType": "Sealable Scroll",

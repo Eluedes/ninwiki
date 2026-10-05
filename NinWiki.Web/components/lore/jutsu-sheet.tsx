@@ -12,7 +12,7 @@ import { MasteryIcon } from '@/components/lore/mastery-icon';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { ApiJutsu, ApiMastery } from '@/lib/api-client';
 
-const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' };
+const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
 
 interface SheetRow {
   label: string;
