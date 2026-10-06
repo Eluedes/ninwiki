@@ -3,13 +3,14 @@
 // Cabecalho fixo do painel /admin, mostrando quem esta' logado de verdade
 // (vem de GET /auth/me via useAuth) e o cargo, com o botao de sair.
 
-import { useRouter } from 'next/navigation';
-import { LogOut, Pencil } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChevronRight, ExternalLink, LogOut, Pencil } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { LanguageSelector } from '@/components/language-selector';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
-import { AdminMobileNav } from '@/components/admin/admin-sidebar';
+import { AdminMobileNav, adminNavItems } from '@/components/admin/admin-sidebar';
 import { ApiError, updateStaffName } from '@/lib/api-client';
 
 /** Cabecalho do painel: idioma, tema e usuario logado com sair. */
@@ -17,6 +18,12 @@ export function AdminHeader() {
   const { dict } = useLanguage();
   const { me, logout, can, refresh } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  // Breadcrumb: "Admin > Secao" a partir do item de menu da rota atual (o mais especifico vence); sub-rotas (ex.: /new) so' mostram a secao.
+  const current = adminNavItems
+    .filter((i) => i.href !== '/admin' && pathname.startsWith(i.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  const currentLabel = current ? dict.admin.sidebar[current.key] : dict.admin.sidebar.overview;
 
   /** Troca o PROPRIO nome (so' S.Adm): pergunta o nome novo, salva e atualiza o cabecalho. */
   async function handleEditMyName() {
@@ -40,9 +47,21 @@ export function AdminHeader() {
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-2 border-b border-border bg-card/80 px-3 backdrop-blur-md sm:px-6">
       {/* Celular/tablet: botao que abre o menu (a barra lateral fixa so' existe em telas grandes). */}
       <AdminMobileNav />
-      <div className="hidden lg:block" />
+      <nav aria-label="breadcrumb" className="hidden min-w-0 items-center gap-1.5 text-sm lg:flex">
+        <Link href="/admin" className="text-muted-foreground hover:text-card-foreground">{dict.admin.sidebar.breadcrumbHome}</Link>
+        {current && (
+          <>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+            <span className="truncate font-semibold text-card-foreground">{currentLabel}</span>
+          </>
+        )}
+      </nav>
 
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <Link href="/" target="_blank" title={dict.admin.sidebar.viewSite}
+          className="hidden h-9 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-card-foreground md:flex">
+          <ExternalLink className="h-3.5 w-3.5" />{dict.admin.sidebar.viewSite}
+        </Link>
         <LanguageSelector />
         {me && (
           <>

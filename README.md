@@ -135,6 +135,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
   linha vazia some da página.
 - **Visão Geral:** quadro de avisos, contadores, **gráfico de acessos** (7/30/90 dias), **países que mais acessam** e páginas mais vistas
   **Cidades e estados:** o cartão de acessos também lista as cidades/estados que mais acessam, mas **só se a Cloudflare mandar a localização**: no painel da Cloudflare vá em *Rules → Settings → Managed Transforms* e ligue **“Add visitor location headers”** (grátis). A API lê só `cf-region` e `cf-ipcity` (e só com `TRUST_PROXY_HEADERS=true`), guarda **contagens por dia + país + estado + cidade, nunca o IP**, e some com dados de mais de 400 dias. Sem isso o cartão mostra a dica e continua com os países. A cidade vem da Cloudflare (aproximada, às vezes a do provedor de internet).
+  (Menu lateral agrupado em seções recolhíveis — Wiki, Comunidade, Mundo, Sistema — e cabeçalho com breadcrumb + "Ver site", no estilo do CoreUI.)
   (seção 2.2c; permissão `analytics.view`), atividade recente e páginas desatualizadas. No rodapé do menu lateral: **"Web x · API y"** = versão
   publicada de cada parte (`dev`/`old` = não foi feito deploy com versão — útil para saber se o site no ar é o código novo).
 - **Editor de texto (Tiptap):** negrito/itálico/sublinhado/tachado, títulos, listas, alinhamento, link, ficha, tabela; **cor da letra e cor de fundo**

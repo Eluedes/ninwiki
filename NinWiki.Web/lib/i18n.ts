@@ -143,7 +143,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
     errorsPage: {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
       occurrences: string; firstSeen: string; lastSeen: string; where: string; route: string; status: string; resolve: string; reopen: string; delete: string;
@@ -622,6 +622,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         villages: 'Vilas',
         organizations: 'Organizações',
         backToSite: 'Voltar ao site',
+        groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
+        breadcrumbHome: 'Painel',
+        viewSite: 'Ver site',
       },
       errorsPage: {
         title: 'Erros e problemas', subtitle: 'Tudo que quebrou no wiki (API, site, tradução, ataques). O bot também avisa no Discord.',
@@ -1310,6 +1313,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         villages: 'Villages',
         organizations: 'Organizations',
         backToSite: 'Back to site',
+        groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
+        breadcrumbHome: 'Admin',
+        viewSite: 'View site',
       },
       errorsPage: {
         title: 'Errors and problems', subtitle: 'Everything that broke in the wiki (API, website, translation, attacks). The bot also alerts on Discord.',
