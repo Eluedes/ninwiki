@@ -71,7 +71,8 @@ export const jutsuSchema = z.object({
   pathId: z.string().nullable().optional(),
   tier: z.coerce.number().int().min(1, 'Minimum tier is 1.').max(5, 'Maximum tier is 5.'),
   chakraCost: z.coerce.number().int().min(0, 'Chakra cost cannot be negative.'),
-  description: z.string().min(1, 'The short description is required.'),
+  // A descricao curta e' obrigatoria so' para jutsu de jogador (o Jutsu NPC usa apenas a descricao completa): ver superRefine abaixo.
+  description: z.string(),
   longDescription: z.string().min(1, 'The full description is required.'),
   descriptionPt: z.string().nullable().optional(),
   longDescriptionPt: z.string().nullable().optional(),
@@ -96,6 +97,10 @@ export const jutsuSchema = z.object({
   debuff: z.string().max(150),
   isNpc: z.boolean(),
   allowedWeapons: z.string().max(100),
+}).superRefine((value, ctx) => {
+  if (!value.isNpc && !value.description.trim()) {
+    ctx.addIssue({ code: 'custom', path: ['description'], message: 'The short description is required.' });
+  }
 });
 
 export type JutsuFormValues = z.infer<typeof jutsuSchema>;

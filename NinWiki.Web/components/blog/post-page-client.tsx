@@ -26,7 +26,7 @@ export function PostPageClient({
   const usePt = locale === 'pt' && Boolean(childrenPt);
   const minutes = readingMinutes(usePt && post.contentPt ? post.contentPt : post.content);
   const title = localizedText(locale, post.title, post.titlePt);
-  const banner = post.bannerImage || post.coverImage;   // banner largo do topo (posts da Steam usam a arte padrao do jogo); sem ele, a capa
+  const banner = post.bannerImage || post.coverImage;   // banner do topo, altura fixa e baixa para nao ocupar a tela toda (posts da Steam usam a arte padrao do jogo); sem ele, a capa
   const tocItems = usePt && tocPt ? tocPt : toc;
   const meta = [
     formatPostDate(published, locale),
@@ -45,7 +45,7 @@ export function PostPageClient({
       {banner ? (
         <header className="relative mb-6 overflow-hidden rounded-2xl border border-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={banner} alt={title} className="min-h-[13rem] w-full object-cover sm:aspect-[3/1]" />
+          <img src={banner} alt={title} className="h-48 w-full object-cover object-center sm:h-60" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>

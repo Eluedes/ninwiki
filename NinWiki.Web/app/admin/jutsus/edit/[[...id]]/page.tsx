@@ -424,17 +424,20 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
           </>
         )}
 
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-card-foreground">{t.shortDescription}</label>
-          <Controller
-            name="description"
-            control={control}
-            render={({ field }) => (
-              <RichTextEditor value={field.value} onChange={field.onChange} placeholder={t.shortDescriptionPlaceholder} />
-            )}
-          />
-          <FieldError message={errors.description?.message} />
-        </div>
+        {/* Descricao curta: so' jutsu de jogador (o Jutsu NPC usa apenas a descricao completa). */}
+        {!isNpc && (
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-card-foreground">{t.shortDescription}</label>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <RichTextEditor value={field.value} onChange={field.onChange} placeholder={t.shortDescriptionPlaceholder} />
+              )}
+            />
+            <FieldError message={errors.description?.message} />
+          </div>
+        )}
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.fullDescription}</label>
           <Controller
@@ -471,16 +474,18 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <label className="text-sm font-semibold text-card-foreground">{dict.admin.translation.nameLabel}</label>
             <Input {...register('namePt')} />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-card-foreground">{dict.admin.translation.descriptionLabel}</label>
-            <Controller
-              name="descriptionPt"
-              control={control}
-              render={({ field }) => (
-                <RichTextEditor value={field.value ?? ''} onChange={field.onChange} placeholder={dict.admin.translation.emptyHint} />
-              )}
-            />
-          </div>
+          {!isNpc && (
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-card-foreground">{dict.admin.translation.descriptionLabel}</label>
+              <Controller
+                name="descriptionPt"
+                control={control}
+                render={({ field }) => (
+                  <RichTextEditor value={field.value ?? ''} onChange={field.onChange} placeholder={dict.admin.translation.emptyHint} />
+                )}
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.fullDescription} (Português)</label>
             <Controller
