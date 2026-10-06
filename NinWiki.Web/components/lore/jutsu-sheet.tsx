@@ -12,7 +12,7 @@ import { MasteryIcon } from '@/components/lore/mastery-icon';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { ApiJutsu, ApiMastery } from '@/lib/api-client';
 
-const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' };
+const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
 
 interface SheetRow {
   label: string;
@@ -75,7 +75,6 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
   ];
   const acquisition: SheetRow[] = [
     { label: t.tier, value: `${has(jutsu.scrollType) ? jutsu.scrollType : t.tier} ${ROMAN[jutsu.tier] ?? jutsu.tier}` },
-    ...(has(jutsu.shop) ? [{ label: t.shop, value: jutsu.shop }] : []),
     ...(jutsu.isNpc ? [{ label: t.source, value: t.npcSource }] : []),
   ];
   const details: SheetRow[] = [
@@ -90,13 +89,18 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
     ...(has(jutsu.effect) ? [{ label: t.specialEffect, value: jutsu.effect }] : []),
   ];
   const battle: SheetRow[] = [
-    ...(has(jutsu.jutsuClass) ? [{ label: t.jutsuClass, value: jutsu.jutsuClass }] : []),
     ...(has(jutsu.range) ? [{ label: t.range, value: jutsu.range }] : []),
     ...(has(jutsu.allowedWeapons) ? [{ label: t.allowedWeapons, value: jutsu.allowedWeapons }] : []),
     ...(has(jutsu.debuff) ? [{ label: t.debuff, value: jutsu.debuff }] : []),
   ];
 
-  const sections = [
+  // Jutsu NPC: sem requisitos, tier, niveis nem dados de batalha; a pagina mostra nome, icone, imagem, descricao, cooldown e cast type
+  // Jutsu NPC: so' Cooldown e Cast Type (quando preenchidos), numa secao unica de detalhes.
+  const npcRows: SheetRow[] = [
+    ...(has(jutsu.cooldown) ? [{ label: t.cooldown, value: jutsu.cooldown }] : []),
+    ...(has(jutsu.castType) ? [{ label: t.castType, value: jutsu.castType }] : []),
+  ];
+  const sections = jutsu.isNpc ? (npcRows.length ? [{ id: 'details', title: t.techniqueDetails, rows: npcRows }] : []) : [
     { id: 'requirements', title: t.requirements, rows: requirements },
     { id: 'acquisition', title: t.acquisition, rows: acquisition },
     { id: 'details', title: t.techniqueDetails, rows: details },

@@ -28,6 +28,8 @@ export const rarityConfig: Record<
   rare: { label: 'Rare', color: 'text-sky-500', barColor: 'bg-sky-500', glow: '14,165,233', chip: 'border-sky-500/30 bg-sky-500/10 text-sky-400' },
   epic: { label: 'Epic', color: 'text-violet-500', barColor: 'bg-violet-500', glow: '139,92,246', chip: 'border-violet-500/30 bg-violet-500/10 text-violet-400' },
   legendary: { label: 'Legendary', color: 'text-amber-500', barColor: 'bg-amber-500', glow: '245,158,11', chip: 'border-amber-500/30 bg-amber-500/10 text-amber-400' },
+  // Event: itens de evento do jogo (rosa/magenta, para nao se confundir com Unique em vermelho nem Enchanted em ciano)
+  event: { label: 'Event', color: 'text-pink-400', barColor: 'bg-pink-400', glow: '244,114,182', chip: 'border-pink-400/30 bg-pink-400/10 text-pink-300' },
   unique: { label: 'Unique', color: 'text-red-500', barColor: 'bg-red-500', glow: '239,68,68', chip: 'border-red-500/30 bg-red-500/10 text-red-400' },
   enchanted: { label: 'Enchanted', color: 'text-cyan-400', barColor: 'bg-cyan-400', glow: '34,211,238', chip: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-300' },
 };

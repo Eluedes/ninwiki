@@ -33,9 +33,11 @@ from app.core.auth import get_current_user, require_permission
 from fastapi.routing import APIRoute
 from app.core.security import SESSION_COOKIE, STATE_COOKIE, create_session_token
 from app.main import app
+from scripts._guarda_banco import exigir_banco_local
 from app.models.enums import StaffRole
 from app.models.users import AuditLogEntry, User
 
+exigir_banco_local(settings.database_url)   # nunca roda contra o banco da SquareCloud (o teste apaga dados)
 PASS, FAIL = 0, 0
 FALHAS: list[str] = []
 
@@ -267,6 +269,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("mais de 3 requisitos e' recusado (422)", r.status_code == 422)
     r = await c.post("/content-items", json={**novo_conteudo("req0"), "category": "weapons", "weaponRequirement": "  \n "}, headers=C)
     check("so' linhas vazias = sem requisito (null)", r.status_code == 201 and r.json()["weaponRequirement"] is None, r.text[:160])
+    r = await c.post("/content-items", json={**novo_conteudo("evento"), "category": "items", "rarity": "event"}, headers=C)
+    check("raridade Event (itens de evento) e' aceita", r.status_code == 201 and r.json()["rarity"] == "event", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("rar-ruim"), "rarity": "mitico"}, headers=C)
     check("raridade inexistente continua recusada (422)", r.status_code == 422)
     r = await c.get(f"/content-items/{rasc_id}")
@@ -1485,11 +1489,13 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         ok = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "rename", AuditLogEntry.entity_id == str(IDS["creator2"])))).scalars().first()
     check("a troca de nome fica no log de auditoria", ok is not None and ok.diff.get("after") == "Nick Novo")
 
-    secao("23) Jutsu: ficha completa (tier maximo 4) e limpar o log (so' S.Adm)")
+    secao("23) Jutsu: ficha completa (tier maximo 5) e limpar o log (so' S.Adm)")
     base_j = {"id": f"{SLUG}-jf", "name": "TESTE Jutsu Ficha", "masteryId": "fire", "tier": 2, "chakraCost": 25,
               "description": "d", "longDescription": "l", "icon": "flame"}
-    r = await c.post("/jutsus", json={**base_j, "tier": 5}, headers=A)
-    check("tier 5 e' recusado (maximo 4)", r.status_code == 422)
+    r = await c.post("/jutsus", json={**base_j, "id": f"{SLUG}-t5", "tier": 5}, headers=A)
+    check("tier 5 e' aceito (maximo 5)", r.status_code == 201 and r.json()["tier"] == 5, r.text[:120])
+    r = await c.post("/jutsus", json={**base_j, "tier": 6}, headers=A)
+    check("tier 6 e' recusado (maximo 5)", r.status_code == 422)
     r = await c.post("/jutsus", json={**base_j, "tier": 0}, headers=A)
     check("tier 0 e' recusado", r.status_code == 422)
     ficha = {**base_j, "tier": 4, "requiredLevel": "20+", "requiredStat": "35 Intellect", "scrollType": "Sealable Scroll",
@@ -2017,6 +2023,10 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
 
     secao("24) Acessos ao site: grafico por dia, paises e paginas (so' contagens)")
     from app.core import geoip
+    from app.core.database import AsyncSessionLocal as _SessLimpa
+    async with _SessLimpa() as _db:   # o ranking mostra so' as 8 paginas mais vistas: sobras de acessos reais/testes antigos no banco local nao podem empurrar a de teste para fora
+        await _db.execute(text("DELETE FROM traffic_pages WHERE day >= current_date - 8"))
+        await _db.commit()
     c.cookies.clear()
     H = {"User-Agent": UA_NAVEGADOR, "Origin": "http://localhost:3000"}
     pagina = f"/{SLUG}-pagina"

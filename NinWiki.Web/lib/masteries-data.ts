@@ -20,7 +20,7 @@ export type MasteryId =
 
 export type AttributeId = 'strength' | 'agility' | 'intellect' | 'chakra' | 'fortitude';
 
-export type JutsuTier = 1 | 2 | 3 | 4;
+export type JutsuTier = 1 | 2 | 3 | 4 | 5;
 
 export type MasteryPathId =
   | 'wind-elemental-unarmed'
@@ -71,7 +71,7 @@ export interface Jutsu {
   name: string;
   englishName: string;
   masteryId: MasteryId;
-  tier: JutsuTier; // 1 (básico) a 4 (mestre)
+  tier: JutsuTier; // 1 (básico) a 5 (mestre)
   chakraCost: number;
   description: string;
   longDescription: string;

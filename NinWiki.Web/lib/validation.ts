@@ -20,7 +20,7 @@ export const contentItemSchema = z.object({
   level: z.coerce.number().int('Level must be a whole number.').min(0, 'Level cannot be negative.'),
   icon: z.string().min(1, 'Pick an icon (emoji).').max(20),
   image: z.string().nullable().optional(),
-  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'enchanted', 'unique']),
+  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'enchanted', 'unique', 'event']),
   // Opcional para mobs (bestiario) - validado no superRefine abaixo.
   description: z.string(),
   lore: z.string().nullable().optional(),
@@ -69,7 +69,7 @@ export const jutsuSchema = z.object({
   namePt: z.string().nullable().optional(),
   masteryId: z.string().min(1, 'Escolha uma mastery.'),
   pathId: z.string().nullable().optional(),
-  tier: z.coerce.number().int().min(1, 'Minimum tier is 1.').max(4, 'Maximum tier is 4.'),
+  tier: z.coerce.number().int().min(1, 'Minimum tier is 1.').max(5, 'Maximum tier is 5.'),
   chakraCost: z.coerce.number().int().min(0, 'Chakra cost cannot be negative.'),
   description: z.string().min(1, 'The short description is required.'),
   longDescription: z.string().min(1, 'The full description is required.'),

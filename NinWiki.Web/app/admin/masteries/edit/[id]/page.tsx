@@ -16,6 +16,8 @@ import Link from 'next/link';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { IconNamePicker } from '@/components/admin/icon-name-picker';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
@@ -206,13 +208,15 @@ export default function MasteryEditorPage({ params }: { params: Promise<{ id: st
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.name}</label>
           <Input {...register('name')} />
+          <FieldHint id="mastery.name" />
           <FieldError message={errors.name?.message} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.icon}</label>
-            <Input {...register('icon')} />
+            <Controller control={control} name="icon" render={({ field }) => <IconNamePicker value={field.value ?? ''} onChange={field.onChange} />} />
+            <FieldHint id="mastery.icon" />
             <FieldError message={errors.icon?.message} />
           </div>
           <div className="space-y-2">
@@ -231,6 +235,7 @@ export default function MasteryEditorPage({ params }: { params: Promise<{ id: st
                 )}
               />
               <Input {...register('color')} placeholder="#ef4444" />
+              <FieldHint id="mastery.color" />
             </div>
             <FieldError message={errors.color?.message} />
           </div>

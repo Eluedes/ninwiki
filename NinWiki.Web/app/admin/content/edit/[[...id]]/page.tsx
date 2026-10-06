@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
 import { ImageUploadField } from '@/components/admin/image-upload-field';
@@ -112,6 +113,7 @@ const rarityOptions: { value: Rarity; label: string }[] = [
   { value: 'legendary', label: 'Legendary' },
   { value: 'enchanted', label: 'Enchanted' },
   { value: 'unique', label: 'Unique' },
+  { value: 'event', label: 'Event' },   // itens de evento do jogo
 ];
 
 // Atributos que um item/arma pode dar (lista fixa do jogo): escolhidos num seletor no editor.
@@ -413,6 +415,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.name}</label>
             <Input {...register('name')} />
+            <FieldHint id="content.name" />
             <FieldError message={errors.name?.message} />
           </div>
           <div className="space-y-2">
@@ -420,6 +423,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
               {t.slugLabel}
             </label>
             <Input {...register('slug')} />
+            <FieldHint id="content.slug" />
             <FieldError message={errors.slug?.message} />
           </div>
         </div>
@@ -514,22 +518,27 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.weaponNpc}</label>
                 <Input {...register('weaponNpc')} placeholder={t.weaponNpcPlaceholder} />
+                <FieldHint id="content.weaponNpc" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.weaponType}</label>
                 <Input {...register('weaponType')} placeholder={t.weaponTypePlaceholder} />
+                <FieldHint id="content.weaponType" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.weaponBaseDamage}</label>
                 <Input {...register('weaponBaseDamage')} placeholder={t.weaponBaseDamagePlaceholder} />
+                <FieldHint id="content.weaponBaseDamage" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.weaponSpecialAbility}</label>
                 <Input {...register('weaponSpecialAbility')} placeholder={t.weaponSpecialAbilityPlaceholder} />
+                <FieldHint id="content.weaponSpecialAbility" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.speed}</label>
                 <Input {...register('weaponSpeed')} placeholder={t.speedPlaceholder} />
+                <FieldHint id="content.weaponSpeed" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.requirement}</label>
@@ -566,6 +575,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.weaponKnockbackDistance}</label>
                 <Input {...register('weaponKnockbackDistance')} placeholder={t.weaponKnockbackDistancePlaceholder} />
+                <FieldHint id="content.weaponKnockbackDistance" />
               </div>
             </>
           )}
@@ -575,6 +585,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.maxStack}</label>
               <Input type="number" {...register('maxStack')} placeholder={t.maxStackPlaceholder} />
+              <FieldHint id="content.maxStack" />
               <FieldError message={errors.maxStack?.message} />
             </div>
           )}
@@ -636,6 +647,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
               <Input {...register('icon')} placeholder="🦠" />
               <EmojiPicker onPick={(emoji) => setValue('icon', emoji, { shouldDirty: true, shouldValidate: true })} />
             </div>
+            <FieldHint id="content.icon" />
             <FieldError message={errors.icon?.message} />
           </div>
         </div>
@@ -680,6 +692,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.spawnLocation}</label>
             <Input {...register('spawnLocation')} placeholder={t.spawnLocationPlaceholder} />
+            <FieldHint id="content.spawnLocation" />
           </div>
         )}
       </div>
@@ -695,22 +708,27 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.health}</label>
               <Input {...register('mobHealth')} placeholder={t.healthPlaceholder} />
+              <FieldHint id="content.mobHealth" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.damage}</label>
               <Input {...register('mobDamage')} placeholder={t.damagePlaceholder} />
+              <FieldHint id="content.mobDamage" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.experience}</label>
               <Input {...register('mobExperience')} placeholder={t.experiencePlaceholder} />
+              <FieldHint id="content.mobExperience" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.range}</label>
               <Input {...register('mobRange')} placeholder={t.rangePlaceholder} />
+              <FieldHint id="content.mobRange" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.respawnTime}</label>
               <Input {...register('mobRespawnTime')} placeholder={t.respawnTimePlaceholder} />
+              <FieldHint id="content.mobRespawnTime" />
             </div>
           </div>
         </div>

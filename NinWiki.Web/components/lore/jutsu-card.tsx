@@ -62,11 +62,14 @@ export function JutsuCard({ jutsu, mastery }: { jutsu: ApiJutsu; mastery?: ApiMa
           {altName && <p className="text-xs text-ink-400">{altName}</p>}
         </div>
 
-        <span
-          className={`chip shrink-0 border font-bold ${tierColors[jutsu.tier] ?? tierColors[1]}`}
-        >
-          T{jutsu.tier}
-        </span>
+        {/* Jutsu NPC nao tem tier */}
+        {!jutsu.isNpc && (
+          <span
+            className={`chip shrink-0 border font-bold ${tierColors[jutsu.tier] ?? tierColors[1]}`}
+          >
+            T{jutsu.tier}
+          </span>
+        )}
       </div>
 
       {jutsu.gif && (

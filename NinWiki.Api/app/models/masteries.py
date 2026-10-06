@@ -9,10 +9,8 @@ escolhidas a dedo pela equipe (nao criadas em volume por usuarios), e
 um id legivel facilita ler o banco direto no Adminer sem precisar
 decorar UUIDs. jutsus continua com esse padrao tambem, pelo mesmo motivo.
 """
-import uuid
-
-from sqlalchemy import Boolean, Enum, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -131,7 +129,7 @@ class Jutsu(Base):
     # Nullable: nem toda mastery tem caminhos (ver MAESTRIAS.md/comentarios
     # do front) - um jutsu de uma mastery SEM caminhos deixa isso vazio.
     path_id: Mapped[str | None] = mapped_column(ForeignKey("mastery_paths.id", ondelete="SET NULL"), nullable=True)
-    tier: Mapped[int]  # 1 a 4 (maximo 4)
+    tier: Mapped[int]  # 1 a 5 (maximo 5)
     chakra_cost: Mapped[int]
     description: Mapped[str] = mapped_column(Text)
     long_description: Mapped[str] = mapped_column(Text)

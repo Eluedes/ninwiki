@@ -1,13 +1,13 @@
 'use client';
 
 // Menu lateral fixo do painel /admin, com navegacao entre as secoes
-// (Overview, Conteudo, Blog Posts, Users) e link de volta ao site publico.
+// agrupadas por assunto (Wiki, Comunidade, Mundo, Sistema) e link de volta ao site publico.
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, Bug, MessageSquare, Megaphone, ImageIcon, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, Bug, MessageSquare, Megaphone, ImageIcon, ArrowLeft, ChevronDown, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { requiredPermissionFor } from '@/lib/admin-routes';
 import { NinLogo } from '@/components/icons/nin-logo';
@@ -15,27 +15,44 @@ import { useEffect, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { API_URL } from '@/lib/api-client';
+import type { Dictionary } from '@/lib/i18n';
 
-// `as const` congela o array/objetos como literais exatos (em vez de
-// string generica), o que ajuda o TypeScript a checar que `key` bate
-// com uma chave valida de dict.admin.sidebar.
-const navItems = [
-  { key: 'overview', href: '/admin', icon: LayoutDashboard },
-  { key: 'content', href: '/admin/content', icon: Boxes },
-  { key: 'masteries', href: '/admin/masteries', icon: Sparkles },
-  { key: 'jutsus', href: '/admin/jutsus', icon: Zap },
-  { key: 'bulkImport', href: '/admin/import', icon: FileJson },
-  { key: 'blogPosts', href: '/admin/blog-posts', icon: FileText },
-  { key: 'comments', href: '/admin/comments', icon: MessageSquare },
-  { key: 'media', href: '/admin/media', icon: ImageIcon },
-  { key: 'announcement', href: '/admin/announcement', icon: Megaphone },
-  { key: 'auditLog', href: '/admin/audit-log', icon: History },
-  { key: 'villages', href: '/admin/villages', icon: Castle },
-  { key: 'organizations', href: '/admin/organizations', icon: Building2 },
-  { key: 'staff', href: '/admin/staff', icon: UserCog },
-  { key: 'permissions', href: '/admin/permissions', icon: ShieldCheck },
-  { key: 'errors', href: '/admin/errors', icon: Bug },
-] as const;
+// Itens agrupados em secoes (estilo CoreUI): `group: null` fica solto no topo;
+// as demais viram um grupo recolhivel com titulo. `as const` ajuda o TypeScript
+// a checar que `key` bate com uma chave valida de dict.admin.sidebar.
+type NavKey = Exclude<keyof Dictionary['admin']['sidebar'], 'groups' | 'users' | 'backToSite' | 'breadcrumbHome' | 'viewSite'>;
+type NavItem = { key: NavKey; href: string; icon: LucideIcon };
+const navGroups: { group: 'wiki' | 'community' | 'world' | 'system' | null; items: NavItem[] }[] = [
+  { group: null, items: [{ key: 'overview', href: '/admin', icon: LayoutDashboard }] },
+  { group: 'wiki', items: [
+    { key: 'content', href: '/admin/content', icon: Boxes },
+    { key: 'masteries', href: '/admin/masteries', icon: Sparkles },
+    { key: 'jutsus', href: '/admin/jutsus', icon: Zap },
+    { key: 'bulkImport', href: '/admin/import', icon: FileJson },
+    { key: 'media', href: '/admin/media', icon: ImageIcon },
+  ] },
+  { group: 'community', items: [
+    { key: 'blogPosts', href: '/admin/blog-posts', icon: FileText },
+    { key: 'comments', href: '/admin/comments', icon: MessageSquare },
+    { key: 'announcement', href: '/admin/announcement', icon: Megaphone },
+  ] },
+  { group: 'world', items: [
+    { key: 'villages', href: '/admin/villages', icon: Castle },
+    { key: 'organizations', href: '/admin/organizations', icon: Building2 },
+  ] },
+  { group: 'system', items: [
+    { key: 'staff', href: '/admin/staff', icon: UserCog },
+    { key: 'permissions', href: '/admin/permissions', icon: ShieldCheck },
+    { key: 'auditLog', href: '/admin/audit-log', icon: History },
+    { key: 'errors', href: '/admin/errors', icon: Bug },
+  ] },
+];
+
+/** Lista plana (usada pelo breadcrumb do cabecalho para achar o titulo da pagina atual). */
+export const adminNavItems = navGroups.flatMap((g) => g.items);
+
+/** Chave do localStorage com os grupos que o usuario recolheu. */
+const COLLAPSED_KEY = 'ninwiki-admin-collapsed';
 
 /** Versao publicada do site e da API (so' S.Adm): ajuda a saber se o deploy mais recente ja' esta no ar. */
 function VersionInfo() {
@@ -60,6 +77,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { can } = useAuth();
 
+  // Grupos recolhidos (lembrados no navegador). Comeca vazio e le o localStorage depois de montar, para o HTML do servidor bater com o do cliente.
+  const [collapsed, setCollapsed] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]');
+      if (Array.isArray(saved)) queueMicrotask(() => setCollapsed(saved.filter((x): x is string => typeof x === 'string')));
+    } catch { /* sem localStorage: tudo aberto */ }
+  }, []);
+  /** Recolhe/expande um grupo e grava a escolha. */
+  function toggle(group: string) {
+    const next = collapsed.includes(group) ? collapsed.filter((g) => g !== group) : [...collapsed, group];
+    setCollapsed(next);
+    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next)); } catch { /* ignora */ }
+  }
+
   return (
     <>
       <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-5">
@@ -67,32 +99,51 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <span className="text-sm font-bold tracking-tight">Admin Panel</span>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {navItems
+      <nav className="flex-1 space-y-4 overflow-y-auto p-3">
+        {navGroups.map(({ group, items }) => {
           // Esconde o que o cargo nao pode usar (mesmo mapa do guarda de paginas)
-          .filter(({ href }) => {
+          const visible = items.filter(({ href }) => {
             const required = requiredPermissionFor(href);
             return required === null || can(required);
-          })
-          .map(({ key, href, icon: Icon }) => {
-          // "Overview" (/admin) precisa de comparacao EXATA, senao ficaria marcado em toda sub-rota; as demais usam startsWith.
-          const isActive =
-            href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
+          });
+          if (visible.length === 0) return null;
+          const links = visible.map(({ key, href, icon: Icon }) => {
+            // "Overview" (/admin) precisa de comparacao EXATA, senao ficaria marcado em toda sub-rota; as demais usam startsWith.
+            const isActive = href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
+            return (
+              <Link
+                key={key}
+                href={href}
+                onClick={onNavigate}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-card-foreground'
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {dict.admin.sidebar[key]}
+              </Link>
+            );
+          });
+          if (group === null) return <div key="top" className="space-y-1">{links}</div>;
+          // Grupo recolhivel; um grupo com a pagina atual dentro nunca fica escondido.
+          const hasActive = visible.some(({ href }) => pathname.startsWith(href));
+          const isOpen = hasActive || !collapsed.includes(group);
           return (
-            <Link
-              key={key}
-              href={href}
-              onClick={onNavigate}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-card-foreground'
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {dict.admin.sidebar[key]}
-            </Link>
+            <div key={group}>
+              <button
+                type="button"
+                onClick={() => toggle(group)}
+                aria-expanded={isOpen}
+                className="flex w-full items-center justify-between px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 hover:text-card-foreground"
+              >
+                {dict.admin.sidebar.groups[group]}
+                <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !isOpen && '-rotate-90')} />
+              </button>
+              {isOpen && <div className="space-y-1">{links}</div>}
+            </div>
           );
         })}
       </nav>

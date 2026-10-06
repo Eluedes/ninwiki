@@ -11,6 +11,8 @@ import Link from 'next/link';
 import { useForm, useWatch, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { IconNamePicker } from '@/components/admin/icon-name-picker';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
 import { ImageUploadField } from '@/components/admin/image-upload-field';
@@ -107,6 +109,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
   });
 
   const masteryId = useWatch({ control, name: 'masteryId' });
+  const isNpc = useWatch({ control, name: 'isNpc' });   // Jutsu NPC: so' nome, imagem e descricao (sem tier, custo, niveis nem ficha)
   const levelRows = useFieldArray({ control, name: 'levels' });
   const jf = dict.jutsuInfo;
 
@@ -208,6 +211,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.name}</label>
           <Input {...register('name')} />
+          <FieldHint id="jutsu.name" />
           <FieldError message={errors.name?.message} />
         </div>
 
@@ -216,6 +220,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             {t.idSlug} {isEdit && <span className="font-normal text-muted-foreground">{t.idSlugLocked}</span>}
           </label>
           <Input {...register('id')} disabled={isEdit} placeholder={t.idPlaceholder} />
+          <FieldHint id="jutsu.id" />
           <FieldError message={errors.id?.message} />
         </div>
 
@@ -280,38 +285,68 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-card-foreground">{t.tier}</label>
-            <Input type="number" min={1} max={4} {...register('tier')} />
-            <p className="text-xs text-muted-foreground">{dict.jutsuInfo.tierHint}</p>
-            <FieldError message={errors.tier?.message} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-card-foreground">{t.chakraCost}</label>
-            <Input type="number" {...register('chakraCost')} />
-            <FieldError message={errors.chakraCost?.message} />
-          </div>
+          {!isNpc && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-card-foreground">{t.tier}</label>
+                <Input type="number" min={1} max={5} {...register('tier')} />
+                <p className="text-xs text-muted-foreground">{dict.jutsuInfo.tierHint}</p>
+                <FieldError message={errors.tier?.message} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-card-foreground">{t.chakraCost}</label>
+                <Input type="number" {...register('chakraCost')} />
+                <FieldHint id="jutsu.chakraCost" />
+                <FieldError message={errors.chakraCost?.message} />
+              </div>
+            </>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.icon}</label>
-            <Input {...register('icon')}  />
+            <Controller control={control} name="icon" render={({ field }) => <IconNamePicker value={field.value ?? ''} onChange={field.onChange} />} />
+            <FieldHint id="jutsu.icon" />
             <FieldError message={errors.icon?.message} />
           </div>
         </div>
 
+        {/* Jutsu NPC: alem de nome, icone, imagem e descricao, so' Cooldown e Cast Type (o resto da ficha e' so' de jutsu de jogador). */}
+        {isNpc && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-card-foreground">{t.cooldown}</label>
+              <Input {...register('cooldown')} placeholder={t.cooldownPlaceholder} />
+              <FieldHint id="jutsu.cooldownNpc" />
+              <FieldError message={errors.cooldown?.message} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-card-foreground">{jf.castType}</label>
+              <Input {...register('castType')} />
+              <FieldHint id="jutsu.castType" />
+              <FieldError message={errors.castType?.message} />
+            </div>
+          </div>
+        )}
+
+        {/* Tudo daqui ate' a descricao so' vale para jutsu de jogador; o Jutsu NPC mostra so' nome, imagem e descricao. */}
+        {!isNpc && (
+          <>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.range}</label>
             <Input {...register('range')} placeholder={t.rangePlaceholder} />
+            <FieldHint id="jutsu.range" />
             <FieldError message={errors.range?.message} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.castTime}</label>
             <Input {...register('castTime')} placeholder={t.castTimePlaceholder} />
+            <FieldHint id="jutsu.castTime" />
             <FieldError message={errors.castTime?.message} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.cooldown}</label>
             <Input {...register('cooldown')} placeholder={t.cooldownPlaceholder} />
+            <FieldHint id="jutsu.cooldown" />
             <FieldError message={errors.cooldown?.message} />
           </div>
         </div>
@@ -319,6 +354,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.effect}</label>
           <Input {...register('effect')} placeholder={t.effectPlaceholder} />
+          <FieldHint id="jutsu.effect" />
           <FieldError message={errors.effect?.message} />
         </div>
         {/* Ficha do jutsu (mesmas secoes da pagina publica) */}
@@ -331,10 +367,12 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.requiredLevel}</label>
               <Input {...register('requiredLevel')} />
+              <FieldHint id="jutsu.requiredLevel" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.requiredStat}</label>
               <Input {...register('requiredStat')} />
+              <FieldHint id="jutsu.requiredStat" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.scrollType}</label>
@@ -342,24 +380,19 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
               <p className="text-xs text-muted-foreground">{jf.scrollTypeHint}</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">{jf.shop}</label>
-              <Input {...register('shop')} />
-            </div>
-            <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.castType}</label>
               <Input {...register('castType')} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">{jf.jutsuClass}</label>
-              <Input {...register('jutsuClass')} />
+              <FieldHint id="jutsu.castType" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.debuff}</label>
               <Input {...register('debuff')} />
+              <FieldHint id="jutsu.debuff" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.allowedWeapons}</label>
               <Input {...register('allowedWeapons')} placeholder="Blunt" maxLength={100} />
+              <FieldHint id="jutsu.allowedWeapons" />
             </div>
           </div>
 
@@ -387,6 +420,9 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <FieldError message={errors.levels?.message} />
           </div>
         </div>
+
+          </>
+        )}
 
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.shortDescription}</label>

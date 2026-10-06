@@ -8,15 +8,12 @@ demais para caber num "content_items" generico, exatamente como
 decidido no desenho de schema do roadmap (Fase 1).
 """
 import uuid
-from datetime import datetime
-
 from sqlalchemy import (
     Enum,
     ForeignKey,
     Numeric,
     String,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship

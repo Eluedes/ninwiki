@@ -19,6 +19,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+/** Nomes de icone disponiveis (usado pelo seletor de icone do /admin). */
+export function iconNames(): string[] {
+  return Object.keys(iconMap);
+}
+
 const iconMap: Record<string, LucideIcon> = {
   flame: Flame,
   wind: Wind,

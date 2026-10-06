@@ -63,7 +63,7 @@ export interface Dictionary {
   news: { title: string; subtitle: string; readMore: string; viewAll: string; empty: string };
   lore: {
     home: string; villagesTitle: string; villagesSubtitle: string; villagesCrumb: string; villageNotFound: string; backToVillages: string;
-    masteryNotFound: string; backToMasteries: string; jutsuNotFound: string; entryNotFound: string; back: string;
+    masteryNotFound: string; backToMasteries: string; jutsuNotFound: string; entryNotFound: string; back: string; pageNotFound: string; backHome: string;
     aboutVillage: string; clans: string; organizations: string; villageSheet: string; otherVillages: string;
     fName: string; fEnglish: string; fPortuguese: string; fElement: string; fMotto: string; fClimate: string; fLeader: string;
     emblemAlt: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapMarkerAria: string; mapHint: string;
@@ -143,7 +143,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
     errorsPage: {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
       occurrences: string; firstSeen: string; lastSeen: string; where: string; route: string; status: string; resolve: string; reopen: string; delete: string;
@@ -307,7 +307,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       home: 'Início', villagesTitle: 'Vilas Ocultas', villagesSubtitle: 'As grandes potências shinobi — cada uma com sua cultura e elemento.',
       villagesCrumb: 'Vilas', villageNotFound: 'Vila não encontrada.', backToVillages: 'Voltar para Vilas',
       masteryNotFound: 'Mastery não encontrada.', backToMasteries: 'Voltar para Masteries', jutsuNotFound: 'Jutsu não encontrado.',
-      entryNotFound: 'Entry não encontrada.', back: 'Voltar',
+      entryNotFound: 'Entry não encontrada.', back: 'Voltar', pageNotFound: 'Página não encontrada.', backHome: 'Voltar ao início',
       aboutVillage: 'Sobre a Vila', clans: 'Clãs', organizations: 'Organizações', villageSheet: 'Ficha da Vila', otherVillages: 'Outras Vilas',
       fName: 'Nome', fEnglish: 'Inglês', fPortuguese: 'Português', fElement: 'Elemento', fMotto: 'Lema', fClimate: 'Clima', fLeader: 'Líder',
       emblemAlt: 'Emblema da {name}', mapTitle: 'Mapa do Mundo', mapSubtitle: 'As três grandes nações shinobi e seus territórios.', mapCrumb: 'Mapa',
@@ -468,9 +468,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
       allowedWeapons: 'Armas permitidas', isNpc: 'Jutsu NPC', isNpcHint: 'Versão do jutsu ensinada/usada por NPC: fica numa seção própria (card NPC em Masteries).', source: 'Fonte', npcSource: 'NPC',
       sheetTitle: 'Ficha do jutsu', sheetHint: 'Cada linha vazia some da página. Os valores ficam em inglês (termos do jogo).',
       requiredLevel: 'Nível exigido', requiredStat: 'Atributo exigido', scrollType: 'Tipo de pergaminho',
-      scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (1 a 4 vira I a IV).',
+      scrollTypeHint: 'Aparece em Aquisição > Tier junto com o numeral do tier (1 a 5 vira I a V).',
       maxLevelHint: 'De 1 a 10. Define quantos campos por nível aparecem abaixo.', perLevelHint: 'Um valor por nível; deixe vazio o que não se aplica.',
-      levelN: 'Nível {n}', tierHint: 'De 1 a 4 (o máximo é 4).',
+      levelN: 'Nível {n}', tierHint: 'De 1 a 5 (o máximo é 5).',
       levelsTitle: 'Níveis: nome, dano base e recarga', levelsHint: 'Uma linha por nível do jutsu (o nível máximo é a quantidade de linhas). O nome é opcional: preencha só nos níveis em que o jutsu muda de nome (ex.: nível 4). Clique em "Adicionar nível" quando o jutsu subir de nível.', levelNamePlaceholder: 'Nome neste nível (opcional)', nameByLevel: 'Nome por nível', nameFromLevel: 'A partir do nível {n}: {name}',
       addLevel: 'Adicionar nível', removeLevel: 'Remover nível',
     },
@@ -622,6 +622,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         villages: 'Vilas',
         organizations: 'Organizações',
         backToSite: 'Voltar ao site',
+        groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
+        breadcrumbHome: 'Painel',
+        viewSite: 'Ver site',
       },
       errorsPage: {
         title: 'Erros e problemas', subtitle: 'Tudo que quebrou no wiki (API, site, tradução, ataques). O bot também avisa no Discord.',
@@ -995,7 +998,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       home: 'Home', villagesTitle: 'Hidden Villages', villagesSubtitle: 'The great shinobi powers — each with its own culture and element.',
       villagesCrumb: 'Villages', villageNotFound: 'Village not found.', backToVillages: 'Back to Villages',
       masteryNotFound: 'Mastery not found.', backToMasteries: 'Back to Masteries', jutsuNotFound: 'Jutsu not found.',
-      entryNotFound: 'Entry not found.', back: 'Back',
+      entryNotFound: 'Entry not found.', back: 'Back', pageNotFound: 'Page not found.', backHome: 'Back to home',
       aboutVillage: 'About the Village', clans: 'Clans', organizations: 'Organizations', villageSheet: 'Village Sheet', otherVillages: 'Other Villages',
       fName: 'Name', fEnglish: 'English', fPortuguese: 'Portuguese', fElement: 'Element', fMotto: 'Motto', fClimate: 'Climate', fLeader: 'Leader',
       emblemAlt: 'Emblem of {name}', mapTitle: 'World Map', mapSubtitle: 'The three great shinobi nations and their territories.', mapCrumb: 'Map',
@@ -1156,9 +1159,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
       allowedWeapons: 'Allowed weapons', isNpc: 'NPC jutsu', isNpcHint: 'Version of the jutsu taught/used by an NPC: it gets its own section (NPC card in Masteries).', source: 'Source', npcSource: 'NPC',
       sheetTitle: 'Jutsu sheet', sheetHint: 'Empty rows are hidden on the page. Values are in English (game terms).',
       requiredLevel: 'Required level', requiredStat: 'Required stat', scrollType: 'Scroll type',
-      scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (1 to 4 becomes I to IV).',
+      scrollTypeHint: 'Shown in Acquisition > Tier with the tier numeral (1 to 5 becomes I to V).',
       maxLevelHint: 'From 1 to 10. Sets how many per-level fields appear below.', perLevelHint: 'One value per level; leave empty what does not apply.',
-      levelN: 'Level {n}', tierHint: 'From 1 to 4 (4 is the maximum).',
+      levelN: 'Level {n}', tierHint: 'From 1 to 5 (5 is the maximum).',
       levelsTitle: 'Levels: name, base damage and cooldown', levelsHint: 'One row per jutsu level (the maximum level is the number of rows). The name is optional: fill it only on the levels where the jutsu changes name (e.g. level 4). Click "Add level" when the jutsu levels up.', levelNamePlaceholder: 'Name at this level (optional)', nameByLevel: 'Name by level', nameFromLevel: 'From level {n}: {name}',
       addLevel: 'Add level', removeLevel: 'Remove level',
     },
@@ -1310,6 +1313,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         villages: 'Villages',
         organizations: 'Organizations',
         backToSite: 'Back to site',
+        groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
+        breadcrumbHome: 'Admin',
+        viewSite: 'View site',
       },
       errorsPage: {
         title: 'Errors and problems', subtitle: 'Everything that broke in the wiki (API, website, translation, attacks). The bot also alerts on Discord.',

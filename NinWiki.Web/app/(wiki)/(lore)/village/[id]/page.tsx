@@ -4,9 +4,9 @@
 // components/lore/village-page-client.tsx (precisa saber o idioma).
 
 import { getVillage, listVillages, ApiError } from '@/lib/api-client';
-import { LoreNotFound } from '@/components/lore/lore-not-found';
 import { VillagePageClient } from '@/components/lore/village-page-client';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 /** Titulo da aba: o nome da vila. */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -32,7 +32,7 @@ export default async function VillagePage({
     village = await getVillage(id);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
-      return <LoreNotFound kind="village" />;
+      notFound();
     }
     throw err;
   }

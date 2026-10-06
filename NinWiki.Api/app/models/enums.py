@@ -16,6 +16,7 @@ class Rarity(str, enum.Enum):
     RARE = "rare"
     EPIC = "epic"
     LEGENDARY = "legendary"
+    EVENT = "event"           # itens de evento (ex.: itens que so' saem em eventos do jogo)
     UNIQUE = "unique"         # itens unicos do jogo (etiqueta vermelha "Unique", ex.: Metal Knuckle Blades)
     ENCHANTED = "enchanted"   # itens encantados do jogo (ex.: Hokuto Sphere, Authority)
 
@@ -39,19 +40,6 @@ class MobType(str, enum.Enum):
     BOSS = "boss"
     NPC = "npc"
     MOUNT = "mount"
-
-
-class DropChanceQualifier(str, enum.Enum):
-    """
-    Como o numero de `chance` de um drop deve ser LIDO/exibido - a
-    ficha do proprio jogo nunca mostra a porcentagem exata (ex: "23%"),
-    so' se e' "Over X%" ou "Below X%" (ex: "Over 10%", "Below 1%").
-    Nullable no modelo (ver ContentItemDrop) - None mantem o
-    comportamento antigo de mostrar o numero exato, pra' nao quebrar
-    drops que ja existiam antes desse campo.
-    """
-    OVER = "over"
-    BELOW = "below"
 
 
 class ItemType(str, enum.Enum):
