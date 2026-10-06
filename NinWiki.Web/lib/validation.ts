@@ -20,7 +20,7 @@ export const contentItemSchema = z.object({
   level: z.coerce.number().int('Level must be a whole number.').min(0, 'Level cannot be negative.'),
   icon: z.string().min(1, 'Pick an icon (emoji).').max(20),
   image: z.string().nullable().optional(),
-  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'enchanted', 'unique']),
+  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'enchanted', 'unique', 'event']),
   // Opcional para mobs (bestiario) - validado no superRefine abaixo.
   description: z.string(),
   lore: z.string().nullable().optional(),

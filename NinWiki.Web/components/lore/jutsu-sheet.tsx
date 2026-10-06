@@ -96,7 +96,8 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
     ...(has(jutsu.debuff) ? [{ label: t.debuff, value: jutsu.debuff }] : []),
   ];
 
-  const sections = [
+  // Jutsu NPC: so' o icone (sem requisitos, tier, niveis nem dados de batalha): a pagina mostra nome, imagem e descricao
+  const sections = jutsu.isNpc ? [] : [
     { id: 'requirements', title: t.requirements, rows: requirements },
     { id: 'acquisition', title: t.acquisition, rows: acquisition },
     { id: 'details', title: t.techniqueDetails, rows: details },

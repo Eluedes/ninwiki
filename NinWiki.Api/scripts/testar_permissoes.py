@@ -269,6 +269,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("mais de 3 requisitos e' recusado (422)", r.status_code == 422)
     r = await c.post("/content-items", json={**novo_conteudo("req0"), "category": "weapons", "weaponRequirement": "  \n "}, headers=C)
     check("so' linhas vazias = sem requisito (null)", r.status_code == 201 and r.json()["weaponRequirement"] is None, r.text[:160])
+    r = await c.post("/content-items", json={**novo_conteudo("evento"), "category": "items", "rarity": "event"}, headers=C)
+    check("raridade Event (itens de evento) e' aceita", r.status_code == 201 and r.json()["rarity"] == "event", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("rar-ruim"), "rarity": "mitico"}, headers=C)
     check("raridade inexistente continua recusada (422)", r.status_code == 422)
     r = await c.get(f"/content-items/{rasc_id}")

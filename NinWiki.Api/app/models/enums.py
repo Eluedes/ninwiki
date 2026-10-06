@@ -16,6 +16,7 @@ class Rarity(str, enum.Enum):
     RARE = "rare"
     EPIC = "epic"
     LEGENDARY = "legendary"
+    EVENT = "event"           # itens de evento (ex.: itens que so' saem em eventos do jogo)
     UNIQUE = "unique"         # itens unicos do jogo (etiqueta vermelha "Unique", ex.: Metal Knuckle Blades)
     ENCHANTED = "enchanted"   # itens encantados do jogo (ex.: Hokuto Sphere, Authority)
 

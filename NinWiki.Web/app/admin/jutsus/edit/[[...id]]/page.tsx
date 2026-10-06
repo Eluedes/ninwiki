@@ -107,6 +107,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
   });
 
   const masteryId = useWatch({ control, name: 'masteryId' });
+  const isNpc = useWatch({ control, name: 'isNpc' });   // Jutsu NPC: so' nome, imagem e descricao (sem tier, custo, niveis nem ficha)
   const levelRows = useFieldArray({ control, name: 'levels' });
   const jf = dict.jutsuInfo;
 
@@ -280,17 +281,21 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-card-foreground">{t.tier}</label>
-            <Input type="number" min={1} max={5} {...register('tier')} />
-            <p className="text-xs text-muted-foreground">{dict.jutsuInfo.tierHint}</p>
-            <FieldError message={errors.tier?.message} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-card-foreground">{t.chakraCost}</label>
-            <Input type="number" {...register('chakraCost')} />
-            <FieldError message={errors.chakraCost?.message} />
-          </div>
+          {!isNpc && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-card-foreground">{t.tier}</label>
+                <Input type="number" min={1} max={5} {...register('tier')} />
+                <p className="text-xs text-muted-foreground">{dict.jutsuInfo.tierHint}</p>
+                <FieldError message={errors.tier?.message} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-card-foreground">{t.chakraCost}</label>
+                <Input type="number" {...register('chakraCost')} />
+                <FieldError message={errors.chakraCost?.message} />
+              </div>
+            </>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.icon}</label>
             <Input {...register('icon')}  />
@@ -298,6 +303,9 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
           </div>
         </div>
 
+        {/* Tudo daqui ate' a descricao so' vale para jutsu de jogador; o Jutsu NPC mostra so' nome, imagem e descricao. */}
+        {!isNpc && (
+          <>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.range}</label>
@@ -387,6 +395,9 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <FieldError message={errors.levels?.message} />
           </div>
         </div>
+
+          </>
+        )}
 
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.shortDescription}</label>
