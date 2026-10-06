@@ -2023,6 +2023,10 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
 
     secao("24) Acessos ao site: grafico por dia, paises e paginas (so' contagens)")
     from app.core import geoip
+    from app.core.database import AsyncSessionLocal as _SessLimpa
+    async with _SessLimpa() as _db:   # o ranking mostra so' as 8 paginas mais vistas: sobras de acessos reais/testes antigos no banco local nao podem empurrar a de teste para fora
+        await _db.execute(text("DELETE FROM traffic_pages WHERE day = current_date"))
+        await _db.commit()
     c.cookies.clear()
     H = {"User-Agent": UA_NAVEGADOR, "Origin": "http://localhost:3000"}
     pagina = f"/{SLUG}-pagina"
