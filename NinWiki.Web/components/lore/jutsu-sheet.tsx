@@ -94,8 +94,13 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
     ...(has(jutsu.debuff) ? [{ label: t.debuff, value: jutsu.debuff }] : []),
   ];
 
-  // Jutsu NPC: so' o icone (sem requisitos, tier, niveis nem dados de batalha): a pagina mostra nome, imagem e descricao
-  const sections = jutsu.isNpc ? [] : [
+  // Jutsu NPC: sem requisitos, tier, niveis nem dados de batalha; a pagina mostra nome, icone, imagem, descricao, cooldown e cast type
+  // Jutsu NPC: so' Cooldown e Cast Type (quando preenchidos), numa secao unica de detalhes.
+  const npcRows: SheetRow[] = [
+    ...(has(jutsu.cooldown) ? [{ label: t.cooldown, value: jutsu.cooldown }] : []),
+    ...(has(jutsu.castType) ? [{ label: t.castType, value: jutsu.castType }] : []),
+  ];
+  const sections = jutsu.isNpc ? (npcRows.length ? [{ id: 'details', title: t.techniqueDetails, rows: npcRows }] : []) : [
     { id: 'requirements', title: t.requirements, rows: requirements },
     { id: 'acquisition', title: t.acquisition, rows: acquisition },
     { id: 'details', title: t.techniqueDetails, rows: details },

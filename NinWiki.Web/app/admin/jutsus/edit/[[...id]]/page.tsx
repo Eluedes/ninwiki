@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useForm, useWatch, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { IconNamePicker } from '@/components/admin/icon-name-picker';
 import { FieldHint } from '@/components/admin/field-hint';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
@@ -302,11 +303,29 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
           )}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.icon}</label>
-            <Input {...register('icon')}  />
+            <Controller control={control} name="icon" render={({ field }) => <IconNamePicker value={field.value ?? ''} onChange={field.onChange} />} />
             <FieldHint id="jutsu.icon" />
             <FieldError message={errors.icon?.message} />
           </div>
         </div>
+
+        {/* Jutsu NPC: alem de nome, icone, imagem e descricao, so' Cooldown e Cast Type (o resto da ficha e' so' de jutsu de jogador). */}
+        {isNpc && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-card-foreground">{t.cooldown}</label>
+              <Input {...register('cooldown')} placeholder={t.cooldownPlaceholder} />
+              <FieldHint id="jutsu.cooldownNpc" />
+              <FieldError message={errors.cooldown?.message} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-card-foreground">{jf.castType}</label>
+              <Input {...register('castType')} />
+              <FieldHint id="jutsu.castType" />
+              <FieldError message={errors.castType?.message} />
+            </div>
+          </div>
+        )}
 
         {/* Tudo daqui ate' a descricao so' vale para jutsu de jogador; o Jutsu NPC mostra so' nome, imagem e descricao. */}
         {!isNpc && (
