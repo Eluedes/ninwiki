@@ -350,16 +350,8 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
               <p className="text-xs text-muted-foreground">{jf.scrollTypeHint}</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">{jf.shop}</label>
-              <Input {...register('shop')} />
-            </div>
-            <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.castType}</label>
               <Input {...register('castType')} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">{jf.jutsuClass}</label>
-              <Input {...register('jutsuClass')} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.debuff}</label>

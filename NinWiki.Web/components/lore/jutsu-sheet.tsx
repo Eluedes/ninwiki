@@ -75,7 +75,6 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
   ];
   const acquisition: SheetRow[] = [
     { label: t.tier, value: `${has(jutsu.scrollType) ? jutsu.scrollType : t.tier} ${ROMAN[jutsu.tier] ?? jutsu.tier}` },
-    ...(has(jutsu.shop) ? [{ label: t.shop, value: jutsu.shop }] : []),
     ...(jutsu.isNpc ? [{ label: t.source, value: t.npcSource }] : []),
   ];
   const details: SheetRow[] = [
@@ -90,7 +89,6 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
     ...(has(jutsu.effect) ? [{ label: t.specialEffect, value: jutsu.effect }] : []),
   ];
   const battle: SheetRow[] = [
-    ...(has(jutsu.jutsuClass) ? [{ label: t.jutsuClass, value: jutsu.jutsuClass }] : []),
     ...(has(jutsu.range) ? [{ label: t.range, value: jutsu.range }] : []),
     ...(has(jutsu.allowedWeapons) ? [{ label: t.allowedWeapons, value: jutsu.allowedWeapons }] : []),
     ...(has(jutsu.debuff) ? [{ label: t.debuff, value: jutsu.debuff }] : []),
