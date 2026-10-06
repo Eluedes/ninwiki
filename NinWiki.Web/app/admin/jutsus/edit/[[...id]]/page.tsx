@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useForm, useWatch, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
 import { ImageUploadField } from '@/components/admin/image-upload-field';
@@ -209,6 +210,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.name}</label>
           <Input {...register('name')} />
+          <FieldHint id="jutsu.name" />
           <FieldError message={errors.name?.message} />
         </div>
 
@@ -217,6 +219,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             {t.idSlug} {isEdit && <span className="font-normal text-muted-foreground">{t.idSlugLocked}</span>}
           </label>
           <Input {...register('id')} disabled={isEdit} placeholder={t.idPlaceholder} />
+          <FieldHint id="jutsu.id" />
           <FieldError message={errors.id?.message} />
         </div>
 
@@ -292,6 +295,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.chakraCost}</label>
                 <Input type="number" {...register('chakraCost')} />
+                <FieldHint id="jutsu.chakraCost" />
                 <FieldError message={errors.chakraCost?.message} />
               </div>
             </>
@@ -299,6 +303,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.icon}</label>
             <Input {...register('icon')}  />
+            <FieldHint id="jutsu.icon" />
             <FieldError message={errors.icon?.message} />
           </div>
         </div>
@@ -310,16 +315,19 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.range}</label>
             <Input {...register('range')} placeholder={t.rangePlaceholder} />
+            <FieldHint id="jutsu.range" />
             <FieldError message={errors.range?.message} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.castTime}</label>
             <Input {...register('castTime')} placeholder={t.castTimePlaceholder} />
+            <FieldHint id="jutsu.castTime" />
             <FieldError message={errors.castTime?.message} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.cooldown}</label>
             <Input {...register('cooldown')} placeholder={t.cooldownPlaceholder} />
+            <FieldHint id="jutsu.cooldown" />
             <FieldError message={errors.cooldown?.message} />
           </div>
         </div>
@@ -327,6 +335,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{t.effect}</label>
           <Input {...register('effect')} placeholder={t.effectPlaceholder} />
+          <FieldHint id="jutsu.effect" />
           <FieldError message={errors.effect?.message} />
         </div>
         {/* Ficha do jutsu (mesmas secoes da pagina publica) */}
@@ -339,10 +348,12 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.requiredLevel}</label>
               <Input {...register('requiredLevel')} />
+              <FieldHint id="jutsu.requiredLevel" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.requiredStat}</label>
               <Input {...register('requiredStat')} />
+              <FieldHint id="jutsu.requiredStat" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.scrollType}</label>
@@ -352,14 +363,17 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.castType}</label>
               <Input {...register('castType')} />
+              <FieldHint id="jutsu.castType" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.debuff}</label>
               <Input {...register('debuff')} />
+              <FieldHint id="jutsu.debuff" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold">{jf.allowedWeapons}</label>
               <Input {...register('allowedWeapons')} placeholder="Blunt" maxLength={100} />
+              <FieldHint id="jutsu.allowedWeapons" />
             </div>
           </div>
 

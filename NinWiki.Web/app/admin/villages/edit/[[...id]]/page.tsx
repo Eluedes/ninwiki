@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
@@ -203,6 +204,7 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
                 },
               })}
             />
+            <FieldHint id="village.name" />
             <FieldError message={errors.name?.message} />
           </div>
           <div className="space-y-2">
@@ -226,11 +228,13 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
               <Input {...register('emblem')} />
               <EmojiPicker onPick={(emoji) => setValue('emblem', emoji, { shouldDirty: true, shouldValidate: true })} />
             </div>
+            <FieldHint id="village.emblem" />
             <FieldError message={errors.emblem?.message} />
           </div>
           <div className="space-y-2">
             <label className={label}>{t.element}</label>
             <Input {...register('element')} />
+            <FieldHint id="village.element" />
             <FieldError message={errors.element?.message} />
           </div>
           <div className="space-y-2">
@@ -258,11 +262,13 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
           <div className="space-y-2">
             <label className={label}>{t.leader}</label>
             <Input {...register('leader')} />
+            <FieldHint id="village.leader" />
             <FieldError message={errors.leader?.message} />
           </div>
           <div className="space-y-2">
             <label className={label}>{t.climate}</label>
             <Input {...register('climate')} />
+            <FieldHint id="village.climate" />
             <FieldError message={errors.climate?.message} />
           </div>
         </div>
@@ -270,6 +276,7 @@ export default function VillageEditorPage({ params }: { params: Promise<{ id?: s
         <div className="space-y-2">
           <label className={label}>{t.motto}</label>
           <Input {...register('motto')} />
+          <FieldHint id="village.motto" />
           <FieldError message={errors.motto?.message} />
         </div>
 
