@@ -10,7 +10,7 @@ const en: Hints = {
   // ---- Jutsu ----
   'jutsu.name': 'Name shown on the wiki. The Portuguese version is translated automatically if left empty below.',
   'jutsu.id': 'Used in the page link (/jutsus/<id>): lowercase, no spaces. It cannot be changed after creation.',
-  'jutsu.icon': 'Click one of the icons above. It is shown in lists, cards and on the jutsu sheet.',
+  'jutsu.icon': 'Pick an icon from the list. It is shown in lists, cards and on the jutsu sheet.',
   'jutsu.chakraCost': 'Chakra points (CP) spent on each cast.',
   'jutsu.range': 'How far the jutsu reaches, e.g. 10 Studs.',
   'jutsu.castTime': 'Delay before the jutsu fires, e.g. 1 Second.',
@@ -48,14 +48,14 @@ const en: Hints = {
   'village.motto': 'Short phrase that represents the village.',
   // ---- Mastery ----
   'mastery.name': 'Name shown on the wiki. The Portuguese version is translated automatically if left empty below.',
-  'mastery.icon': 'Click one of the icons above. It is shown in lists and cards.',
+  'mastery.icon': 'Pick an icon from the list. It is shown in lists and cards.',
   'mastery.color': 'Highlight color of the mastery in hex, e.g. #ef4444.',
 };
 
 const pt: Hints = {
   'jutsu.name': 'Nome mostrado no wiki. A versão em português é traduzida automaticamente se ficar vazia abaixo.',
   'jutsu.id': 'Usado no link da página (/jutsus/<id>): minúsculas, sem espaços. Não pode ser alterado depois de criado.',
-  'jutsu.icon': 'Clique em um dos ícones acima. Ele aparece em listas, cards e na ficha do jutsu.',
+  'jutsu.icon': 'Escolha um ícone na lista. Ele aparece em listas, cards e na ficha do jutsu.',
   'jutsu.chakraCost': 'Pontos de chakra (CP) gastos a cada uso.',
   'jutsu.range': 'Alcance do jutsu, ex.: 10 Studs.',
   'jutsu.castTime': 'Atraso antes do jutsu disparar, ex.: 1 Second.',
@@ -90,7 +90,7 @@ const pt: Hints = {
   'village.climate': 'Clima da vila, ex.: Hot and dry.',
   'village.motto': 'Frase curta que representa a vila.',
   'mastery.name': 'Nome mostrado no wiki. A versão em português é traduzida automaticamente se ficar vazia abaixo.',
-  'mastery.icon': 'Clique em um dos ícones acima. Ele aparece em listas e cards.',
+  'mastery.icon': 'Escolha um ícone na lista. Ele aparece em listas e cards.',
   'mastery.color': 'Cor de destaque da mastery em hexadecimal, ex.: #ef4444.',
 };
 
