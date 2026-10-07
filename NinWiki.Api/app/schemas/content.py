@@ -146,6 +146,20 @@ class DropEntryRead(DropEntrySchema):
         return data
 
 
+class DroppedByEntry(CamelModel):
+    """
+    Um mob que dropa este item (lado INVERSO do drop): calculado na leitura a partir das paginas de mob que ligam
+    (ou citam pelo nome) este item - ninguem cadastra isso a mao. So' mobs publicados entram.
+    """
+    slug: str
+    name: str
+    name_pt: str | None = None
+    image: str | None = None
+    icon: str
+    chance: float
+    chance_qualifier: DropChanceQualifier | None = None
+
+
 class ContentItemBase(CamelModel):
     """Campos compartilhados entre criar e editar - o "miolo" do formulario."""
     slug: str = Field(min_length=1, max_length=150)
@@ -244,6 +258,8 @@ class ContentItemRead(ContentItemBase):
     # padrao/motivo de DropEntryRead.dropped_item_slug logo acima (o
     # campo nao existe com esse nome no banco, so' a relacao).
     cast_village_name: str | None = None
+    # Mobs que dropam este item (automatico, ver DroppedByEntry); preenchido pelos GETs de ficha - nas demais respostas fica [].
+    dropped_by: list[DroppedByEntry] = []
 
     @model_validator(mode="before")
     @classmethod
@@ -252,7 +268,7 @@ class ContentItemRead(ContentItemBase):
         if hasattr(data, "cast_village") and not isinstance(data, dict):
             village = data.cast_village
             return {
-                **{f: getattr(data, f, None) for f in cls.model_fields if f != "cast_village_name"},
+                **{f: getattr(data, f, None) for f in cls.model_fields if f not in ("cast_village_name", "dropped_by")},
                 "cast_village_name": village.name if village is not None else None,
             }
         return data

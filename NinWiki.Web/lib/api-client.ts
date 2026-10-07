@@ -112,7 +112,20 @@ export interface ApiContentItem {
   itemType: ItemType | null;
   attributes: ApiAttributeRow[];
   drops: ApiDropEntry[];
+  // Mobs que dropam esta entry - calculado pela API a partir das paginas de mob (nunca cadastrado a mao).
+  droppedBy: ApiDroppedBy[];
   status: 'draft' | 'published';
+}
+
+/** Um mob que dropa a entry (espelha DroppedByEntry no backend). */
+export interface ApiDroppedBy {
+  slug: string;
+  name: string;
+  namePt: string | null;
+  image: string | null;
+  icon: string;
+  chance: number;
+  chanceQualifier: 'over' | 'below' | null;
 }
 
 // Versao enxuta usada nas listagens (sem attributes/drops/lore/synergy) -

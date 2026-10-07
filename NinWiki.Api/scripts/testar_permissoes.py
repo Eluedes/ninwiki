@@ -259,6 +259,24 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}, headers=A)
     r = await c.get(f"/content-items/{mob_id}", headers=C)
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
+    # "Dropado por": automatico - o item lista os mobs PUBLICADOS que o ligam (ou citam pelo nome) nos drops
+    r = await c.get(f"/content-items/{drop_item_id}", headers=C)
+    check("item NAO lista mob em rascunho como 'dropado por'", r.status_code == 200 and r.json()["droppedBy"] == [], r.text[:200])
+    item_nome = r.json()["name"]
+    r = await c.put(f"/content-items/{mob_id}", json={**novo_conteudo("drop-mob"), "category": "mobs", "status": "published", "drops": [
+        {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id}]}, headers=A)
+    check("admin publica o mob com drop ligado", r.status_code == 200, r.text[:160])
+    await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "status": "published", "attributes": [], "drops": []}, headers=A)   # o item tambem precisa estar publicado para o anonimo ve-lo
+    r = await c.get(f"/content-items/{drop_item_id}")
+    db_mobs = r.json().get("droppedBy", [])
+    check("item mostra o mob publicado que o dropa (automatico, chance 10)", len(db_mobs) == 1 and db_mobs[0]["slug"] == f"{SLUG}-drop-mob" and db_mobs[0]["chance"] == 10, r.text[:240])
+    r = await c.post("/content-items", json={**novo_conteudo("drop-mob2"), "category": "mobs", "drops": [
+        {"itemName": item_nome, "chance": 3}]}, headers=C)
+    mob2_id = r.json()["id"]
+    await c.put(f"/content-items/{mob2_id}", json={**novo_conteudo("drop-mob2"), "category": "mobs", "status": "published", "drops": [
+        {"itemName": item_nome, "chance": 3}]}, headers=A)
+    r = await c.get(f"/content-items/slug/{SLUG}-drop-item")
+    check("drop so' com o NOME do item (sem ligacao) tambem conta como 'dropado por'", len(r.json().get("droppedBy", [])) == 2, r.text[:240])
     r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
     check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("unico"), "category": "weapons", "rarity": "unique"}, headers=C)
