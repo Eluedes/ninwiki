@@ -130,6 +130,7 @@ ROTAS_PUBLICAS = {
     # escrita "publica" de proposito: cada uma tem a sua propria protecao
     ("POST", "/auth/dev-login"),   # so' funciona em development + confere a origem
     ("POST", "/auth/logout"),      # sem sessao so' limpa o cookie
+    ("POST", "/reports"),           # visitante avisa conteudo desatualizado / erro de traducao (origem + limites + isca + alvo conferido)
     ("POST", "/client-errors"),    # o navegador do visitante avisa que o site quebrou (origem + limite por IP + teto por hora)
 }
 
@@ -2291,6 +2292,72 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     async with _SessM() as db:
         await db.execute(text("DELETE FROM error_events WHERE fingerprint LIKE 'teste-manut-%'"))
         await db.execute(text("DELETE FROM audit_log WHERE action = 'teste-manut'"))
+        await db.commit()
+
+    secao("33) Reports de visitantes: conteudo desatualizado / erro de traducao (publico com defesas; so' reports.manage le e resolve)")
+    from app.core.rate_limit import limiter as _lim
+    from app.core.database import AsyncSessionLocal as _SessR
+    ORIGEM = {"Origin": settings.frontend_origin}
+    async with _SessR() as db:
+        jutsu_id = (await db.execute(text("SELECT id FROM jutsus LIMIT 1"))).scalar()
+        mastery_id = (await db.execute(text("SELECT id FROM masteries LIMIT 1"))).scalar()
+    base = {"targetType": "content", "targetId": f"{SLUG}-drop-item", "kind": "translation", "message": "A traducao deste item esta errada no nome.", "locale": "pt"}
+    _lim._hits.clear()
+    r = await c.post("/reports", json=base, headers=ORIGEM)
+    check("visitante anonimo envia report de um conteudo publicado (204)", r.status_code == 204, f"veio {r.status_code} {r.text[:120]}")
+    r = await c.get("/reports?status=all", headers=A)
+    meus = [x for x in r.json() if x["targetId"] == f"{SLUG}-drop-item"] if r.status_code == 200 else []
+    check("Adm ve o report; nome e endereco da pagina vem do banco (nao do visitante)", len(meus) == 1 and meus[0]["targetPath"] == f"/detail/{SLUG}-drop-item" and meus[0]["status"] == "open" and "ip" not in str(meus[0]).lower(), r.text[:240])
+    rep_id = meus[0]["id"] if meus else None
+    for tipo, alvo in (("jutsu", jutsu_id), ("mastery", mastery_id)):
+        if alvo:
+            r = await c.post("/reports", json={**base, "targetType": tipo, "targetId": alvo, "kind": "outdated"}, headers=ORIGEM)
+            check(f"report de {tipo} e' aceito", r.status_code == 204, f"veio {r.status_code} {r.text[:120]}")
+    _lim._hits.clear()
+    r = await c.post("/reports", json=base, headers=ORIGEM)
+    r2 = await c.get("/reports?status=all", headers=A)
+    check("mesmo texto, mesma pagina e mesmo IP nao cria duplicado", r.status_code == 204 and len([x for x in r2.json() if x["targetId"] == f"{SLUG}-drop-item"]) == 1, r2.text[:200])
+    _lim._hits.clear()
+    r = await c.post("/reports", json=base, headers={"Origin": "https://site-malicioso.example"})
+    check("origem estranha e' barrada (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.post("/reports", json={**base, "message": "curto"}, headers=ORIGEM)
+    check("mensagem curta demais e' recusada (422)", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/reports", json={**base, "message": "x" * 1001}, headers=ORIGEM)
+    check("mensagem acima de 1000 caracteres e' recusada (422)", r.status_code == 422, f"veio {r.status_code}")
+    _lim._hits.clear()
+    r = await c.post("/reports", json={**base, "message": "veja http://a.com e http://b.com por favor"}, headers=ORIGEM)
+    check("mais de 1 link e' recusado (422)", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/reports", json={**base, "targetId": "nao-existe-teste-perm"}, headers=ORIGEM)
+    check("pagina que nao existe e' recusada (404)", r.status_code == 404, f"veio {r.status_code}")
+    await c.post("/content-items", json=novo_conteudo("rep-rascunho"), headers=C)   # fica em rascunho (Creator so' cria rascunho)
+    r = await c.post("/reports", json={**base, "targetId": f"{SLUG}-rep-rascunho"}, headers=ORIGEM)
+    check("pagina em rascunho nao recebe report (404)", r.status_code == 404, f"veio {r.status_code}")
+    _lim._hits.clear()
+    r = await c.post("/reports", json={**base, "kind": "hack"}, headers=ORIGEM)
+    check("tipo de report invalido e' recusado (422)", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/reports", json={**base, "message": "texto de robo bem comprido aqui", "website": "http://spam.example"}, headers=ORIGEM)
+    r2 = await c.get("/reports?status=all", headers=A)
+    check("robo que preenche o campo isca: 204 mas nada e' guardado", r.status_code == 204 and not any("robo" in x["message"] for x in r2.json()), r2.text[:160])
+    _lim._hits.clear()
+    codigos = [(await c.post("/reports", json={**base, "message": f"flood numero {i} do teste de limite"}, headers=ORIGEM)).status_code for i in range(6)]
+    check("limite por IP: depois de 3 por minuto vem 429", 429 in codigos and codigos[0] == 204, str(codigos))
+    _lim._hits.clear()
+    r = await c.get("/reports")
+    check("anonimo NAO lista reports (401)", r.status_code == 401, f"veio {r.status_code}")
+    r = await c.get("/reports", headers=C)
+    check("Creator NAO ve reports por padrao (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.patch(f"/reports/{rep_id}", json={"status": "resolved"}, headers=A)
+    check("Adm marca como resolvido (guarda quem e quando)", r.status_code == 200 and r.json()["status"] == "resolved" and r.json()["handledBy"], r.text[:200])
+    r = await c.get("/reports", headers=A)
+    check("report resolvido some da lista de abertos", all(x["id"] != rep_id for x in r.json()), r.text[:160])
+    r = await c.patch(f"/reports/{rep_id}", json={"status": "open"}, headers=A)
+    check("reabrir limpa quem resolveu", r.status_code == 200 and r.json()["handledBy"] is None, r.text[:200])
+    r = await c.patch(f"/reports/{rep_id}", json={"status": "qualquer"}, headers=A)
+    check("status invalido e' recusado (422)", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.delete(f"/reports/{rep_id}", headers=A)
+    check("Adm apaga o report (204)", r.status_code == 204, f"veio {r.status_code}")
+    async with _SessR() as db:
+        await db.execute(text("DELETE FROM content_reports WHERE target_id LIKE :p OR target_id = 'nao-existe-teste-perm' OR message LIKE 'flood numero%' OR ip_address IS NOT NULL AND created_at > now() - interval '1 hour'"), {"p": f"{SLUG}%"})
         await db.commit()
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")

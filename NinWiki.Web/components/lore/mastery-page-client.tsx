@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { JutsuCard } from '@/components/lore/jutsu-card';
 import { Infobox } from '@/components/lore/infobox';
+import { ReportButton } from '@/components/report/report-button';
 import { PageHeader } from '@/components/lore/page-header';
 import { MasteryVisual } from '@/components/lore/mastery-visual';
 import { RichText } from '@/components/lore/rich-text';
@@ -66,6 +67,7 @@ export function MasteryPageClient({
           />
         }
         accentColor={mastery.color}
+        action={<ReportButton targetType="mastery" targetId={mastery.id} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">

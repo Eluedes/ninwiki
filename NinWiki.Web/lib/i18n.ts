@@ -76,6 +76,7 @@ export interface Dictionary {
   maintenance: { title: string; text: string; back: string };
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
+  report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
   detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
   masteryDetail: {
@@ -143,7 +144,8 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    reportsPage: { title: string; subtitle: string; open: string; resolved: string; dismissed: string; all: string; allKinds: string; kinds: Record<string, string>; targets: Record<string, string>; empty: string; loadError: string; actionError: string; resolve: string; dismiss: string; reopen: string; delete: string; confirmDelete: string; openPage: string; refresh: string; reportedOn: string; handledBy: string; language: string };
     errorsPage: {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
       occurrences: string; firstSeen: string; lastSeen: string; where: string; route: string; status: string; resolve: string; reopen: string; delete: string;
@@ -326,6 +328,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       back: 'Voltar para o Blog',
       by: 'por',
       updated: 'Atualizado em',
+    },
+    report: {
+      button: 'Reportar', title: 'Reportar um problema', subtitle: 'Achou uma informação desatualizada ou um erro de tradução? Conte pra gente — a equipe vai revisar.',
+      kindLabel: 'O que está errado?', outdated: 'Informação desatualizada', translation: 'Erro de tradução', other: 'Outro problema',
+      messageLabel: 'Descreva o problema', placeholder: 'Ex.: A chance de drop mudou para 5% na última atualização.',
+      send: 'Enviar report', sending: 'Enviando…', cancel: 'Cancelar', thanks: 'Obrigado! Seu report foi enviado para a equipe.', close: 'Fechar',
+      tooShort: 'Escreva pelo menos 10 caracteres.', error: 'Não foi possível enviar o report. Tente de novo daqui a pouco.',
     },
     catalog: {
       level: 'Nível',
@@ -621,12 +630,21 @@ export const dictionaries: Record<Locale, Dictionary> = {
         staff: 'Equipe',
         permissions: 'Permissões',
         errors: 'Erros',
+        reports: 'Reports',
         villages: 'Vilas',
         organizations: 'Organizações',
         backToSite: 'Voltar ao site',
         groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
         breadcrumbHome: 'Painel',
         viewSite: 'Ver site',
+      },
+      reportsPage: {
+        title: 'Reports dos visitantes', subtitle: 'Informações desatualizadas e erros de tradução apontados nas páginas.',
+        open: 'Abertos', resolved: 'Resolvidos', dismissed: 'Descartados', all: 'Todos', allKinds: 'Todos os tipos',
+        kinds: { outdated: 'Desatualizado', translation: 'Tradução', other: 'Outro' }, targets: { content: 'Conteúdo', jutsu: 'Jutsu', mastery: 'Mastery' },
+        empty: 'Nenhum report por aqui.', loadError: 'Não foi possível carregar os reports.', actionError: 'Não foi possível concluir a ação.',
+        resolve: 'Resolver', dismiss: 'Descartar', reopen: 'Reabrir', delete: 'Apagar', confirmDelete: 'Apagar este report?',
+        openPage: 'Abrir página', refresh: 'Atualizar', reportedOn: 'Enviado em', handledBy: 'Tratado por', language: 'Idioma do visitante',
       },
       errorsPage: {
         title: 'Erros e problemas', subtitle: 'Tudo que quebrou no wiki (API, site, tradução, ataques). O bot também avisa no Discord.',
@@ -662,7 +680,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', imagecats: 'Categorias do banco de imagens (desmarque para TRANCAR a categoria para este cargo)', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log', analytics: 'Acessos' },
         names: {
           'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
-          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores',
+          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'reports.manage': 'Ver e tratar os reports dos visitantes',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
           'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)', 'media.reset_ids': 'Renumerar os IDs do banco de imagens', 'media.closed': 'Ver a categoria fechada do banco de imagens', 'media.cat.weapon': 'Ver imagens: Armas', 'media.cat.clothing': 'Ver imagens: Roupas', 'media.cat.consumable': 'Ver imagens: Consumíveis', 'media.cat.currency': 'Ver imagens: Moedas', 'media.cat.material': 'Ver imagens: Materiais', 'media.cat.ring': 'Ver imagens: Anéis', 'media.cat.scroll': 'Ver imagens: Pergaminhos', 'media.cat.npc': 'Ver imagens: NPCs', 'media.cat.monster': 'Ver imagens: Monstros', 'media.cat.furniture': 'Ver imagens: Móveis', 'media.cat.hair_beard': 'Ver imagens: Cabelo/Barba', 'media.cat.other': 'Ver imagens: Outros', 'media.cat.none': 'Ver imagens: Sem categoria',
@@ -1020,6 +1038,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       by: 'by',
       updated: 'Updated on',
     },
+    report: {
+      button: 'Report', title: 'Report a problem', subtitle: 'Found outdated information or a translation mistake? Tell us — the team will review it.',
+      kindLabel: 'What is wrong?', outdated: 'Outdated information', translation: 'Translation error', other: 'Something else',
+      messageLabel: 'Describe the problem', placeholder: 'e.g. The drop chance changed to 5% in the latest update.',
+      send: 'Send report', sending: 'Sending…', cancel: 'Cancel', thanks: 'Thank you! Your report was sent to the team.', close: 'Close',
+      tooShort: 'Please write at least 10 characters.', error: 'Could not send the report. Try again in a moment.',
+    },
     catalog: {
       level: 'Level',
       levelRange: 'Levels',
@@ -1314,12 +1339,21 @@ export const dictionaries: Record<Locale, Dictionary> = {
         staff: 'Staff',
         permissions: 'Permissions',
         errors: 'Errors',
+        reports: 'Reports',
         villages: 'Villages',
         organizations: 'Organizations',
         backToSite: 'Back to site',
         groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
         breadcrumbHome: 'Admin',
         viewSite: 'View site',
+      },
+      reportsPage: {
+        title: 'Visitor reports', subtitle: 'Outdated information and translation errors reported on the pages.',
+        open: 'Open', resolved: 'Resolved', dismissed: 'Dismissed', all: 'All', allKinds: 'All types',
+        kinds: { outdated: 'Outdated', translation: 'Translation', other: 'Other' }, targets: { content: 'Content', jutsu: 'Jutsu', mastery: 'Mastery' },
+        empty: 'No reports here.', loadError: 'Could not load the reports.', actionError: 'Could not complete the action.',
+        resolve: 'Resolve', dismiss: 'Dismiss', reopen: 'Reopen', delete: 'Delete', confirmDelete: 'Delete this report?',
+        openPage: 'Open page', refresh: 'Refresh', reportedOn: 'Reported on', handledBy: 'Handled by', language: 'Visitor language',
       },
       errorsPage: {
         title: 'Errors and problems', subtitle: 'Everything that broke in the wiki (API, website, translation, attacks). The bot also alerts on Discord.',
@@ -1355,7 +1389,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', imagecats: 'Image library categories (untick to LOCK a category for this role)', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log', analytics: 'Traffic' },
         names: {
           'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
-          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers',
+          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'reports.manage': 'View and handle visitor reports',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
           'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.upload': 'Upload images to the image library (bulk)', 'media.reset_ids': 'Renumber the image library IDs', 'media.closed': 'See the closed category of the image library', 'media.cat.weapon': 'See images: Weapons', 'media.cat.clothing': 'See images: Clothing', 'media.cat.consumable': 'See images: Consumables', 'media.cat.currency': 'See images: Currency', 'media.cat.material': 'See images: Materials', 'media.cat.ring': 'See images: Rings', 'media.cat.scroll': 'See images: Scrolls', 'media.cat.npc': 'See images: NPCs', 'media.cat.monster': 'See images: Monsters', 'media.cat.furniture': 'See images: Furniture', 'media.cat.hair_beard': 'See images: Hair/Beard', 'media.cat.other': 'See images: Other', 'media.cat.none': 'See images: Uncategorized',

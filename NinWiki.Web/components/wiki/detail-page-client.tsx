@@ -7,6 +7,7 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
+import { ReportButton } from '@/components/report/report-button';
 import { DetailSidebar } from '@/components/wiki/detail-sidebar';
 import { CatalogCard } from '@/components/wiki/catalog-card';
 import { WikiImage } from '@/components/wiki/wiki-image';
@@ -58,13 +59,17 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <Link
-        href={`/catalog/${entry.category}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {dict.detail.back}
-      </Link>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <Link
+          href={`/catalog/${entry.category}`}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {dict.detail.back}
+        </Link>
+        {/* Visitante avisa informacao desatualizada / erro de traducao desta pagina (vai para /admin/reports) */}
+        <ReportButton targetType="content" targetId={entry.slug} />
+      </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="md:col-span-2 space-y-6">

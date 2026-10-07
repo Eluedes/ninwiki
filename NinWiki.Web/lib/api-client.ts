@@ -745,7 +745,7 @@ export type StaffRole = 'super_admin' | 'admin' | 'creator';
 // Nomes das permissoes - espelham app/core/permissions.py::Permission no backend.
 export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
-  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate'
+  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload' | 'media.reset_ids' | 'media.closed'
@@ -1510,4 +1510,49 @@ export function getSteamNewsStatus(): Promise<ApiSteamStatus> {
 export function runSteamNewsImport(post?: string, refresh = false): Promise<ApiSteamStatus> {
   const q = post?.trim() ? `?post=${encodeURIComponent(post.trim())}` : refresh ? '?refresh=true' : '';   // refresh = refaz TODOS os posts ja' importados   // com `post` (link ou numero) importa SO' esse post da Steam
   return apiFetch(`/steam-news/import${q}`, { method: 'POST' });
+}
+
+
+// ---- Reports de visitantes (conteudo desatualizado / erro de traducao) ----
+
+export type ReportTargetType = 'content' | 'jutsu' | 'mastery';
+export type ReportKind = 'outdated' | 'translation' | 'other';
+export type ReportStatus = 'open' | 'resolved' | 'dismissed';
+
+/** Um report como o painel ve' (espelha ReportRead no backend; sem IP). */
+export interface ApiReport {
+  id: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  targetName: string;
+  targetPath: string;
+  kind: ReportKind;
+  message: string;
+  locale: string | null;
+  status: ReportStatus;
+  createdAt: string;
+  handledBy: string | null;
+  handledAt: string | null;
+}
+
+/** Visitante (sem login) envia um report sobre uma pagina. `website` e' a "isca" anti-robo e deve ir sempre vazia. */
+export function submitReport(input: { targetType: ReportTargetType; targetId: string; kind: ReportKind; message: string; locale: string; website: string }): Promise<void> {
+  return apiFetch('/reports', { method: 'POST', body: JSON.stringify(input) }, true);
+}
+
+/** Painel: lista os reports (por padrao os abertos). */
+export function listReports(status: ReportStatus | 'all', kind?: ReportKind): Promise<ApiReport[]> {
+  const params = new URLSearchParams({ status });
+  if (kind) params.set('kind', kind);
+  return apiFetch(`/reports?${params}`);
+}
+
+/** Painel: marca o report como resolvido, descartado ou reabre. */
+export function setReportStatus(id: string, status: ReportStatus): Promise<ApiReport> {
+  return apiFetch(`/reports/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+}
+
+/** Painel: apaga o report. */
+export function deleteReport(id: string): Promise<void> {
+  return apiFetch(`/reports/${id}`, { method: 'DELETE' });
 }
