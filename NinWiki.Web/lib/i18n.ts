@@ -76,7 +76,7 @@ export interface Dictionary {
   maintenance: { title: string; text: string; back: string };
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
-  catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterEquipment: string; itemsFilterPack: string; itemsFilterSpecial: string };
+  catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
   detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
   masteryDetail: {
     notFound: string; backToMasteries: string; elemental: string; nonElemental: string;
@@ -240,7 +240,7 @@ export interface Dictionary {
     contentEditor: {
       catMobs: string; catItems: string; catWeapons: string; catMissions: string; catGuides: string;
       mobMonster: string; mobBoss: string; mobNpc: string; mobMount: string;
-      itemGeneral: string; itemRing: string; itemAccessory: string; itemShirt: string; itemVest: string; itemPant: string; itemHat: string; itemMask: string; itemShoe: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string; itemPack: string; itemEquipment: string; equipmentKind: string;
+      itemGeneral: string; itemRing: string; itemAccessory: string; itemShirt: string; itemVest: string; itemPant: string; itemHat: string; itemMask: string; itemShoe: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string; itemPack: string; itemWardrobe: string; wardrobeKind: string;
       editTitle: string; newTitle: string;
       name: string; category: string; mobType: string; itemType: string; slugLabel: string; back: string; icon: string;
       speed: string; speedPlaceholder: string; requirement: string; requirementPlaceholder: string; addRequirement: string;
@@ -338,7 +338,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       itemsFilterAll: 'Todos',
       itemsFilterConsumables: 'Consumíveis',
       itemsFilterMaterials: 'Materiais',
-      itemsFilterEquipment: 'Equipamentos',
+      itemsFilterWardrobe: 'Guarda-roupa',
+      itemsFilterRings: 'Anéis',
       itemsFilterPack: 'Pack',
       itemsFilterSpecial: 'Itens Especiais',
     },
@@ -906,7 +907,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         catMobs: 'Mobs', catItems: 'Itens', catWeapons: 'Armas', catMissions: 'Missões', catGuides: 'Guias',
         mobMonster: 'Monstro', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Montaria',
         itemGeneral: 'Geral', itemRing: 'Ring', itemAccessory: 'Acessório', itemShirt: 'Camisa', itemVest: 'Colete', itemPant: 'Calça', itemHat: 'Chapéu', itemMask: 'Máscara', itemShoe: 'Sapato', itemConsumable: 'Consumível', itemMaterial: 'Material',
-        itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade', itemPack: 'Pack', itemEquipment: 'Equipamento', equipmentKind: 'Tipo de equipamento',
+        itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade', itemPack: 'Pack', itemWardrobe: 'Guarda-roupa', wardrobeKind: 'Tipo de peça',
         editTitle: 'Editar entry', newTitle: 'Nova entry',
         name: 'Nome', category: 'Categoria', mobType: 'Tipo de mob', itemType: 'Tipo de item',
         slugLabel: 'Slug (identificador na URL)',
@@ -1029,7 +1030,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       itemsFilterAll: 'All',
       itemsFilterConsumables: 'Consumables',
       itemsFilterMaterials: 'Materials',
-      itemsFilterEquipment: 'Equipment',
+      itemsFilterWardrobe: 'Wardrobe',
+      itemsFilterRings: 'Rings',
       itemsFilterPack: 'Pack',
       itemsFilterSpecial: 'Special Items',
     },
@@ -1597,7 +1599,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         catMobs: 'Mobs', catItems: 'Items', catWeapons: 'Weapons', catMissions: 'Missions', catGuides: 'Guides',
         mobMonster: 'Monster', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Mount',
         itemGeneral: 'General', itemRing: 'Ring', itemAccessory: 'Accessory', itemShirt: 'Shirt', itemVest: 'Vest', itemPant: 'Pant', itemHat: 'Hat', itemMask: 'Mask', itemShoe: 'Shoe', itemConsumable: 'Consumable', itemMaterial: 'Material',
-        itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority', itemPack: 'Pack', itemEquipment: 'Equipment', equipmentKind: 'Equipment type',
+        itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority', itemPack: 'Pack', itemWardrobe: 'Wardrobe', wardrobeKind: 'Piece type',
         editTitle: 'Edit entry', newTitle: 'New entry',
         name: 'Name', category: 'Category', mobType: 'Mob type', itemType: 'Item type',
         slugLabel: 'Slug (URL identifier)',

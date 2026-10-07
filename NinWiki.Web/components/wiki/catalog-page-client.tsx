@@ -6,7 +6,7 @@
 // pai (app/(wiki)/catalog/[category]/page.tsx). Precisa ser Client
 // Component porque usa useState (texto da busca, secoes recolhidas).
 
-import { EQUIPMENT_TYPES } from '@/lib/item-types';
+import { WARDROBE_TYPES } from '@/lib/item-types';
 import { useState, useMemo } from 'react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { CatalogCard } from '@/components/wiki/catalog-card';
@@ -29,12 +29,13 @@ import type { Category } from '@/lib/types';
 // o estado null already mostra tudo sem filtro nenhum (usado so' como
 // valor inicial e quando a pessoa clica de novo no filtro ja' ativo,
 // pra' "desligar" ele), mas nao existe um botao VISIVEL com esse nome.
-type ItemsFilterKey = 'consumables' | 'materials' | 'equipment' | 'pack' | 'special';
+type ItemsFilterKey = 'consumables' | 'materials' | 'wardrobe' | 'ring' | 'pack' | 'special';
 
 const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   consumables: ['consumable'],
   materials: ['currency', 'material'],   // Moeda (currency) fica em Materials; 'material' so' existe em itens antigos
-  equipment: [...EQUIPMENT_TYPES],   // Ring, Accessory e as pecas de roupa ficam juntos
+  wardrobe: [...WARDROBE_TYPES],     // Accessory e as pecas de roupa ficam juntos (Guarda-roupa)
+  ring: ['ring'],                    // Ring tem categoria propria
   pack: ['pack'],                    // catalogo Pack
   special: ['general', 'cast', 'authority'],
 };
@@ -129,7 +130,8 @@ export function CatalogPageClient({
     () => ({
       consumables: dict.catalog.itemsFilterConsumables,
       materials: dict.catalog.itemsFilterMaterials,
-      equipment: dict.catalog.itemsFilterEquipment,
+      wardrobe: dict.catalog.itemsFilterWardrobe,
+      ring: dict.catalog.itemsFilterRings,
       pack: dict.catalog.itemsFilterPack,
       special: dict.catalog.itemsFilterSpecial,
     }),
@@ -205,7 +207,7 @@ export function CatalogPageClient({
           em vez de precisar de um botao separado pra isso. */}
       {category === 'items' && (
         <div className="mb-6 flex flex-wrap gap-1.5">
-          {(['consumables', 'materials', 'equipment', 'pack', 'special'] as const).map((key) => {
+          {(['consumables', 'materials', 'wardrobe', 'ring', 'pack', 'special'] as const).map((key) => {
             return (
               <button
                 key={key}
