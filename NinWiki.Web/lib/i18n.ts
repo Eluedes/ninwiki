@@ -58,6 +58,7 @@ export interface JutsuInfoDict {
 export interface Dictionary {
   siteName: string;
   siteTagline: string;
+  compare: { title: string; subtitle: string; search: string; noResults: string; change: string; pickBoth: string; button: string };
   nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; map: string; blog: string };
   home: { welcome: string; subtitle: string; browseAll: string };
   news: { title: string; subtitle: string; readMore: string; viewAll: string; empty: string };
@@ -282,6 +283,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
   pt: {
     siteName: 'Nin Online Wiki',
     siteTagline: 'A enciclopédia definitiva do mundo Nin',
+    compare: {
+      title: 'Comparar itens', subtitle: 'Escolha dois itens ou armas para ver os dados lado a lado. As linhas diferentes ficam destacadas.',
+      search: 'Buscar item ou arma…', noResults: 'Nada encontrado.', change: 'Trocar', pickBoth: 'Escolha os dois lados para comparar.', button: 'Comparar',
+    },
     nav: {
       home: 'Início',
       blog: 'Blog',
@@ -997,6 +1002,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
   en: {
     siteName: 'Nin Online Wiki',
     siteTagline: 'The definitive encyclopedia of the Nin world',
+    compare: {
+      title: 'Compare items', subtitle: 'Pick two items or weapons to see their data side by side. Rows that differ are highlighted.',
+      search: 'Search item or weapon…', noResults: 'Nothing found.', change: 'Change', pickBoth: 'Pick both sides to compare.', button: 'Compare',
+    },
     nav: {
       home: 'Home',
       blog: 'Blog',

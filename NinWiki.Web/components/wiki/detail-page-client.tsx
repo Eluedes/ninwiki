@@ -15,7 +15,7 @@ import { RichText, extractPlainText } from '@/components/lore/rich-text';
 import { cn, itemHasStack, shouldShowLevel, signedValue } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
-import { ArrowLeft, Heart, Languages, Layers, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Heart, Languages, Layers, Scale, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem, ApiContentItemSummary } from '@/lib/api-client';
 
 /** Selo do subtipo do mob (o mob comum nao tem selo). */
@@ -76,6 +76,12 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
           )}
           {entry.updatedAt && (
             <span className="text-xs text-muted-foreground">{dict.detail.updatedOn} {new Date(entry.updatedAt).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          )}
+          {/* Itens e armas podem ser comparados lado a lado com outro */}
+          {(entry.category === 'items' || entry.category === 'weapons') && (
+            <Link href={`/compare?a=${entry.slug}`} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-card-foreground">
+              <Scale className="h-3.5 w-3.5" />{dict.compare.button}
+            </Link>
           )}
           {/* Visitante avisa informacao desatualizada / erro de traducao desta pagina (vai para /admin/reports) */}
           <ReportButton targetType="content" targetId={entry.slug} />

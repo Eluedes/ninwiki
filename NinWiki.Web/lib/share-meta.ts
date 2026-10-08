@@ -9,7 +9,11 @@ const FALLBACK_IMAGE = '/images/logo/nin-logo-blood.png';
 
 /** Monta title/description/openGraph/twitter para uma pagina. `html` e' o texto rico (descricao) de onde sai o resumo. */
 export function shareMetadata(opts: { title: string; html?: string | null; path: string; image?: string | null }): Metadata {
-  const description = opts.html ? extractPlainText(opts.html).replace(/\s+/g, ' ').trim().slice(0, 200) || undefined : undefined;
+  // O campo pode ser JSON do Tiptap ou HTML: extractPlainText resolve o JSON; o resto tira as tags e decodifica as entidades comuns.
+  const plain = opts.html
+    ? extractPlainText(opts.html).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    : '';
+  const description = plain.replace(/\s+/g, ' ').trim().slice(0, 200) || undefined;
   const image = opts.image || FALLBACK_IMAGE;
   return {
     title: opts.title,
