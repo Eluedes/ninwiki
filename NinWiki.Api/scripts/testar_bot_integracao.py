@@ -42,7 +42,6 @@ from ninwiki_bot.config import BotSettings  # noqa: E402
 try:
     import discord
     from discord import app_commands
-    from ninwiki_bot.staff_commands import StaffGroup
     TEM_DISCORD = True
 except ImportError:
     TEM_DISCORD = False
@@ -180,47 +179,23 @@ async def testar() -> None:
     # ------------------------------------------------------------------
     secao("2) Cliente HTTP do bot x API real")
     settings.bot_api_token = TOKEN
-    lista = await api.list_staff(IDS["sadm"])
-    check("S.Adm lista a equipe pelo cliente do bot", any(m["discordId"] == str(IDS["sadm"]) for m in lista))
-    check("Discord ID chega como TEXTO", all(isinstance(m["discordId"], str) for m in lista))
-    novo = await api.add_staff(IDS["sadm"], IDS["alvo"], "creator", "TESTE_alvo")
-    check("S.Adm cadastra Creator", novo["role"] == "creator" and novo["discordId"] == str(IDS["alvo"]))
-    try:
-        await api.add_staff(IDS["adm"], IDS["alvo2"], "admin", "x")
-        check("Adm cadastrar Adm e' barrado", False)
-    except ApiError as e:
-        check("Adm cadastrar Adm e' barrado (403, msg em portugues)", e.status_code == 403 and ("permission" in e.detail.lower() or "role" in e.detail.lower()), e.detail)
-    try:
-        await api.list_staff(IDS["estranho"])
-        check("quem nao e' da equipe e' barrado", False)
-    except ApiError as e:
-        check("quem nao e' da equipe e' barrado (403)", e.status_code == 403 and "team" in e.detail, e.detail)
-    try:
-        await api.list_staff(IDS["creator"])
-        check("Creator listar e' barrado", False)
-    except ApiError as e:
-        check("Creator listar e' barrado (403)", e.status_code == 403)
-    try:
-        await api.add_staff(IDS["sadm"], IDS["alvo"], "creator", "x")
-        check("cadastro repetido e' barrado", False)
-    except ApiError as e:
-        check("cadastro repetido (409)", e.status_code == 409, e.detail)
-    alt = await api.change_role(IDS["sadm"], IDS["alvo"], "admin")
-    check("S.Adm promove alvo a Adm", alt["role"] == "admin")
-    off = await api.set_active(IDS["sadm"], IDS["alvo"], False)
-    check("S.Adm desativa", off["isActive"] is False)
-    on = await api.set_active(IDS["sadm"], IDS["alvo"], True)
-    check("S.Adm reativa", on["isActive"] is True)
+    DESDE = "2000-01-01T00:00:00+00:00"
+    erros = await api.errors_since(DESDE)
+    check("cliente do bot conversa com a API com o token certo (lista de erros)", isinstance(erros, list))
+    for metodo, rota in (("GET", f"/bot/me?invokerDiscordId={IDS['sadm']}"), ("GET", f"/bot/staff?invokerDiscordId={IDS['sadm']}"),
+                         ("POST", "/bot/staff"), ("POST", "/bot/audit-log/clear"), ("PATCH", f"/bot/staff/{IDS['alvo']}/role")):
+        r = await http.request(metodo, rota, headers={"X-Bot-Token": TOKEN}, json={} if metodo != "GET" else None)
+        check(f"{metodo} {rota.split('?')[0]}: a gestao da equipe pelo bot NAO existe mais (404/405)", r.status_code in (404, 405), f"veio {r.status_code}")
 
     errado = NinWikiApi("http://test", "token-errado-1234567890", client=http)
     try:
-        await errado.list_staff(IDS["sadm"])
+        await errado.errors_since(DESDE)
         check("token do bot errado e' barrado", False)
     except ApiError as e:
         check("token do bot errado (401) com mensagem clara", e.status_code == 401 and "BOT_API_TOKEN" in e.detail, e.detail)
     settings.bot_api_token = ""
     try:
-        await api.list_staff(IDS["sadm"])
+        await api.errors_since(DESDE)
         check("API com bot desligado", False)
     except ApiError as e:
         check("API com bot desligado (404) explica o motivo", e.status_code == 404 and "BOT_API_TOKEN" in e.detail, e.detail)
@@ -228,18 +203,18 @@ async def testar() -> None:
     limiter.reset()
     for i in range(10):
         try:
-            await NinWikiApi("http://test", f"chute-numero-{i}-xxxxxxxxxx", client=http).list_staff(IDS["sadm"])
+            await NinWikiApi("http://test", f"chute-numero-{i}-xxxxxxxxxx", client=http).errors_since(DESDE)
         except ApiError:
             pass
     try:
-        await api.list_staff(IDS["sadm"])
+        await api.errors_since(DESDE)
         check("bloqueio por forca bruta", False)
     except ApiError as e:
         check("apos muitos tokens errados a API bloqueia e o bot mostra a mensagem (429)", e.status_code == 429 and "Too many attempts" in e.detail, e.detail)
     limiter.reset()
     fora = NinWikiApi("http://127.0.0.1:9", TOKEN)
     try:
-        await fora.list_staff(IDS["sadm"])
+        await fora.errors_since(DESDE)
         check("API fora do ar", False)
     except ApiError as e:
         check("API fora do ar vira mensagem amigavel (503)", e.status_code == 503 and "API" in e.detail, e.detail)
@@ -252,185 +227,7 @@ async def testar() -> None:
         await http.aclose()
         return
 
-    secao("3) Comandos de barra /team (Discord simulado) e o modal /team manage")
-    from unittest.mock import PropertyMock, patch
-    from ninwiki_bot.staff_commands import ManageStaffModal, run_manage_action
-    grupo = StaffGroup(api, allowed_guilds=set())
-    cmd = {c.name: c for c in grupo.commands}
-    check("os 3 comandos existem: list, manage, clearlog", set(cmd) == {"list", "manage", "clearlog"})
-    check("grupo so' funciona em servidor (nao em DM)", grupo.guild_only is True)
-
-    i = interacao(IDS["sadm"])
-    await cmd["list"].callback(grupo, i)
-    check("/team list mostra a equipe (embed)", "TESTE_adm" in texto_enviado(i) and "Adm" in texto_enviado(i))
-    check("resposta e' efemera (so' quem digitou ve)", todas_efemeras(i))
-
-    i = interacao(IDS["creator"])
-    await cmd["list"].callback(grupo, i)
-    check("Creator em /team list recebe recusa clara", texto_enviado(i).startswith("❌") and "permission" in texto_enviado(i).lower(), texto_enviado(i))
-
-    # ---- o modal (componentes novos: selects dentro do modal) ----
-    modal = ManageStaffModal(api, set())
-    tipos = [type(getattr(modal, n).component).__name__ for n in ("action", "member", "role", "name")]
-    check("o modal tem 4 campos: acao (select), pessoa (user select), cargo (select) e nome (texto)",
-          tipos == ["Select", "UserSelect", "Select", "TextInput"], str(tipos))
-    check("acao e pessoa sao obrigatorias; cargo e nome opcionais",
-          modal.action.component.required and modal.member.component.required and not modal.role.component.required and not modal.name.component.required)
-    check("o select de acao oferece as 5 acoes", {o.value for o in modal.action.component.options} == {"add", "role", "rename", "deactivate", "reactivate"})
-    i = interacao(IDS["sadm"])
-    await cmd["manage"].callback(grupo, i, None)
-    check("/team manage abre o modal (send_modal)", i.response.send_modal.await_count == 1 and isinstance(i.response.send_modal.call_args.args[0], ManageStaffModal))
-
-    # (cada acao abaixo roda a MESMA funcao que o on_submit do modal chama)
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "add", fake_user("alvo2"), "creator", "")
-    u = await buscar(IDS["alvo2"])
-    check("Add: cria a pessoa no banco como Creator (nome do Discord quando o nome vem vazio)", u is not None and u.role == StaffRole.CREATOR and u.created_by_id is not None and u.username == "TESTE_alvo2")
-    check("...e confirma com ✅", texto_enviado(i).startswith("✅") and "Creator" in texto_enviado(i), texto_enviado(i))
-
-    i = interacao(IDS["adm"])
-    await run_manage_action(api, i, "add", fake_user("estranho"), "admin", "")
-    check("Adm tentando cadastrar um Adm: ❌ e NADA foi criado", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
-
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "add", fake_user("estranho", bot=True), "creator", "")
-    check("cadastrar um BOT e' recusado antes de chamar a API", "Bots cannot" in texto_enviado(i) and await buscar(IDS["estranho"]) is None)
-
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "add", fake_user("estranho"), None, "")
-    check("Add sem escolher o cargo: pede o cargo e nada e' criado", "Pick a role" in texto_enviado(i) and await buscar(IDS["estranho"]) is None, texto_enviado(i))
-
-    i = interacao(IDS["estranho"])
-    await run_manage_action(api, i, "add", fake_user("estranho"), "creator", "")
-    check("quem nao e' da equipe nao consegue cadastrar (nem a si mesmo)", texto_enviado(i).startswith("❌") and await buscar(IDS["estranho"]) is None, texto_enviado(i))
-
-    i = interacao(IDS["adm"])
-    await run_manage_action(api, i, "role", fake_user("alvo2"), "admin", "")
-    u = await buscar(IDS["alvo2"])
-    check("Adm NAO promove Creator a Adm (❌, cargo continua Creator)", texto_enviado(i).startswith("❌") and u.role == StaffRole.CREATOR, texto_enviado(i))
-
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "role", fake_user("alvo2"), "admin", "")
-    u = await buscar(IDS["alvo2"])
-    check("S.Adm promove pelo modal (✅, cargo mudou e sessao invalidada)", texto_enviado(i).startswith("✅") and u.role == StaffRole.ADMIN and u.token_version >= 1, texto_enviado(i))
-
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "role", fake_user("alvo2"), None, "")
-    check("Change role sem escolher o cargo: pede o cargo", "Pick the new role" in texto_enviado(i))
-
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "rename", fake_user("alvo2"), None, "  Nick   Bot  ")
-    u = await buscar(IDS["alvo2"])
-    check("Rename: S.Adm troca o nome (espacos limpos) e ele fica travado", texto_enviado(i).startswith("✅") and u.username == "Nick Bot" and u.username_locked is True, texto_enviado(i))
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "rename", fake_user("alvo2"), None, "")
-    check("Rename sem digitar o nome: pede o nome", "Type the new display name" in texto_enviado(i))
-    i = interacao(IDS["adm"])
-    await run_manage_action(api, i, "rename", fake_user("alvo2"), None, "Hack")
-    check("Adm NAO renomeia ninguem (❌, nome intacto)", texto_enviado(i).startswith("❌") and (await buscar(IDS["alvo2"])).username == "Nick Bot", texto_enviado(i))
-
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "deactivate", fake_user("alvo2"), None, "")
-    u = await buscar(IDS["alvo2"])
-    check("Deactivate desativa", texto_enviado(i).startswith("✅") and u.is_active is False)
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "reactivate", fake_user("alvo2"), None, "")
-    u = await buscar(IDS["alvo2"])
-    check("Reactivate reativa", texto_enviado(i).startswith("✅") and u.is_active is True)
-
-    i = interacao(IDS["adm"])
-    await run_manage_action(api, i, "deactivate", fake_user("sadm"), None, "")
-    check("Adm NAO desativa S.Adm (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["sadm"])).is_active)
-
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "deactivate", fake_user("sadm"), None, "")
-    check("ninguem se desativa a si mesmo (❌)", texto_enviado(i).startswith("❌") and (await buscar(IDS["sadm"])).is_active, texto_enviado(i))
-
-    i = interacao(IDS["sadm"])
-    await run_manage_action(api, i, "inexistente", fake_user("alvo2"), None, "")
-    check("acao desconhecida e' recusada", "Unknown action" in texto_enviado(i))
-
-    # servidor nao permitido no on_submit do modal
-    m = ManageStaffModal(api, {555})
-    i = interacao(IDS["sadm"], guild_id=999)
-    with patch.object(type(m.action.component), "values", new_callable=PropertyMock, return_value=["add"]):
-        await m.on_submit(i)
-    check("modal enviado em servidor nao permitido e' recusado", "not available" in texto_enviado(i))
-
-    # todos os /team sao SO' do S.Adm do wiki
-    check("/team nao tem mais 'status' (o /status publico cobre)", "status" not in cmd and {"list", "manage", "clearlog"} <= set(cmd))
-    me = await api.whoami(IDS["sadm"])
-    check("whoami: S.Adm", me == {"role": "super_admin", "isSuperAdmin": True}, str(me))
-    check("whoami: Adm nao e' S.Adm", (await api.whoami(IDS["adm"]))["isSuperAdmin"] is False)
-    for quem in ("adm", "creator", "estranho"):
-        i = interacao(IDS[quem])
-        check(f"/team recusa {quem} (so' o S.Adm do wiki usa)", await grupo.interaction_check(i) is False and i.response.send_message.await_count == 1
-              and i.response.send_message.call_args.kwargs.get("ephemeral") is True, texto_enviado(i))
-    i = interacao(IDS["sadm"])
-    check("/team libera o S.Adm", await grupo.interaction_check(i) is True)
-    i = interacao(IDS["adm"])
-    check("a recusa diz que e' so' do S.Adm", await grupo.interaction_check(i) is False and "S.Adm" in texto_enviado(i), texto_enviado(i))
-
-    # ---- /team clearlog (so' S.Adm, com confirmacao; limpa o log do painel e/ou as mensagens do canal do Discord) ----
-    from ninwiki_bot.staff_commands import ConfirmClearView, run_clear_log
-    clear_both = app_commands.Choice(name="Panel audit log + Discord log channel", value="both")
-    i = interacao(IDS["adm"])
-    await cmd["clearlog"].callback(grupo, i, clear_both, 3650)
-    check("Adm em /team clearlog: recusa ANTES de perguntar (nada apagado)", texto_enviado(i).startswith("❌") and "permission" in texto_enviado(i).lower(), texto_enviado(i))
-    async def contar_limpezas() -> int:
-        """Quantas linhas 'clear_log' existem agora no log."""
-        async with AsyncSessionLocal() as db:
-            return len((await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log"))).scalars().all())
-
-    antes = await contar_limpezas()
-    i = interacao(IDS["sadm"])
-    await cmd["clearlog"].callback(grupo, i, clear_both, 3650)
-    enviado = i.followup.send.call_args
-    check("S.Adm em /team clearlog recebe a pergunta com os botoes Confirmar/Cancelar (efemera)",
-          "Clear" in str(enviado.args[0]) and isinstance(enviado.kwargs.get("view"), ConfirmClearView) and enviado.kwargs.get("ephemeral") is True)
-    check("so' perguntar (conferir a permissao) NAO grava nada no log", await contar_limpezas() == antes)
-    async with AsyncSessionLocal() as db:
-        db.add(AuditLogEntry(action="create", entity_type="content_item", entity_id="teste-bot-velho", actor_name="TESTE_velho",
-                             source="panel", created_at=datetime.now(timezone.utc) - timedelta(days=4000)))
-        await db.commit()
-    canal = MagicMock()
-    canal.purge = AsyncMock(return_value=[1, 2, 3])
-    texto = await run_clear_log(api, IDS["sadm"], "both", 3650, canal, bot_user_id=777)
-    check("clearlog 'both': apaga o log antigo do painel e as mensagens do bot no canal", "✅" in texto and "3** messages" in texto and canal.purge.await_count == 1, texto)
-    kw = canal.purge.call_args.kwargs
-    fake_msg_bot, fake_msg_outro = MagicMock(), MagicMock()
-    fake_msg_bot.author.id, fake_msg_outro.author.id = 777, 123
-    check("o canal so' perde as mensagens do PROPRIO bot, uma a uma (sem exigir permissao de moderacao)",
-          kw["check"](fake_msg_bot) is True and kw["check"](fake_msg_outro) is False and kw["bulk"] is False and kw["before"] is not None)
-    async with AsyncSessionLocal() as db:
-        velho = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.entity_id == "teste-bot-velho"))).scalars().first()
-        marca = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.action == "clear_log", AuditLogEntry.source == "bot").order_by(AuditLogEntry.created_at.desc()))).scalars().first()
-    check("a linha antiga sumiu e a limpeza ficou registrada (source=bot, com o canal)", velho is None and marca is not None and marca.diff.get("discord_channel") is True)
-    canal2 = MagicMock()
-    canal2.purge = AsyncMock(return_value=[])
-    texto = await run_clear_log(api, IDS["sadm"], "channel", None, canal2, bot_user_id=777)
-    check("clearlog 'channel': so' o canal (nao toca no banco) e sem data apaga tudo do bot", "✅" in texto and "panel log" not in texto and canal2.purge.call_args.kwargs["before"] is None, texto)
-    texto = await run_clear_log(api, IDS["sadm"], "channel", None, None, bot_user_id=777)
-    check("sem canal de log configurado: avisa em vez de quebrar", "no Discord log channel" in texto, texto)
-    try:
-        await run_clear_log(api, IDS["adm"], "both", 3650, canal, bot_user_id=777)
-        check("Adm nao consegue limpar nem chamando direto", False)
-    except ApiError as e:
-        check("Adm nao consegue limpar nem chamando direto (403) e o canal nao e' tocado", e.status_code == 403 and canal.purge.await_count == 1, e.detail)
-
-    # o invoker enviado a' API e' SEMPRE quem digitou o comando (interaction.user), nunca o "alvo"
-    async with AsyncSessionLocal() as db:
-        logs = (await db.execute(select(AuditLogEntry).where(AuditLogEntry.source == "bot", AuditLogEntry.actor_name.like("TESTE_%")))).scalars().all()
-    check("acoes pelo bot ficam no log com source=bot e o nome de QUEM digitou",
-          len(logs) >= 4 and {l.actor_name for l in logs} <= {"TESTE_adm", "TESTE_sadm"}, str({l.actor_name for l in logs}))
-
-    secao("4) Restricao por servidor (ALLOWED_GUILD_IDS)")
-    restrito = StaffGroup(api, allowed_guilds={555})
-    i = interacao(IDS["sadm"], guild_id=999)
-    check("servidor nao permitido: comando recusado", await restrito.interaction_check(i) is False and "not available" in texto_enviado(i))
-    i = interacao(IDS["sadm"], guild_id=555)
-    check("servidor permitido: comando liberado", await restrito.interaction_check(i) is True)
-    check("sem lista: qualquer servidor", await grupo.interaction_check(interacao(IDS["sadm"], guild_id=42)) is True)
+    from unittest.mock import patch  # noqa: F401  (usado pelas secoes seguintes)
 
     # ------------------------------------------------------------------
     secao("5) Feed do log geral no Discord")

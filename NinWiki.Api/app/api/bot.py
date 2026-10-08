@@ -1,14 +1,13 @@
 """
-API do NinWiki.Bot (Discord) - cadastro/gestao da equipe por comando.
+API do NinWiki.Bot (Discord) - busca publica, feeds (log, erros, versao) e backup.
+
+Os comandos /team (gerir a equipe pelo Discord) foram REMOVIDOS: equipe e permissoes agora so' pelo painel.
 
 COMO A CONFIANCA FUNCIONA: o bot prova quem ELE e' com o header
-X-Bot-Token (BOT_API_TOKEN do .env, comparado em tempo constante) e
-informa QUEM DIGITOU o comando (invokerDiscordId). A API entao aplica as
-MESMAS regras do painel a esse "invoker" (ele tem que ser staff ativa, com
-a permissao e a hierarquia certas) - o bot nunca ganha poder proprio.
-Quem tiver o token do bot consegue agir como qualquer staff, entao ele
-e' tratado como senha: so' no .env, nunca no Git, nunca em log.
-Discord ja garante ao bot o ID real de quem executou o comando.
+X-Bot-Token (BOT_API_TOKEN do .env, comparado em tempo constante). As rotas
+daqui so' LEEM (busca, log sem IP, erros sem traceback, versao) ou geram o
+backup cifrado - nenhuma muda equipe ou permissoes. O token e' tratado como
+senha: so' no .env, nunca no Git, nunca em log.
 
 BOT_API_TOKEN vazio = tudo aqui devolve 404 (desligado).
 """
@@ -24,24 +23,20 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.audit_log import clear_log_rows
-from app.api.staff import to_read
-from app.core import backup, staff_service
+from app.core import backup
 from app.api.uploads import UPLOAD_DIR
 from app.core.config import settings
 from app.core.translation import fill_missing_translations
 from app.core.database import get_db
-from app.core.permissions import Permission, user_has_permission
 from app.core.rate_limit import BOT_FAIL, client_key, limiter, retry_message
 from app.models.content import ContentItem
-from app.models.enums import ContentStatus, StaffRole
+from app.models.enums import ContentStatus
 from app.models.masteries import Jutsu, Mastery
 from app.models.posts import Post
 from app.models.errors import ErrorEvent
-from app.models.users import AuditLogEntry, User
+from app.models.users import AuditLogEntry
 from app.schemas.content import CamelModel
 from app.schemas.errors import BotErrorEntry
-from app.schemas.staff import StaffRead, parse_discord_id
 
 
 async def require_bot(x_bot_token: str | None = Header(default=None)) -> None:
@@ -59,146 +54,6 @@ async def require_bot(x_bot_token: str | None = Header(default=None)) -> None:
 
 
 router = APIRouter(prefix="/bot", tags=["bot"], dependencies=[Depends(require_bot)])
-
-
-class BotInvoker(CamelModel):
-    """Corpo base das chamadas do bot: o Discord ID de QUEM digitou o comando."""
-    invoker_discord_id: str
-
-
-class BotStaffCreate(BotInvoker):
-    """Corpo de cadastrar alguem na equipe pelo bot."""
-    discord_id: str
-    role: StaffRole
-    username: str | None = None
-
-
-class BotRoleUpdate(BotInvoker):
-    """Corpo de trocar o cargo de alguem pelo bot."""
-    role: StaffRole
-
-
-class BotClearLog(BotInvoker):
-    """Corpo de limpar o log pelo bot: `older_than_days` vazio = tudo; `clear_database=false` = so' o canal do Discord."""
-    older_than_days: int | None = None
-    clear_database: bool = True
-    discord_channel: bool = False
-    check_only: bool = False  # so' confere a permissao (nao apaga nem registra nada)
-
-
-class BotRename(BotInvoker):
-    """Corpo de trocar o nome (nick) de alguem pelo bot."""
-    username: str
-
-
-async def _invoker(db: AsyncSession, raw_id: str) -> User:
-    """Acha quem digitou o comando e exige que seja staff ativa (senao 403)."""
-    try:
-        discord_id = parse_discord_id(raw_id)
-    except ValueError:
-        raise HTTPException(status_code=422, detail="Invalid invokerDiscordId")
-    user = await staff_service.get_by_discord_id(db, discord_id)
-    if user is None or not user.is_active:
-        raise HTTPException(status_code=403, detail="You are not part of the team")
-    return user
-
-
-async def _target(db: AsyncSession, raw_id: str) -> User:
-    """Acha o membro da equipe alvo do comando pelo Discord ID (senao 404)."""
-    try:
-        discord_id = parse_discord_id(raw_id)
-    except ValueError:
-        raise HTTPException(status_code=422, detail="Invalid Discord ID")
-    user = await staff_service.get_by_discord_id(db, discord_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="This Discord ID is not on the team")
-    return user
-
-
-@router.get("/me")
-async def bot_me(invokerDiscordId: str, db: AsyncSession = Depends(get_db)):
-    """Quem e' o invoker na equipe do wiki: cargo e se e' S.Adm (o bot libera os comandos /team so' para o S.Adm)."""
-    invoker = await _invoker(db, invokerDiscordId)
-    return {"role": invoker.role.value, "isSuperAdmin": invoker.role == StaffRole.SUPER_ADMIN}
-
-
-@router.get("/staff", response_model=list[StaffRead])
-async def bot_list_staff(invokerDiscordId: str, db: AsyncSession = Depends(get_db)):
-    """Lista a equipe para o comando /equipe listar (so' quem tem a permissao staff.view)."""
-    invoker = await _invoker(db, invokerDiscordId)
-    if not user_has_permission(invoker, Permission.STAFF_VIEW):
-        raise HTTPException(status_code=403, detail="You do not have permission to do this")
-    rows = (await db.execute(select(User).order_by(User.created_at))).scalars().all()
-    return [to_read(u) for u in rows]
-
-
-@router.post("/staff", response_model=StaffRead, status_code=201)
-async def bot_add_staff(payload: BotStaffCreate, db: AsyncSession = Depends(get_db)):
-    """Cadastra alguem na equipe (/equipe adicionar) aplicando as regras do invoker."""
-    invoker = await _invoker(db, payload.invoker_discord_id)
-    try:
-        target_id = parse_discord_id(payload.discord_id)
-    except ValueError:
-        raise HTTPException(status_code=422, detail="Invalid Discord ID")
-    user = await staff_service.add_staff(db, invoker, target_id, payload.role, payload.username, source="bot")
-    await db.commit()
-    return to_read(user)
-
-
-@router.patch("/staff/{discord_id}/role", response_model=StaffRead)
-async def bot_change_role(discord_id: str, payload: BotRoleUpdate, db: AsyncSession = Depends(get_db)):
-    """Troca o cargo de alguem (/equipe cargo) aplicando as regras do invoker."""
-    invoker = await _invoker(db, payload.invoker_discord_id)
-    target = await _target(db, discord_id)
-    await staff_service.change_role(db, invoker, target, payload.role, source="bot")
-    await db.commit()
-    return to_read(target)
-
-
-@router.post("/audit-log/clear")
-async def bot_clear_log(payload: BotClearLog, db: AsyncSession = Depends(get_db)):
-    """Limpa o log (/team clearlog): so' quem tem audit.clear (S.Adm); o bot depois apaga as mensagens do canal, se pedido."""
-    invoker = await _invoker(db, payload.invoker_discord_id)
-    if not user_has_permission(invoker, Permission.AUDIT_CLEAR):
-        raise HTTPException(status_code=403, detail="You do not have permission to do this")
-    if payload.older_than_days is not None and not 1 <= payload.older_than_days <= 3650:
-        raise HTTPException(status_code=422, detail="Days must be between 1 and 3650")
-    if payload.check_only:
-        return {"deleted": 0}
-    deleted = await clear_log_rows(db, invoker, payload.older_than_days, source="bot",
-                                   discord_channel=payload.discord_channel, delete_rows=payload.clear_database)
-    await db.commit()
-    return {"deleted": deleted}
-
-
-@router.patch("/staff/{discord_id}/name", response_model=StaffRead)
-async def bot_rename(discord_id: str, payload: BotRename, db: AsyncSession = Depends(get_db)):
-    """Troca o nome (nick) de alguem da equipe (/team manage > Rename) aplicando as regras do invoker (so' S.Adm)."""
-    invoker = await _invoker(db, payload.invoker_discord_id)
-    target = await _target(db, discord_id)
-    await staff_service.rename(db, invoker, target, payload.username, source="bot")
-    await db.commit()
-    return to_read(target)
-
-
-@router.post("/staff/{discord_id}/deactivate", response_model=StaffRead)
-async def bot_deactivate(discord_id: str, payload: BotInvoker, db: AsyncSession = Depends(get_db)):
-    """Desativa alguem da equipe (/equipe desativar)."""
-    invoker = await _invoker(db, payload.invoker_discord_id)
-    target = await _target(db, discord_id)
-    await staff_service.set_active(db, invoker, target, False, source="bot")
-    await db.commit()
-    return to_read(target)
-
-
-@router.post("/staff/{discord_id}/activate", response_model=StaffRead)
-async def bot_activate(discord_id: str, payload: BotInvoker, db: AsyncSession = Depends(get_db)):
-    """Reativa alguem da equipe (/equipe reativar)."""
-    invoker = await _invoker(db, payload.invoker_discord_id)
-    target = await _target(db, discord_id)
-    await staff_service.set_active(db, invoker, target, True, source="bot")
-    await db.commit()
-    return to_read(target)
 
 
 # ---------------- feed do log geral para o Discord ----------------

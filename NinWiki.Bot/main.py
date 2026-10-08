@@ -28,14 +28,13 @@ from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageS
 from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
 from ninwiki_bot.language import LanguageStore
 from ninwiki_bot.public_commands import register_public_commands
-from ninwiki_bot.staff_commands import StaffGroup
 from ninwiki_bot.version_feed import VersionStore, build_embed as build_version_embed, merge as merge_versions
 
 log = logging.getLogger("ninwiki_bot")
 
 
 class NinWikiBot(discord.Client):
-    """O bot: comandos /equipe + (opcional) feed do log geral num canal do Discord."""
+    """O bot: busca publica (/search, /status, /language) + (opcional) feed do log geral num canal do Discord."""
 
     def __init__(self, settings: BotSettings):
         # Intents PADRAO (sem nenhuma privilegiada): so' usamos comandos de barra,
@@ -326,7 +325,6 @@ class NinWikiBot(discord.Client):
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
         register_public_commands(self.tree, self.api, self.settings.allowed_guilds, self.settings.site_url, self.check_now, bool(self.settings.site_url), self.languages)
-        self.tree.add_command(StaffGroup(self.api, self.settings.allowed_guilds, self.settings.site_url, self._log_channel))
         # Comandos so' nos servidores escolhidos (ALLOWED_GUILD_IDS + DEV_GUILD_ID), na hora, e sem sobra de comandos globais antigos (ver ninwiki_bot/command_sync.py).
         result = await sync_commands(self.tree, target_guilds(self.settings.allowed_guilds, self.settings.dev_guild_id), lambda gid: discord.Object(id=gid))
         self.command_sync_result = result

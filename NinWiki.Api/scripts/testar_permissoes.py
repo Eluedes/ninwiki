@@ -474,38 +474,24 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("POST da origem certa passa (201)", r.status_code == 201, f"veio {r.status_code}")
 
     # ------------------------------------------------------------------
-    secao("11) API do Bot: mesmas regras do painel")
+    secao("11) API do Bot: so' leitura/backup, token obrigatorio e NENHUMA rota de gestao da equipe")
+    DESDE_BOT = "2000-01-01T00:00:00+00:00"
     settings.bot_api_token = ""
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}")
+    r = await c.get("/bot/errors", params={"since": DESDE_BOT})
     check("sem BOT_API_TOKEN configurado a rota nem existe (404)", r.status_code == 404)
     settings.bot_api_token = "token-de-teste-do-bot"
     B = {"X-Bot-Token": settings.bot_api_token}
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}")
+    r = await c.get("/bot/errors", params={"since": DESDE_BOT})
     check("sem header X-Bot-Token (401)", r.status_code == 401)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}", headers={"X-Bot-Token": "errado"})
+    r = await c.get("/bot/errors", params={"since": DESDE_BOT}, headers={"X-Bot-Token": "errado"})
     check("token do bot errado (401)", r.status_code == 401)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}", headers=B)
-    check("bot + invoker Adm NAO lista equipe (403) - Equipe e' so' do S.Adm", r.status_code == 403)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['sadm']}", headers=B)
-    check("bot + invoker S.Adm lista equipe (200)", r.status_code == 200)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['creator']}", headers=B)
-    check("bot + invoker Creator NAO lista (403)", r.status_code == 403)
-    r = await c.get(f"/bot/staff?invokerDiscordId={BASE + 20}", headers=B)
-    check("bot + invoker que nao e' da equipe (403)", r.status_code == 403)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['inativo']}", headers=B)
-    check("bot + invoker desativado (403)", r.status_code == 403)
-    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["sadm"]), "discordId": str(BASE + 12), "role": "creator", "username": "TESTE_bot"}, headers=B)
-    check("bot cadastra Creator pelo S.Adm (201)", r.status_code == 201, f"veio {r.status_code} {r.text[:100]}")
-    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["adm"]), "discordId": str(BASE + 13), "role": "creator"}, headers=B)
-    check("bot NAO deixa Adm cadastrar ninguem (403) - mesma regra do painel", r.status_code == 403)
-    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["creator"]), "discordId": str(BASE + 13), "role": "creator"}, headers=B)
-    check("bot NAO deixa Creator cadastrar ninguem (403)", r.status_code == 403)
-    r = await c.post(f"/bot/staff/{BASE + 12}/deactivate", json={"invokerDiscordId": str(IDS["sadm"])}, headers=B)
-    check("bot desativa Creator (200)", r.status_code == 200 and r.json()["isActive"] is False)
-    r = await c.post(f"/bot/staff/{IDS['sadm']}/deactivate", json={"invokerDiscordId": str(IDS["adm"])}, headers=B)
-    check("bot NAO deixa Adm desativar ninguem (403)", r.status_code == 403)
-    r = await c.get("/audit-log?source=bot&limit=50", headers=S)
-    check("acoes do bot ficam marcadas source=bot no log", len(r.json()) >= 2 and all(e["source"] == "bot" for e in r.json()))
+    r = await c.get("/bot/errors", params={"since": DESDE_BOT}, headers=B)
+    check("token certo le a lista de erros (200)", r.status_code == 200)
+    for metodo, rota in (("GET", f"/bot/me?invokerDiscordId={IDS['sadm']}"), ("GET", f"/bot/staff?invokerDiscordId={IDS['sadm']}"),
+                         ("POST", "/bot/staff"), ("POST", "/bot/audit-log/clear"),
+                         ("PATCH", f"/bot/staff/{BASE + 12}/role"), ("POST", f"/bot/staff/{BASE + 12}/deactivate")):
+        r = await c.request(metodo, rota, headers=B, json={} if metodo != "GET" else None)
+        check(f"{metodo} {rota.split('?')[0]}: gestao da equipe pelo Discord foi REMOVIDA (404/405)", r.status_code in (404, 405), f"veio {r.status_code}")
 
     # ------------------------------------------------------------------
     secao("12) Login do Discord (Discord simulado)")
@@ -799,19 +785,19 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         # -- token do bot: forca bruta --
         settings.bot_api_token = "token-de-teste-do-bot-1234567890"
         certo = {"X-Bot-Token": settings.bot_api_token}
-        consulta = f"/bot/staff?invokerDiscordId={IDS['sadm']}"
+        consulta = "/bot/errors"
         async with cliente("198.51.100.15") as x:
-            codigos = [(await x.get(consulta, headers={"X-Bot-Token": f"chute-{i}"})).status_code for i in range(10)]
+            codigos = [(await x.get(consulta, params={"since": DESDE_BOT}, headers={"X-Bot-Token": f"chute-{i}"})).status_code for i in range(10)]
             check("bot: 10 tokens errados dao 401", codigos == [401] * 10, str(codigos))
-            r = await x.get(consulta, headers={"X-Bot-Token": "mais-um-chute"})
+            r = await x.get(consulta, params={"since": DESDE_BOT}, headers={"X-Bot-Token": "mais-um-chute"})
             check("o 11o ja' e' 429 (bloqueado)", r.status_code == 429 and "Too many attempts" in r.json()["detail"], f"{r.status_code}")
-            r = await x.get(consulta, headers=certo)
+            r = await x.get(consulta, params={"since": DESDE_BOT}, headers=certo)
             check("...e enquanto bloqueado nem o token CERTO passa (429)", r.status_code == 429)
             relogio.t += 11 * 60
-            r = await x.get(consulta, headers=certo)
+            r = await x.get(consulta, params={"since": DESDE_BOT}, headers=certo)
             check("passada a janela (10 min) o token certo volta a funcionar", r.status_code == 200, f"{r.status_code}")
         async with cliente("198.51.100.16") as y:
-            r = await y.get(consulta, headers=certo)
+            r = await y.get(consulta, params={"since": DESDE_BOT}, headers=certo)
             check("o bot em OUTRO IP nunca e' afetado", r.status_code == 200)
         settings.bot_api_token = ""
         settings.discord_client_id = settings.discord_client_secret = ""

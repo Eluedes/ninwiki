@@ -7,7 +7,7 @@ Wiki com painel administrativo (mais uma página extra do Guima). Projetos indep
 | `NinWiki.Api` | API + banco (conteúdo, login, equipe, avisos, uploads) | Python, FastAPI, PostgreSQL | 8000 |
 | `NinWiki.Web` | Site público + painel `/admin` | Next.js 16, React 18 | 3000 |
 | `Guima.Site` | Página única "em construção" da Guima Company (Node sem dependências, segurança embutida; ver `Guima.Site/README.md`) | Node | 3100 |
-| `NinWiki.Bot` | Bot de Discord (`/status`, `/search`, `/team ...`, log e painel de status no canal) | Python, discord.py | — |
+| `NinWiki.Bot` | Bot de Discord (`/status`, `/search`, `/language`, log, erros e painel de status no canal) | Python, discord.py | — |
 
 Outros documentos: `NinWiki.Web/GUIA_DE_EDICAO.md` (editar o frontend), `NinWiki.Web/MAESTRIAS.md`,
 `NinWiki.Bot/README.md`, `ROADMAP.md` (o que já foi feito / falta), `FASE2_LOCAL.md` (login e cargos).
@@ -231,7 +231,7 @@ O português antigo vai para o campo `_pt` e a tradução em inglês vira o camp
   Para isso valer de verdade, mantenha o **repositório do GitHub privado** (se for público, os `.md` ficam à vista lá).
 - **Bibliotecas:** o workflow *Segurança* (toda segunda e a cada push na `main`) roda `pip-audit` e `npm audit` e fica vermelho se houver falha conhecida;
   o aviso aparece na aba *Actions* (sem abrir branches nem pull requests). Última checagem: 0 vulnerabilidades no que vai para produção (API, bot e site). No site, as ferramentas de **build/lint** (`tailwindcss`, `eslint-config-next`...) ficam em `devDependencies`: elas só rodam no seu computador e no GitHub, nunca na SquareCloud. O `npm install` pode mostrar avisos "high" delas por causa do `braces` (negação de serviço com padrões de glob aninhados) — **ainda não existe versão corrigida** do `braces`; como esses padrões vêm só dos nossos próprios arquivos de configuração (nunca de visitante), não há como explorar. Confira com `npm audit --omit=dev` (deve dar 0) e rode `npm audit` de vez em quando: quando sair a correção, `npm update` resolve.
-- Texto rico: cor, fundo, fonte e tamanho só em formato conhecido (sem injeção de CSS). Bot: `/team` só para o S.Adm do wiki, conferido na API.
+- Texto rico: cor, fundo, fonte e tamanho só em formato conhecido (sem injeção de CSS). Bot: só leitura (busca, log sem IP, erros sem traceback, backup) — não existe mais comando para gerir equipe pelo Discord.
 - **O que só você pode fazer:** 2FA no Discord, GitHub e SquareCloud; Cloudflare na frente; backup do banco com restauração testada; não colar segredos em chat/print.
 - Honestidade: conteúdo **público** precisa ser legível por qualquer visitante, então ninguém impede 100% a cópia por um robô
   decidido — o que se faz é torná-la lenta e cara, e proteger o servidor. Com a **Cloudflare** na frente (ver 3.8) fica bem melhor.
@@ -452,7 +452,7 @@ Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o 
 - [ ] Em `/admin/staff` cadastre o resto da equipe e ajuste `/admin/permissions`
 - [ ] Crie um post de teste com imagem; confira a imagem no site (se não aparecer, `API_BASE_URL` está errado)
 - [ ] Num navegador sem login: abra um post, entre com o Discord (leitor), comente e curta
-- [ ] Bot: `/team ...` responde e os canais de log/erros recebem mensagens
+- [ ] Bot: `/search` responde e os canais de log/erros recebem mensagens
 
 ### 3.10 No dia a dia
 - **Publicar uma atualização:** *commit/push* no GitHub → Actions → rode **só** o workflow do que mudou (API, site ou bot). A API reinicia e
@@ -581,7 +581,7 @@ Todo arquivo começa com um comentário-resumo do que faz e toda função tem um
 - `NinWiki.Api/alembic/versions/*` = histórico do banco; `scripts/*` = testes e utilitários (`migrar_banco.py`, `verificar_projeto.py`).
 - `NinWiki.Web/app/*` = páginas (`(wiki)` público, `admin` painel); `components/*` = peças de tela; `lib/api-client.ts` = tudo que o
   site pede à API; `proxy.ts` = limite por IP/robôs; `next.config.js` = cabeçalhos de segurança/CSP.
-- `NinWiki.Bot/main.py` + `ninwiki_bot/*` = `/status` e `/search` (`public_commands.py`), `/team` (`staff_commands.py`), log no Discord (`log_feed.py`), erros e painel de status (`error_feed.py`).
+- `NinWiki.Bot/main.py` + `ninwiki_bot/*` = `/status`, `/search` e `/language` (`public_commands.py`), log no Discord (`log_feed.py`), erros e painel de status (`error_feed.py`).
 - `NinWiki.Web/components/admin/rich-text-editor.tsx` (+ `editor-color-picker.tsx`, `lib/editor-fonts.ts`) = editor de texto; `components/lore/rich-text.tsx` = como o texto aparece no site; `components/admin/traffic-card.tsx` = gráfico de acessos.
 - **Backup / versão / manutenção:** `NinWiki.Api/app/core/backup.py` (gera o backup cifrado) + `app/api/bot.py` (`/bot/backup`, `/bot/version`) + `scripts/restaurar_backup.py`; `NinWiki.Bot/ninwiki_bot/backup_feed.py` e `version_feed.py` (decidem nomes/retenção/quando editar) + `command_sync.py` (comandos por servidor) + `main.py` (os laços); `NinWiki.Api/app/core/steam_news.py` (importador da Steam); `NinWiki.Web/app/version/route.ts` e `proxy.ts` (cabeçalho `x-ninwiki-web`); `Cloudflare/` (Worker da página de manutenção). Ferramentas locais sem relação com o wiki ficam na branch `ferramentas-locais` (**nunca** dar merge).
 - `NinWiki.Api/app/api/analytics.py` + `core/geoip.py` = acessos anônimos e país; `app/api/bot.py` = rotas do bot (equipe, log, erros, busca).
