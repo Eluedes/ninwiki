@@ -235,6 +235,17 @@ async def testar() -> None:
                        "message": "O nome em portugues esta errado", "locale": "pt", "createdAt": "2026-10-08T12:00:00Z"}, "https://wiki.example/")
     check("aviso de report: titulo com o tipo, link da pagina no site e aponta o painel",
           "Translation error" in f["title"] and "https://wiki.example/jutsus/fire-ball" in f["fields"][0][1] and "/admin/reports" in f["footer"], str(f))
+    if TEM_DISCORD:
+        from ninwiki_bot.public_commands import build_drop_embed, build_posts_embed
+        e = build_drop_embed({"found": True, "title": "Ring of Vigor", "href": "/detail/ring", "image": None, "rarity": "rare",
+                              "mobs": [{"name": "Larva", "href": "/detail/larva", "chance": 10, "chanceQualifier": "over"}, {"name": "Wolf", "href": "/detail/wolf", "chance": 2.5, "chanceQualifier": None}]},
+                             "ring", "https://wiki.example/", "en")
+        check("/drop: titulo com o item, mobs com link e chance (Over 10% / 2.5%)", "Ring of Vigor" in e.title and "[Larva](https://wiki.example/detail/larva) — Over 10%" in e.description and "2.5%" in e.description, str(e.description))
+        check("/drop: item sem mob mostra aviso; nome inexistente mostra 'nada encontrado'",
+              "No published mob" in build_drop_embed({"found": True, "title": "X", "href": "/detail/x", "mobs": []}, "x", "", "en").description
+              and "Nothing matched" in build_drop_embed({"found": False}, "zz", "", "en").description)
+        e = build_posts_embed([{"title": "Update 1.0", "excerpt": "Big update", "image": None, "href": "/blog/u1", "publishedAt": "2026-10-08T12:00:00Z"}], "https://wiki.example", "pt")
+        check("/patchnotes: titulo em portugues, post com link e data", "Últimas notícias" in e.title and "https://wiki.example/blog/u1" in e.fields[0].value and "<t:" in e.fields[0].value, str(e.fields[0].value))
     secao("5) Feed do log geral no Discord")
     import tempfile
     from ninwiki_bot.log_feed import FeedState, LogFeedStore, format_entry, pick_new, query_since

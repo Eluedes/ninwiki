@@ -294,6 +294,19 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         {"itemName": item_nome, "chance": 3}]}, headers=A)
     r = await c.get(f"/content-items/slug/{SLUG}-drop-item")
     check("drop so' com o NOME do item (sem ligacao) tambem conta como 'dropado por'", len(r.json().get("droppedBy", [])) == 2, r.text[:240])
+    settings.bot_api_token = "token-de-teste-do-bot"
+    BT = {"X-Bot-Token": settings.bot_api_token}
+    r = await c.get("/bot/drops", params={"q": item_nome}, headers=BT)
+    check("/bot/drops acha o item e lista os 2 mobs que o dropam (com a chance)", r.status_code == 200 and r.json()["found"] and len(r.json()["mobs"]) == 2
+          and all(m["href"].startswith("/detail/") for m in r.json()["mobs"]), r.text[:260])
+    r = await c.get("/bot/drops", params={"q": "zzzz-nao-existe"}, headers=BT)
+    check("/bot/drops de nome inexistente: found=false", r.status_code == 200 and r.json()["found"] is False, r.text[:120])
+    r = await c.get("/bot/suggest", params={"q": item_nome[:6]}, headers=BT)
+    check("/bot/suggest devolve nomes para o autocompletar (sem repetir)", r.status_code == 200 and item_nome in r.json() and len(set(r.json())) == len(r.json()), r.text[:200])
+    r = await c.get("/bot/latest-posts", headers=BT)
+    check("/bot/latest-posts devolve lista (posts no ar)", r.status_code == 200 and isinstance(r.json(), list), r.text[:120])
+    r = await c.get("/bot/drops", params={"q": item_nome})
+    check("/bot/drops sem token do bot (401)", r.status_code == 401)
     r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
     check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("unico"), "category": "weapons", "rarity": "unique"}, headers=C)

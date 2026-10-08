@@ -29,8 +29,9 @@ from app.core.config import settings
 from app.core.translation import fill_missing_translations
 from app.core.database import get_db
 from app.core.rate_limit import BOT_FAIL, client_key, limiter, retry_message
+from app.api.content_items import _dropped_by
 from app.models.content import ContentItem
-from app.models.enums import ContentStatus
+from app.models.enums import ContentCategory, ContentStatus
 from app.models.masteries import Jutsu, Mastery
 from app.models.posts import Post
 from app.models.reports import ContentReport
@@ -206,6 +207,33 @@ class BotFact(CamelModel):
     value: str
 
 
+class BotDropMob(CamelModel):
+    """Um mob que dropa o item (resposta do /drop)."""
+    name: str
+    href: str
+    chance: float
+    chance_qualifier: str | None = None
+
+
+class BotDropResult(CamelModel):
+    """Resposta do /drop: o item achado (ou nada) e os mobs publicados que o dropam."""
+    found: bool
+    title: str = ""
+    href: str = ""
+    image: str | None = None
+    rarity: str | None = None
+    mobs: list[BotDropMob] = []
+
+
+class BotPostEntry(CamelModel):
+    """Um post do blog no ar (resposta do /patchnotes)."""
+    title: str
+    excerpt: str
+    image: str | None = None
+    href: str
+    published_at: datetime | None = None
+
+
 class BotSearchHit(CamelModel):
     """Um resultado da busca do bot: o que e', um resumo, a imagem, os dados principais e o caminho da pagina no site."""
     kind: str
@@ -364,6 +392,62 @@ async def _fill_pt(db: AsyncSession, rows: list) -> None:
             changed = True
     if changed:
         await db.commit()
+
+
+@router.get("/suggest", response_model=list[str])
+async def bot_suggest(
+    q: str = Query(..., min_length=2, max_length=60),
+    lang: str = Query("en", pattern="^(en|pt)$"),
+    db: AsyncSession = Depends(get_db),
+) -> list[str]:
+    """Nomes para o autocompletar do Discord (itens/mobs/armas publicados, jutsus e masteries), ate' 20, sem repetir."""
+    like = _like(q.strip())
+    items = (await db.execute(select(ContentItem).where(
+        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
+        .order_by(ContentItem.name).limit(12))).scalars().all()
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+                               .order_by(Jutsu.name).limit(6))).scalars().all()
+    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
+                                  .order_by(Mastery.name).limit(4))).scalars().all()
+    names = [_pick(lang, r.name, r.name_pt) for r in (*items, *jutsus, *masteries)]
+    return list(dict.fromkeys(n for n in names if n))[:20]
+
+
+@router.get("/drops", response_model=BotDropResult)
+async def bot_drops(
+    q: str = Query(..., min_length=2, max_length=60),
+    lang: str = Query("en", pattern="^(en|pt)$"),
+    db: AsyncSession = Depends(get_db),
+) -> BotDropResult:
+    """Quais mobs dropam o item `q`: acha o item publicado (nome exato primeiro, senao o primeiro que contem) e lista os mobs com a chance."""
+    like = _like(q.strip())
+    rows = (await db.execute(select(ContentItem).where(
+        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.category != ContentCategory.MOBS,
+        ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\")).order_by(ContentItem.name).limit(10))).scalars().all()
+    if not rows:
+        return BotDropResult(found=False)
+    exact = [r for r in rows if q.strip().lower() in (r.name.lower(), (r.name_pt or "").lower())]
+    item = (exact or rows)[0]
+    mobs = await _dropped_by(item, db)
+    return BotDropResult(
+        found=True, title=_pick(lang, item.name, item.name_pt), href=f"/detail/{item.slug}", image=_abs_image(item.image), rarity=item.rarity.value,
+        mobs=[BotDropMob(name=_pick(lang, m.name, m.name_pt), href=f"/detail/{m.slug}", chance=m.chance,
+                         chance_qualifier=m.chance_qualifier.value if m.chance_qualifier else None) for m in mobs],
+    )
+
+
+@router.get("/latest-posts", response_model=list[BotPostEntry])
+async def bot_latest_posts(
+    limit: int = Query(3, ge=1, le=5), lang: str = Query("en", pattern="^(en|pt)$"), db: AsyncSession = Depends(get_db),
+) -> list[BotPostEntry]:
+    """Os posts mais recentes que ja' estao NO AR (publicados e com a data alcancada), para o /patchnotes."""
+    now = datetime.now(timezone.utc)
+    posts = (await db.execute(select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now))
+                              .order_by(Post.published_at.desc().nullslast(), Post.created_at.desc()).limit(limit))).scalars().all()
+    if lang == "pt":
+        await _fill_pt(db, list(posts))
+    return [BotPostEntry(title=_pick(lang, p.title, p.title_pt), excerpt=_summary(_pick(lang, p.excerpt, p.excerpt_pt)), image=_abs_image(p.cover_image),
+                         href=f"/blog/{p.slug}", published_at=p.published_at) for p in posts]
 
 
 @router.get("/search", response_model=list[BotSearchHit])

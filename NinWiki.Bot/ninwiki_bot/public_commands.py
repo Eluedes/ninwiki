@@ -4,7 +4,10 @@ Comandos PUBLICOS do bot (qualquer pessoa do servidor pode usar), todos com Comp
   /status                    API, banco e site no ar agora (tempo de resposta e disponibilidade desde que o bot ligou)
   /search <termo> [language] procura no wiki e mostra o melhor resultado com IMAGEM, dados da ficha e RESUMO (+ botao para a
                              pagina completa e um menu para ver os outros resultados); rodape com quem pesquisou e a marca da equipe
+  /drop <item>               quais mobs dropam o item (e a chance de cada um)
+  /patchnotes                as noticias/patch notes mais recentes do blog
   /language <en|pt>          idioma padrao do bot NESTE servidor (so' quem tem "Gerenciar servidor")
+  (/search e /drop sugerem nomes enquanto a pessoa digita: autocompletar do Discord)
 
 Nada aqui mostra dado interno: so' online/offline e conteudo PUBLICADO do site. Os construtores de tela (build_*) nao falam
 com o Discord, so' montam o LayoutView - assim podem ser testados sem conexao.
@@ -165,6 +168,49 @@ class SearchView(discord.ui.LayoutView):
                 pass
 
 
+def _chance(m: dict) -> str:
+    """Texto da chance de um drop: 'Over 10%', 'Below 1%' ou '25%' (igual ao site)."""
+    q = m.get("chanceQualifier")
+    return f"Over {m['chance']:g}%" if q == "over" else f"Below {m['chance']:g}%" if q == "below" else f"{m['chance']:g}%"
+
+
+def build_drop_embed(result: dict, query: str, site_url: str, lang: str = DEFAULT) -> discord.Embed:
+    """Embed do /drop: o item e a lista de mobs que o dropam (com link para a pagina de cada um)."""
+    t = TEXT[lang]
+    base = site_url.rstrip("/")
+    if not result.get("found"):
+        return discord.Embed(description=t["drop_none"].format(q=_clean(query)), color=KIND_COLOR)
+    embed = discord.Embed(title=t["drop_title"].format(item=_clean(result["title"]))[:256], url=f"{base}{result['href']}" if base else None, color=KIND_COLOR)
+    if result.get("image"):
+        embed.set_thumbnail(url=result["image"])
+    mobs = result.get("mobs") or []
+    if mobs:
+        lines = [f"• [{_clean(m['name'])}]({base}{m['href']}) — {_chance(m)}" if base else f"• {_clean(m['name'])} — {_chance(m)}" for m in mobs[:20]]
+        embed.description = "\n".join(lines)
+        if len(mobs) > 20:
+            embed.set_footer(text=f"+{len(mobs) - 20}")
+    else:
+        embed.description = t["drop_nobody"]
+    return embed
+
+
+def build_posts_embed(posts: list[dict], site_url: str, lang: str = DEFAULT) -> discord.Embed:
+    """Embed do /patchnotes: os posts mais recentes (titulo com link, data e resumo)."""
+    t = TEXT[lang]
+    base = site_url.rstrip("/")
+    embed = discord.Embed(title=t["posts_title"], color=KIND_COLOR)
+    if not posts:
+        embed.description = t["posts_none"]
+        return embed
+    for p in posts:
+        when = f" · <t:{int(datetime.fromisoformat(p['publishedAt'].replace('Z', '+00:00')).timestamp())}:D>" if p.get("publishedAt") else ""
+        title = f"[{_clean(p['title'])}]({base}{p['href']})" if base else _clean(p["title"])
+        embed.add_field(name="\u200b", value=f"**{title}**{when}\n{_clean(p.get('excerpt', ''))[:300]}", inline=False)
+    if posts[0].get("image"):
+        embed.set_image(url=posts[0]["image"])
+    return embed
+
+
 def build_search_view(query: str, hits: list[dict], site_url: str, index: int = 0, owner_id: int | None = None,
                       lang: str = DEFAULT, owner_name: str | None = None) -> SearchView:
     """Tela do /search (ver SearchView)."""
@@ -215,6 +261,53 @@ def register_public_commands(
         name = getattr(interaction.user, "display_name", None) or getattr(interaction.user, "name", None)
         view = build_search_view(term, hits, site_url, owner_id=interaction.user.id, lang=lang, owner_name=name)
         view.message = await interaction.followup.send(view=view, allowed_mentions=NO_MENTIONS, wait=True)
+
+    async def _autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """Autocompletar do Discord: sugere nomes do wiki enquanto a pessoa digita (precisa de 2+ letras; falha em silencio)."""
+        if len(current.strip()) < 2:
+            return []
+        try:
+            names = await api.suggest(current.strip(), languages.get(interaction.guild_id))
+        except ApiError:
+            return []
+        return [app_commands.Choice(name=n[:100], value=n[:100]) for n in names[:25]]
+
+    search.autocomplete("term")(_autocomplete)
+
+    @tree.command(name="drop", description="Which mobs drop this item, and how likely")
+    @app_commands.describe(item="Item or weapon name (start typing for suggestions)")
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
+    async def drop(interaction: discord.Interaction, item: app_commands.Range[str, 2, 60]) -> None:
+        """Mostra quais mobs dropam o item (no idioma do servidor)."""
+        if not await allowed(interaction):
+            return
+        lang = languages.get(interaction.guild_id)
+        await interaction.response.defer(thinking=True)
+        try:
+            result = await api.drops(item.strip(), lang)
+        except ApiError:
+            await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
+            return
+        await interaction.followup.send(embed=build_drop_embed(result, item, site_url, lang), allowed_mentions=NO_MENTIONS)
+
+    drop.autocomplete("item")(_autocomplete)
+
+    @tree.command(name="patchnotes", description="The latest news and patch notes from the wiki blog")
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
+    async def patchnotes(interaction: discord.Interaction) -> None:
+        """Mostra os 3 posts mais recentes do blog (no idioma do servidor)."""
+        if not await allowed(interaction):
+            return
+        lang = languages.get(interaction.guild_id)
+        await interaction.response.defer(thinking=True)
+        try:
+            posts = await api.latest_posts(3, lang)
+        except ApiError:
+            await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
+            return
+        await interaction.followup.send(embed=build_posts_embed(posts, site_url, lang), allowed_mentions=NO_MENTIONS)
 
     @tree.command(name="language", description="Set this bot's default language on this server (English or Português)")
     @app_commands.describe(language="Language used by /search and /status here")

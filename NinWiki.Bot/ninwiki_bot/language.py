@@ -24,6 +24,9 @@ TEXT = {
         "lang_set": "✅ This server's language is now **English**. `/search` and `/status` will answer in English here.",
         "lang_need_perm": "❌ You need the **Manage Server** permission to change the language.",
         "wrong_guild": "This command is not available on this server.", "slow": "⏳ Slow down - try again in {s}s.",
+        "drop_none": "Nothing matched **{q}**. Try another name (the item must be published on the wiki).",
+        "drop_title": "🎁 Where to get {item}", "drop_nobody": "No published mob drops this item yet.", "drop_chance": "chance",
+        "drop_footer": "Full details on the wiki", "posts_title": "📰 Latest patch notes / news", "posts_none": "No posts yet.",
     },
     "pt": {
         "kind": {"item": "Item", "mob": "Mob", "weapon": "Arma", "guide": "Guia", "mission": "Missão", "mastery": "Maestria", "jutsu": "Jutsu", "post": "Post do blog"},
@@ -38,6 +41,9 @@ TEXT = {
         "lang_set": "✅ O idioma deste servidor agora é **Português**. `/search` e `/status` vão responder em português aqui.",
         "lang_need_perm": "❌ Você precisa da permissão **Gerenciar servidor** para trocar o idioma.",
         "wrong_guild": "Este comando não está disponível neste servidor.", "slow": "⏳ Calma - tente de novo em {s}s.",
+        "drop_none": "Nada combinou com **{q}**. Tente outro nome (o item precisa estar publicado no wiki).",
+        "drop_title": "🎁 Onde conseguir {item}", "drop_nobody": "Nenhum mob publicado dropa este item ainda.", "drop_chance": "chance",
+        "drop_footer": "Detalhes completos no wiki", "posts_title": "📰 Últimas notícias / patch notes", "posts_none": "Nenhum post ainda.",
     },
 }
 
