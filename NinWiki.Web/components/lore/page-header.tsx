@@ -21,6 +21,7 @@ export function PageHeader({
   icon,
   accentColor,
   children,
+  action,
 }: {
   title: string;
   subtitle?: string;
@@ -28,6 +29,7 @@ export function PageHeader({
   icon?: ReactNode;
   accentColor?: string;
   children?: ReactNode;
+  action?: ReactNode;   // canto direito do titulo (ex.: botao Reportar)
 }) {
   // Azul-chakra como cor padrao quando a pagina nao especifica uma
   // cor de destaque propria (ex: paginas sem uma mastery/vila associada).
@@ -71,6 +73,7 @@ export function PageHeader({
           <h1 className="stamp-title text-2xl text-ink-100 sm:text-3xl">{title}</h1>
           {subtitle && <p className="mt-1 text-sm text-ink-300 sm:text-base">{subtitle}</p>}
         </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
 
       {children && <div className="mt-4">{children}</div>}

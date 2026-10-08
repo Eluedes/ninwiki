@@ -43,13 +43,19 @@ export function PostPageClient({
       </Link>
       {/* Capa grande no topo (estilo noticia da Steam): imagem larga com o titulo por cima de um degrade escuro */}
       {banner ? (
-        <header className="relative mx-auto mb-6 max-w-[960px] overflow-hidden rounded-2xl border border-border">
+        <header className="relative mb-6 overflow-hidden rounded-2xl border border-border bg-black">
+          {/* Fundo: a mesma arte esticada e desfocada, so' para preencher as laterais (a arte em si NAO e' esticada nem cortada). */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={banner} alt={title} className="aspect-[960/311] min-h-[12rem] w-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>
-            <div className="mt-2 text-sm text-white/80">{meta}</div>
+          <img src={banner} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-2xl" />
+          {/* Frente: a arte INTEIRA, no tamanho real (ate' 960px) e centralizada; titulo por cima no desktop e embaixo no celular. */}
+          <div className="relative mx-auto max-w-[960px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={banner} alt={title} className="block h-auto w-full" />
+            <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-t from-black/85 via-black/20 to-transparent sm:block" />
+            <div className="bg-black/60 p-4 sm:absolute sm:inset-x-0 sm:bottom-0 sm:bg-transparent sm:p-8">
+              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>
+              <div className="mt-2 text-sm text-white/80">{meta}</div>
+            </div>
           </div>
         </header>
       ) : (

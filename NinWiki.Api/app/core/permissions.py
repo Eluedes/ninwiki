@@ -86,6 +86,9 @@ class Permission(str, Enum):
     # --- Comentarios dos leitores no blog (esconder/apagar comentario, banir leitor) ---
     COMMENTS_MODERATE = "comments.moderate"
 
+    # --- Reports dos visitantes (conteudo desatualizado / erro de traducao): ler, resolver, descartar e apagar ---
+    REPORTS_MANAGE = "reports.manage"
+
     # --- Erros do wiki (traceback, IPs - so' o S.Adm) ---
     ERRORS_VIEW = "errors.view"
 
@@ -138,6 +141,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.NOTICE_MANAGE,
     Permission.ANNOUNCEMENT_MANAGE,
     Permission.COMMENTS_MODERATE,
+    Permission.REPORTS_MANAGE,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,
 })

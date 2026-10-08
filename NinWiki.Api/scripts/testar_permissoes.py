@@ -130,6 +130,7 @@ ROTAS_PUBLICAS = {
     # escrita "publica" de proposito: cada uma tem a sua propria protecao
     ("POST", "/auth/dev-login"),   # so' funciona em development + confere a origem
     ("POST", "/auth/logout"),      # sem sessao so' limpa o cookie
+    ("POST", "/reports"),           # visitante avisa conteudo desatualizado / erro de traducao (origem + limites + isca + alvo conferido)
     ("POST", "/client-errors"),    # o navegador do visitante avisa que o site quebrou (origem + limite por IP + teto por hora)
 }
 
@@ -259,6 +260,24 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}, headers=A)
     r = await c.get(f"/content-items/{mob_id}", headers=C)
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
+    # "Dropado por": automatico - o item lista os mobs PUBLICADOS que o ligam (ou citam pelo nome) nos drops
+    r = await c.get(f"/content-items/{drop_item_id}", headers=C)
+    check("item NAO lista mob em rascunho como 'dropado por'", r.status_code == 200 and r.json()["droppedBy"] == [], r.text[:200])
+    item_nome = r.json()["name"]
+    r = await c.put(f"/content-items/{mob_id}", json={**novo_conteudo("drop-mob"), "category": "mobs", "status": "published", "drops": [
+        {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id}]}, headers=A)
+    check("admin publica o mob com drop ligado", r.status_code == 200, r.text[:160])
+    await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "status": "published", "attributes": [], "drops": []}, headers=A)   # o item tambem precisa estar publicado para o anonimo ve-lo
+    r = await c.get(f"/content-items/{drop_item_id}")
+    db_mobs = r.json().get("droppedBy", [])
+    check("item mostra o mob publicado que o dropa (automatico, chance 10)", len(db_mobs) == 1 and db_mobs[0]["slug"] == f"{SLUG}-drop-mob" and db_mobs[0]["chance"] == 10, r.text[:240])
+    r = await c.post("/content-items", json={**novo_conteudo("drop-mob2"), "category": "mobs", "drops": [
+        {"itemName": item_nome, "chance": 3}]}, headers=C)
+    mob2_id = r.json()["id"]
+    await c.put(f"/content-items/{mob2_id}", json={**novo_conteudo("drop-mob2"), "category": "mobs", "status": "published", "drops": [
+        {"itemName": item_nome, "chance": 3}]}, headers=A)
+    r = await c.get(f"/content-items/slug/{SLUG}-drop-item")
+    check("drop so' com o NOME do item (sem ligacao) tambem conta como 'dropado por'", len(r.json().get("droppedBy", [])) == 2, r.text[:240])
     r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
     check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("unico"), "category": "weapons", "rarity": "unique"}, headers=C)
@@ -455,38 +474,24 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("POST da origem certa passa (201)", r.status_code == 201, f"veio {r.status_code}")
 
     # ------------------------------------------------------------------
-    secao("11) API do Bot: mesmas regras do painel")
+    secao("11) API do Bot: so' leitura/backup, token obrigatorio e NENHUMA rota de gestao da equipe")
+    DESDE_BOT = "2000-01-01T00:00:00+00:00"
     settings.bot_api_token = ""
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}")
+    r = await c.get("/bot/errors", params={"since": DESDE_BOT})
     check("sem BOT_API_TOKEN configurado a rota nem existe (404)", r.status_code == 404)
     settings.bot_api_token = "token-de-teste-do-bot"
     B = {"X-Bot-Token": settings.bot_api_token}
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}")
+    r = await c.get("/bot/errors", params={"since": DESDE_BOT})
     check("sem header X-Bot-Token (401)", r.status_code == 401)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}", headers={"X-Bot-Token": "errado"})
+    r = await c.get("/bot/errors", params={"since": DESDE_BOT}, headers={"X-Bot-Token": "errado"})
     check("token do bot errado (401)", r.status_code == 401)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['adm']}", headers=B)
-    check("bot + invoker Adm NAO lista equipe (403) - Equipe e' so' do S.Adm", r.status_code == 403)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['sadm']}", headers=B)
-    check("bot + invoker S.Adm lista equipe (200)", r.status_code == 200)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['creator']}", headers=B)
-    check("bot + invoker Creator NAO lista (403)", r.status_code == 403)
-    r = await c.get(f"/bot/staff?invokerDiscordId={BASE + 20}", headers=B)
-    check("bot + invoker que nao e' da equipe (403)", r.status_code == 403)
-    r = await c.get(f"/bot/staff?invokerDiscordId={IDS['inativo']}", headers=B)
-    check("bot + invoker desativado (403)", r.status_code == 403)
-    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["sadm"]), "discordId": str(BASE + 12), "role": "creator", "username": "TESTE_bot"}, headers=B)
-    check("bot cadastra Creator pelo S.Adm (201)", r.status_code == 201, f"veio {r.status_code} {r.text[:100]}")
-    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["adm"]), "discordId": str(BASE + 13), "role": "creator"}, headers=B)
-    check("bot NAO deixa Adm cadastrar ninguem (403) - mesma regra do painel", r.status_code == 403)
-    r = await c.post("/bot/staff", json={"invokerDiscordId": str(IDS["creator"]), "discordId": str(BASE + 13), "role": "creator"}, headers=B)
-    check("bot NAO deixa Creator cadastrar ninguem (403)", r.status_code == 403)
-    r = await c.post(f"/bot/staff/{BASE + 12}/deactivate", json={"invokerDiscordId": str(IDS["sadm"])}, headers=B)
-    check("bot desativa Creator (200)", r.status_code == 200 and r.json()["isActive"] is False)
-    r = await c.post(f"/bot/staff/{IDS['sadm']}/deactivate", json={"invokerDiscordId": str(IDS["adm"])}, headers=B)
-    check("bot NAO deixa Adm desativar ninguem (403)", r.status_code == 403)
-    r = await c.get("/audit-log?source=bot&limit=50", headers=S)
-    check("acoes do bot ficam marcadas source=bot no log", len(r.json()) >= 2 and all(e["source"] == "bot" for e in r.json()))
+    r = await c.get("/bot/errors", params={"since": DESDE_BOT}, headers=B)
+    check("token certo le a lista de erros (200)", r.status_code == 200)
+    for metodo, rota in (("GET", f"/bot/me?invokerDiscordId={IDS['sadm']}"), ("GET", f"/bot/staff?invokerDiscordId={IDS['sadm']}"),
+                         ("POST", "/bot/staff"), ("POST", "/bot/audit-log/clear"),
+                         ("PATCH", f"/bot/staff/{BASE + 12}/role"), ("POST", f"/bot/staff/{BASE + 12}/deactivate")):
+        r = await c.request(metodo, rota, headers=B, json={} if metodo != "GET" else None)
+        check(f"{metodo} {rota.split('?')[0]}: gestao da equipe pelo Discord foi REMOVIDA (404/405)", r.status_code in (404, 405), f"veio {r.status_code}")
 
     # ------------------------------------------------------------------
     secao("12) Login do Discord (Discord simulado)")
@@ -780,19 +785,19 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         # -- token do bot: forca bruta --
         settings.bot_api_token = "token-de-teste-do-bot-1234567890"
         certo = {"X-Bot-Token": settings.bot_api_token}
-        consulta = f"/bot/staff?invokerDiscordId={IDS['sadm']}"
+        consulta = "/bot/errors"
         async with cliente("198.51.100.15") as x:
-            codigos = [(await x.get(consulta, headers={"X-Bot-Token": f"chute-{i}"})).status_code for i in range(10)]
+            codigos = [(await x.get(consulta, params={"since": DESDE_BOT}, headers={"X-Bot-Token": f"chute-{i}"})).status_code for i in range(10)]
             check("bot: 10 tokens errados dao 401", codigos == [401] * 10, str(codigos))
-            r = await x.get(consulta, headers={"X-Bot-Token": "mais-um-chute"})
+            r = await x.get(consulta, params={"since": DESDE_BOT}, headers={"X-Bot-Token": "mais-um-chute"})
             check("o 11o ja' e' 429 (bloqueado)", r.status_code == 429 and "Too many attempts" in r.json()["detail"], f"{r.status_code}")
-            r = await x.get(consulta, headers=certo)
+            r = await x.get(consulta, params={"since": DESDE_BOT}, headers=certo)
             check("...e enquanto bloqueado nem o token CERTO passa (429)", r.status_code == 429)
             relogio.t += 11 * 60
-            r = await x.get(consulta, headers=certo)
+            r = await x.get(consulta, params={"since": DESDE_BOT}, headers=certo)
             check("passada a janela (10 min) o token certo volta a funcionar", r.status_code == 200, f"{r.status_code}")
         async with cliente("198.51.100.16") as y:
-            r = await y.get(consulta, headers=certo)
+            r = await y.get(consulta, params={"since": DESDE_BOT}, headers=certo)
             check("o bot em OUTRO IP nunca e' afetado", r.status_code == 200)
         settings.bot_api_token = ""
         settings.discord_client_id = settings.discord_client_secret = ""
@@ -2273,6 +2278,72 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     async with _SessM() as db:
         await db.execute(text("DELETE FROM error_events WHERE fingerprint LIKE 'teste-manut-%'"))
         await db.execute(text("DELETE FROM audit_log WHERE action = 'teste-manut'"))
+        await db.commit()
+
+    secao("33) Reports de visitantes: conteudo desatualizado / erro de traducao (publico com defesas; so' reports.manage le e resolve)")
+    from app.core.rate_limit import limiter as _lim
+    from app.core.database import AsyncSessionLocal as _SessR
+    ORIGEM = {"Origin": settings.frontend_origin}
+    async with _SessR() as db:
+        jutsu_id = (await db.execute(text("SELECT id FROM jutsus LIMIT 1"))).scalar()
+        mastery_id = (await db.execute(text("SELECT id FROM masteries LIMIT 1"))).scalar()
+    base = {"targetType": "content", "targetId": f"{SLUG}-drop-item", "kind": "translation", "message": "A traducao deste item esta errada no nome.", "locale": "pt"}
+    _lim._hits.clear()
+    r = await c.post("/reports", json=base, headers=ORIGEM)
+    check("visitante anonimo envia report de um conteudo publicado (204)", r.status_code == 204, f"veio {r.status_code} {r.text[:120]}")
+    r = await c.get("/reports?status=all", headers=A)
+    meus = [x for x in r.json() if x["targetId"] == f"{SLUG}-drop-item"] if r.status_code == 200 else []
+    check("Adm ve o report; nome e endereco da pagina vem do banco (nao do visitante)", len(meus) == 1 and meus[0]["targetPath"] == f"/detail/{SLUG}-drop-item" and meus[0]["status"] == "open" and "ip" not in str(meus[0]).lower(), r.text[:240])
+    rep_id = meus[0]["id"] if meus else None
+    for tipo, alvo in (("jutsu", jutsu_id), ("mastery", mastery_id)):
+        if alvo:
+            r = await c.post("/reports", json={**base, "targetType": tipo, "targetId": alvo, "kind": "outdated"}, headers=ORIGEM)
+            check(f"report de {tipo} e' aceito", r.status_code == 204, f"veio {r.status_code} {r.text[:120]}")
+    _lim._hits.clear()
+    r = await c.post("/reports", json=base, headers=ORIGEM)
+    r2 = await c.get("/reports?status=all", headers=A)
+    check("mesmo texto, mesma pagina e mesmo IP nao cria duplicado", r.status_code == 204 and len([x for x in r2.json() if x["targetId"] == f"{SLUG}-drop-item"]) == 1, r2.text[:200])
+    _lim._hits.clear()
+    r = await c.post("/reports", json=base, headers={"Origin": "https://site-malicioso.example"})
+    check("origem estranha e' barrada (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.post("/reports", json={**base, "message": "curto"}, headers=ORIGEM)
+    check("mensagem curta demais e' recusada (422)", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/reports", json={**base, "message": "x" * 1001}, headers=ORIGEM)
+    check("mensagem acima de 1000 caracteres e' recusada (422)", r.status_code == 422, f"veio {r.status_code}")
+    _lim._hits.clear()
+    r = await c.post("/reports", json={**base, "message": "veja http://a.com e http://b.com por favor"}, headers=ORIGEM)
+    check("mais de 1 link e' recusado (422)", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/reports", json={**base, "targetId": "nao-existe-teste-perm"}, headers=ORIGEM)
+    check("pagina que nao existe e' recusada (404)", r.status_code == 404, f"veio {r.status_code}")
+    await c.post("/content-items", json=novo_conteudo("rep-rascunho"), headers=C)   # fica em rascunho (Creator so' cria rascunho)
+    r = await c.post("/reports", json={**base, "targetId": f"{SLUG}-rep-rascunho"}, headers=ORIGEM)
+    check("pagina em rascunho nao recebe report (404)", r.status_code == 404, f"veio {r.status_code}")
+    _lim._hits.clear()
+    r = await c.post("/reports", json={**base, "kind": "hack"}, headers=ORIGEM)
+    check("tipo de report invalido e' recusado (422)", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/reports", json={**base, "message": "texto de robo bem comprido aqui", "website": "http://spam.example"}, headers=ORIGEM)
+    r2 = await c.get("/reports?status=all", headers=A)
+    check("robo que preenche o campo isca: 204 mas nada e' guardado", r.status_code == 204 and not any("robo" in x["message"] for x in r2.json()), r2.text[:160])
+    _lim._hits.clear()
+    codigos = [(await c.post("/reports", json={**base, "message": f"flood numero {i} do teste de limite"}, headers=ORIGEM)).status_code for i in range(6)]
+    check("limite por IP: depois de 3 por minuto vem 429", 429 in codigos and codigos[0] == 204, str(codigos))
+    _lim._hits.clear()
+    r = await c.get("/reports")
+    check("anonimo NAO lista reports (401)", r.status_code == 401, f"veio {r.status_code}")
+    r = await c.get("/reports", headers=C)
+    check("Creator NAO ve reports por padrao (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.patch(f"/reports/{rep_id}", json={"status": "resolved"}, headers=A)
+    check("Adm marca como resolvido (guarda quem e quando)", r.status_code == 200 and r.json()["status"] == "resolved" and r.json()["handledBy"], r.text[:200])
+    r = await c.get("/reports", headers=A)
+    check("report resolvido some da lista de abertos", all(x["id"] != rep_id for x in r.json()), r.text[:160])
+    r = await c.patch(f"/reports/{rep_id}", json={"status": "open"}, headers=A)
+    check("reabrir limpa quem resolveu", r.status_code == 200 and r.json()["handledBy"] is None, r.text[:200])
+    r = await c.patch(f"/reports/{rep_id}", json={"status": "qualquer"}, headers=A)
+    check("status invalido e' recusado (422)", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.delete(f"/reports/{rep_id}", headers=A)
+    check("Adm apaga o report (204)", r.status_code == 204, f"veio {r.status_code}")
+    async with _SessR() as db:
+        await db.execute(text("DELETE FROM content_reports WHERE target_id LIKE :p OR target_id = 'nao-existe-teste-perm' OR message LIKE 'flood numero%' OR ip_address IS NOT NULL AND created_at > now() - interval '1 hour'"), {"p": f"{SLUG}%"})
         await db.commit()
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")

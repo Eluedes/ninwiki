@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { JutsuSheet } from '@/components/lore/jutsu-sheet';
+import { ReportButton } from '@/components/report/report-button';
 import { PageHeader } from '@/components/lore/page-header';
 import { MasteryIcon } from '@/components/lore/mastery-icon';
 import { JutsuGif } from '@/components/lore/jutsu-gif';
@@ -51,6 +52,7 @@ export function JutsuPageClient({
         ]}
         icon={<MasteryIcon icon={jutsu.icon} className="h-7 w-7" />}
         accentColor={mastery?.color}
+        action={<ReportButton targetType="jutsu" targetId={jutsu.id} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">

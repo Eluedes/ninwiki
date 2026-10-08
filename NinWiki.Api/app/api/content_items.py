@@ -19,7 +19,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import Field
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -34,7 +34,7 @@ from app.models.enums import ContentStatus, ItemType, MobType, Rarity
 from app.models.masteries import Jutsu
 from app.models.content import ContentItem, ContentItemAttribute, ContentItemAttack, ContentItemDrop
 from app.models.enums import ContentCategory
-from app.schemas.content import CamelModel, ContentItemCreate, ContentItemRead, ContentItemSummary, ContentItemUpdate
+from app.schemas.content import CamelModel, ContentItemCreate, ContentItemRead, DroppedByEntry, ContentItemSummary, ContentItemUpdate
 
 router = APIRouter(prefix="/content-items", tags=["content-items"])
 
@@ -247,14 +247,46 @@ async def list_content_items(
     return result.scalars().all()
 
 
+async def _dropped_by(item: ContentItem, db: AsyncSession) -> list[DroppedByEntry]:
+    """
+    Mobs PUBLICADOS que dropam `item`, calculado na hora (nada e' cadastrado a mao): conta o drop que esta' LIGADO ao item
+    (dropped_item_id) e tambem o drop so' com o NOME igual (sem ligacao). Um mob aparece uma vez, com a maior chance.
+    """
+    if item.category == ContentCategory.MOBS:
+        return []   # mob nao e' dropado por ninguem
+    stmt = (
+        select(ContentItem, ContentItemDrop)
+        .join(ContentItemDrop, ContentItemDrop.content_item_id == ContentItem.id)
+        .where(
+            ContentItem.status == ContentStatus.PUBLISHED,
+            or_(
+                ContentItemDrop.dropped_item_id == item.id,
+                (ContentItemDrop.dropped_item_id.is_(None)) & (func.lower(ContentItemDrop.item_name) == item.name.lower()),
+            ),
+        )
+        .order_by(ContentItem.name)
+    )
+    best: dict[UUID, DroppedByEntry] = {}
+    for mob, drop in (await db.execute(stmt)).all():
+        entry = DroppedByEntry(
+            slug=mob.slug, name=mob.name, name_pt=mob.name_pt, image=mob.image, icon=mob.icon,
+            chance=float(drop.chance), chance_qualifier=drop.chance_qualifier,
+        )
+        if mob.id not in best or entry.chance > best[mob.id].chance:
+            best[mob.id] = entry
+    return list(best.values())
+
+
 @router.get("/{item_id}", response_model=ContentItemRead)
 async def get_content_item(
     item_id: UUID, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db),
 ):
-    """Ficha completa de UMA entry, com attributes e drops carregados."""
+    """Ficha completa de UMA entry, com attributes, drops e (automatico) os mobs que dropam o item."""
     item = await _get_item_or_404(item_id, db)
     _hide_draft_from_public(item, user)
-    return item
+    read = ContentItemRead.model_validate(item)
+    read.dropped_by = await _dropped_by(item, db)
+    return read
 
 
 @router.get("/slug/{slug}", response_model=ContentItemRead)
@@ -290,7 +322,9 @@ async def get_content_item_by_slug(
     if item is None:
         raise HTTPException(status_code=404, detail="Entry not found")
     _hide_draft_from_public(item, user)
-    return item
+    read = ContentItemRead.model_validate(item)
+    read.dropped_by = await _dropped_by(item, db)
+    return read
 
 
 async def _validate_dropped_item_ids(drops: list, db: AsyncSession) -> None:

@@ -14,8 +14,9 @@ import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
 import { useLanguage } from '@/components/providers/language-provider';
 import { DropRow } from '@/components/wiki/drop-row';
+import { DroppedBy } from '@/components/wiki/dropped-by';
 import { WikiImage } from '@/components/wiki/wiki-image';
-import { Crosshair, Gem, Heart, Layers, MapPin, Star, Swords, Tag, Timer, type LucideIcon } from 'lucide-react';
+import { Crosshair, Gem, Heart, Layers, MapPin, Skull, Star, Swords, Tag, Timer, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem } from '@/lib/api-client';
 
 interface DetailSidebarProps {
@@ -58,6 +59,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   const isPt = locale === 'pt';
   const name = isPt ? (entry.namePt ?? entry.name) : entry.name;
   const spawnLocation = isPt ? (entry.spawnLocationPt ?? entry.spawnLocation) : entry.spawnLocation;
+  const droppedBy = entry.droppedBy ?? [];   // mobs que dropam esta entry (a API calcula; `?? []` cobre resposta antiga durante o deploy)
 
   // Ficha de Arma: layout PROPRIO, diferente do resto (secoes que
   // expandem/recolhem, batendo com a ficha do proprio jogo - print de
@@ -120,6 +122,14 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
             )}
           </div>
         ))}
+
+        {/* Dropado por: automatico (mobs que ligam esta arma nos drops) */}
+        {droppedBy.length > 0 && (
+          <>
+            <SectionTitle icon={Skull}>{dict.detail.droppedBy}</SectionTitle>
+            <DroppedBy mobs={droppedBy} />
+          </>
+        )}
 
         {entry.drops.length > 0 && (
           <>
@@ -259,6 +269,14 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
         </>
       )}
 
+      {/* Dropado por: automatico (mobs que ligam este item nos drops); some se nenhum mob dropa. */}
+      {droppedBy.length > 0 && (
+        <>
+          <SectionTitle icon={Skull}>{dict.detail.droppedBy}</SectionTitle>
+          <DroppedBy mobs={droppedBy} />
+        </>
+      )}
+
       {/* Drops so' aparecem se a entry tiver (nem toda tem). */}
       {entry.drops.length > 0 && (
         <>
@@ -271,7 +289,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
         </>
       )}
 
-      {detailRows.length === 0 && entry.attributes.length === 0 && entry.drops.length === 0 && (
+      {detailRows.length === 0 && entry.attributes.length === 0 && entry.drops.length === 0 && droppedBy.length === 0 && (
         <p className="px-4 py-6 text-center text-sm text-muted-foreground">{name}</p>
       )}
     </div>

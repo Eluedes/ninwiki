@@ -23,10 +23,12 @@ from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.core.rate_limit import limiter
 from app.models.errors import ErrorEvent
+from app.models.reports import ContentReport
 from app.models.traffic import TrafficDaily, TrafficPage, TrafficPlace, TrafficVisitor
 from app.models.users import AuditLogEntry
 
 log = logging.getLogger("ninwiki.maintenance")
+REPORT_RETENTION_DAYS = 60   # reports resolvidos/descartados somem depois disso
 TRAFFIC_DAYS = 400   # a tela de acessos mostra no maximo 365 dias
 
 
@@ -51,6 +53,9 @@ async def prune_database(db: AsyncSession, now: datetime | None = None) -> dict[
         await run("errorsOld", delete(ErrorEvent).where(ErrorEvent.last_seen < now - timedelta(days=settings.error_retention_days)))
     if settings.audit_retention_days > 0:
         await run("auditLog", delete(AuditLogEntry).where(AuditLogEntry.created_at < now - timedelta(days=settings.audit_retention_days)))
+    # Reports de visitantes ja' tratados (resolvidos/descartados) ha' mais de 60 dias; os abertos nunca sao apagados sozinhos.
+    await run("reportsHandled", delete(ContentReport).where(
+        ContentReport.status.in_(("resolved", "dismissed")), ContentReport.handled_at < now - timedelta(days=REPORT_RETENTION_DAYS)))
     await run("trafficVisitors", delete(TrafficVisitor).where(TrafficVisitor.day < today - timedelta(days=2)))
     await run("trafficDaily", delete(TrafficDaily).where(TrafficDaily.day < today - timedelta(days=TRAFFIC_DAYS)))
     await run("trafficPages", delete(TrafficPage).where(TrafficPage.day < today - timedelta(days=TRAFFIC_DAYS)))
