@@ -260,6 +260,18 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}, headers=A)
     r = await c.get(f"/content-items/{mob_id}", headers=C)
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
+    # Selo "traducao automatica": so' quando a DeepL preencheu o portugues e ninguem revisou
+    from unittest.mock import AsyncMock, patch as _patch
+    with _patch("app.api.content_items.translate_field", new=AsyncMock(return_value="TRADUZIDO")):
+        r = await c.post("/content-items", json={**novo_conteudo("sel-auto"), "category": "items"}, headers=C)
+        check("conteudo sem portugues traduzido pela DeepL ganha translationAuto=true", r.status_code == 201 and r.json()["translationAuto"] is True and r.json()["namePt"] == "TRADUZIDO", r.text[:200])
+        sel_id = r.json()["id"]
+        r = await c.post("/content-items", json={**novo_conteudo("sel-manual"), "category": "items", "namePt": "Nome a mao"}, headers=C)
+        check("portugues escrito a mao no cadastro: translationAuto=false", r.status_code == 201 and r.json()["translationAuto"] is False, r.text[:200])
+        r = await c.put(f"/content-items/{sel_id}", json={**novo_conteudo("sel-auto"), "category": "items", "namePt": "Corrigido por pessoa", "descriptionPt": "d", "lorePt": "l", "synergyPt": "s", "spawnLocationPt": "x"}, headers=A)
+        check("pessoa corrigiu o portugues numa edicao: o selo some (translationAuto=false)", r.status_code == 200 and r.json()["translationAuto"] is False, r.text[:200])
+        r = await c.get(f"/content-items/{sel_id}", headers=A)
+        check("a ficha traz updatedAt (para 'Atualizado em')", r.json().get("updatedAt"), r.text[:120])
     # Historico de versoes: cada edicao guarda o estado anterior; restaurar volta a versao (e tambem entra no historico)
     r = await c.get(f"/content-items/{drop_item_id}", headers=A)
     nome_original = r.json()["name"]

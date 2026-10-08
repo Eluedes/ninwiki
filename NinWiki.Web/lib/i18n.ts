@@ -78,7 +78,7 @@ export interface Dictionary {
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
-  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
+  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
   masteryDetail: {
     notFound: string; backToMasteries: string; elemental: string; nonElemental: string;
     aboutMastery: string; masteryPaths: string; noJutsusInPath: string; jutsusOfMastery: string;
@@ -364,6 +364,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       level: 'Nível',
       noDrops: 'Este item não possui drops registrados.',
       droppedBy: 'Dropado por',
+      updatedOn: 'Atualizado em', autoTranslated: 'Tradução automática', autoTranslatedHint: 'Este texto em português foi traduzido automaticamente e ainda não foi revisado. Achou um erro? Use o botão Reportar.',
       relatedEntries: 'Relacionados',
       spawnLocation: 'Onde encontrar',
       attacks: 'Jutsu / Attacks',
@@ -1078,6 +1079,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       level: 'Level',
       noDrops: 'This entry has no recorded drops.',
       droppedBy: 'Dropped by',
+      updatedOn: 'Updated', autoTranslated: 'Auto-translated', autoTranslatedHint: 'This Portuguese text was translated automatically and has not been reviewed yet. Found a mistake? Use the Report button.',
       relatedEntries: 'Related',
       spawnLocation: 'Where to find',
       attacks: 'Jutsu / Attacks',

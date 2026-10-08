@@ -114,6 +114,8 @@ export interface ApiContentItem {
   drops: ApiDropEntry[];
   // Mobs que dropam esta entry - calculado pela API a partir das paginas de mob (nunca cadastrado a mao).
   droppedBy: ApiDroppedBy[];
+  updatedAt?: string | null;       // ultima edicao ('Atualizado em')
+  translationAuto?: boolean;       // portugues veio da traducao automatica e ninguem revisou (selo no site)
   status: 'draft' | 'published';
 }
 

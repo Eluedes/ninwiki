@@ -260,6 +260,8 @@ class ContentItemRead(ContentItemBase):
     cast_village_name: str | None = None
     # Mobs que dropam este item (automatico, ver DroppedByEntry); preenchido pelos GETs de ficha - nas demais respostas fica [].
     dropped_by: list[DroppedByEntry] = []
+    updated_at: datetime | None = None    # ultima edicao (o site mostra 'Atualizado em')
+    translation_auto: bool = False        # portugues veio da traducao automatica e ninguem revisou (ver ContentItem.translation_auto)
 
     @model_validator(mode="before")
     @classmethod

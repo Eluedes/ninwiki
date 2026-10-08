@@ -10,6 +10,7 @@ decidido no desenho de schema do roadmap (Fase 1).
 import uuid
 from datetime import datetime
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Enum,
     ForeignKey,
@@ -33,6 +34,10 @@ class ContentItem(Base, TimestampMixin):
     __tablename__ = "content_items"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # True quando o texto em portugues foi preenchido pela traducao AUTOMATICA (DeepL) e nenhuma pessoa corrigiu/escreveu a mao
+    # depois. O site mostra o selo "Traducao automatica" so' nesse caso (e o visitante pode reportar erro). False = revisado ou sem dado.
+    translation_auto: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     # Identificador amigavel usado na URL (ex: "larva", "ring-of-vigor").
     # Unico no banco inteiro, nao so' dentro da categoria - evita duas

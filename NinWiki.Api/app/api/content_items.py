@@ -396,7 +396,7 @@ _TRANSLATABLE_FIELDS = [
 ]
 
 
-async def _fill_missing_translations(item: ContentItem) -> None:
+async def _fill_missing_translations(item: ContentItem) -> bool:
     """
     Preenche SO' os campos "_pt" que estao vazios, traduzindo o campo
     EN correspondente via DeepL - nunca sobrescreve um "_pt" que ja'
@@ -405,16 +405,21 @@ async def _fill_missing_translations(item: ContentItem) -> None:
     pra' quando a pessoa realmente QUISER forcar uma traducao nova por
     cima do que ja existe.
 
+    Devolve True se preencheu algum campo.
+
     Sem efeito nenhum se DEEPL_API_KEY nao estiver configurada -
     translate_field ja' devolve None nesse caso, e o campo so' fica
     vazio ate' alguem preencher a mao ou configurar a chave depois.
     """
+    filled = False
     for field_en, field_pt in _TRANSLATABLE_FIELDS:
         if getattr(item, field_pt):
             continue
         translated = await translate_field(getattr(item, field_en))
         if translated:
             setattr(item, field_pt, translated)
+            filled = True
+    return filled
 
 
 @router.post("", response_model=ContentItemRead, status_code=201)
@@ -465,7 +470,10 @@ async def create_content_item(
             dropped_item_id=drop.dropped_item_id,
         ))
 
-    await _fill_missing_translations(item)
+    # Selo 'traducao automatica': so' se a DeepL preencheu algo e ninguem escreveu o portugues a mao neste envio
+    human_wrote = any(getattr(item, pt) for _, pt in _TRANSLATABLE_FIELDS)
+    filled = await _fill_missing_translations(item)
+    item.translation_auto = filled and not human_wrote
 
     db.add(item)
     await db.commit()
@@ -494,6 +502,7 @@ async def update_content_item(
     await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     _guard_edit(staff, item, payload.status)
     before = {"name": item.name, "status": item.status.value}
+    previous_pt = {pt: getattr(item, pt) for _, pt in _TRANSLATABLE_FIELDS}   # para saber se alguem mexeu no portugues nesta edicao
     # Historico: guarda o estado ATUAL (antes desta edicao) para poder desfazer; entra na mesma transacao da edicao.
     db.add(ContentVersion(
         content_item_id=item.id, saved_by=staff.username,
@@ -562,7 +571,12 @@ async def update_content_item(
             dropped_item_id=drop.dropped_item_id,
         ))
 
-    await _fill_missing_translations(item)
+    human_touched = any(getattr(item, pt) != previous_pt[pt] for pt in previous_pt)   # alguem escreveu/corrigiu o portugues nesta edicao
+    filled = await _fill_missing_translations(item)
+    if human_touched:
+        item.translation_auto = False
+    elif filled:
+        item.translation_auto = True
 
     await db.commit()
     await _prune_versions(item.id, db)
@@ -648,6 +662,7 @@ async def retranslate_content_item(
         translated = await translate_field(getattr(item, field_en))
         if translated:
             setattr(item, field_pt, translated)
+            item.translation_auto = True   # retraduzir sobrescreve com a traducao automatica
     await db.commit()
     return await _get_item_or_404(item.id, db)
 
