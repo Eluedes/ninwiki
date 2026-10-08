@@ -9,13 +9,16 @@ import { ArrowLeft } from 'lucide-react';
 import { getContentItemBySlug, listContentItems, ApiError } from '@/lib/api-client';
 import { DetailPageClient } from '@/components/wiki/detail-page-client';
 import type { Metadata } from 'next';
+import { shareMetadata } from '@/lib/share-meta';
 import { notFound } from 'next/navigation';
 
 /** Titulo da aba: o nome da entry (mob, item, arma...). */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   try {
-    return { title: (await getContentItemBySlug(id)).name };
+    const entry = await getContentItemBySlug(id);
+    // cartao do link (Discord, WhatsApp, Google): nome, resumo e a imagem da entry (ou o logo)
+    return shareMetadata({ title: entry.name, html: entry.description, path: `/detail/${entry.slug}`, image: entry.image });
   } catch {
     return { title: 'Wiki' };
   }

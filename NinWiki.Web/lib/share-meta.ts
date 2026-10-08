@@ -1,0 +1,21 @@
+// Metadata de COMPARTILHAMENTO (Open Graph / Twitter) das paginas publicas: e' o que o Discord, o WhatsApp e o Google leem para
+// montar o cartao do link (titulo, resumo e imagem). A imagem e' a da propria pagina quando existe; senao o logo do wiki.
+// Enderecos relativos viram absolutos pelo `metadataBase` do layout raiz (NEXT_PUBLIC_SITE_URL).
+
+import type { Metadata } from 'next';
+import { extractPlainText } from '@/components/lore/rich-text';
+
+const FALLBACK_IMAGE = '/images/logo/nin-logo-blood.png';
+
+/** Monta title/description/openGraph/twitter para uma pagina. `html` e' o texto rico (descricao) de onde sai o resumo. */
+export function shareMetadata(opts: { title: string; html?: string | null; path: string; image?: string | null }): Metadata {
+  const description = opts.html ? extractPlainText(opts.html).replace(/\s+/g, ' ').trim().slice(0, 200) || undefined : undefined;
+  const image = opts.image || FALLBACK_IMAGE;
+  return {
+    title: opts.title,
+    description,
+    alternates: { canonical: opts.path },
+    openGraph: { type: 'website', title: opts.title, description, url: opts.path, siteName: 'Nin Online Wiki', images: [{ url: image }] },
+    twitter: { card: opts.image ? 'summary_large_image' : 'summary', title: opts.title, description, images: [image] },
+  };
+}

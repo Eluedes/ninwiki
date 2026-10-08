@@ -8,6 +8,7 @@ import { getMastery, listJutsus, listUtilityJutsus, listNpcJutsus, listAttribute
 import { NPC_ID, NPC_MASTERY, UTILITY_ID, UTILITY_MASTERY } from '@/lib/utility-category';
 import { MasteryPageClient } from '@/components/lore/mastery-page-client';
 import type { Metadata } from 'next';
+import { shareMetadata } from '@/lib/share-meta';
 import { notFound } from 'next/navigation';
 
 /** Titulo da aba: o nome da mastery. */
@@ -16,7 +17,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (id === UTILITY_ID) return { title: 'Utility' };
   if (id === NPC_ID) return { title: 'NPC Jutsu' };
   try {
-    return { title: `${(await getMastery(id)).name} Mastery` };
+    const mastery = await getMastery(id);
+    return shareMetadata({ title: `${mastery.name} Mastery`, html: mastery.description, path: `/masteries/${mastery.id}`, image: mastery.image });
   } catch {
     return { title: 'Masteries' };
   }
