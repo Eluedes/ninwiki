@@ -33,6 +33,7 @@ from app.models.content import ContentItem
 from app.models.enums import ContentStatus
 from app.models.masteries import Jutsu, Mastery
 from app.models.posts import Post
+from app.models.reports import ContentReport
 from app.models.errors import ErrorEvent
 from app.models.users import AuditLogEntry
 from app.schemas.content import CamelModel
@@ -169,6 +170,31 @@ async def bot_errors(
     if since.tzinfo is None:
         since = since.replace(tzinfo=timezone.utc)
     stmt = select(ErrorEvent).where(ErrorEvent.last_seen > since).order_by(ErrorEvent.last_seen).limit(limit)
+    return (await db.execute(stmt)).scalars().all()
+
+
+class BotReportEntry(CamelModel):
+    """Um report de visitante como o bot recebe: o suficiente para o aviso no Discord (sem IP)."""
+    id: UUID
+    kind: str
+    target_type: str
+    target_name: str
+    target_path: str
+    message: str
+    locale: str | None
+    created_at: datetime
+
+
+@router.get("/reports", response_model=list[BotReportEntry])
+async def bot_reports(
+    since: datetime = Query(..., description="So' reports criados DEPOIS deste instante (ISO 8601)"),
+    limit: int = Query(20, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reports de visitantes novos desde X (mais antigos primeiro) para o bot avisar no canal de erros. Sem IP."""
+    if since.tzinfo is None:
+        since = since.replace(tzinfo=timezone.utc)
+    stmt = select(ContentReport).where(ContentReport.created_at > since).order_by(ContentReport.created_at).limit(limit)
     return (await db.execute(stmt)).scalars().all()
 
 

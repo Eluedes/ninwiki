@@ -77,6 +77,10 @@ class NinWikiApi:
         """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""
         return await self._request("GET", "/bot/errors", params={"since": since_iso, "limit": limit})
 
+    async def reports_since(self, since_iso: str, limit: int = 20) -> list[dict]:
+        """Reports de visitantes (conteudo desatualizado / erro de traducao) criados depois de `since_iso`, mais antigos primeiro. Sem IP."""
+        return await self._request("GET", "/bot/reports", params={"since": since_iso, "limit": limit})
+
     async def api_status(self) -> tuple[bool, bool]:
         """(API respondeu?, banco respondeu?) via GET /health/ready. Nunca levanta excecao: falha de rede = (False, False)."""
         try:

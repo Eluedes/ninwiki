@@ -39,6 +39,7 @@ class ErrorFeedState:
     """Onde o feed parou: instante da ultima consulta + para cada problema ja' avisado (contador e hora do aviso)."""
     since: datetime
     posted: dict[str, dict] = field(default_factory=dict)  # fingerprint -> {"count": int, "at": iso}
+    reports_since: datetime | None = None   # ate' onde os REPORTS de visitantes ja' foram avisados (None = "a partir de agora")
 
 
 def _clip(text: str, limit: int = MAX_TEXT) -> str:
@@ -110,6 +111,24 @@ def format_error(entry: dict, since_last: int) -> dict:
         "fields": fields,
         "footer": "New problem — details and traceback in the panel: /admin/errors" if first_time else "Still happening — /admin/errors",
         "timestamp": _parse_time(entry["lastSeen"]),
+    }
+
+
+REPORT_KIND = {"outdated": "Outdated information", "translation": "Translation error", "other": "Other problem"}
+REPORT_COLOR = 0x3498DB   # azul: aviso de visitante (diferente de erro do sistema)
+
+
+def format_report(entry: dict, site_url: str = "") -> dict:
+    """Transforma um report de visitante em {title, description, color, fields, footer, timestamp} (o main.py monta o embed)."""
+    base = site_url.rstrip("/")
+    page = f"{base}{entry['targetPath']}" if base else entry["targetPath"]
+    return {
+        "title": f"📝 Visitor report: {REPORT_KIND.get(entry['kind'], entry['kind'])}",
+        "description": _clip(entry.get("message", ""), 900) or None,
+        "color": REPORT_COLOR,
+        "fields": [("Page", f"[{_clip(entry['targetName'], 120)}]({page})"), ("Language", str(entry.get("locale") or "?").upper())],
+        "footer": "Handle it in the panel: /admin/reports",
+        "timestamp": _parse_time(entry["createdAt"]),
     }
 
 
@@ -212,12 +231,14 @@ class ErrorFeedStore:
         try:
             raw = json.loads(self.path.read_text(encoding="utf-8"))
             posted = {str(k): {"count": int(v["count"]), "at": str(v["at"])} for k, v in raw.get("posted", {}).items()}
-            return ErrorFeedState(since=_parse_time(raw["since"]), posted=posted)
+            rs = raw.get("reportsSince")
+            return ErrorFeedState(since=_parse_time(raw["since"]), posted=posted, reports_since=_parse_time(rs) if rs else None)
         except (OSError, ValueError, KeyError, TypeError):
             return ErrorFeedState(since=datetime.now(timezone.utc))
 
     def save(self, state: ErrorFeedState) -> None:
         """Grava o estado (escrita atomica: arquivo temporario + rename)."""
         tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"since": state.since.isoformat(), "posted": state.posted}), encoding="utf-8")
+        tmp.write_text(json.dumps({"since": state.since.isoformat(), "posted": state.posted,
+                                         "reportsSince": state.reports_since.isoformat() if state.reports_since else None}), encoding="utf-8")
         tmp.replace(self.path)

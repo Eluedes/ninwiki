@@ -230,6 +230,11 @@ async def testar() -> None:
     from unittest.mock import patch  # noqa: F401  (usado pelas secoes seguintes)
 
     # ------------------------------------------------------------------
+    from ninwiki_bot.error_feed import format_report
+    f = format_report({"kind": "translation", "targetType": "jutsu", "targetName": "Fire Ball", "targetPath": "/jutsus/fire-ball",
+                       "message": "O nome em portugues esta errado", "locale": "pt", "createdAt": "2026-10-08T12:00:00Z"}, "https://wiki.example/")
+    check("aviso de report: titulo com o tipo, link da pagina no site e aponta o painel",
+          "Translation error" in f["title"] and "https://wiki.example/jutsus/fire-ball" in f["fields"][0][1] and "/admin/reports" in f["footer"], str(f))
     secao("5) Feed do log geral no Discord")
     import tempfile
     from ninwiki_bot.log_feed import FeedState, LogFeedStore, format_entry, pick_new, query_since

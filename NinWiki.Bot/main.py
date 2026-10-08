@@ -24,7 +24,7 @@ from ninwiki_bot.api_client import ApiError, NinWikiApi
 from ninwiki_bot.backup_feed import BackupStore, format_size, is_due, messages_to_delete, part_filename, parts_needed, stamp_of
 from ninwiki_bot.command_sync import sync_commands, target_guilds
 from ninwiki_bot.config import BotSettings
-from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_status_panel, query_since as errors_query_since, record_check, update_status
+from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_report, format_status_panel, query_since as errors_query_since, record_check, update_status
 from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
 from ninwiki_bot.language import LanguageStore
 from ninwiki_bot.public_commands import register_public_commands
@@ -142,6 +142,19 @@ class NinWikiBot(discord.Client):
                     embed.set_footer(text=f["footer"])
                     embeds.append(embed)
                 await channel.send(embeds=embeds, allowed_mentions=discord.AllowedMentions.none())
+            # Reports de visitantes novos (mesmo canal): na 1a vez comeca "a partir de agora" para nao despejar o historico.
+            if new_state.reports_since is None:
+                new_state.reports_since = datetime.now(timezone.utc)
+            else:
+                reports = await self.api.reports_since(new_state.reports_since.isoformat())
+                for r in reports:
+                    f = format_report(r, self.settings.site_url)
+                    embed = discord.Embed(title=f["title"], description=f["description"], color=f["color"], timestamp=f["timestamp"])
+                    for name, value in f["fields"]:
+                        embed.add_field(name=name, value=value, inline=True)
+                    embed.set_footer(text=f["footer"])
+                    await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
+                    new_state.reports_since = max(new_state.reports_since, datetime.fromisoformat(r["createdAt"].replace("Z", "+00:00")))
             self.error_state = new_state
             self.error_store.save(self.error_state)
             self._errors_failing = False

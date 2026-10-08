@@ -2295,6 +2295,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     meus = [x for x in r.json() if x["targetId"] == f"{SLUG}-drop-item"] if r.status_code == 200 else []
     check("Adm ve o report; nome e endereco da pagina vem do banco (nao do visitante)", len(meus) == 1 and meus[0]["targetPath"] == f"/detail/{SLUG}-drop-item" and meus[0]["status"] == "open" and "ip" not in str(meus[0]).lower(), r.text[:240])
     rep_id = meus[0]["id"] if meus else None
+    settings.bot_api_token = "token-de-teste-do-bot"
+    r = await c.get("/bot/reports", params={"since": "2000-01-01T00:00:00+00:00"}, headers={"X-Bot-Token": settings.bot_api_token})
+    check("bot le os reports novos (aviso no Discord), sem IP", r.status_code == 200 and any(x["targetPath"] == f"/detail/{SLUG}-drop-item" for x in r.json())
+          and "ip" not in str(r.json()).lower().replace("description", ""), r.text[:200])
+    r = await c.get("/bot/reports", params={"since": "2000-01-01T00:00:00+00:00"})
+    check("/bot/reports sem token do bot (401)", r.status_code == 401)
     for tipo, alvo in (("jutsu", jutsu_id), ("mastery", mastery_id)):
         if alvo:
             r = await c.post("/reports", json={**base, "targetType": tipo, "targetId": alvo, "kind": "outdated"}, headers=ORIGEM)
