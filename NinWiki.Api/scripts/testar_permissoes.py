@@ -260,6 +260,22 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}, headers=A)
     r = await c.get(f"/content-items/{mob_id}", headers=C)
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
+    # Historico de versoes: cada edicao guarda o estado anterior; restaurar volta a versao (e tambem entra no historico)
+    r = await c.get(f"/content-items/{drop_item_id}", headers=A)
+    nome_original = r.json()["name"]
+    corpo_hist = {**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}
+    await c.put(f"/content-items/{drop_item_id}", json={**corpo_hist, "name": "Nome Novo Do Historico"}, headers=A)
+    r = await c.get(f"/content-items/{drop_item_id}/versions", headers=A)
+    versoes = r.json() if r.status_code == 200 else []
+    check("edicao guarda a versao anterior no historico (nome antigo, quem editou)", len(versoes) >= 1 and versoes[0]["name"] == nome_original and versoes[0]["savedBy"], r.text[:240])
+    r = await c.get(f"/content-items/{drop_item_id}/versions")
+    check("anonimo NAO ve o historico (401)", r.status_code == 401)
+    r = await c.post(f"/content-items/{drop_item_id}/versions/{versoes[0]['id']}/restore", headers=A)
+    check("restaurar volta o nome antigo", r.status_code == 200 and r.json()["name"] == nome_original, r.text[:200])
+    r = await c.get(f"/content-items/{drop_item_id}/versions", headers=A)
+    check("restaurar tambem entra no historico (da' para desfazer)", len(r.json()) == len(versoes) + 1 and r.json()[0]["name"] == "Nome Novo Do Historico", r.text[:240])
+    r = await c.post(f"/content-items/{drop_item_id}/versions/00000000-0000-0000-0000-000000000000/restore", headers=A)
+    check("versao inexistente (404)", r.status_code == 404)
     # "Dropado por": automatico - o item lista os mobs PUBLICADOS que o ligam (ou citam pelo nome) nos drops
     r = await c.get(f"/content-items/{drop_item_id}", headers=C)
     check("item NAO lista mob em rascunho como 'dropado por'", r.status_code == 200 and r.json()["droppedBy"] == [], r.text[:200])

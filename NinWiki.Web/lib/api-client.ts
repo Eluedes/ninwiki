@@ -1556,3 +1556,24 @@ export function setReportStatus(id: string, status: ReportStatus): Promise<ApiRe
 export function deleteReport(id: string): Promise<void> {
   return apiFetch(`/reports/${id}`, { method: 'DELETE' });
 }
+
+// ---- Historico de versoes do conteudo (desfazer edicao) ----
+
+/** Uma versao anterior de uma entry (espelha ContentVersionRead no backend). */
+export interface ApiContentVersion {
+  id: string;
+  createdAt: string;
+  savedBy: string | null;
+  name: string;
+  status: string;
+}
+
+/** Versoes anteriores da entry, da mais nova para a mais antiga. */
+export function listContentVersions(itemId: string): Promise<ApiContentVersion[]> {
+  return apiFetch(`/content-items/${itemId}/versions`);
+}
+
+/** Volta a entry para uma versao anterior (a API grava o estado atual no historico antes). */
+export function restoreContentVersion(itemId: string, versionId: string): Promise<ApiContentItem> {
+  return apiFetch(`/content-items/${itemId}/versions/${versionId}/restore`, { method: 'POST' });
+}

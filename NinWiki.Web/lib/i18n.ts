@@ -145,6 +145,7 @@ export interface Dictionary {
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
     sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
     reportsPage: { title: string; subtitle: string; open: string; resolved: string; dismissed: string; all: string; allKinds: string; kinds: Record<string, string>; targets: Record<string, string>; empty: string; loadError: string; actionError: string; resolve: string; dismiss: string; reopen: string; delete: string; confirmDelete: string; openPage: string; refresh: string; reportedOn: string; handledBy: string; language: string };
     errorsPage: {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
@@ -637,6 +638,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
         breadcrumbHome: 'Painel',
         viewSite: 'Ver site',
+      },
+      versionHistory: {
+        title: 'Versões anteriores', hint: 'Cada edição guarda o estado de antes (últimas 25). Restaurar volta a página para aquela versão — e também entra aqui, então dá para desfazer.',
+        empty: 'Nenhuma versão anterior ainda: aparece depois da primeira edição.', restore: 'Restaurar', confirm: 'Voltar esta página para essa versão? O estado atual fica salvo no histórico.',
+        by: 'por', loadError: 'Não foi possível carregar o histórico.', restoreError: 'Não foi possível restaurar.',
       },
       reportsPage: {
         title: 'Reports dos visitantes', subtitle: 'Informações desatualizadas e erros de tradução apontados nas páginas.',
@@ -1346,6 +1352,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
         breadcrumbHome: 'Admin',
         viewSite: 'View site',
+      },
+      versionHistory: {
+        title: 'Previous versions', hint: 'Every edit saves the state from before (last 25). Restoring brings the page back to that version — and is saved here too, so you can undo it.',
+        empty: 'No previous versions yet: they show up after the first edit.', restore: 'Restore', confirm: 'Bring this page back to that version? The current state is kept in the history.',
+        by: 'by', loadError: 'Could not load the history.', restoreError: 'Could not restore.',
       },
       reportsPage: {
         title: 'Visitor reports', subtitle: 'Outdated information and translation errors reported on the pages.',

@@ -19,7 +19,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import Field
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -32,9 +32,9 @@ from app.models.users import User
 from app.core.translation import translate_field
 from app.models.enums import ContentStatus, ItemType, MobType, Rarity
 from app.models.masteries import Jutsu
-from app.models.content import ContentItem, ContentItemAttribute, ContentItemAttack, ContentItemDrop
+from app.models.content import ContentItem, ContentItemAttribute, ContentItemAttack, ContentItemDrop, ContentVersion
 from app.models.enums import ContentCategory
-from app.schemas.content import CamelModel, ContentItemCreate, ContentItemRead, DroppedByEntry, ContentItemSummary, ContentItemUpdate
+from app.schemas.content import CamelModel, ContentItemCreate, ContentItemRead, ContentVersionRead, DroppedByEntry, ContentItemSummary, ContentItemUpdate
 
 router = APIRouter(prefix="/content-items", tags=["content-items"])
 
@@ -494,6 +494,11 @@ async def update_content_item(
     await resolve_images(db, payload)  # campos de imagem aceitam o ID do banco de imagens (img:12)
     _guard_edit(staff, item, payload.status)
     before = {"name": item.name, "status": item.status.value}
+    # Historico: guarda o estado ATUAL (antes desta edicao) para poder desfazer; entra na mesma transacao da edicao.
+    db.add(ContentVersion(
+        content_item_id=item.id, saved_by=staff.username,
+        snapshot=ContentItemRead.model_validate(item).model_dump(mode="json", by_alias=True, exclude={"dropped_by"}),
+    ))
 
     linked_rarities = await _drop_rarities(payload.drops, db)
     jutsu_names = await _attack_jutsu_names(payload.attacks, db)
@@ -560,6 +565,7 @@ async def update_content_item(
     await _fill_missing_translations(item)
 
     await db.commit()
+    await _prune_versions(item.id, db)
 
     after = {"name": item.name, "status": item.status.value}
     await log_action(db, actor=staff, action="update", entity_type="content_item", entity_id=str(item.id),
@@ -572,6 +578,52 @@ async def update_content_item(
     # dropped_item_slug desatualizado ou ausente pra' drops que
     # acabaram de ganhar/trocar de dropped_item_id nesta mesma edicao.
     return await _get_item_or_404(item.id, db)
+
+
+MAX_VERSIONS_PER_ITEM = 25   # versoes anteriores guardadas por entry (as mais antigas somem sozinhas)
+
+
+async def _prune_versions(item_id: UUID, db: AsyncSession) -> None:
+    """Mantem so' as MAX_VERSIONS_PER_ITEM versoes mais novas da entry."""
+    old_ids = (await db.execute(
+        select(ContentVersion.id).where(ContentVersion.content_item_id == item_id)
+        .order_by(ContentVersion.created_at.desc()).offset(MAX_VERSIONS_PER_ITEM)
+    )).scalars().all()
+    if old_ids:
+        await db.execute(delete(ContentVersion).where(ContentVersion.id.in_(old_ids)))
+        await db.commit()
+
+
+@router.get("/{item_id}/versions", response_model=list[ContentVersionRead])
+async def list_versions(
+    item_id: UUID, staff: User = Depends(require_permission(Permission.CONTENT_EDIT)), db: AsyncSession = Depends(get_db),
+):
+    """Historico da entry: versoes anteriores, da mais nova para a mais antiga."""
+    await _get_item_or_404(item_id, db)
+    rows = (await db.execute(
+        select(ContentVersion).where(ContentVersion.content_item_id == item_id).order_by(ContentVersion.created_at.desc())
+    )).scalars().all()
+    return [ContentVersionRead(id=v.id, created_at=v.created_at, saved_by=v.saved_by,
+                               name=str(v.snapshot.get("name", "")), status=str(v.snapshot.get("status", ""))) for v in rows]
+
+
+@router.post("/{item_id}/versions/{version_id}/restore", response_model=ContentItemRead)
+async def restore_version(
+    item_id: UUID, version_id: UUID,
+    staff: User = Depends(require_permission(Permission.CONTENT_EDIT)), db: AsyncSession = Depends(get_db),
+):
+    """
+    Volta a entry para uma versao anterior, pela MESMA edicao do painel (mesmas regras de permissao e de rascunho/publicado).
+    O estado de antes da restauracao tambem vai para o historico, entao da' para desfazer a restauracao.
+    """
+    version = await db.get(ContentVersion, version_id)
+    if version is None or version.content_item_id != item_id:
+        raise HTTPException(status_code=404, detail="Version not found")
+    try:
+        payload = ContentItemUpdate.model_validate(version.snapshot)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="This version can no longer be restored")
+    return await update_content_item(item_id, payload, staff, db)
 
 
 @router.post("/{item_id}/retranslate", response_model=ContentItemRead)

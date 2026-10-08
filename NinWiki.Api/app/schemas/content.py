@@ -280,6 +280,15 @@ class ContentItemRead(ContentItemBase):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
+class ContentVersionRead(CamelModel):
+    """Uma versao anterior da entry na lista do historico (o JSON completo fica so' no servidor ate' restaurar)."""
+    id: UUID
+    created_at: datetime
+    saved_by: str | None
+    name: str
+    status: str
+
+
 class ContentItemSummary(CamelModel):
     """
     Versao enxuta usada na LISTAGEM (sem lore/synergy/attributes/drops

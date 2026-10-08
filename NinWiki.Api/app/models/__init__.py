@@ -10,7 +10,7 @@ simplesmente nao gerar a tabela dele, silenciosamente.
 Ao criar um modelo novo: sempre adicionar o import aqui tambem.
 """
 from app.models.base import Base, TimestampMixin  # noqa: F401
-from app.models.content import ContentItem, ContentItemAttribute, ContentItemDrop  # noqa: F401
+from app.models.content import ContentItem, ContentItemAttribute, ContentItemDrop, ContentVersion  # noqa: F401
 from app.models.masteries import Attribute, Jutsu, Mastery, MasteryAttribute, MasteryPath, MasteryPathAttribute  # noqa: F401
 from app.models.villages import Clan, Organization, OrganizationVillage, Village  # noqa: F401
 from app.models.guide import NinjaRank, Profession, StoryArc, Summon  # noqa: F401
