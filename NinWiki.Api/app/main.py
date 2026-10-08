@@ -60,7 +60,7 @@ from app.api.villages import organizations_router, router as villages_router
 from app.core.config import settings
 from app.core import maintenance, steam_news
 from app.core.database import AsyncSessionLocal
-from app.core.hardening import BodyLimitMiddleware, ErrorCaptureMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware
+from app.core.hardening import BodyLimitMiddleware, ErrorCaptureMiddleware, PublicCacheMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware
 from app.core.security import ClientIPMiddleware
 from app.core.staff_service import StaffError
 
@@ -117,11 +117,12 @@ app = FastAPI(
 # (ex: localhost:8000), a nao ser que a API diga explicitamente que
 # permite. Esse middleware e' o que autoriza o front-end a nos chamar.
 # ORDEM DAS CAMADAS (a ultima adicionada e' a mais externa; a requisicao entra de fora pra dentro):
-#   ClientIP -> CORS -> SecurityHeaders -> ErrorCapture -> RateLimit -> BodyLimit -> rotas.
+#   ClientIP -> CORS -> SecurityHeaders -> PublicCache -> ErrorCapture -> RateLimit -> BodyLimit -> rotas.
 # O CORS fica por fora do limite de taxa para o navegador conseguir ler tambem as respostas 429/413.
 app.add_middleware(BodyLimitMiddleware)       # corpo gigante -> 413
 app.add_middleware(RateLimitMiddleware)       # flood / scraping -> 429
 app.add_middleware(ErrorCaptureMiddleware)    # excecao nao tratada / 5xx -> registro de erros + 500 generico
+app.add_middleware(PublicCacheMiddleware)     # ETag + cache curto nas leituras publicas anonimas (304 sem corpo)
 app.add_middleware(SecurityHeadersMiddleware) # cabecalhos de seguranca em toda resposta
 
 app.add_middleware(

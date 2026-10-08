@@ -1,5 +1,5 @@
 """
-Endurecimento da API contra abuso e ataques comuns - tres middlewares ASGI puros:
+Endurecimento da API contra abuso e ataques comuns - middlewares ASGI puros (e o cache HTTP das leituras publicas):
 
   0. ErrorCaptureMiddleware     qualquer excecao nao tratada (ou resposta 5xx) vira um registro em /admin/errors e no canal
                                 de erros do bot; o visitante recebe um 500 generico, sem detalhe interno.
@@ -18,6 +18,7 @@ TRUST_PROXY_HEADERS=true senao todo mundo parece ter o IP do proxy e um unico ab
 O site (Next.js) busca dados no servidor, entao as visitas chegam com o IP do servidor do site -
 por isso o limite de leitura padrao e' alto.
 """
+import hashlib
 import json
 import logging
 import time
@@ -91,6 +92,70 @@ class SecurityHeadersMiddleware:
             await send(message)
 
         await self.app(scope, receive, send_with_headers)
+
+
+# Leituras PUBLICAS que podem ser guardadas em cache por pouco tempo (so' para quem chega SEM cookie/token: visitante anonimo).
+_CACHEABLE_PREFIXES = ("/content-items", "/masteries", "/jutsus", "/villages", "/organizations", "/guide", "/announcement", "/tags", "/attributes")
+CACHE_SECONDS = 15           # frescor maximo que o navegador/CDN pode reaproveitar sem perguntar de novo
+CACHE_STALE_SECONDS = 60     # e por quanto tempo pode mostrar o antigo enquanto busca o novo em segundo plano
+_MAX_CACHEABLE_BYTES = 2 * 1024 * 1024
+
+
+class PublicCacheMiddleware:
+    """
+    Cache HTTP das leituras publicas (GET de conteudo, masteries, jutsus, vilas...): acrescenta ETag + Cache-Control curto e
+    responde 304 (sem corpo) quando o navegador ja' tem a versao atual. So' vale para quem chega SEM cookie, Authorization ou token
+    do bot (visitante anonimo): quem esta' logado na equipe sempre recebe a resposta fresca, com rascunhos, e nunca vai para o cache
+    ("Vary: Cookie"). So' respostas 200 em JSON de ate' 2 MB; erro nunca fica em cache.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    @staticmethod
+    def _eligible(scope: dict) -> bool:
+        """GET anonimo em rota publica da lista."""
+        if scope.get("method") != "GET":
+            return False
+        if not _path_of(scope).startswith(_CACHEABLE_PREFIXES):
+            return False
+        names = {k for k, _ in scope.get("headers", [])}
+        return not ({b"cookie", b"authorization", b"x-bot-token"} & names)
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or not self._eligible(scope):
+            await self.app(scope, receive, send)
+            return
+        start: dict | None = None
+        body = bytearray()
+
+        async def capture(message):
+            """Guarda a resposta inteira para poder calcular o ETag antes de enviar."""
+            nonlocal start
+            if message["type"] == "http.response.start":
+                start = message
+            elif message["type"] == "http.response.body":
+                body.extend(message.get("body", b""))
+
+        await self.app(scope, receive, capture)
+        assert start is not None
+        headers = list(start.get("headers", []))
+        content_type = next((v for k, v in headers if k.lower() == b"content-type"), b"")
+        if start["status"] != 200 or b"json" not in content_type or len(body) > _MAX_CACHEABLE_BYTES:
+            await send(start)
+            await send({"type": "http.response.body", "body": bytes(body)})
+            return
+        etag = b'"' + hashlib.sha1(bytes(body)).hexdigest().encode() + b'"'
+        headers = [(k, v) for k, v in headers if k.lower() not in (b"etag", b"cache-control", b"content-length")]
+        headers += [(b"etag", etag), (b"cache-control", f"public, max-age={CACHE_SECONDS}, stale-while-revalidate={CACHE_STALE_SECONDS}".encode()),
+                    (b"vary", b"Cookie")]
+        if next((v for k, v in scope.get("headers", []) if k == b"if-none-match"), None) == etag:
+            await send({"type": "http.response.start", "status": 304, "headers": headers})
+            await send({"type": "http.response.body", "body": b""})
+            return
+        headers.append((b"content-length", str(len(body)).encode()))
+        await send({"type": "http.response.start", "status": 200, "headers": headers})
+        await send({"type": "http.response.body", "body": bytes(body)})
 
 
 class ErrorCaptureMiddleware:

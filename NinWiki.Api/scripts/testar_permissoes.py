@@ -2321,6 +2321,21 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         await db.execute(text("DELETE FROM audit_log WHERE action = 'teste-manut'"))
         await db.commit()
 
+    secao("34) Cache HTTP das leituras publicas: ETag + 304 para anonimo; equipe logada nunca fica em cache")
+    r = await c.get("/masteries")
+    etag = r.headers.get("etag")
+    check("leitura publica anonima traz ETag e Cache-Control curto", r.status_code == 200 and etag and "max-age=15" in r.headers.get("cache-control", "") and "Cookie" in r.headers.get("vary", ""), str(dict(r.headers)))
+    r2 = await c.get("/masteries", headers={"If-None-Match": etag})
+    check("mesmo ETag: 304 sem corpo", r2.status_code == 304 and r2.content == b"", f"{r2.status_code}")
+    r3 = await c.get("/masteries", headers={"If-None-Match": '"outro"'})
+    check("ETag diferente: 200 com corpo", r3.status_code == 200 and len(r3.content) > 0)
+    r4 = await c.get("/masteries", headers=A)
+    check("equipe logada (cookie) NAO recebe cache publico", r4.status_code == 200 and "public" not in r4.headers.get("cache-control", "") and "etag" not in r4.headers, str(dict(r4.headers)))
+    r5 = await c.get("/content-items/00000000-0000-0000-0000-000000000000")
+    check("erro (404) nunca fica em cache", r5.status_code == 404 and "public" not in r5.headers.get("cache-control", ""))
+    r6 = await c.get("/auth/me")
+    check("rotas sensiveis continuam fora do cache", "public" not in r6.headers.get("cache-control", ""))
+
     secao("33) Reports de visitantes: conteudo desatualizado / erro de traducao (publico com defesas; so' reports.manage le e resolve)")
     from app.core.rate_limit import limiter as _lim
     from app.core.database import AsyncSessionLocal as _SessR
