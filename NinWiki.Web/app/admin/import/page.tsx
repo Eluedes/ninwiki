@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
 import { ArrowLeft, Upload, Loader2, CheckCircle2, AlertTriangle, FileJson } from 'lucide-react';
+import { GameNamesFinder } from '@/components/admin/game-names-finder';
 import { bulkImportContentItems, ApiError, type BulkImportEntry, type BulkImportResult } from '@/lib/api-client';
 import type { Category } from '@/lib/types';
 import type { Dictionary } from '@/lib/i18n';
@@ -198,6 +199,8 @@ export default function BulkImportPage() {
           </div>
         )}
       </div>
+      {/* Nomes novos direto do arquivo de traducao do jogo (compara com o que o wiki ja' tem) */}
+      <GameNamesFinder />
     </div>
   );
 }

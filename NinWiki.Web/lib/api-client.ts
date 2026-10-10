@@ -514,6 +514,7 @@ export async function uploadImage(file: File, onProgress?: (p: UploadProgress) =
 
 export interface BulkImportEntry {
   name: string;
+  namePt?: string | null;   // nome oficial em portugues (do arquivo de traducao do jogo)
   category: Category;
   mobType?: string | null;
   itemType?: string | null;
@@ -1591,4 +1592,14 @@ export function importOfficialTranslations(
   apply: boolean, body: { translations: Record<string, string>; language: string | null; overwrite: boolean },
 ): Promise<ApiTranslationResult> {
   return apiFetch(`/translations/${apply ? 'apply' : 'preview'}`, { method: 'POST', body: JSON.stringify(body) });
+}
+
+// ---- Nomes novos do arquivo do jogo (painel; exige content.import) ----
+
+export interface ApiNewName { name: string; namePt: string | null; hint: 'jutsu' | 'recipe' | null }
+export interface ApiNewNamesResult { totalStrings: number; nameLike: number; alreadyInWiki: number; candidates: ApiNewName[]; truncated: boolean }
+
+/** Acha no arquivo em ingles do jogo os nomes que o wiki ainda nao tem (o de portugues, opcional, traz o nome oficial em PT). */
+export function findNewGameNames(english: Record<string, string>, portuguese: Record<string, string> | null): Promise<ApiNewNamesResult> {
+  return apiFetch('/translations/new-names', { method: 'POST', body: JSON.stringify({ english, portuguese }) });
 }

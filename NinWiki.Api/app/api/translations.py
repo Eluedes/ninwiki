@@ -7,15 +7,19 @@ Importacao das traducoes OFICIAIS do jogo (arquivo "nin-online-translation" em P
 Permissao translation.import (Adm e S.Adm por padrao). A logica esta em app/core/official_translations.py.
 """
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.content_items import _slugify
 
 from app.core import official_translations as ot
 from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.permissions import Permission
+from app.models.content import ContentItem
 from app.models.users import User
-from app.schemas.translations import TranslationBreakdown, TranslationImportRequest, TranslationImportResult, TranslationSample
+from app.schemas.translations import NewName, NewNamesRequest, NewNamesResult, TranslationBreakdown, TranslationImportRequest, TranslationImportResult, TranslationSample
 
 router = APIRouter(prefix="/translations", tags=["translations"])
 SAMPLES = 40
@@ -44,6 +48,34 @@ def _result(plan: ot.Plan, entries: int, applied: bool) -> TranslationImportResu
     clip = lambda v: None if v is None else (v if len(v) <= 300 else v[:299] + "…")   # noqa: E731
     samples = [TranslationSample(entity=c.entity, label=c.label, field=c.field, old=clip(c.old), new=clip(c.new)) for c in plan.changes[:SAMPLES]]
     return TranslationImportResult(dictionary_entries=entries, total_changes=len(plan.changes), applied=applied, breakdown=breakdown, samples=samples)
+
+
+@router.post("/new-names", response_model=NewNamesResult)
+async def new_names(
+    body: NewNamesRequest, staff: User = Depends(require_permission(Permission.CONTENT_IMPORT)), db: AsyncSession = Depends(get_db),
+):
+    """
+    Acha no arquivo em INGLES do jogo os textos que PARECEM nomes (ver looks_like_name) e que o wiki ainda nao tem - nem como
+    rascunho criado pela importacao (compara o nome e tambem o slug), nem como conteudo, jutsu, mastery, vila, cla' ou organizacao.
+    A pessoa escolhe quais viram rascunho (POST /content-items/bulk-import); se mandou o arquivo de Portugues, o nome oficial em PT vai junto.
+    """
+    if len(body.english) > ot.MAX_ENTRIES:
+        raise HTTPException(status_code=422, detail="Too many entries in the file")
+    pt_index = ot.build_index(body.portuguese or {})
+    have = await ot.existing_names(db)
+    slugs = set((await db.execute(select(ContentItem.slug))).scalars().all())
+    found: dict[str, NewName] = {}
+    name_like = 0
+    for key in body.english:
+        if not isinstance(key, str) or not ot.looks_like_name(key):
+            continue
+        name_like += 1
+        n = ot.norm(key)
+        if n in have or _slugify(key) in slugs or n in found:
+            continue
+        found[n] = NewName(name=key.strip(), name_pt=pt_index.get(n), hint=ot.name_hint(key))
+    ordered = sorted(found.values(), key=lambda c: c.name.casefold())
+    return NewNamesResult(total_strings=len(body.english), name_like=name_like, already_in_wiki=name_like - len(found), candidates=ordered[:5000], truncated=len(ordered) > 5000)
 
 
 @router.post("/preview", response_model=TranslationImportResult)

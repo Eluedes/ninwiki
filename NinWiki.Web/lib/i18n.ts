@@ -146,6 +146,7 @@ export interface Dictionary {
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
     sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    gameNames: { title: string; subtitle: string; chooseFiles: string; invalidFile: string; find: string; loadError: string; summary: string; truncated: string; search: string; hideJutsu: string; selectShown: string; clear: string; empty: string; moreHidden: string; createDrafts: string; confirm: string; created: string; note: string; categories: Record<string, string>; hints: Record<string, string> };
     translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
     reportsPage: { title: string; subtitle: string; open: string; resolved: string; dismissed: string; all: string; allKinds: string; kinds: Record<string, string>; targets: Record<string, string>; empty: string; loadError: string; actionError: string; resolve: string; dismiss: string; reopen: string; delete: string; confirmDelete: string; openPage: string; refresh: string; reportedOn: string; handledBy: string; language: string };
@@ -646,6 +647,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
         breadcrumbHome: 'Painel',
         viewSite: 'Ver site',
+      },
+      gameNames: {
+        title: 'Nomes novos do arquivo do jogo', subtitle: 'Escolha o arquivo em inglês exportado do Nin Online (e, junto, o de Brazilian Portuguese para já trazer o nome oficial em português). O wiki lista os textos que parecem nomes e que você ainda não tem — nem como rascunho da importação.',
+        chooseFiles: 'Escolher arquivo(s) .json', invalidFile: 'Arquivo inválido: não é um arquivo de tradução do Nin Online.', find: 'Procurar nomes novos', loadError: 'Não foi possível concluir.',
+        summary: '{total} textos no arquivo · {names} parecem nomes · {have} o wiki já tem · {new} novos.', truncated: '(mostrando os 5.000 primeiros)', search: 'Filtrar…',
+        hideJutsu: 'Esconder o que parece jutsu', selectShown: 'Marcar todos da lista', clear: 'Limpar marcação', empty: 'Nada por aqui.', moreHidden: '+{n} nomes fora da tela: use o filtro para chegar neles (o "Marcar todos" vale para todos).',
+        createDrafts: 'Criar rascunhos', confirm: 'Criar {n} rascunhos na categoria "{category}"?', created: '{n} rascunhos criados ({s} já existiam e foram pulados). Abra cada um em Conteúdo para completar nível, descrição e imagem.',
+        note: 'A lista é um palpite: o arquivo do jogo mistura itens, mobs, NPCs, lugares e textos de tela, e não diz qual é qual. Confira antes de criar; tudo nasce como rascunho.',
+        categories: { items: 'Itens', weapons: 'Armas', mobs: 'Mobs', missions: 'Missões', guides: 'Guias' }, hints: { jutsu: 'parece jutsu', recipe: 'parece receita' },
       },
       translationsPage: {
         title: 'Traduções oficiais do jogo', subtitle: 'Importe o arquivo de tradução do próprio Nin Online (Brazilian Portuguese .json) e o wiki preenche o português dos conteúdos, jutsus, masteries, vilas, clãs e organizações com o texto oficial.',
@@ -1378,6 +1388,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
         breadcrumbHome: 'Admin',
         viewSite: 'View site',
+      },
+      gameNames: {
+        title: 'New names from the game file', subtitle: 'Choose the English file exported from Nin Online (and the Brazilian Portuguese one with it to bring the official Portuguese name). The wiki lists the texts that look like names and that you do not have yet — not even as an import draft.',
+        chooseFiles: 'Choose .json file(s)', invalidFile: 'Invalid file: this is not a Nin Online translation file.', find: 'Find new names', loadError: 'Could not finish.',
+        summary: '{total} texts in the file · {names} look like names · {have} already in the wiki · {new} new.', truncated: '(showing the first 5,000)', search: 'Filter…',
+        hideJutsu: 'Hide what looks like a jutsu', selectShown: 'Select all in list', clear: 'Clear selection', empty: 'Nothing here.', moreHidden: '+{n} names off screen: use the filter to reach them ("Select all" covers all of them).',
+        createDrafts: 'Create drafts', confirm: 'Create {n} drafts in the "{category}" category?', created: '{n} drafts created ({s} already existed and were skipped). Open each one in Content to fill in level, description and image.',
+        note: 'The list is a guess: the game file mixes items, mobs, NPCs, places and screen texts, and does not say which is which. Check before creating; everything starts as a draft.',
+        categories: { items: 'Items', weapons: 'Weapons', mobs: 'Mobs', missions: 'Missions', guides: 'Guides' }, hints: { jutsu: 'looks like a jutsu', recipe: 'looks like a recipe' },
       },
       translationsPage: {
         title: 'Official game translations', subtitle: 'Import the translation file from Nin Online itself (Brazilian Portuguese .json) and the wiki fills the Portuguese of content, jutsus, masteries, villages, clans and organizations with the official text.',
