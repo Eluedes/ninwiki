@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
 import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { DropItemPicker } from '@/components/admin/drop-item-picker';
+import { VersionHistory } from '@/components/admin/version-history';
 import { EntryHistory } from '@/components/admin/entry-history';
 import {
   Select,
@@ -887,6 +888,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         <div className="space-y-3 rounded-xl border border-border bg-card p-6 shadow-sm">
           <h2 className="font-semibold text-card-foreground">{t.history}</h2>
           <EntryHistory entityType="content_item" entityId={rawId} />
+          {can('content.edit') && <VersionHistory itemId={rawId} />}
         </div>
       )}
 

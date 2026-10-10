@@ -260,6 +260,8 @@ class ContentItemRead(ContentItemBase):
     cast_village_name: str | None = None
     # Mobs que dropam este item (automatico, ver DroppedByEntry); preenchido pelos GETs de ficha - nas demais respostas fica [].
     dropped_by: list[DroppedByEntry] = []
+    updated_at: datetime | None = None    # ultima edicao (o site mostra 'Atualizado em')
+    translation_auto: bool = False        # portugues veio da traducao automatica e ninguem revisou (ver ContentItem.translation_auto)
 
     @model_validator(mode="before")
     @classmethod
@@ -278,6 +280,15 @@ class ContentItemRead(ContentItemBase):
     # exigir um dicionario - sem isso, `ContentItemRead.model_validate(item)`
     # nao funcionaria com o resultado de uma query.
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
+
+
+class ContentVersionRead(CamelModel):
+    """Uma versao anterior da entry na lista do historico (o JSON completo fica so' no servidor ate' restaurar)."""
+    id: UUID
+    created_at: datetime
+    saved_by: str | None
+    name: str
+    status: str
 
 
 class ContentItemSummary(CamelModel):

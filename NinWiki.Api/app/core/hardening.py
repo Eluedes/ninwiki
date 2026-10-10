@@ -1,5 +1,5 @@
 """
-Endurecimento da API contra abuso e ataques comuns - tres middlewares ASGI puros:
+Endurecimento da API contra abuso e ataques comuns - middlewares ASGI puros (e o cache HTTP das leituras publicas):
 
   0. ErrorCaptureMiddleware     qualquer excecao nao tratada (ou resposta 5xx) vira um registro em /admin/errors e no canal
                                 de erros do bot; o visitante recebe um 500 generico, sem detalhe interno.
@@ -18,6 +18,7 @@ TRUST_PROXY_HEADERS=true senao todo mundo parece ter o IP do proxy e um unico ab
 O site (Next.js) busca dados no servidor, entao as visitas chegam com o IP do servidor do site -
 por isso o limite de leitura padrao e' alto.
 """
+import hashlib
 import json
 import logging
 import time
@@ -91,6 +92,89 @@ class SecurityHeadersMiddleware:
             await send(message)
 
         await self.app(scope, receive, send_with_headers)
+
+
+# Leituras PUBLICAS que podem ser guardadas em cache por muito pouco tempo (so' para quem chega SEM cookie/token: visitante anonimo).
+# O prefixo e' comparado por SEGMENTO inteiro ("/tags" vale, "/tags-admin" nao).
+_CACHEABLE_PREFIXES = ("/content-items", "/masteries", "/jutsus", "/villages", "/organizations", "/guide", "/announcement", "/tags", "/attributes")
+CACHE_SECONDS = 5            # frescor maximo: depois de despublicar/corrigir, o visitante ve' o novo em ate' ~5s (sem "mostrar o velho enquanto atualiza")
+_MAX_CACHEABLE_BYTES = 2 * 1024 * 1024
+
+
+def _cacheable_path(path: str) -> bool:
+    """O caminho e' (ou esta' dentro de) uma das rotas publicas da lista? Compara segmentos inteiros, nao so' o comeco do texto."""
+    return any(path == prefix or path.startswith(prefix + "/") for prefix in _CACHEABLE_PREFIXES)
+
+
+def _etag_matches(if_none_match: bytes | None, etag: bytes) -> bool:
+    """If-None-Match bate com o ETag atual? Aceita lista separada por virgula, '*' e a versao 'fraca' (W/"...") que proxies/CDN geram."""
+    if not if_none_match:
+        return False
+    for candidate in if_none_match.split(b","):
+        candidate = candidate.strip()
+        if candidate == b"*" or candidate.removeprefix(b"W/") == etag:
+            return True
+    return False
+
+
+class PublicCacheMiddleware:
+    """
+    Cache HTTP das leituras publicas (GET de conteudo, masteries, jutsus, vilas...): acrescenta ETag + Cache-Control curto e
+    responde 304 (sem corpo) quando o navegador ja' tem a versao atual. So' vale para quem chega SEM cookie, Authorization ou token
+    do bot (visitante anonimo): quem esta' logado na equipe sempre recebe a resposta fresca, com rascunhos, e nunca vai para o cache
+    ("Vary: Cookie, Authorization, X-Bot-Token"). So' respostas 200 em JSON de ate' 2 MB e que NAO definem cookie; erro nunca fica em cache.
+
+    LIMITE CONHECIDO: o 304 economiza so' o trafego - a API ainda executa a rota (consulta ao banco) e conta no limite de uso.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    @staticmethod
+    def _eligible(scope: dict) -> bool:
+        """GET anonimo em rota publica da lista."""
+        if scope.get("method") != "GET" or not _cacheable_path(_path_of(scope)):
+            return False
+        names = {k for k, _ in scope.get("headers", [])}
+        return not ({b"cookie", b"authorization", b"x-bot-token"} & names)
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or not self._eligible(scope):
+            await self.app(scope, receive, send)
+            return
+        start: dict | None = None
+        body = bytearray()
+
+        async def capture(message):
+            """Guarda a resposta inteira para poder calcular o ETag antes de enviar."""
+            nonlocal start
+            if message["type"] == "http.response.start":
+                start = message
+            elif message["type"] == "http.response.body":
+                body.extend(message.get("body", b""))
+
+        await self.app(scope, receive, capture)
+        if start is None:   # a rota terminou sem responder (ex.: cliente desconectou): nao ha' o que enviar
+            return
+        headers = list(start.get("headers", []))
+        names = {k.lower() for k, _ in headers}
+        content_type = next((v for k, v in headers if k.lower() == b"content-type"), b"")
+        if start["status"] != 200 or b"json" not in content_type or b"set-cookie" in names or len(body) > _MAX_CACHEABLE_BYTES:
+            await send(start)
+            await send({"type": "http.response.body", "body": bytes(body)})
+            return
+        etag = b'"' + hashlib.sha1(bytes(body)).hexdigest().encode() + b'"'
+        existing_vary = next((v for k, v in headers if k.lower() == b"vary"), b"")
+        vary = b", ".join(x for x in (existing_vary, b"Cookie, Authorization, X-Bot-Token") if x)   # junta com o Vary que ja' existia
+        headers = [(k, v) for k, v in headers if k.lower() not in (b"etag", b"cache-control", b"content-length", b"vary")]
+        headers += [(b"etag", etag), (b"cache-control", f"public, max-age={CACHE_SECONDS}".encode()), (b"vary", vary)]
+        if _etag_matches(next((v for k, v in scope.get("headers", []) if k == b"if-none-match"), None), etag):
+            await send({"type": "http.response.start", "status": 304, "headers": headers})
+            await send({"type": "http.response.body", "body": b""})
+            return
+        headers.append((b"content-length", str(len(body)).encode()))
+        await send({"type": "http.response.start", "status": 200, "headers": headers})
+        await send({"type": "http.response.body", "body": bytes(body)})
 
 
 class ErrorCaptureMiddleware:
@@ -207,6 +291,8 @@ class BodyLimitMiddleware:
         """Limite em bytes: uploads de imagem/arquivo tem o proprio tamanho (+1 MB de folga do multipart); o resto e' JSON pequeno."""
         if path == "/uploads/image":
             return (settings.max_upload_size_mb + 1) * 1024 * 1024
+        if path in ("/translations/preview", "/translations/apply"):   # dicionario oficial do jogo (~1,7 MB)
+            return 8 * 1024 * 1024
         if path == "/content-items/bulk-import":  # lista grande de nomes vindos do jogo (milhares de itens)
             return 8 * 1024 * 1024
         if path.startswith("/notices/") and path.endswith("/files"):

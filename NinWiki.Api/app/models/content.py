@@ -8,14 +8,18 @@ demais para caber num "content_items" generico, exatamente como
 decidido no desenho de schema do roadmap (Fase 1).
 """
 import uuid
+from datetime import datetime
 from sqlalchemy import (
+    Boolean,
+    DateTime,
     Enum,
     ForeignKey,
     Numeric,
     String,
     Text,
+    func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -30,6 +34,10 @@ class ContentItem(Base, TimestampMixin):
     __tablename__ = "content_items"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # True quando o texto em portugues foi preenchido pela traducao AUTOMATICA (DeepL) e nenhuma pessoa corrigiu/escreveu a mao
+    # depois. O site mostra o selo "Traducao automatica" so' nesse caso (e o visitante pode reportar erro). False = revisado ou sem dado.
+    translation_auto: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     # Identificador amigavel usado na URL (ex: "larva", "ring-of-vigor").
     # Unico no banco inteiro, nao so' dentro da categoria - evita duas
@@ -241,3 +249,21 @@ class ContentItemDrop(Base):
     # dizer qual e' qual, o SQLAlchemy nao sabe qual coluna usar pra
     # cada relationship e da' erro de ambiguidade na inicializacao.
     dropped_item: Mapped["ContentItem | None"] = relationship(foreign_keys=[dropped_item_id])
+
+
+class ContentVersion(Base):
+    """
+    Uma VERSAO ANTERIOR de uma entry (historico para desfazer): antes de cada edicao pelo painel, o estado ate' ali e' guardado
+    aqui como JSON (o mesmo formato que a API devolve, camelCase). Restaurar uma versao = aplicar esse JSON de volta pela
+    edicao normal (por isso restaurar tambem entra no historico e pode ser desfeito). Mantem so' as ultimas
+    MAX_VERSIONS_PER_ITEM de cada entry; apagar a entry apaga as versoes.
+    """
+    __tablename__ = "content_versions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    content_item_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("content_items.id", ondelete="CASCADE"), index=True
+    )
+    snapshot: Mapped[dict] = mapped_column(JSONB)
+    saved_by: Mapped[str | None] = mapped_column(String(100), nullable=True)   # quem fez a edicao que SUBSTITUIU esta versao
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

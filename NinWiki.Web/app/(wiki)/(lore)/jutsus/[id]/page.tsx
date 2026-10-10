@@ -8,6 +8,7 @@ import { getJutsu, getMastery, ApiError } from '@/lib/api-client';
 import { UTILITY_MASTERY } from '@/lib/utility-category';
 import { JutsuPageClient } from '@/components/lore/jutsu-page-client';
 import type { Metadata } from 'next';
+import { shareMetadata } from '@/lib/share-meta';
 import { notFound } from 'next/navigation';
 
 /** Titulo da aba: o nome do jutsu (em ingles, o idioma principal do site). */
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   try {
     const jutsu = await getJutsu(id);
-    return { title: jutsu.name };
+    return shareMetadata({ title: jutsu.name, html: jutsu.description, path: `/jutsus/${jutsu.id}` });
   } catch {
     return { title: 'Jutsu' };
   }

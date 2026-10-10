@@ -73,9 +73,25 @@ class NinWikiApi:
         """Busca publica pelo nome (itens, mobs, armas, jutsus, masteries, posts) em `en` ou `pt`: ate' 10 resultados com resumo, imagem e dados."""
         return await self._request("GET", "/bot/search", params={"q": query, "lang": lang})
 
+    async def suggest(self, query: str, lang: str = "en") -> list[str]:
+        """Nomes para o autocompletar do Discord (ate' 20) que combinam com `query`."""
+        return await self._request("GET", "/bot/suggest", params={"q": query, "lang": lang})
+
+    async def drops(self, query: str, lang: str = "en") -> dict:
+        """Quais mobs dropam o item `query` ({found, title, href, image, rarity, mobs:[{name, href, chance, chanceQualifier}]})."""
+        return await self._request("GET", "/bot/drops", params={"q": query, "lang": lang})
+
+    async def latest_posts(self, limit: int = 3, lang: str = "en") -> list[dict]:
+        """Os posts do blog mais recentes que ja' estao no ar (para o /patchnotes)."""
+        return await self._request("GET", "/bot/latest-posts", params={"limit": limit, "lang": lang})
+
     async def errors_since(self, since_iso: str, limit: int = 50) -> list[dict]:
         """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""
         return await self._request("GET", "/bot/errors", params={"since": since_iso, "limit": limit})
+
+    async def reports_since(self, since_iso: str, limit: int = 20) -> list[dict]:
+        """Reports de visitantes (conteudo desatualizado / erro de traducao) criados depois de `since_iso`, mais antigos primeiro. Sem IP."""
+        return await self._request("GET", "/bot/reports", params={"since": since_iso, "limit": limit})
 
     async def api_status(self) -> tuple[bool, bool]:
         """(API respondeu?, banco respondeu?) via GET /health/ready. Nunca levanta excecao: falha de rede = (False, False)."""

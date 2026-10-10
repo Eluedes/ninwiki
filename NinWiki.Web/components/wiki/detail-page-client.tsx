@@ -15,7 +15,7 @@ import { RichText, extractPlainText } from '@/components/lore/rich-text';
 import { cn, itemHasStack, shouldShowLevel, signedValue } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
-import { ArrowLeft, Heart, Layers, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Heart, Languages, Layers, Scale, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem, ApiContentItemSummary } from '@/lib/api-client';
 
 /** Selo do subtipo do mob (o mob comum nao tem selo). */
@@ -67,8 +67,25 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
           <ArrowLeft className="h-4 w-4" />
           {dict.detail.back}
         </Link>
-        {/* Visitante avisa informacao desatualizada / erro de traducao desta pagina (vai para /admin/reports) */}
-        <ReportButton targetType="content" targetId={entry.slug} />
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {/* Selo so' em portugues e so' quando o texto veio da traducao automatica sem revisao */}
+          {isPt && entry.translationAuto && (
+            <span title={dict.detail.autoTranslatedHint} className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+              <Languages className="h-3 w-3" />{dict.detail.autoTranslated}
+            </span>
+          )}
+          {entry.updatedAt && (
+            <span className="text-xs text-muted-foreground">{dict.detail.updatedOn} {new Date(entry.updatedAt).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          )}
+          {/* Itens e armas podem ser comparados lado a lado com outro */}
+          {(entry.category === 'items' || entry.category === 'weapons') && (
+            <Link href={`/compare?a=${entry.slug}`} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-card-foreground">
+              <Scale className="h-3.5 w-3.5" />{dict.compare.button}
+            </Link>
+          )}
+          {/* Visitante avisa informacao desatualizada / erro de traducao desta pagina (vai para /admin/reports) */}
+          <ReportButton targetType="content" targetId={entry.slug} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

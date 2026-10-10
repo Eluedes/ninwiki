@@ -114,6 +114,8 @@ export interface ApiContentItem {
   drops: ApiDropEntry[];
   // Mobs que dropam esta entry - calculado pela API a partir das paginas de mob (nunca cadastrado a mao).
   droppedBy: ApiDroppedBy[];
+  updatedAt?: string | null;       // ultima edicao ('Atualizado em')
+  translationAuto?: boolean;       // portugues veio da traducao automatica e ninguem revisou (selo no site)
   status: 'draft' | 'published';
 }
 
@@ -745,7 +747,7 @@ export type StaffRole = 'super_admin' | 'admin' | 'creator';
 // Nomes das permissoes - espelham app/core/permissions.py::Permission no backend.
 export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
-  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage'
+  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'translation.import'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload' | 'media.reset_ids' | 'media.closed'
@@ -1555,4 +1557,38 @@ export function setReportStatus(id: string, status: ReportStatus): Promise<ApiRe
 /** Painel: apaga o report. */
 export function deleteReport(id: string): Promise<void> {
   return apiFetch(`/reports/${id}`, { method: 'DELETE' });
+}
+
+// ---- Historico de versoes do conteudo (desfazer edicao) ----
+
+/** Uma versao anterior de uma entry (espelha ContentVersionRead no backend). */
+export interface ApiContentVersion {
+  id: string;
+  createdAt: string;
+  savedBy: string | null;
+  name: string;
+  status: string;
+}
+
+/** Versoes anteriores da entry, da mais nova para a mais antiga. */
+export function listContentVersions(itemId: string): Promise<ApiContentVersion[]> {
+  return apiFetch(`/content-items/${itemId}/versions`);
+}
+
+/** Volta a entry para uma versao anterior (a API grava o estado atual no historico antes). */
+export function restoreContentVersion(itemId: string, versionId: string): Promise<ApiContentItem> {
+  return apiFetch(`/content-items/${itemId}/versions/${versionId}/restore`, { method: 'POST' });
+}
+
+// ---- Importacao das traducoes oficiais do jogo (painel; exige translation.import) ----
+
+export interface ApiTranslationBreakdown { entity: string; records: number; changes: number; unmatched: number; unmatchedNames: string[] }
+export interface ApiTranslationSample { entity: string; label: string; field: string; old: string | null; new: string }
+export interface ApiTranslationResult { dictionaryEntries: number; totalChanges: number; applied: boolean; breakdown: ApiTranslationBreakdown[]; samples: ApiTranslationSample[] }
+
+/** Calcula o que mudaria com o dicionario do arquivo (nada e' gravado) - `apply: true` grava de verdade. */
+export function importOfficialTranslations(
+  apply: boolean, body: { translations: Record<string, string>; language: string | null; overwrite: boolean },
+): Promise<ApiTranslationResult> {
+  return apiFetch(`/translations/${apply ? 'apply' : 'preview'}`, { method: 'POST', body: JSON.stringify(body) });
 }

@@ -260,6 +260,34 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}, headers=A)
     r = await c.get(f"/content-items/{mob_id}", headers=C)
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
+    # Selo "traducao automatica": so' quando a DeepL preencheu o portugues e ninguem revisou
+    from unittest.mock import AsyncMock, patch as _patch
+    with _patch("app.api.content_items.translate_field", new=AsyncMock(return_value="TRADUZIDO")):
+        r = await c.post("/content-items", json={**novo_conteudo("sel-auto"), "category": "items"}, headers=C)
+        check("conteudo sem portugues traduzido pela DeepL ganha translationAuto=true", r.status_code == 201 and r.json()["translationAuto"] is True and r.json()["namePt"] == "TRADUZIDO", r.text[:200])
+        sel_id = r.json()["id"]
+        r = await c.post("/content-items", json={**novo_conteudo("sel-manual"), "category": "items", "namePt": "Nome a mao"}, headers=C)
+        check("portugues escrito a mao no cadastro: translationAuto=false", r.status_code == 201 and r.json()["translationAuto"] is False, r.text[:200])
+        r = await c.put(f"/content-items/{sel_id}", json={**novo_conteudo("sel-auto"), "category": "items", "namePt": "Corrigido por pessoa", "descriptionPt": "d", "lorePt": "l", "synergyPt": "s", "spawnLocationPt": "x"}, headers=A)
+        check("pessoa corrigiu o portugues numa edicao: o selo some (translationAuto=false)", r.status_code == 200 and r.json()["translationAuto"] is False, r.text[:200])
+        r = await c.get(f"/content-items/{sel_id}", headers=A)
+        check("a ficha traz updatedAt (para 'Atualizado em')", r.json().get("updatedAt"), r.text[:120])
+    # Historico de versoes: cada edicao guarda o estado anterior; restaurar volta a versao (e tambem entra no historico)
+    r = await c.get(f"/content-items/{drop_item_id}", headers=A)
+    nome_original = r.json()["name"]
+    corpo_hist = {**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "attributes": [], "drops": []}
+    await c.put(f"/content-items/{drop_item_id}", json={**corpo_hist, "name": "Nome Novo Do Historico"}, headers=A)
+    r = await c.get(f"/content-items/{drop_item_id}/versions", headers=A)
+    versoes = r.json() if r.status_code == 200 else []
+    check("edicao guarda a versao anterior no historico (nome antigo, quem editou)", len(versoes) >= 1 and versoes[0]["name"] == nome_original and versoes[0]["savedBy"], r.text[:240])
+    r = await c.get(f"/content-items/{drop_item_id}/versions")
+    check("anonimo NAO ve o historico (401)", r.status_code == 401)
+    r = await c.post(f"/content-items/{drop_item_id}/versions/{versoes[0]['id']}/restore", headers=A)
+    check("restaurar volta o nome antigo", r.status_code == 200 and r.json()["name"] == nome_original, r.text[:200])
+    r = await c.get(f"/content-items/{drop_item_id}/versions", headers=A)
+    check("restaurar tambem entra no historico (da' para desfazer)", len(r.json()) == len(versoes) + 1 and r.json()[0]["name"] == "Nome Novo Do Historico", r.text[:240])
+    r = await c.post(f"/content-items/{drop_item_id}/versions/00000000-0000-0000-0000-000000000000/restore", headers=A)
+    check("versao inexistente (404)", r.status_code == 404)
     # "Dropado por": automatico - o item lista os mobs PUBLICADOS que o ligam (ou citam pelo nome) nos drops
     r = await c.get(f"/content-items/{drop_item_id}", headers=C)
     check("item NAO lista mob em rascunho como 'dropado por'", r.status_code == 200 and r.json()["droppedBy"] == [], r.text[:200])
@@ -278,6 +306,19 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         {"itemName": item_nome, "chance": 3}]}, headers=A)
     r = await c.get(f"/content-items/slug/{SLUG}-drop-item")
     check("drop so' com o NOME do item (sem ligacao) tambem conta como 'dropado por'", len(r.json().get("droppedBy", [])) == 2, r.text[:240])
+    settings.bot_api_token = "token-de-teste-do-bot"
+    BT = {"X-Bot-Token": settings.bot_api_token}
+    r = await c.get("/bot/drops", params={"q": item_nome}, headers=BT)
+    check("/bot/drops acha o item e lista os 2 mobs que o dropam (com a chance)", r.status_code == 200 and r.json()["found"] and len(r.json()["mobs"]) == 2
+          and all(m["href"].startswith("/detail/") for m in r.json()["mobs"]), r.text[:260])
+    r = await c.get("/bot/drops", params={"q": "zzzz-nao-existe"}, headers=BT)
+    check("/bot/drops de nome inexistente: found=false", r.status_code == 200 and r.json()["found"] is False, r.text[:120])
+    r = await c.get("/bot/suggest", params={"q": item_nome[:6]}, headers=BT)
+    check("/bot/suggest devolve nomes para o autocompletar (sem repetir)", r.status_code == 200 and item_nome in r.json() and len(set(r.json())) == len(r.json()), r.text[:200])
+    r = await c.get("/bot/latest-posts", headers=BT)
+    check("/bot/latest-posts devolve lista (posts no ar)", r.status_code == 200 and isinstance(r.json(), list), r.text[:120])
+    r = await c.get("/bot/drops", params={"q": item_nome})
+    check("/bot/drops sem token do bot (401)", r.status_code == 401)
     r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
     check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("unico"), "category": "weapons", "rarity": "unique"}, headers=C)
@@ -2280,6 +2321,67 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         await db.execute(text("DELETE FROM audit_log WHERE action = 'teste-manut'"))
         await db.commit()
 
+    secao("34) Cache HTTP das leituras publicas: ETag + 304 para anonimo; equipe logada nunca fica em cache")
+    c.cookies.clear()   # este bloco precisa ser ANONIMO (uma sessao deixada por secao anterior desligaria o cache)
+    r = await c.get("/masteries")
+    etag = r.headers.get("etag")
+    check("leitura publica anonima traz ETag e Cache-Control curto (5s)", r.status_code == 200 and etag and "max-age=5" in r.headers.get("cache-control", "")
+          and "stale-while-revalidate" not in r.headers.get("cache-control", "") and "Authorization" in r.headers.get("vary", ""), str(dict(r.headers)))
+    r_fraco = await c.get("/masteries", headers={"If-None-Match": "W/" + etag})
+    check("ETag 'fraco' (W/...) de proxy/CDN tambem da' 304", r_fraco.status_code == 304, f"{r_fraco.status_code}")
+    r_lista = await c.get("/masteries", headers={"If-None-Match": '"a", ' + etag})
+    check("lista de ETags no If-None-Match: 304 se um deles bate", r_lista.status_code == 304, f"{r_lista.status_code}")
+    r_prefixo = await c.get("/tags-admin-inexistente")
+    check("prefixo so' vale por segmento inteiro (/tags-... nao entra no cache)", "public" not in r_prefixo.headers.get("cache-control", ""))
+    r2 = await c.get("/masteries", headers={"If-None-Match": etag})
+    check("mesmo ETag: 304 sem corpo", r2.status_code == 304 and r2.content == b"", f"{r2.status_code}")
+    r3 = await c.get("/masteries", headers={"If-None-Match": '"outro"'})
+    check("ETag diferente: 200 com corpo", r3.status_code == 200 and len(r3.content) > 0)
+    r4 = await c.get("/masteries", headers=A)
+    check("equipe logada (cookie) NAO recebe cache publico", r4.status_code == 200 and "public" not in r4.headers.get("cache-control", "") and "etag" not in r4.headers, str(dict(r4.headers)))
+    r5 = await c.get("/content-items/00000000-0000-0000-0000-000000000000")
+    check("erro (404) nunca fica em cache", r5.status_code == 404 and "public" not in r5.headers.get("cache-control", ""))
+    r6 = await c.get("/auth/me")
+    check("rotas sensiveis continuam fora do cache", "public" not in r6.headers.get("cache-control", ""))
+
+    secao("35) Traducoes oficiais do jogo: preview nao grava; so' preenche o vazio (ou o automatico); overwrite troca; Creator nao importa")
+    import json as _json
+    from unittest.mock import AsyncMock as _AM, patch as _pt
+    rich_en = _json.dumps({"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "A shiny   official feather."}]}]})
+    dic = {"Teste Oficial Alpha": "Alfa Oficial", "a shiny official feather.": "Uma pena oficial brilhante.", "Teste Oficial Beta": "Beta Oficial", "Teste Oficial Auto": "Auto Oficial", "\x00\x00": ""}
+    r = await c.post("/content-items", json={**novo_conteudo("of-a"), "category": "items", "name": "teste oficial alpha", "description": rich_en}, headers=C)
+    of_a = r.json()["id"]
+    r = await c.post("/content-items", json={**novo_conteudo("of-b"), "category": "items", "name": "Teste Oficial Beta", "namePt": "Manual"}, headers=C)
+    of_b = r.json()["id"]
+    with _pt("app.api.content_items.translate_field", new=_AM(return_value="AUTOMATICO")):
+        r = await c.post("/content-items", json={**novo_conteudo("of-c"), "category": "items", "name": "Teste Oficial Auto"}, headers=C)
+    of_c = r.json()["id"]
+    check("preparo: item 'c' tem selo de traducao automatica", r.json()["translationAuto"] is True)
+    corpo = {"translations": dic, "language": "Brazilian Portuguese", "overwrite": False}
+    check("Creator NAO importa traducoes (403)", (await c.post("/translations/preview", json=corpo, headers=C)).status_code == 403)
+    check("anonimo NAO importa (401)", (await c.post("/translations/preview", json=corpo)).status_code == 401)
+    r = await c.post("/translations/preview", json={**corpo, "language": "English"}, headers=A)
+    check("arquivo em ingles e' recusado (422) - so' o de Portugues", r.status_code == 422 and "Portuguese" in r.text, r.text[:160])
+    r = await c.post("/translations/preview", json=corpo, headers=A)
+    mudancas = [x for x in r.json().get("samples", []) if x["label"].startswith("teste oficial") or x["label"].startswith("Teste Oficial")]
+    check("preview lista as mudancas (alpha: nome + descricao; auto: nome) e nao grava nada", r.status_code == 200 and r.json()["applied"] is False and len(mudancas) >= 3
+          and (await c.get(f"/content-items/{of_a}", headers=A)).json()["namePt"] in (None, ""), r.text[:300])
+    r = await c.post("/translations/apply", json=corpo, headers=A)
+    check("apply grava", r.status_code == 200 and r.json()["applied"] is True and r.json()["totalChanges"] >= 3, r.text[:200])
+    a_ = (await c.get(f"/content-items/{of_a}", headers=A)).json()
+    check("nome e descricao (rica, no mesmo formato) em portugues oficial", a_["namePt"] == "Alfa Oficial" and "Uma pena oficial brilhante." in a_["descriptionPt"] and _json.loads(a_["descriptionPt"])["type"] == "doc", str(a_)[:300])
+    b_ = (await c.get(f"/content-items/{of_b}", headers=A)).json()
+    check("portugues escrito a mao NAO e' sobrescrito sem 'overwrite'", b_["namePt"] == "Manual", b_["namePt"])
+    c_ = (await c.get(f"/content-items/{of_c}", headers=A)).json()
+    check("traducao automatica E' trocada pela oficial (e continua com selo: descricao/lore ainda automaticos)", c_["namePt"] == "Auto Oficial" and c_["translationAuto"] is True, str(c_)[:200])
+    r = await c.post("/translations/apply", json={**corpo, "overwrite": True}, headers=A)
+    b_ = (await c.get(f"/content-items/{of_b}", headers=A)).json()
+    check("com overwrite o portugues a mao e' trocado pelo oficial", b_["namePt"] == "Beta Oficial", b_["namePt"])
+    r = await c.post("/translations/apply", json=corpo, headers=A)
+    check("aplicar de novo nao muda nada (idempotente)", r.status_code == 200 and r.json()["totalChanges"] == 0, r.text[:200])
+    r = await c.get("/audit-log?limit=20", headers=S)
+    check("importacao fica no log de auditoria", any(e["entityType"] == "translation" for e in r.json()), r.text[:160])
+
     secao("33) Reports de visitantes: conteudo desatualizado / erro de traducao (publico com defesas; so' reports.manage le e resolve)")
     from app.core.rate_limit import limiter as _lim
     from app.core.database import AsyncSessionLocal as _SessR
@@ -2295,6 +2397,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     meus = [x for x in r.json() if x["targetId"] == f"{SLUG}-drop-item"] if r.status_code == 200 else []
     check("Adm ve o report; nome e endereco da pagina vem do banco (nao do visitante)", len(meus) == 1 and meus[0]["targetPath"] == f"/detail/{SLUG}-drop-item" and meus[0]["status"] == "open" and "ip" not in str(meus[0]).lower(), r.text[:240])
     rep_id = meus[0]["id"] if meus else None
+    settings.bot_api_token = "token-de-teste-do-bot"
+    r = await c.get("/bot/reports", params={"since": "2000-01-01T00:00:00+00:00"}, headers={"X-Bot-Token": settings.bot_api_token})
+    check("bot le os reports novos (aviso no Discord), sem IP", r.status_code == 200 and any(x["targetPath"] == f"/detail/{SLUG}-drop-item" for x in r.json())
+          and "ip" not in str(r.json()).lower().replace("description", ""), r.text[:200])
+    r = await c.get("/bot/reports", params={"since": "2000-01-01T00:00:00+00:00"})
+    check("/bot/reports sem token do bot (401)", r.status_code == 401)
     for tipo, alvo in (("jutsu", jutsu_id), ("mastery", mastery_id)):
         if alvo:
             r = await c.post("/reports", json={**base, "targetType": tipo, "targetId": alvo, "kind": "outdated"}, headers=ORIGEM)

@@ -11,6 +11,8 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 | `/status` | **qualquer pessoa**: API, banco e site no ar agora (tempo de resposta e uptime), em cartão Components V2 |
 | `/language language` | **só quem tem "Gerenciar servidor"**: idioma padrão do bot **neste servidor** (English ou Português); vale para `/search` e `/status` e fica salvo em `language_state.json` |
 | `/search term [language]` | **qualquer pessoa**: procura no wiki (itens, mobs, armas, guias, missões, masteries, jutsus e posts publicados) e mostra o melhor resultado com **imagem, dados e resumo** (botão para a página completa e um menu para ver os outros resultados) |
+| `/drop item` | **qualquer pessoa**: quais **mobs dropam** o item/arma e a chance de cada um (com link para a página); sugere nomes enquanto você digita |
+| `/patchnotes` | **qualquer pessoa**: as 3 notícias/patch notes mais recentes do blog (título com link, data e resumo) |
 
 **Convidar o bot:** use o link `https://discord.com/oauth2/authorize?client_id=SEU_APPLICATION_ID&permissions=117760&scope=bot%20applications.commands` (permissões: ver canais, enviar mensagens, links incorporados, anexar arquivos para o backup e histórico). O site já tem o botão pronto (`NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID`).
 

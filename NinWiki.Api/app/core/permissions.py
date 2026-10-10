@@ -45,6 +45,7 @@ class Permission(str, Enum):
     # --- Ferramentas ---
     UPLOAD_CREATE = "uploads.create"
     TRANSLATION_RETRANSLATE = "translation.retranslate"
+    TRANSLATION_IMPORT = "translation.import"   # importar as traducoes OFICIAIS do jogo (arquivo .json) para os campos em portugues
     MEDIA_UPLOAD = "media.upload"          # enviar imagens PELO BANCO DE IMAGENS (lote, arrastar e soltar). Padrao: so' S.Adm; o S.Adm pode liberar a Adm/Creator em /admin/permissions
     MEDIA_CLOSED = "media.closed"          # ver e usar a categoria "closed" do banco de imagens - so' S.Adm (SUPER_ONLY: os outros nem sabem que ela existe)
     MEDIA_RESET_IDS = "media.reset_ids"    # renumerar os IDs do banco de imagens (1, 2, 3...) - so' S.Adm (SUPER_ONLY)
@@ -132,6 +133,7 @@ _CREATOR: frozenset[Permission] = frozenset({
 
 _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.CONTENT_PUBLISH,
+    Permission.TRANSLATION_IMPORT,
     Permission.CONTENT_DELETE,
     Permission.CONTENT_IMPORT,
     Permission.POST_PUBLISH,

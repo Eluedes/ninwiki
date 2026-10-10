@@ -46,6 +46,7 @@ from app.api.bot import router as bot_router
 from app.api.content_items import router as content_items_router
 from app.api.engagement import moderation_router as comments_moderation_router, router as engagement_router
 from app.api.reports import router as reports_router
+from app.api.translations import router as translations_router
 from app.api.errors import client_router as client_errors_router, router as errors_router
 from app.api.guide import router as guide_router
 from app.api.masteries import router as masteries_router
@@ -60,7 +61,7 @@ from app.api.villages import organizations_router, router as villages_router
 from app.core.config import settings
 from app.core import maintenance, steam_news
 from app.core.database import AsyncSessionLocal
-from app.core.hardening import BodyLimitMiddleware, ErrorCaptureMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware
+from app.core.hardening import BodyLimitMiddleware, ErrorCaptureMiddleware, PublicCacheMiddleware, RateLimitMiddleware, SecurityHeadersMiddleware
 from app.core.security import ClientIPMiddleware
 from app.core.staff_service import StaffError
 
@@ -117,11 +118,12 @@ app = FastAPI(
 # (ex: localhost:8000), a nao ser que a API diga explicitamente que
 # permite. Esse middleware e' o que autoriza o front-end a nos chamar.
 # ORDEM DAS CAMADAS (a ultima adicionada e' a mais externa; a requisicao entra de fora pra dentro):
-#   ClientIP -> CORS -> SecurityHeaders -> ErrorCapture -> RateLimit -> BodyLimit -> rotas.
+#   ClientIP -> CORS -> SecurityHeaders -> PublicCache -> ErrorCapture -> RateLimit -> BodyLimit -> rotas.
 # O CORS fica por fora do limite de taxa para o navegador conseguir ler tambem as respostas 429/413.
 app.add_middleware(BodyLimitMiddleware)       # corpo gigante -> 413
 app.add_middleware(RateLimitMiddleware)       # flood / scraping -> 429
 app.add_middleware(ErrorCaptureMiddleware)    # excecao nao tratada / 5xx -> registro de erros + 500 generico
+app.add_middleware(PublicCacheMiddleware)     # ETag + cache curto nas leituras publicas anonimas (304 sem corpo)
 app.add_middleware(SecurityHeadersMiddleware) # cabecalhos de seguranca em toda resposta
 
 app.add_middleware(
@@ -178,6 +180,7 @@ app.include_router(notices_router)
 app.include_router(errors_router)
 app.include_router(client_errors_router)
 app.include_router(reports_router)
+app.include_router(translations_router)
 
 # Serve os arquivos da pasta uploads/ diretamente (ex: uma imagem salva
 # em uploads/abc123.png fica acessivel em http://localhost:8000/uploads/abc123.png).
