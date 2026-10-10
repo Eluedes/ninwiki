@@ -136,6 +136,7 @@ class BulkImportEntry(CamelModel):
     category: ContentCategory
     mob_type: MobType | None = None
     item_type: ItemType | None = None
+    name_pt: str | None = Field(default=None, max_length=200)   # nome oficial em portugues (vem do arquivo de traducao do jogo)
 
 
 class BulkImportRequest(CamelModel):
@@ -204,6 +205,7 @@ async def bulk_import(
             icon=_DEFAULT_ICON_BY_CATEGORY.get(entry.category.value, "❔"),
             rarity=Rarity.COMMON,
             description="",
+            name_pt=(entry.name_pt or "").strip() or None,
             mob_type=entry.mob_type,
             item_type=entry.item_type,
             status=ContentStatus.DRAFT,

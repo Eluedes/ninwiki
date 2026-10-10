@@ -14,6 +14,7 @@ REGRAS DE SEGURANCA (nada e' apagado nem sobrescrito sem querer):
 Este arquivo nao faz commit: quem chama decide (preview so' calcula; apply grava).
 """
 import json
+import re
 from dataclasses import dataclass, field
 
 from sqlalchemy import select
@@ -108,6 +109,51 @@ def translate_rich(value: str | None, index: dict[str, str]) -> str | None:
     if all(p is not None for p in parts):
         return _doc([line for p in parts for line in p.splitlines()])
     return None
+
+
+# Primeira palavra de rotulos de tela / missoes / comandos (nao de nomes de coisas): "Click to hide", "Reset all perks", "Talk to ...".
+_NOT_NAME_FIRST_WORDS = frozenset({
+    "click", "right-click", "left-click", "enter", "reset", "add", "remove", "unequip", "equip", "filter", "return", "talk", "eliminate", "clear",
+    "wear", "select", "choose", "press", "hold", "use", "you", "your", "you're", "are", "is", "do", "does", "did", "can", "will", "would", "should",
+    "please", "no", "yes", "not", "now", "all", "show", "hide", "open", "close", "go", "get", "find", "collect", "defeat", "kill", "deliver", "bring",
+    "visit", "speak", "check", "buy", "sell", "learn", "claim", "accept", "decline", "cancel", "confirm", "save", "load", "send", "search", "sort",
+    "view", "next", "previous", "back", "continue", "loading", "waiting", "invalid", "unknown", "failed", "success", "welcome", "warning",
+})
+_NAME_BAD_CHARS = set('.!?;,*"{}[]<>%\n\\/=+#@$^|~`_')
+
+
+def looks_like_name(text: str) -> bool:
+    """
+    Palpite se um texto do jogo parece um NOME (item, mob, arma, jutsu...) e nao uma frase/fala/rotulo de tela: curto, poucas
+    palavras, comeca com letra maiuscula, sem pontuacao de frase, numeros soltos nem marcadores. E' so' um filtro - a pessoa confere a lista.
+    """
+    t = text.strip()
+    if not 2 <= len(t) <= 45 or not t[0].isalpha() or not t[0].isupper() or t.endswith(":"):
+        return False
+    if any(ch in _NAME_BAD_CHARS for ch in t) or "\x00" in t or len(t.split()) > 6 or t.split()[0].casefold() in _NOT_NAME_FIRST_WORDS:
+        return False
+    if " " not in t and re.search(r"[a-z][A-Z]", t):   # identificador interno do jogo (PrisonTimer, ArrowGeninTest), nao um nome
+        return False
+    return not any(ch.isdigit() for ch in t) or t.count("(") > 0 and sum(ch.isdigit() for ch in t) <= 2
+
+
+def name_hint(text: str) -> str | None:
+    """Palpite do tipo pelo final do nome: 'jutsu' (…Technique / …Jutsu / (NPC)) ou 'recipe' (… Recipe); None = nao sabe."""
+    t = text.strip().casefold()
+    if t.endswith(("technique", "jutsu", "(npc)")):
+        return "jutsu"
+    return "recipe" if t.endswith("recipe") else None
+
+
+async def existing_names(db: AsyncSession) -> set[str]:
+    """Nomes (EN e PT, normalizados) de tudo que o wiki ja' tem: conteudo (rascunho ou no ar), jutsus, masteries, vilas, cla's e organizacoes."""
+    names: set[str] = set()
+    for _, model, _fields in SPECS:
+        for en, pt in (await db.execute(select(model.name, model.name_pt))).all():
+            for value in (en, pt):
+                if value and value.strip():
+                    names.add(norm(value))
+    return names
 
 
 @dataclass

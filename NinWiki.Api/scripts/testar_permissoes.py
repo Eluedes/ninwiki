@@ -2382,6 +2382,26 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.get("/audit-log?limit=20", headers=S)
     check("importacao fica no log de auditoria", any(e["entityType"] == "translation" for e in r.json()), r.text[:160])
 
+    secao("36) Nomes novos do arquivo do jogo: so' o que parece nome e o wiki ainda nao tem (nem como rascunho)")
+    from app.core.database import AsyncSessionLocal as _SessR
+    ja = (await c.get(f"/content-items/{of_a}", headers=A)).json()["name"]
+    ingles = {ja: ja, "Brand New Shuriken": "Brand New Shuriken", "Fire Style Technique": "Fire Style Technique", "You are good at that.": "x", "Click to hide": "x",
+              "PrisonTimer": "x", "Reset all perks": "x", "Mist Room (Entrance Left)": "x", "\x00\x00": ""}
+    pt_only = {"Brand New Shuriken": "Shuriken Novissima", "Fire Style Technique": "Tecnica de Fogo"}
+    r = await c.post("/translations/new-names", json={"english": ingles, "portuguese": pt_only}, headers=A)
+    nomes = {x["name"]: x for x in r.json().get("candidates", [])} if r.status_code == 200 else {}
+    check("novos nomes: so' o que parece nome e nao existe no wiki (item ja' existente, frases, rotulos e ids internos ficam de fora)",
+          r.status_code == 200 and set(nomes) == {"Brand New Shuriken", "Fire Style Technique", "Mist Room (Entrance Left)"}, r.text[:300])
+    check("traz o nome oficial em portugues (arquivo PT) e o palpite de tipo (jutsu)", nomes.get("Brand New Shuriken", {}).get("namePt") == "Shuriken Novissima" and nomes.get("Fire Style Technique", {}).get("hint") == "jutsu", str(nomes)[:300])
+    check("Creator NAO usa (403)", (await c.post("/translations/new-names", json={"english": ingles}, headers=C)).status_code == 403)
+    r = await c.post("/content-items/bulk-import", json={"entries": [{"name": "Brand New Shuriken", "category": "weapons", "namePt": "Shuriken Novissima"}]}, headers=A)
+    check("bulk-import cria o rascunho ja' com o nome oficial em portugues", r.status_code == 200 and r.json()["created"] == 1, r.text[:160])
+    r = await c.post("/translations/new-names", json={"english": ingles}, headers=A)
+    check("depois de importado como rascunho, o nome some da lista de novos (compara nome e slug)", "Brand New Shuriken" not in [x["name"] for x in r.json()["candidates"]], r.text[:200])
+    async with _SessR() as db:
+        await db.execute(text("DELETE FROM content_items WHERE slug = 'brand-new-shuriken'"))
+        await db.commit()
+
     secao("33) Reports de visitantes: conteudo desatualizado / erro de traducao (publico com defesas; so' reports.manage le e resolve)")
     from app.core.rate_limit import limiter as _lim
     from app.core.database import AsyncSessionLocal as _SessR
