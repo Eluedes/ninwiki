@@ -46,6 +46,7 @@ from app.api.bot import router as bot_router
 from app.api.content_items import router as content_items_router
 from app.api.engagement import moderation_router as comments_moderation_router, router as engagement_router
 from app.api.reports import router as reports_router
+from app.api.translations import router as translations_router
 from app.api.errors import client_router as client_errors_router, router as errors_router
 from app.api.guide import router as guide_router
 from app.api.masteries import router as masteries_router
@@ -179,6 +180,7 @@ app.include_router(notices_router)
 app.include_router(errors_router)
 app.include_router(client_errors_router)
 app.include_router(reports_router)
+app.include_router(translations_router)
 
 # Serve os arquivos da pasta uploads/ diretamente (ex: uma imagem salva
 # em uploads/abc123.png fica acessivel em http://localhost:8000/uploads/abc123.png).

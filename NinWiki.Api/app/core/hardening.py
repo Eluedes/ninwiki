@@ -291,6 +291,8 @@ class BodyLimitMiddleware:
         """Limite em bytes: uploads de imagem/arquivo tem o proprio tamanho (+1 MB de folga do multipart); o resto e' JSON pequeno."""
         if path == "/uploads/image":
             return (settings.max_upload_size_mb + 1) * 1024 * 1024
+        if path in ("/translations/preview", "/translations/apply"):   # dicionario oficial do jogo (~1,7 MB)
+            return 8 * 1024 * 1024
         if path == "/content-items/bulk-import":  # lista grande de nomes vindos do jogo (milhares de itens)
             return 8 * 1024 * 1024
         if path.startswith("/notices/") and path.endswith("/files"):

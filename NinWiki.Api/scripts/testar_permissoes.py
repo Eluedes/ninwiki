@@ -2344,6 +2344,44 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r6 = await c.get("/auth/me")
     check("rotas sensiveis continuam fora do cache", "public" not in r6.headers.get("cache-control", ""))
 
+    secao("35) Traducoes oficiais do jogo: preview nao grava; so' preenche o vazio (ou o automatico); overwrite troca; Creator nao importa")
+    import json as _json
+    from unittest.mock import AsyncMock as _AM, patch as _pt
+    rich_en = _json.dumps({"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "A shiny   official feather."}]}]})
+    dic = {"Teste Oficial Alpha": "Alfa Oficial", "a shiny official feather.": "Uma pena oficial brilhante.", "Teste Oficial Beta": "Beta Oficial", "Teste Oficial Auto": "Auto Oficial", "\x00\x00": ""}
+    r = await c.post("/content-items", json={**novo_conteudo("of-a"), "category": "items", "name": "teste oficial alpha", "description": rich_en}, headers=C)
+    of_a = r.json()["id"]
+    r = await c.post("/content-items", json={**novo_conteudo("of-b"), "category": "items", "name": "Teste Oficial Beta", "namePt": "Manual"}, headers=C)
+    of_b = r.json()["id"]
+    with _pt("app.api.content_items.translate_field", new=_AM(return_value="AUTOMATICO")):
+        r = await c.post("/content-items", json={**novo_conteudo("of-c"), "category": "items", "name": "Teste Oficial Auto"}, headers=C)
+    of_c = r.json()["id"]
+    check("preparo: item 'c' tem selo de traducao automatica", r.json()["translationAuto"] is True)
+    corpo = {"translations": dic, "language": "Brazilian Portuguese", "overwrite": False}
+    check("Creator NAO importa traducoes (403)", (await c.post("/translations/preview", json=corpo, headers=C)).status_code == 403)
+    check("anonimo NAO importa (401)", (await c.post("/translations/preview", json=corpo)).status_code == 401)
+    r = await c.post("/translations/preview", json={**corpo, "language": "English"}, headers=A)
+    check("arquivo em ingles e' recusado (422) - so' o de Portugues", r.status_code == 422 and "Portuguese" in r.text, r.text[:160])
+    r = await c.post("/translations/preview", json=corpo, headers=A)
+    mudancas = [x for x in r.json().get("samples", []) if x["label"].startswith("teste oficial") or x["label"].startswith("Teste Oficial")]
+    check("preview lista as mudancas (alpha: nome + descricao; auto: nome) e nao grava nada", r.status_code == 200 and r.json()["applied"] is False and len(mudancas) >= 3
+          and (await c.get(f"/content-items/{of_a}", headers=A)).json()["namePt"] in (None, ""), r.text[:300])
+    r = await c.post("/translations/apply", json=corpo, headers=A)
+    check("apply grava", r.status_code == 200 and r.json()["applied"] is True and r.json()["totalChanges"] >= 3, r.text[:200])
+    a_ = (await c.get(f"/content-items/{of_a}", headers=A)).json()
+    check("nome e descricao (rica, no mesmo formato) em portugues oficial", a_["namePt"] == "Alfa Oficial" and "Uma pena oficial brilhante." in a_["descriptionPt"] and _json.loads(a_["descriptionPt"])["type"] == "doc", str(a_)[:300])
+    b_ = (await c.get(f"/content-items/{of_b}", headers=A)).json()
+    check("portugues escrito a mao NAO e' sobrescrito sem 'overwrite'", b_["namePt"] == "Manual", b_["namePt"])
+    c_ = (await c.get(f"/content-items/{of_c}", headers=A)).json()
+    check("traducao automatica E' trocada pela oficial (e continua com selo: descricao/lore ainda automaticos)", c_["namePt"] == "Auto Oficial" and c_["translationAuto"] is True, str(c_)[:200])
+    r = await c.post("/translations/apply", json={**corpo, "overwrite": True}, headers=A)
+    b_ = (await c.get(f"/content-items/{of_b}", headers=A)).json()
+    check("com overwrite o portugues a mao e' trocado pelo oficial", b_["namePt"] == "Beta Oficial", b_["namePt"])
+    r = await c.post("/translations/apply", json=corpo, headers=A)
+    check("aplicar de novo nao muda nada (idempotente)", r.status_code == 200 and r.json()["totalChanges"] == 0, r.text[:200])
+    r = await c.get("/audit-log?limit=20", headers=S)
+    check("importacao fica no log de auditoria", any(e["entityType"] == "translation" for e in r.json()), r.text[:160])
+
     secao("33) Reports de visitantes: conteudo desatualizado / erro de traducao (publico com defesas; so' reports.manage le e resolve)")
     from app.core.rate_limit import limiter as _lim
     from app.core.database import AsyncSessionLocal as _SessR

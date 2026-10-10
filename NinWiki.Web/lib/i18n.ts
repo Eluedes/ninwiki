@@ -145,7 +145,8 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
     reportsPage: { title: string; subtitle: string; open: string; resolved: string; dismissed: string; all: string; allKinds: string; kinds: Record<string, string>; targets: Record<string, string>; empty: string; loadError: string; actionError: string; resolve: string; dismiss: string; reopen: string; delete: string; confirmDelete: string; openPage: string; refresh: string; reportedOn: string; handledBy: string; language: string };
     errorsPage: {
@@ -638,12 +639,25 @@ export const dictionaries: Record<Locale, Dictionary> = {
         permissions: 'Permissões',
         errors: 'Erros',
         reports: 'Reports',
+        translations: 'Traduções oficiais',
         villages: 'Vilas',
         organizations: 'Organizações',
         backToSite: 'Voltar ao site',
         groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
         breadcrumbHome: 'Painel',
         viewSite: 'Ver site',
+      },
+      translationsPage: {
+        title: 'Traduções oficiais do jogo', subtitle: 'Importe o arquivo de tradução do próprio Nin Online (Brazilian Portuguese .json) e o wiki preenche o português dos conteúdos, jutsus, masteries, vilas, clãs e organizações com o texto oficial.',
+        chooseFile: 'Escolher arquivo .json', invalidFile: 'Arquivo inválido: não é um arquivo de tradução do Nin Online.', wrongLanguage: 'Este é o arquivo em outro idioma. Envie o arquivo "Brazilian Portuguese".',
+        fileInfo: 'idioma: {language} · {count} textos · exportado em {date}', overwrite: 'Trocar também o português que já existe',
+        overwriteHint: 'Desligado (recomendado): só preenche o que está vazio ou veio da tradução automática; o português escrito à mão é mantido. Ligado: o texto oficial substitui tudo que for diferente.',
+        preview: 'Ver o que vai mudar', apply: 'Aplicar traduções', confirmApply: 'Gravar {n} alterações no português do wiki?', working: 'Processando…', resultTitle: 'Resultado', applied: 'Pronto! {n} campos atualizados.',
+        nothing: 'Nada para mudar: tudo que tem tradução oficial já está igual.', colType: 'Tipo', colRecords: 'Registros', colChanges: 'Alterações', colNoMatch: 'Sem tradução oficial',
+        types: { content: 'Conteúdo', jutsu: 'Jutsus', mastery: 'Masteries', village: 'Vilas', clan: 'Clãs', organization: 'Organizações' },
+        fields: { name_pt: 'Nome', description_pt: 'Descrição', long_description_pt: 'Descrição completa', lore_pt: 'Lore', synergy_pt: 'Sinergia', spawn_location_pt: 'Local de spawn', motto_pt: 'Lema', climate_pt: 'Clima', name_by_level_pt: 'Nome por nível' },
+        samples: 'Exemplos do que muda', noMatchNames: 'Nomes (em inglês) sem tradução oficial — confira a grafia:', loadError: 'Não foi possível ler o arquivo.',
+        howTo: 'Só acertos exatos do texto em inglês (sem diferenciar maiúsculas). Nada é apagado; dá para rodar de novo quando o jogo atualizar a tradução.',
       },
       versionHistory: {
         title: 'Versões anteriores', hint: 'Cada edição guarda o estado de antes (últimas 25). Restaurar volta a página para aquela versão — e também entra aqui, então dá para desfazer.',
@@ -692,7 +706,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', imagecats: 'Categorias do banco de imagens (desmarque para TRANCAR a categoria para este cargo)', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log', analytics: 'Acessos' },
         names: {
           'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
-          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'reports.manage': 'Ver e tratar os reports dos visitantes',
+          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
           'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)', 'media.reset_ids': 'Renumerar os IDs do banco de imagens', 'media.closed': 'Ver a categoria fechada do banco de imagens', 'media.cat.weapon': 'Ver imagens: Armas', 'media.cat.clothing': 'Ver imagens: Roupas', 'media.cat.consumable': 'Ver imagens: Consumíveis', 'media.cat.currency': 'Ver imagens: Moedas', 'media.cat.material': 'Ver imagens: Materiais', 'media.cat.ring': 'Ver imagens: Anéis', 'media.cat.scroll': 'Ver imagens: Pergaminhos', 'media.cat.npc': 'Ver imagens: NPCs', 'media.cat.monster': 'Ver imagens: Monstros', 'media.cat.furniture': 'Ver imagens: Móveis', 'media.cat.hair_beard': 'Ver imagens: Cabelo/Barba', 'media.cat.other': 'Ver imagens: Outros', 'media.cat.none': 'Ver imagens: Sem categoria',
@@ -1357,12 +1371,25 @@ export const dictionaries: Record<Locale, Dictionary> = {
         permissions: 'Permissions',
         errors: 'Errors',
         reports: 'Reports',
+        translations: 'Official translations',
         villages: 'Villages',
         organizations: 'Organizations',
         backToSite: 'Back to site',
         groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
         breadcrumbHome: 'Admin',
         viewSite: 'View site',
+      },
+      translationsPage: {
+        title: 'Official game translations', subtitle: 'Import the translation file from Nin Online itself (Brazilian Portuguese .json) and the wiki fills the Portuguese of content, jutsus, masteries, villages, clans and organizations with the official text.',
+        chooseFile: 'Choose .json file', invalidFile: 'Invalid file: this is not a Nin Online translation file.', wrongLanguage: 'This is the file for another language. Send the "Brazilian Portuguese" file.',
+        fileInfo: 'language: {language} · {count} texts · exported {date}', overwrite: 'Also replace Portuguese that already exists',
+        overwriteHint: 'Off (recommended): only fills what is empty or came from automatic translation; hand-written Portuguese is kept. On: the official text replaces anything that differs.',
+        preview: 'Preview changes', apply: 'Apply translations', confirmApply: 'Write {n} changes to the wiki Portuguese?', working: 'Working…', resultTitle: 'Result', applied: 'Done! {n} fields updated.',
+        nothing: 'Nothing to change: everything with an official translation is already the same.', colType: 'Type', colRecords: 'Records', colChanges: 'Changes', colNoMatch: 'No official translation',
+        types: { content: 'Content', jutsu: 'Jutsus', mastery: 'Masteries', village: 'Villages', clan: 'Clans', organization: 'Organizations' },
+        fields: { name_pt: 'Name', description_pt: 'Description', long_description_pt: 'Full description', lore_pt: 'Lore', synergy_pt: 'Synergy', spawn_location_pt: 'Spawn location', motto_pt: 'Motto', climate_pt: 'Climate', name_by_level_pt: 'Name per level' },
+        samples: 'Examples of what changes', noMatchNames: 'Names (in English) without an official translation — check the spelling:', loadError: 'Could not read the file.',
+        howTo: 'Exact matches of the English text only (case-insensitive). Nothing is deleted; run it again whenever the game updates the translation.',
       },
       versionHistory: {
         title: 'Previous versions', hint: 'Every edit saves the state from before (last 25). Restoring brings the page back to that version — and is saved here too, so you can undo it.',
@@ -1411,7 +1438,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', imagecats: 'Image library categories (untick to LOCK a category for this role)', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log', analytics: 'Traffic' },
         names: {
           'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
-          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'reports.manage': 'View and handle visitor reports',
+          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
           'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.upload': 'Upload images to the image library (bulk)', 'media.reset_ids': 'Renumber the image library IDs', 'media.closed': 'See the closed category of the image library', 'media.cat.weapon': 'See images: Weapons', 'media.cat.clothing': 'See images: Clothing', 'media.cat.consumable': 'See images: Consumables', 'media.cat.currency': 'See images: Currency', 'media.cat.material': 'See images: Materials', 'media.cat.ring': 'See images: Rings', 'media.cat.scroll': 'See images: Scrolls', 'media.cat.npc': 'See images: NPCs', 'media.cat.monster': 'See images: Monsters', 'media.cat.furniture': 'See images: Furniture', 'media.cat.hair_beard': 'See images: Hair/Beard', 'media.cat.other': 'See images: Other', 'media.cat.none': 'See images: Uncategorized',
