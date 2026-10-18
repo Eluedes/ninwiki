@@ -9,7 +9,7 @@ PASSO A PASSO
        python scripts/imagens_em_folhas.py folhas  C:\\imagens  C:\\folhas  --por-folha 100
      Cria C:\\folhas\\folha_001.png ... (cada icone ampliado, com um numero) e C:\\folhas\\indice.csv (numero -> arquivo).
   2) Mande as folhas para o Claude no chat (algumas por mensagem) pedindo: "responda em CSV: numero,tipo,nome".
-     Categorias (as mesmas do painel): weapon, gear, consumable, currency, material, ring, scroll, npc, monster, furniture, hair_beard, other.
+     Categorias (as mesmas do painel): weapon, gear, consumable, currency, material, ring, scroll, npc, monster, furniture, hair_beard, skin, tools, other.
      O nome fica em ingles, sem traduzir, em snake_case e curto (sword, health_potion, gold_coin).
   3) Salve a resposta como C:\\folhas\\respostas.csv e confira com o ensaio (nao muda nada):
        python scripts/imagens_em_folhas.py renomear  C:\\imagens  C:\\folhas  C:\\folhas\\respostas.csv
@@ -29,7 +29,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-CATEGORIES = {"weapon", "gear", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "other"}   # as mesmas do painel
+CATEGORIES = {"weapon", "gear", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "skin", "tools", "other"}   # as mesmas do painel
 EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 CELL = 112      # tamanho de cada icone na folha (ampliado)
 LABEL_H = 18    # faixa do numero embaixo do icone

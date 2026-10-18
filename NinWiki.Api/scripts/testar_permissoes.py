@@ -1920,7 +1920,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     cc = r.json()
     r = await c.post("/media", files={"file": ("b.png", _png((3, 2, 1)), "image/png")}, data={"category": "inventada"}, headers=S)
     check("categoria desconhecida e' recusada (422)", r.status_code == 422)
-    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard"):
+    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard", "skin", "tools"):
         r = await c.post("/media", files={"file": (f"{nova}.png", _png((4, 4, len(nova))), "image/png")}, data={"category": nova}, headers=S)
         check(f"categoria nova '{nova}' existe", r.status_code == 201 and r.json()["category"] == nova, r.text[:100])
         if r.status_code == 201:
@@ -1996,7 +1996,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     # TRANCAR categorias por cargo (permissao media.cat.<categoria>): igual a 'closed', mas escolhido pelo S.Adm
     r = await c.get("/roles/permissions", headers=S)
     nomes = {p["name"] for p in r.json()["permissions"]}
-    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.none"} <= nomes)
+    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.skin", "media.cat.tools", "media.cat.none"} <= nomes)
     me_cr = (await c.get("/auth/me", headers=Cm)).json()["permissions"]
     check("por padrao o Creator ve todas as categorias (menos closed)", "media.cat.weapon" in me_cr and "media.cat.none" in me_cr and "media.closed" not in me_cr)
     trancada = (await c.post("/media", files={"file": ("tr.png", _png((31, 3, 3)), "image/png")}, data={"name": f"{SLUG} trancada", "category": "weapon"}, headers=S)).json()
