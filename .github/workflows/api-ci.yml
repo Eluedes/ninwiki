@@ -5,10 +5,18 @@ on:
   push:
     paths:
       - 'NinWiki.Api/**'
+      - 'README.md'
+      - 'NinWiki.Bot/**'
+      - 'NinWiki.Web/lib/**'
+      - 'NinWiki.Web/app/admin/**'
       - '.github/workflows/api-ci.yml'
   pull_request:
     paths:
       - 'NinWiki.Api/**'
+      - 'README.md'
+      - 'NinWiki.Bot/**'
+      - 'NinWiki.Web/lib/**'
+      - 'NinWiki.Web/app/admin/**'
       - '.github/workflows/api-ci.yml'
 
 jobs:
@@ -29,3 +37,5 @@ jobs:
         run: pip install -r requirements.txt
       - name: Verificar sintaxe e imports compiláveis
         run: python -m compileall -q app
+      - name: README em dia com o código (variáveis, permissões, comandos do bot, migrações, telas)
+        run: python scripts/verificar_readme.py
