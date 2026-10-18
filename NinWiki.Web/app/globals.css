@@ -83,6 +83,13 @@
      E' o valor padrao ja' definido em :root/.dark acima - so' precisa
      de uma regra quando o usuario escolhe outro tema.
      ========================================================================== */
+  /* "laranja" = a cor do anel do logo original do jogo (e' o tema padrao). */
+  :root[data-color-theme='laranja'],
+  .dark[data-color-theme='laranja'] {
+    --primary: 17 92% 44%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 17 92% 44%;
+  }
   :root[data-color-theme='canarinho'],
   .dark[data-color-theme='canarinho'] {
     --primary: 143 100% 30%;
@@ -263,8 +270,8 @@
    4 imagens (uma por tema de cor) empilhadas no mesmo lugar via
    position:absolute, com so' a do tema ATIVO visivel - a troca usa o
    mesmo atributo data-color-theme que controla o resto do site (ver
-   components/providers/color-theme-provider.tsx). Padrao (sem atributo,
-   ou "blood") mostra a imagem vermelha.
+   components/providers/color-theme-provider.tsx). O padrao e' "laranja" (o logo
+   original do jogo); sem atributo mostra a imagem vermelha ("blood").
    ============================================================================ */
 .nin-logo-img {
   display: block;
@@ -272,15 +279,20 @@
   height: 100%;
   object-fit: contain;
 }
+.nin-logo-img-laranja,
 .nin-logo-img-canarinho,
 .nin-logo-img-ouro,
 .nin-logo-img-anil {
   display: none;
 }
+[data-color-theme='laranja'] .nin-logo-img-blood,
 [data-color-theme='canarinho'] .nin-logo-img-blood,
 [data-color-theme='ouro'] .nin-logo-img-blood,
 [data-color-theme='anil'] .nin-logo-img-blood {
   display: none;
+}
+[data-color-theme='laranja'] .nin-logo-img-laranja {
+  display: block;
 }
 [data-color-theme='canarinho'] .nin-logo-img-canarinho {
   display: block;
