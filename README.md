@@ -63,6 +63,7 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
+python scripts/verificar_readme.py          # README x código (variáveis, permissões, comandos do bot, migrações, telas); --corrigir regera a tabela de permissões
 python scripts/testar_permissoes.py        # 803 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
 python scripts/testar_bot_integracao.py    # 145 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
@@ -176,6 +177,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
   linha vazia some da página.
 - **Textos de ajuda nos formulários:** abaixo dos campos de texto de jutsu, conteúdo, vila e mastery há uma linha cinza explicando o campo (com exemplo). Os textos ficam em `NinWiki.Web/lib/field-hints.ts` (uma linha por campo, em inglês e português; campo sem entrada ali fica sem ajuda).
 - **Banner do post do blog:** aparece **inteiro**, no tamanho real da arte (até 960 px) e centralizado, com a mesma arte desfocada preenchendo as laterais; a arte padrão (`public/images/blog/steam-banner.webp`) tem 960×311 px — para ficar mais nítida em telas grandes, troque por uma versão de 1920 px ou mais na mesma proporção.
+- **Usando o Claude Code no VS Code:** o arquivo `CLAUDE.md` na raiz é lido automaticamente e traz as regras do projeto (idioma, comentários, testes, não mexer no banco de produção, README sempre em dia). Antes de encerrar qualquer mudança, rode `py scripts/verificar_readme.py` na pasta `NinWiki.Api`: ele confere variáveis, permissões, comandos do bot, migrações e telas citados aqui contra o código e também roda no GitHub (aba *Actions*) e dentro de `verificar_projeto.py`.
 - **Telas do painel:** `/admin` (Visão Geral), `/admin/content` (conteúdo: itens, mobs, armas, missões, guias), `/admin/masteries`, `/admin/jutsus`, `/admin/import` (importar JSON e nomes novos do jogo), `/admin/translations`, `/admin/media`, `/admin/blog-posts`, `/admin/comments`, `/admin/reports`, `/admin/announcement`, `/admin/villages`, `/admin/organizations`, `/admin/staff`, `/admin/permissions`, `/admin/audit-log`, `/admin/errors` (cada uma só aparece para quem tem a permissão — veja a tabela acima).
 - **Navegação:** Menu lateral agrupado em seções recolhíveis — Wiki, Comunidade, Mundo, Sistema — e cabeçalho com breadcrumb + "Ver site", no estilo do CoreUI.
 - **"Dropado por" (automático):** a ficha de um item/arma lista sozinha os mobs publicados que o dropam — vale o drop ligado ao item na página do mob e também o drop digitado com o mesmo nome do item. Nada é cadastrado à mão no item (a API calcula em `GET /content-items/{id}` e `/slug/{slug}`, campo `droppedBy`).
