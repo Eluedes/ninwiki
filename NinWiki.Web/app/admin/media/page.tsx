@@ -2,7 +2,7 @@
 
 // Banco de imagens (rota /admin/media): toda imagem enviada ganha um ID que a equipe digita nos campos de imagem (img:12, #12 ou 12).
 // Ver: uploads.create. Enviar (lote/arrastar e soltar): media.upload (padrao so' S.Adm). Renomear, categoria, apagar e importar da pasta: media.manage (a API confere de novo).
-// 100 imagens por pagina, com filtro por categoria (weapon, clothing...).
+// 100 imagens por pagina, com filtro por categoria (weapon, gear...).
 
 import { UploadProgressBar } from '@/components/admin/upload-progress';
 import { useCallback, useEffect, useRef, useState } from 'react';

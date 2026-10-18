@@ -53,7 +53,7 @@ class Permission(str, Enum):
     #     O S.Adm TRANCA uma categoria para um cargo desmarcando a permissao em /admin/permissions: para quem nao tem, ela some da lista, da
     #     contagem e da busca, e tentar abrir uma imagem dela (ID chutado, img:12) da' o aviso de acesso negado - igual a 'closed'.
     MEDIA_CAT_WEAPON = "media.cat.weapon"
-    MEDIA_CAT_CLOTHING = "media.cat.clothing"
+    MEDIA_CAT_GEAR = "media.cat.gear"
     MEDIA_CAT_CONSUMABLE = "media.cat.consumable"
     MEDIA_CAT_CURRENCY = "media.cat.currency"
     MEDIA_CAT_MATERIAL = "media.cat.material"
