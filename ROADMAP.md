@@ -509,3 +509,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   Organizações usam as permissões de Lore
 - **Rate limit** é por IP e em memória (sem Redis): serve enquanto houver uma instância só da API; atrás de proxy,
   `TRUST_PROXY_HEADERS=true`
+
+## Limpeza e correção de 18/10
+- ✅ **Bug 500 em `/content-items/slug/{slug}`** (páginas `/detail/...` quebravam): com o Pydantic 2.13 os schemas de dentro de outro schema (atributos, ataques, drops) também precisam de `from_attributes=True`. Corrigido em `app/schemas/content.py` e `masteries.py`; `verificar_projeto.py` agora confere isso sozinho (`checar_schemas_aninhados`).
+- ✅ **Código morto removido**: 31 componentes `components/ui/*` e `data-table.tsx` sem uso, `.eslintrc.json` (o projeto usa `eslint.config.mjs`), `use-toast`, a tela antiga `/admin/users`, os dados de mentira de `lib/data.ts` e 24 bibliotecas do `package.json` que só eles usavam.

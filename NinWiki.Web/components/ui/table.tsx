@@ -1,9 +1,7 @@
 // components/ui/table.tsx
 // Componentes semanticos de tabela HTML estilizados (Table, TableHeader,
-// TableBody, TableRow, TableCell, etc). components/admin/data-table.tsx e as
-// paginas app/admin/users/page.tsx escrevem a tabela na mao com
-// <table>/<tr>/<td> em vez de usar estes componentes - outra oportunidade de
-// padronizacao futura.
+// TableBody, TableRow, TableCell, etc). As tabelas do painel usam o TanStack
+// (components/admin/tanstack-data-table.tsx); este arquivo serve para tabelas simples.
 
 import * as React from 'react';
 

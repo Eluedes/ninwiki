@@ -4,9 +4,7 @@
 // (biblioteca headless - ela cuida da logica de ordenacao/paginacao/
 // selecao, a gente so' desenha o visual com os componentes do shadcn).
 // SUBSTITUI as tabelas escritas na mao em /admin/content e
-// /admin/jutsus (JSX com .map() direto) - a tabela antiga em
-// components/admin/data-table.tsx continua existindo, usada so' pela
-// pagina de Blog Posts (ainda mockada, fora do escopo desta rodada).
+// /admin/jutsus (JSX com .map() direto); a tabela antiga (data-table.tsx) foi apagada.
 //
 // O que isso resolve, dos "Proximos passos combinados" do ROADMAP.md:
 //   1. TanStack Table no lugar da tabela manual (esta troca)

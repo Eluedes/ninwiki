@@ -15,7 +15,7 @@ from app.schemas.validators import validate_rich_content
 
 class CamelModel(BaseModel):
     """Base dos schemas: converte nomes para camelCase no JSON, igual ao TypeScript do site."""
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
 class AttributeRead(CamelModel):

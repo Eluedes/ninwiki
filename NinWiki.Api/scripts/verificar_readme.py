@@ -32,7 +32,7 @@ BOT_README = ROOT / "NinWiki.Bot" / "README.md"
 MARK_START = "<!-- permissoes:inicio"
 MARK_END = "<!-- permissoes:fim -->"
 # Telas do painel que nao precisam de texto proprio no README (redirecionamentos / sub-rotas).
-ADMIN_PAGES_IGNORADAS = {"users", "blog-posts"}   # /admin/users e' so' redirecionamento; blog-posts esta' descrito como "Blog Posts" no painel
+ADMIN_PAGES_IGNORADAS = {"blog-posts"}   # blog-posts esta' descrito como "Blog Posts" no painel
 # Coisas que ja' foram removidas e NAO podem voltar a ser citadas como existentes.
 REMOVIDOS = ["/team list", "/team manage", "/team clearlog", "staff_commands.py"]
 

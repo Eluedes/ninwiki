@@ -32,7 +32,7 @@ class CamelModel(BaseModel):
     e o JSON que entra/sai pela rede usa `mobType` (o alias camelCase) -
     sem essa flag, so' um dos dois formatos seria aceito.
     """
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
 class AttributeRowSchema(CamelModel):
