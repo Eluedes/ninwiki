@@ -48,6 +48,28 @@ def join_parts(first: str, dst) -> int:
     return total
 
 
+def ordenar_auto_referencia(table, rows: list[dict]) -> list[dict]:
+    """
+    Tabela que aponta para ela mesma (ex.: `users.created_by_id` = quem cadastrou quem) so' aceita a linha
+    filha DEPOIS da linha-mae. Sem isso o Postgres recusa o insert ("violates foreign key constraint").
+    Devolve as linhas com as maes primeiro; tabela sem auto-referencia volta como esta.
+    """
+    pk = [c.name for c in table.primary_key.columns]
+    refs = [fk.parent.name for fk in table.foreign_keys if fk.column.table is table]
+    if len(pk) != 1 or not refs:
+        return rows
+    ja_inseridos: set = set()
+    pendentes, ordenadas = list(rows), []
+    while pendentes:
+        prontas = [r for r in pendentes if all(r.get(c) is None or r.get(c) in ja_inseridos or r.get(c) == r.get(pk[0]) for c in refs)]
+        if not prontas:   # referencia a uma linha que nem esta' no backup: insere o resto e deixa o banco acusar
+            prontas = pendentes
+        ordenadas += prontas
+        ja_inseridos |= {r[pk[0]] for r in prontas}
+        pendentes = [r for r in pendentes if r not in prontas]
+    return ordenadas
+
+
 async def restore(first: str, passphrase: str) -> tuple[dict[str, int], int]:
     """Junta e decifra o backup, restaura o banco (apaga e insere) e copia as imagens. Devolve (linhas por tabela, imagens)."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -73,6 +95,7 @@ async def restore(first: str, passphrase: str) -> tuple[dict[str, int], int]:
                 for name in header["tables"]:             # maes primeiro ao inserir
                     table = tables[name]
                     rows = [{c.name: restore_value(c, r.get(c.name)) for c in table.columns if c.name in r} for r in by_table[name]]
+                    rows = ordenar_auto_referencia(table, rows)
                     for i in range(0, len(rows), 1000):
                         await db.execute(insert(table), rows[i:i + 1000])
                     counts[name] = len(rows)
