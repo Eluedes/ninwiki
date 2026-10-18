@@ -261,6 +261,15 @@ export default function MediaPage() {
     }
   }
 
+  // Botoes de trocar de pagina: aparecem na barra fixa do topo da grade e tambem no fim da pagina.
+  const paginacao = total > PAGE ? (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" disabled={page === 0 || loading} onClick={() => { setPage((p) => Math.max(0, p - 1)); setSelected(new Set()); }}>{t.prev}</Button>
+      <span className="text-sm text-muted-foreground">{t.pageOf.replace('{page}', String(page + 1)).replace('{pages}', String(Math.max(1, Math.ceil(total / PAGE))))}</span>
+      <Button variant="outline" size="sm" disabled={(page + 1) * PAGE >= total || loading} onClick={() => { setPage((p) => p + 1); setSelected(new Set()); }}>{t.next}</Button>
+    </div>
+  ) : null;
+
   return (
     <DropZone onFiles={sendFiles} label={t.dropHere} disabled={up.busy || !canUpload} className="min-h-[70vh] space-y-5">
       <div>
@@ -339,9 +348,11 @@ export default function MediaPage() {
       {up.skipped > 0 && <p className="text-sm text-amber-400">{t.skipped.replace('{n}', String(up.skipped))}</p>}
       {info && <p className="text-sm text-emerald-400">{info}</p>}
 
-      {/* Barra de selecao em massa (so' quem pode apagar) */}
-      {manage && (
-        <div className="flex flex-wrap items-center gap-3 text-sm">
+      {/* Barra FIXA (acompanha o scroll, logo abaixo do cabecalho do painel): selecao em massa (so' quem pode apagar) + botoes de pagina */}
+      {(manage || paginacao) && (
+        <div className="sticky top-16 z-30 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background/95 px-3 py-2 text-sm shadow-sm backdrop-blur">
+          {manage && (
+            <>
           <button type="button" className="text-primary hover:underline" onClick={() => setSelected(new Set(items.map((m) => m.id)))}>{t.selectAll}</button>
           {selected.size > 0 && (
             <>
@@ -358,6 +369,9 @@ export default function MediaPage() {
               </Button>
             </>
           )}
+            </>
+          )}
+          {paginacao && <div className="ml-auto">{paginacao}</div>}
         </div>
       )}
       <p className="text-xs text-muted-foreground">{t.howTo} · {t.total.replace('{n}', String(total))}</p>
@@ -413,13 +427,7 @@ export default function MediaPage() {
 
       {loading && <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
       {!loading && items.length === 0 && !error && <p className="py-10 text-center text-sm text-muted-foreground">{t.empty}</p>}
-      {total > PAGE && (
-        <div className="flex items-center justify-center gap-3">
-          <Button variant="outline" size="sm" disabled={page === 0 || loading} onClick={() => { setPage((p) => Math.max(0, p - 1)); setSelected(new Set()); }}>{t.prev}</Button>
-          <span className="text-sm text-muted-foreground">{t.pageOf.replace('{page}', String(page + 1)).replace('{pages}', String(Math.max(1, Math.ceil(total / PAGE))))}</span>
-          <Button variant="outline" size="sm" disabled={(page + 1) * PAGE >= total || loading} onClick={() => { setPage((p) => p + 1); setSelected(new Set()); }}>{t.next}</Button>
-        </div>
-      )}
+      {paginacao && <div className="flex justify-center">{paginacao}</div>}
     </DropZone>
   );
 }
