@@ -23,7 +23,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 
-from sqlalchemy import delete, insert
+from sqlalchemy import delete, func, insert, select, text
 
 from app.api.uploads import UPLOAD_DIR
 from app.core.backup import decrypt_to, restore_value
@@ -70,6 +70,22 @@ def ordenar_auto_referencia(table, rows: list[dict]) -> list[dict]:
     return ordenadas
 
 
+async def acertar_contadores(db, tables: dict) -> None:
+    """
+    Depois de inserir linhas com ID explicito, o contador automatico (sequence) do Postgres continua no 1 e o proximo cadastro novo
+    quebra com "duplicate key". Poe cada contador no maior ID existente.
+    """
+    for table in tables.values():
+        pk = list(table.primary_key.columns)
+        if len(pk) != 1 or not pk[0].autoincrement or pk[0].type.python_type is not int:
+            continue
+        seq = (await db.execute(text("select pg_get_serial_sequence(:t, :c)"), {"t": table.name, "c": pk[0].name})).scalar()
+        if seq is None:
+            continue
+        maior = (await db.execute(select(func.max(pk[0])))).scalar()
+        await db.execute(text("select setval(:s, :v, :usado)"), {"s": seq, "v": maior or 1, "usado": maior is not None})
+
+
 async def restore(first: str, passphrase: str) -> tuple[dict[str, int], int]:
     """Junta e decifra o backup, restaura o banco (apaga e insere) e copia as imagens. Devolve (linhas por tabela, imagens)."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -99,6 +115,7 @@ async def restore(first: str, passphrase: str) -> tuple[dict[str, int], int]:
                     for i in range(0, len(rows), 1000):
                         await db.execute(insert(table), rows[i:i + 1000])
                     counts[name] = len(rows)
+                await acertar_contadores(db, tables)
                 await db.commit()
             UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
             for member in tar:
