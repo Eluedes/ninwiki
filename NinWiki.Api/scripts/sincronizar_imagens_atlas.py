@@ -3,7 +3,7 @@ Arruma o banco de imagens usando a lista de itens do Nin Atlas (https://nin-atla
 
 O QUE FAZ (nesta ordem):
   1. CATEGORIZA as imagens `N_item` / `N_fundo` (o N e' o ID do item no jogo, igual ao do Atlas) que ainda estao SEM categoria:
-       item do Atlas  -> categoria pelo tipo (Weapon=weapon, roupas e acessorios=gear, Ring=ring, Consumable=consumable, Currency=currency,
+       item do Atlas  -> categoria pelo tipo (Weapon=weapon, roupas e acessorios=gear, Ring=ring, Consumable e Cast=consumable, Currency=material (so' Ryo/Token/Coin/Coupon = currency),
                          Manual/Scroll=scroll, Furniture=furniture, Cast/Pack/Rod/Recipe/Authority/outros=other)
        NAO esta' no Atlas -> `closed` (so' S.Adm ve)
      Imagem que ja tem categoria NUNCA e' mexida (o trabalho manual fica), e nomes fora do padrao (Fire, Earth...) tambem nao.
@@ -48,9 +48,11 @@ NOME_IMAGEM = re.compile(r"^(\d+)_(item|fundo)$")
 CATEGORIA_POR_TIPO = {
     "Weapon": "weapon",
     "Shirt": "gear", "Hat": "gear", "Mask": "gear", "Pants": "gear", "Shoes": "gear", "Vest": "gear", "Accessory": "gear",
-    "Ring": "ring", "Consumable": "consumable", "Currency": "currency",
+    "Ring": "ring", "Consumable": "consumable", "Cast": "consumable",   # Cast = shuriken, kunai, pilulas, dango (gastam ao usar)
     "Manual": "scroll", "Scroll": "scroll", "Furniture": "furniture",
+    "Currency": "material",   # no Atlas "Currency" e' quase tudo loot de mob (Scorpion Tail, Tiger Fur...): so' o que parece moeda vira `currency` (abaixo)
 }
+MOEDA_DE_VERDADE = re.compile(r"^(Ryo|.*(Token|Coin|Coupon)s?)$", re.I)
 
 
 def carregar_atlas(origem: str | None) -> dict:
@@ -71,6 +73,8 @@ def categoria_do_item(atlas: dict, item_id: str) -> str:
     if item is None:
         return "closed"
     tipo = atlas["itemTypes"].get(str(item["type"]), "")
+    if tipo == "Currency" and MOEDA_DE_VERDADE.match(item.get("name", "")):
+        return "currency"
     return CATEGORIA_POR_TIPO.get(tipo, "other")
 
 
@@ -109,6 +113,8 @@ async def main() -> None:
     ap = argparse.ArgumentParser(description="Categoriza e completa o banco de imagens com base no Nin Atlas.")
     ap.add_argument("--aplicar", action="store_true", help="grava no banco (sem isso e' so' simulacao)")
     ap.add_argument("--permitir-remoto", action="store_true", help="deixa rodar contra um banco que nao e' local (producao)")
+    ap.add_argument("--corrigir-divergentes", action="store_true",
+                    help="tambem corrige as que JA tem categoria mas contradizem o tipo do Atlas (ex.: anel em furniture); `closed` nunca e' mexida")
     ap.add_argument("--atlas", help="arquivo atlas.js local, em vez de baixar")
     ap.add_argument("--cliente", default=CLIENTE_PADRAO, help="pasta graphics/items do cliente do jogo")
     args = ap.parse_args()
@@ -123,6 +129,7 @@ async def main() -> None:
 
         # 1) categorizar o que esta' sem categoria
         por_categoria: Counter = Counter()
+        corrigidas: Counter = Counter()
         ignoradas = com_categoria = 0
         for m in imagens:
             achou = NOME_IMAGEM.match(m.name or "")
@@ -130,7 +137,14 @@ async def main() -> None:
                 ignoradas += 1
                 continue
             if m.category:
-                com_categoria += 1
+                esperado = categoria_do_item(atlas, achou.group(1))
+                # categoria do usuario que contradiz o tipo do Atlas (so' com --corrigir-divergentes; `closed` e fora-do-Atlas ficam)
+                if args.corrigir_divergentes and m.category != "closed" and esperado != "closed" and m.category != esperado:
+                    corrigidas[f"{m.category} -> {esperado}"] += 1
+                    if args.aplicar:
+                        m.category = esperado
+                else:
+                    com_categoria += 1
                 continue
             cat = categoria_do_item(atlas, achou.group(1))
             por_categoria[cat] += 1
@@ -140,6 +154,10 @@ async def main() -> None:
               f"({com_categoria} ja tinham categoria e ficam como estao; {ignoradas} com nome fora do padrao ficam quietas)")
         for cat, n in por_categoria.most_common():
             print(f"     {cat:<11} {n}")
+        if args.corrigir_divergentes:
+            print(f"   Corrigir divergentes: {sum(corrigidas.values())} imagens (categoria atual contradiz o tipo do Atlas)")
+            for troca, n in corrigidas.most_common():
+                print(f"     {troca:<24} {n}")
 
         # 2) completar o que falta
         existentes = {m.name for m in imagens}
