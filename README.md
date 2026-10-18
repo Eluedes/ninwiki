@@ -63,8 +63,8 @@ Veja `NinWiki.Bot/README.md`. Resumo: `copy .env.example .env`, preencher, `pip 
 ```bash
 cd NinWiki.Api
 python scripts/verificar_projeto.py        # código x migrations x banco x frontend (tsc + lint)
-python scripts/testar_permissoes.py        # 580 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
-python scripts/testar_bot_integracao.py    # 172 verificações do bot + log + erros (precisa do banco no ar)
+python scripts/testar_permissoes.py        # 803 verificações de segurança/permissões/traduções/erros/blog (precisa do banco no ar)
+python scripts/testar_bot_integracao.py    # 145 verificações do bot + log + erros (precisa do banco no ar)
 cd ../NinWiki.Web && npm run typecheck && npm run lint && npm run build
 pip-audit -r requirements.txt && npm audit # vulnerabilidades conhecidas nas bibliotecas (pip install pip-audit)
 ```
@@ -114,6 +114,45 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
 - **Nome (nick) da equipe:** em `/admin/staff` (só S.Adm) o lápis ao lado do nome edita o nome de qualquer um, **inclusive o seu**. O nome editado
   fica salvo: o login com o Discord não o sobrescreve mais.
 - **Permissões** (`/admin/permissions`, só S.Adm): liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora.
+- **Tabela de permissões** (gerada do código, `app/core/permissions.py`; o S.Adm ajusta Adm/Creator em `/admin/permissions`; as *exclusivas* nem aparecem para os outros cargos; as `media.cat.*` liberam ver cada categoria do banco de imagens):
+
+| Permissão | O que libera | Quem tem por padrão |
+|---|---|---|
+| `content.create` | Criar conteúdo | Creator, Adm, S.Adm |
+| `content.edit` | Editar conteúdo | Creator, Adm, S.Adm |
+| `content.publish` | Publicar / despublicar conteúdo | Adm, S.Adm |
+| `content.delete` | Apagar conteúdo | Adm, S.Adm |
+| `content.import` | Importar conteúdo em massa | Adm, S.Adm |
+| `posts.create` | Criar posts | Creator, Adm, S.Adm |
+| `posts.edit` | Editar posts | Creator, Adm, S.Adm |
+| `posts.publish` | Publicar / despublicar posts | Adm, S.Adm |
+| `posts.delete` | Apagar posts | Adm, S.Adm |
+| `lore.edit` | Editar Masteries, Jutsus, Vilas e Organizações | Adm, S.Adm |
+| `lore.delete` | Apagar Jutsus, Vilas e Organizações | Adm, S.Adm |
+| `uploads.create` | Enviar imagens | Creator, Adm, S.Adm |
+| `translation.retranslate` | Retraduzir conteúdo | Creator, Adm, S.Adm |
+| `translation.import` | Importar as traduções oficiais do jogo | Adm, S.Adm |
+| `media.upload` | Enviar imagens pelo banco de imagens (lote) | S.Adm |
+| `media.closed` | Ver a categoria fechada do banco de imagens | S.Adm (exclusiva) |
+| `media.reset_ids` | Renumerar os IDs do banco de imagens | S.Adm (exclusiva) |
+| `media.manage` | Renomear/apagar imagens do banco de imagens | S.Adm |
+| `staff.view` | Ver a equipe | S.Adm (exclusiva) |
+| `staff.create` | Cadastrar equipe | S.Adm (exclusiva) |
+| `staff.edit` | Trocar cargo | S.Adm (exclusiva) |
+| `staff.deactivate` | Desativar / reativar equipe | S.Adm (exclusiva) |
+| `staff.delete` | Remover alguém da equipe | S.Adm (exclusiva) |
+| `notices.view` | Ver avisos e baixar arquivos | Creator, Adm, S.Adm |
+| `notices.manage` | Postar, editar e apagar avisos | Adm, S.Adm |
+| `announcement.manage` | Editar o anúncio da Home | Adm, S.Adm |
+| `roles.manage` | Editar permissões dos cargos | S.Adm (exclusiva) |
+| `comments.moderate` | Moderar comentários e banir leitores | Adm, S.Adm |
+| `reports.manage` | Ver e tratar os reports dos visitantes | Adm, S.Adm |
+| `errors.view` | Ver erros e problemas do wiki | S.Adm (exclusiva) |
+| `analytics.view` | Ver os acessos ao site | Adm, S.Adm |
+| `audit.view` | Ver o log de conteúdo | Adm, S.Adm |
+| `audit.view_all` | Ver o log completo (com IPs) | S.Adm (exclusiva) |
+| `audit.clear` | Limpar o log | S.Adm (exclusiva) |
+
 - **Cargos personalizados** (mesma tela, seção *Custom roles*): o S.Adm cria cargos como *Tradutor*, *Moderador* ou *Redator* — nome, **cor**, descrição e as permissões que quiser (até 25) — e dá o cargo em `/admin/staff` (aparece no seletor de cargo). Regras: ficam no nível do **Creator** (nunca gerenciam a equipe nem as permissões, nada exclusivo do S.Adm pode ser dado), a edição vale na hora para quem tem o cargo, e um cargo só é apagado quando ninguém o tem. Criar/editar/apagar vai para o log. Migration nova: `39ea91f5adab`.
 - **Log geral:** `/admin/audit-log` (quem fez o quê; o IP só o S.Adm vê). O **S.Adm pode limpar o log** (tudo, ou só o mais antigo que 7/30 dias) para a
   equipe não ver o histórico antigo; a própria limpeza fica registrada como a primeira linha do log novo.
@@ -127,12 +166,14 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
 - **Páginas inexistentes dão 404 de verdade:** vila, mastery, jutsu e entry que não existem agora respondem HTTP 404 com a tela "Página não encontrada" (antes mostravam uma mensagem com status 200, que o Google guardaria como se a página existisse).
 - **Não aponte o ambiente local para o banco da SquareCloud:** o que você salva ali aparece NA HORA no site que já está no ar (que ainda roda o código antigo); valores novos (raridade Unique, jutsu sem mastery…) podem derrubar a API antiga; e as imagens enviadas localmente ficam só no seu computador, mas o banco guarda o endereço `localhost` delas. Use um banco **local** (copie os dados com o backup e `scripts/restaurar_backup.py`), teste, faça o deploy (as migrações rodam sozinhas) e só então mexa no conteúdo pelo painel do site. Os scripts de teste **recusam** rodar contra um banco que não seja local.
 - **Raridade Event:** além de Common, Uncommon, Rare, Epic, Legendary, Unique e Enchanted, existe **Event** (rosa), para itens de evento do jogo (exige `alembic upgrade head`).
-- **Itens:** no editor, o campo **Item type** tem Geral, **Equipment**, Consumível, Moeda, Cast, Authority e **Pack**; ao escolher **Equipment** aparece um 2º seletor com a peça — **Ring, Accessory, Shirt, Vest, Pant, Hat, Mask e Shoe** (equipamentos mostram nível e aparecem juntos no filtro *Equipment* do catálogo; o tipo gravado é a própria peça). **Pack** tem seu próprio filtro no catálogo de itens, Consumível, Moeda, Cast e **Authority** (itens de Autoridade do clã) — o tipo *Material* saiu da lista (só aparece em itens antigos que já o têm) e itens de **Moeda** ficam no filtro **Materials** do catálogo; raridades Common, Uncommon, Rare, Epic, Legendary, **Unique** (vermelha) e **Enchanted**. **Nível 0 = item/arma sem nível**: nada de "Level" aparece no site. O **Max Stack** ("Can hold max 500 per Stack") vale para Moeda, Authority, Consumível, Material e **Pack**. A página do item mostra a imagem grande sobre um brilho **na cor da raridade**, selos (tipo, raridade, nível) e uma ficha lateral com Detalhes/Atributos; os cards das listas têm brilho e selo de raridade. (Novos valores de raridade/tipo exigem `alembic upgrade head`, que o Deploy API já faz.)
-- **Jutsu NPC:** no editor do jutsu, a caixa **Jutsu NPC** marca a versão do jutsu ensinada/usada por NPC (mesmo nome do jutsu de mastery ou de Utilidade — crie como um jutsu à parte). Ele **não tem nível, tier nem ficha**: ao marcar a caixa o editor esconde esses campos e a página pública mostra só **nome, imagem (ícone/GIF) e descrição**. Esses jutsus **não aparecem em Masteries** (nem nas páginas das masteries, nem como card): só quem clica no **link direto** do jutsu (ex.: o ataque ligado em um monstro) ou abre `/masteries/npc`. Exige `alembic upgrade head`.
+- **Itens:** no editor, o campo **Item type** tem Geral, **Wardrobe (Guarda-roupa)**, **Ring**, Consumível, Moeda, Cast, Authority e **Pack**; ao escolher **Wardrobe** aparece um 2º seletor com a peça — **Accessory, Shirt, Vest, Pant, Hat, Mask e Shoe** (o tipo gravado é a própria peça). O **Ring** tem categoria própria: opção direta no editor e filtro **Rings** no catálogo (o guarda-roupa tem o filtro **Wardrobe**). Todo equipamento (ring, acessório e roupas) mostra nível. **Pack** tem seu próprio filtro no catálogo de itens, Consumível, Moeda, Cast e **Authority** (itens de Autoridade do clã) — o tipo *Material* saiu da lista (só aparece em itens antigos que já o têm) e itens de **Moeda** ficam no filtro **Materials** do catálogo; raridades Common, Uncommon, Rare, Epic, Legendary, **Unique** (vermelha) e **Enchanted**. **Nível 0 = item/arma sem nível**: nada de "Level" aparece no site. O **Max Stack** ("Can hold max 500 per Stack") vale para Moeda, Authority, Consumível, Material e **Pack**. A página do item mostra a imagem grande sobre um brilho **na cor da raridade**, selos (tipo, raridade, nível) e uma ficha lateral com Detalhes/Atributos; os cards das listas têm brilho e selo de raridade. (Novos valores de raridade/tipo exigem `alembic upgrade head`, que o Deploy API já faz.)
+- **Jutsu NPC:** no editor do jutsu, a caixa **Jutsu NPC** marca a versão do jutsu ensinada/usada por NPC (mesmo nome do jutsu de mastery ou de Utilidade — crie como um jutsu à parte). Ele **não tem nível, tier nem ficha de jogador**: ao marcar a caixa o editor esconde esses campos (e a *Short description*) e mostra só **nome, ID, Mastery, ícone, Cooldown, Cast Type, imagem/GIF e descrição completa**; a página pública mostra nome, ícone, imagem, descrição e uma seção com Cooldown e Cast Type. Esses jutsus **não aparecem em Masteries** (nem nas páginas das masteries, nem como card): só quem clica no **link direto** do jutsu (ex.: o ataque ligado em um monstro) ou abre `/masteries/npc`. Exige `alembic upgrade head`.
 - **Jutsus de Utilidade (categoria Utility):** no editor do jutsu, o campo *Mastery* tem a opção **Utility (sem mastery — qualquer pessoa pode usar)**: o jutsu fica sem mastery e sem caminho. Na lista pública de masteries aparece um card **Utility** (só se houver pelo menos um jutsu assim) que leva para `/masteries/utility`, com a lista desses jutsus; no painel há o filtro *Utility*. Não existe uma mastery "Utility" no banco: é um jutsu com `mastery_id` vazio (exige `alembic upgrade head`).
 - **Jutsus:** a página mostra a ficha em seções que abrem e fecham (Requisitos, Aquisição, Detalhes da técnica, Dados de batalha). No editor você preenche
-  nível/atributo exigido, tipo de pergaminho + tier (**1 a 5**), nível máximo com **nome (opcional), dano e recarga por nível** (o nome por nível serve para jutsus que **mudam de nome** ao subir, ex.: no nível 4 — deixe vazio nos níveis em que o nome não muda; a **DeepL traduz o nome por nível** ao salvar — troque o nome em inglês e ele é retraduzido; sem mexer, a tradução é mantida; o botão *Retraduzir* também a refaz; a ficha mostra, dentro das listas de dano e recarga, uma linha-divisória **"A partir do nível 4: Great Fireball"** antes do nível em que o nome muda), tipo de conjuração, classe, debuff e linhas extras;
+  nível/atributo exigido, tipo de pergaminho + tier (**1 a 5**), nível máximo com **nome (opcional), dano e recarga por nível** (o nome por nível serve para jutsus que **mudam de nome** ao subir, ex.: no nível 4 — deixe vazio nos níveis em que o nome não muda; a **DeepL traduz o nome por nível** ao salvar — troque o nome em inglês e ele é retraduzido; sem mexer, a tradução é mantida; o botão *Retraduzir* também a refaz; a ficha mostra, dentro das listas de dano e recarga, uma linha-divisória **"A partir do nível 4: Great Fireball"** antes do nível em que o nome muda), tipo de conjuração, debuff e armas permitidas (os campos *Classe* e *Loja* saíram do formulário e da ficha; o ícone agora é um **dropdown** com prévia dos ícones disponíveis);
   linha vazia some da página.
+- **Textos de ajuda nos formulários:** abaixo dos campos de texto de jutsu, conteúdo, vila e mastery há uma linha cinza explicando o campo (com exemplo). Os textos ficam em `NinWiki.Web/lib/field-hints.ts` (uma linha por campo, em inglês e português; campo sem entrada ali fica sem ajuda).
+- **Banner do post do blog:** aparece **inteiro**, no tamanho real da arte (até 960 px) e centralizado, com a mesma arte desfocada preenchendo as laterais; a arte padrão (`public/images/blog/steam-banner.webp`) tem 960×311 px — para ficar mais nítida em telas grandes, troque por uma versão de 1920 px ou mais na mesma proporção.
 - **Navegação:** Menu lateral agrupado em seções recolhíveis — Wiki, Comunidade, Mundo, Sistema — e cabeçalho com breadcrumb + "Ver site", no estilo do CoreUI.
 - **"Dropado por" (automático):** a ficha de um item/arma lista sozinha os mobs publicados que o dropam — vale o drop ligado ao item na página do mob e também o drop digitado com o mesmo nome do item. Nada é cadastrado à mão no item (a API calcula em `GET /content-items/{id}` e `/slug/{slug}`, campo `droppedBy`).
 - **Reports dos visitantes:** toda página de conteúdo, jutsu e mastery tem o botão **Reportar** (sem login): o visitante escolhe *Informação desatualizada*, *Erro de tradução* ou *Outro* e descreve o problema. A equipe trata em **/admin/reports** (menu Comunidade; permissão `reports.manage`, padrão: Adm e S.Adm — o S.Adm pode liberar para o Creator em /admin/permissions): filtra por status/tipo, abre a página citada e marca como resolvido, descartado, reabre ou apaga (tudo vai para o log de auditoria). Defesas: só aceita a origem do site, limite de 3 por minuto e 20 por dia por IP, campo-isca anti-robô, texto simples de 10 a 1000 caracteres com no máximo 1 link, página conferida no banco (não aceita rascunho nem página inexistente), teto de 200 por hora no site todo e sem duplicados. O IP fica guardado só para barrar abuso e nunca aparece no painel. Reports resolvidos/descartados somem sozinhos depois de 60 dias (manutenção automática); os abertos nunca. **Requer a migração `d9c1e3f5a768` (Deploy API).**
