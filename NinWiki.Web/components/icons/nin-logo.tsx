@@ -1,5 +1,5 @@
 // Logo do site: o logo ORIGINAL do jogo (shuriken com anel laranja, o `laranja`, tema padrao)
-// e 4 recoloracoes dele (uma por tema de cor) via processamento de
+// e 4 recoloracoes dele (so' o ANEL muda para a cor do tema; a shuriken prateada fica igual) (uma por tema de cor) via processamento de
 // imagem (deslocamento de matiz preservando saturacao/brilho - o
 // mesmo desenho, so' muda a familia de cor do anel).
 //

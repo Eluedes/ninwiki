@@ -5,6 +5,7 @@
 // 100 imagens por pagina, com filtro por categoria (weapon, gear...).
 
 import { UploadProgressBar } from '@/components/admin/upload-progress';
+import { ignoreRowClick, rangeBetween } from '@/lib/row-select';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, Copy, FolderSync, Images, Loader2, Pencil, Search, Trash2, Upload } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -148,6 +149,25 @@ export default function MediaPage() {
     } finally {
       setBusy(null);
     }
+  }
+
+  /** Clique no cartao inteiro (nao so' na caixinha) marca/desmarca; Shift+clique marca o intervalo desde o ultimo clique. */
+  const ultimoClicado = useRef<number | null>(null);
+  function aoClicarNoCartao(e: React.MouseEvent, posicao: number) {
+    if (!manage || ignoreRowClick(e.target)) return;
+    if (e.shiftKey && ultimoClicado.current !== null && ultimoClicado.current < items.length) {
+      const marcar = !selected.has(items[posicao].id);
+      const ids = rangeBetween(ultimoClicado.current, posicao).map((i) => items[i].id);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        for (const id of ids) { if (marcar) next.add(id); else next.delete(id); }
+        return next;
+      });
+      window.getSelection()?.removeAllRanges();
+    } else {
+      toggle(items[posicao].id);
+    }
+    ultimoClicado.current = posicao;
   }
 
   /** Marca/desmarca uma imagem. */
@@ -343,8 +363,8 @@ export default function MediaPage() {
       <p className="text-xs text-muted-foreground">{t.howTo} · {t.total.replace('{n}', String(total))}</p>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {items.map((m) => (
-          <div key={m.id} className={`relative overflow-hidden rounded-xl border bg-card shadow-sm ${selected.has(m.id) ? 'border-primary ring-2 ring-primary/40' : 'border-border'}`}>
+        {items.map((m, posicao) => (
+          <div key={m.id} onClick={(e) => aoClicarNoCartao(e, posicao)} className={`relative overflow-hidden rounded-xl border bg-card shadow-sm ${manage ? 'cursor-pointer select-none' : ''} ${selected.has(m.id) ? 'border-primary ring-2 ring-primary/40' : 'border-border'}`}>
             {manage && (
               <input
                 type="checkbox" checked={selected.has(m.id)} onChange={() => toggle(m.id)} aria-label={`${t.select} #${m.id}`}

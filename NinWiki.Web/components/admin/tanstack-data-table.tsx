@@ -22,13 +22,14 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowUp, ArrowDown, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ignoreRowClick, rangeBetween } from '@/lib/row-select';
 
 interface TanstackDataTableProps<TData> {
   columns: ColumnDef<TData>[];
@@ -70,6 +71,28 @@ export function TanstackDataTable<TData>({
   });
 
   const selectedRows = table.getSelectedRowModel().rows.map((r) => r.original);
+
+  // Clicar em QUALQUER ponto da linha marca/desmarca (nao so' na caixinha); Shift+clique marca o intervalo desde o ultimo clique.
+  // Links, botoes, campos e a propria caixinha continuam com a funcao deles (ver lib/row-select.ts).
+  const ultimoClicado = useRef<number | null>(null);
+  function aoClicarNaLinha(e: React.MouseEvent, rowId: string, posicao: number) {
+    if (!bulkActions || ignoreRowClick(e.target)) return;
+    const linhas = table.getRowModel().rows;
+    if (e.shiftKey && ultimoClicado.current !== null && ultimoClicado.current < linhas.length) {
+      const marcar = !linhas[posicao].getIsSelected();
+      setRowSelection((prev) => {
+        const next = { ...prev };
+        for (const i of rangeBetween(ultimoClicado.current as number, posicao)) {
+          if (marcar) next[linhas[i].id] = true; else delete next[linhas[i].id];
+        }
+        return next;
+      });
+      window.getSelection()?.removeAllRanges();
+    } else {
+      table.getRow(rowId).toggleSelected();
+    }
+    ultimoClicado.current = posicao;
+  }
 
   return (
     <div className="space-y-3">
@@ -122,8 +145,9 @@ export function TanstackDataTable<TData>({
                   </TableCell>
                 </TableRow>
               )}
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} className="transition-colors hover:bg-secondary/30">
+              {table.getRowModel().rows.map((row, posicao) => (
+                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} onClick={(e) => aoClicarNaLinha(e, row.id, posicao)}
+                  className={cn('transition-colors hover:bg-secondary/30', bulkActions && 'cursor-pointer')}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
