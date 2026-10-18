@@ -26,6 +26,8 @@ O QUE CONFERE:
   4. Models x migracoes: os models Python batem EXATAMENTE com o que as
      migracoes criam no banco? (campo no model sem migracao = erro em
      producao, coluna que o codigo espera mas nao existe)
+  5b. README: variaveis, permissoes, comandos do bot, migracoes e telas citados no README
+     batem com o codigo? (detalhe em scripts/verificar_readme.py)
   5. Frontend: o TypeScript compila sem erro? (pega import quebrado,
      componente no arquivo errado, campo que nao existe no tipo...) E o
      lint (npm run lint) esta' limpo, sem nenhum aviso? (pega efeito que
@@ -238,6 +240,18 @@ def checar_frontend() -> None:
         print(f"            ... e mais {len(linhas) - 10} (rode 'npm run typecheck' na pasta NinWiki.Web pra ver todos)")
 
 
+def checar_readme() -> None:
+    """README x codigo (variaveis, tabela de permissoes, comandos do bot, migracoes, telas): ver scripts/verificar_readme.py."""
+    global problemas, avisos
+    sys.path.insert(0, str(API_DIR / "scripts"))
+    import verificar_readme
+
+    print("\nREADME x codigo")
+    r = verificar_readme.rodar()
+    problemas += r.erros
+    avisos += r.avisos
+
+
 def main() -> int:
     """Roda todas as verificacoes e imprime o resultado final."""
     print("=" * 62)
@@ -250,6 +264,7 @@ def main() -> int:
         checar_models_vs_migracoes()
     else:
         print("\n4) Models Python x migracoes\n  [PULADO] resolva os pontos 2/3 primeiro")
+    checar_readme()
     checar_frontend()
     print("\n" + "=" * 62)
     if problemas:

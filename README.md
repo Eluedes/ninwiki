@@ -116,6 +116,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
 - **Permissões** (`/admin/permissions`, só S.Adm): liga/desliga o que **Adm** e **Creator** podem fazer; vale na hora.
 - **Tabela de permissões** (gerada do código, `app/core/permissions.py`; o S.Adm ajusta Adm/Creator em `/admin/permissions`; as *exclusivas* nem aparecem para os outros cargos; as `media.cat.*` liberam ver cada categoria do banco de imagens):
 
+<!-- permissoes:inicio (gerado por NinWiki.Api/scripts/verificar_readme.py --corrigir; nao edite a mao) -->
 | Permissão | O que libera | Quem tem por padrão |
 |---|---|---|
 | `content.create` | Criar conteúdo | Creator, Adm, S.Adm |
@@ -152,6 +153,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
 | `audit.view` | Ver o log de conteúdo | Adm, S.Adm |
 | `audit.view_all` | Ver o log completo (com IPs) | S.Adm (exclusiva) |
 | `audit.clear` | Limpar o log | S.Adm (exclusiva) |
+<!-- permissoes:fim -->
 
 - **Cargos personalizados** (mesma tela, seção *Custom roles*): o S.Adm cria cargos como *Tradutor*, *Moderador* ou *Redator* — nome, **cor**, descrição e as permissões que quiser (até 25) — e dá o cargo em `/admin/staff` (aparece no seletor de cargo). Regras: ficam no nível do **Creator** (nunca gerenciam a equipe nem as permissões, nada exclusivo do S.Adm pode ser dado), a edição vale na hora para quem tem o cargo, e um cargo só é apagado quando ninguém o tem. Criar/editar/apagar vai para o log. Migration nova: `39ea91f5adab`.
 - **Log geral:** `/admin/audit-log` (quem fez o quê; o IP só o S.Adm vê). O **S.Adm pode limpar o log** (tudo, ou só o mais antigo que 7/30 dias) para a
@@ -174,6 +176,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
   linha vazia some da página.
 - **Textos de ajuda nos formulários:** abaixo dos campos de texto de jutsu, conteúdo, vila e mastery há uma linha cinza explicando o campo (com exemplo). Os textos ficam em `NinWiki.Web/lib/field-hints.ts` (uma linha por campo, em inglês e português; campo sem entrada ali fica sem ajuda).
 - **Banner do post do blog:** aparece **inteiro**, no tamanho real da arte (até 960 px) e centralizado, com a mesma arte desfocada preenchendo as laterais; a arte padrão (`public/images/blog/steam-banner.webp`) tem 960×311 px — para ficar mais nítida em telas grandes, troque por uma versão de 1920 px ou mais na mesma proporção.
+- **Telas do painel:** `/admin` (Visão Geral), `/admin/content` (conteúdo: itens, mobs, armas, missões, guias), `/admin/masteries`, `/admin/jutsus`, `/admin/import` (importar JSON e nomes novos do jogo), `/admin/translations`, `/admin/media`, `/admin/blog-posts`, `/admin/comments`, `/admin/reports`, `/admin/announcement`, `/admin/villages`, `/admin/organizations`, `/admin/staff`, `/admin/permissions`, `/admin/audit-log`, `/admin/errors` (cada uma só aparece para quem tem a permissão — veja a tabela acima).
 - **Navegação:** Menu lateral agrupado em seções recolhíveis — Wiki, Comunidade, Mundo, Sistema — e cabeçalho com breadcrumb + "Ver site", no estilo do CoreUI.
 - **"Dropado por" (automático):** a ficha de um item/arma lista sozinha os mobs publicados que o dropam — vale o drop ligado ao item na página do mob e também o drop digitado com o mesmo nome do item. Nada é cadastrado à mão no item (a API calcula em `GET /content-items/{id}` e `/slug/{slug}`, campo `droppedBy`).
 - **Reports dos visitantes:** toda página de conteúdo, jutsu e mastery tem o botão **Reportar** (sem login): o visitante escolhe *Informação desatualizada*, *Erro de tradução* ou *Outro* e descreve o problema. A equipe trata em **/admin/reports** (menu Comunidade; permissão `reports.manage`, padrão: Adm e S.Adm — o S.Adm pode liberar para o Creator em /admin/permissions): filtra por status/tipo, abre a página citada e marca como resolvido, descartado, reabre ou apaga (tudo vai para o log de auditoria). Defesas: só aceita a origem do site, limite de 3 por minuto e 20 por dia por IP, campo-isca anti-robô, texto simples de 10 a 1000 caracteres com no máximo 1 link, página conferida no banco (não aceita rascunho nem página inexistente), teto de 200 por hora no site todo e sem duplicados. O IP fica guardado só para barrar abuso e nunca aparece no painel. Reports resolvidos/descartados somem sozinhos depois de 60 dias (manutenção automática); os abertos nunca. **Requer a migração `d9c1e3f5a768` (Deploy API).**
