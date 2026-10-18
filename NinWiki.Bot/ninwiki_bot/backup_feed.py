@@ -7,7 +7,7 @@ NOME: `ninwiki-AAAAMMDD-HHMM.nbk.NN-of-MM` (ex.: ninwiki-20261003-1200.nbk.01-of
 import json
 import math
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 PART_RE = re.compile(r"^ninwiki-(\d{8}-\d{4})\.nbk\.(\d{2,})-of-(\d{2,})$")
