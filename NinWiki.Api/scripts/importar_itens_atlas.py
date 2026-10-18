@@ -12,7 +12,7 @@ O QUE FAZ, por item do Atlas (o ID do Atlas e' o mesmo ID da imagem `N_item` no 
   - Depois liga os drops dos mobs que ainda estavam soltos (so' o nome) ao item de mesmo nome (e copia a raridade dele).
 NAO importa (fica para voce): bonus de atributo (+Fortitude etc.), vida/chakra/critico, requisitos que nao sao Strength, receitas e lojas.
 
-NADA e' publicado. Por padrao e' SIMULACAO; grava com --aplicar. Recusa banco que nao seja local, a menos que use --permitir-remoto (faca um backup antes).
+NADA e' publicado, a menos que use --publicar (publica so' as paginas que o Atlas cobre, nunca os outros rascunhos). Por padrao e' SIMULACAO; grava com --aplicar. Recusa banco que nao seja local, a menos que use --permitir-remoto (faca um backup antes).
 Rode ANTES o `sincronizar_imagens_atlas.py` (para existir a imagem de cada item).
 
 Uso (pasta NinWiki.Api, venv ativado, `$env:PYTHONPATH="."`):
@@ -90,6 +90,7 @@ async def main() -> None:
     ap = argparse.ArgumentParser(description="Importa os itens do Nin Atlas como rascunho.")
     ap.add_argument("--aplicar", action="store_true", help="grava no banco (sem isso e' so' simulacao)")
     ap.add_argument("--permitir-remoto", action="store_true", help="deixa rodar contra um banco que nao e' local (producao)")
+    ap.add_argument("--publicar", action="store_true", help="publica (status published) as paginas de item/arma que o Atlas cobre")
     ap.add_argument("--atlas", help="arquivo atlas.js local, em vez de baixar")
     args = ap.parse_args()
 
@@ -105,7 +106,7 @@ async def main() -> None:
         imagens = {m.name: m.filename for m in (await db.execute(select(MediaImage).where(MediaImage.name.like("%\\_item", escape="\\")))).scalars().all()}
 
         vistos: set[str] = set()
-        novos = atualizados = campos = armas_movidas = sem_imagem = repetidos = 0
+        novos = atualizados = campos = armas_movidas = sem_imagem = repetidos = publicados = 0
         por_campo: dict[str, int] = {}
 
         def preencher(alvo: ContentItem, campo: str, valor) -> None:
@@ -145,7 +146,8 @@ async def main() -> None:
                 slugs.add(slug)
                 if args.aplicar:
                     db.add(ContentItem(slug=slug, category=categoria, name=it["name"], icon=_DEFAULT_ICON_BY_CATEGORY.get(categoria.value, "❔"),
-                                       rarity=raridade, description=doc_simples(texto) if texto else "", status=ContentStatus.DRAFT,
+                                       rarity=raridade, description=doc_simples(texto) if texto else "",
+                                       status=ContentStatus.PUBLISHED if args.publicar else ContentStatus.DRAFT,
                                        item_type=item_type, level=it.get("lvl") or 0, image=url, max_stack=stack,
                                        weapon_base_damage=str(it["dmg"]) if eh_arma and it.get("dmg") is not None else None,
                                        weapon_requirement=f"{req_forca} Strength" if eh_arma and req_forca is not None else None))
@@ -174,6 +176,10 @@ async def main() -> None:
                 preencher(alvo, "weapon_base_damage", str(it["dmg"]))
             if eh_arma and req_forca is not None and not alvo.weapon_requirement:
                 preencher(alvo, "weapon_requirement", f"{req_forca} Strength")
+            if args.publicar and alvo.status != ContentStatus.PUBLISHED:
+                publicados += 1
+                if args.aplicar:
+                    alvo.status = ContentStatus.PUBLISHED
 
         if args.aplicar:
             await db.flush()
@@ -195,10 +201,11 @@ async def main() -> None:
     print(f"\nItens novos (rascunho): {novos}")
     print(f"Itens que o wiki ja tinha, com campos vazios preenchidos: {atualizados} ({campos} campos)")
     print("  por campo:", ", ".join(f"{k}={v}" for k, v in sorted(por_campo.items(), key=lambda kv: -kv[1])))
+    print(f"Publicados agora: {publicados} existentes + {novos if args.publicar else 0} novos")
     print(f"Armas que passaram de Items para Weapons (so' rascunhos): {armas_movidas}")
     print(f"Nomes repetidos no Atlas (variantes) juntados: {repetidos} | itens sem imagem no banco: {sem_imagem}")
     print(f"Drops de mobs que estavam soltos e agora ligam a um item: {ligados} de {len(soltos)}")
-    print("\nGravado (tudo como rascunho)." if args.aplicar else "\nSimulacao: nada foi gravado. Rode de novo com --aplicar para gravar.")
+    print("\nGravado." if args.aplicar else "\nSimulacao: nada foi gravado. Rode de novo com --aplicar para gravar.")
 
 
 if __name__ == "__main__":

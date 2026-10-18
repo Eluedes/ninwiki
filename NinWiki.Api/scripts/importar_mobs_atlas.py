@@ -11,7 +11,7 @@ O QUE FAZ, por monstro do Atlas:
   - Retrato: o 1o quadro da folha de sprites (`{sprite}.png`, 16 colunas x 4 linhas), recortado nas bordas e ampliado 4x sem borrar, vai para o banco de imagens
     (categoria `monster`, nome `mob_{sprite}`; monstros que dividem o mesmo sprite dividem a imagem).
 
-NADA e' publicado: tudo entra como rascunho para voce revisar. Por padrao e' SIMULACAO (so' conta); grava com --aplicar. Recusa banco que nao seja local,
+NADA e' publicado, a menos que use --publicar (publica so' os monstros que o Atlas cobre): sem isso tudo entra como rascunho para voce revisar. Por padrao e' SIMULACAO (so' conta); grava com --aplicar. Recusa banco que nao seja local,
 a menos que use --permitir-remoto (faca um backup antes).
 
 Uso (pasta NinWiki.Api, venv ativado, `$env:PYTHONPATH="."`):
@@ -76,6 +76,7 @@ async def main() -> None:
     ap = argparse.ArgumentParser(description="Importa os monstros do Nin Atlas como rascunho.")
     ap.add_argument("--aplicar", action="store_true", help="grava no banco (sem isso e' so' simulacao)")
     ap.add_argument("--permitir-remoto", action="store_true", help="deixa rodar contra um banco que nao e' local (producao)")
+    ap.add_argument("--publicar", action="store_true", help="publica (status published) os monstros que o Atlas cobre")
     ap.add_argument("--atlas", help="arquivo atlas.js local, em vez de baixar")
     ap.add_argument("--personagens", default=PERSONAGENS_PADRAO, help="pasta com os PNGs das folhas de sprite ({sprite}.png)")
     args = ap.parse_args()
@@ -95,7 +96,7 @@ async def main() -> None:
         midia = {m.name: m for m in (await db.execute(select(MediaImage).where(MediaImage.name.like("mob\\_%", escape="\\")))).scalars().all()}
         pasta = Path(args.personagens)
 
-        novos = atualizados = campos = drops_novos = drops_ligados = imagens_novas = sem_folha = 0
+        novos = atualizados = campos = drops_novos = drops_ligados = imagens_novas = sem_folha = publicados = 0
         sem_item: set[str] = set()
         try:
             for n in lutadores:
@@ -131,7 +132,8 @@ async def main() -> None:
                         slug, k = f"{base}-{k}", k + 1
                     slugs.add(slug)
                     alvo = ContentItem(slug=slug, category=ContentCategory.MOBS, name=n["name"], icon=_DEFAULT_ICON_BY_CATEGORY.get("mobs", "👹"),
-                                       rarity=Rarity.COMMON, description="", status=ContentStatus.DRAFT, mob_type=tipo, level=dados["level"] or 0,
+                                       rarity=Rarity.COMMON, description="",
+                                       status=ContentStatus.PUBLISHED if args.publicar else ContentStatus.DRAFT, mob_type=tipo, level=dados["level"] or 0,
                                        mob_damage=dados["mob_damage"], mob_experience=dados["mob_experience"], mob_respawn_time=dados["mob_respawn_time"],
                                        mob_range=dados["mob_range"], image=url_imagem)
                     if args.aplicar:
@@ -156,6 +158,10 @@ async def main() -> None:
                         if args.aplicar:
                             alvo.image = url_imagem
                     tem_drops = bool(alvo.drops)
+                    if args.publicar and alvo.status != ContentStatus.PUBLISHED:
+                        publicados += 1
+                        if args.aplicar:
+                            alvo.status = ContentStatus.PUBLISHED
 
                 # drops (so' se o mob ainda nao tem nenhum)
                 if not tem_drops:
@@ -191,11 +197,12 @@ async def main() -> None:
 
     print(f"\nMonstros novos (rascunho): {novos}")
     print(f"Mobs que o wiki ja tinha e recebem dados nos campos vazios: {atualizados} ({campos} campos preenchidos)")
+    print(f"Publicados agora: {publicados} existentes + {novos if args.publicar else 0} novos")
     print(f"Drops novos: {drops_novos} ({drops_ligados} ligados a um item que ja existe no wiki; {len(sem_item)} itens ainda nao existem como pagina)")
     print(f"Retratos novos no banco de imagens: {imagens_novas} ({sem_folha} sprites sem folha em '{args.personagens}')")
     if sem_item:
         print("  itens de drop ainda sem pagina (exemplos):", ", ".join(sorted(sem_item)[:10]))
-    print("\nGravado (tudo como rascunho)." if args.aplicar else "\nSimulacao: nada foi gravado. Rode de novo com --aplicar para gravar.")
+    print("\nGravado." if args.aplicar else "\nSimulacao: nada foi gravado. Rode de novo com --aplicar para gravar.")
 
 
 if __name__ == "__main__":
