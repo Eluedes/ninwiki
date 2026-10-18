@@ -111,8 +111,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   dado como prop, buscados só quando a categoria é "guides" — sem gastar requisição à toa
   nas outras 4. Testado com dado real: vilas, clãs (Muteki, Sasayaki), organizações (ANBU,
   Hunter Nin), ranks (Genin→Kage), profissões e summons todos renderizando corretos
-- ⬜ Rate limiting nas rotas públicas de busca — baixa prioridade, só importa de verdade
-  quando o site estiver no ar fora da sua máquina (ver Fase 6/7)
+- ✅ Rate limiting nas rotas públicas (inclui a busca): limite por IP de leitura/escrita/imagens na API (`PUBLIC_REQUESTS_PER_MINUTE`...) e no site (`proxy.ts`)
 
 ## Fase 4 — Painel admin (CRUD real)
 - ✅ **Seção "Conteúdo" reconstruída do zero**, substituindo a antiga "Wiki Pages" mockada:
@@ -451,7 +450,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   (`/team ...`, log, alertas) em inglês. **Idioma escolhido fica salvo** (antes cada página voltava para inglês). Script
   `scripts/traduzir_para_ingles.py` converte conteúdo antigo em português (DeepL PT→EN, simulação por padrão)
 - ⬜ Rate limit com **Redis** se um dia houver mais de uma instância (hoje é por processo — exato com uma instância só)
-- ⬜ Cloudflare (WAF/proxy) na frente — recomendado, ver README 3.8
+- ✅ Cloudflare (proxy) na frente, com Worker de manutenção (`Cloudflare/`); WAF/regras extras ficam a critério do dono
 
 ## Fase 7 — Deploy
 - ✅ **Preparação para a SquareCloud (01/10)**: `README.md` na raiz (rodar local, usar o painel, passo a passo do
@@ -462,11 +461,10 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   vilas) eram pré-renderizadas no build — o build quebrava com a API fora do ar e o conteúdo ficava congelado; agora
   são `force-dynamic`. (2) Alembic não entendia `?ssl=require` (asyncpg vs psycopg); `alembic/env.py` converte para
   `sslmode=`. `tsc`, `eslint` e `next build` passam
-- ⬜ Criar os apps na SquareCloud (API, Web, Bot opcional) + banco PostgreSQL e testar o login Discord em produção
-- ⬜ **Domínio próprio com subdomínios** (`wiki.` e `api.`): o cookie `SameSite=Lax` exige os dois no mesmo site
-- ⬜ **Uploads em disco local**: um redeploy pode apagar `NinWiki.Api/uploads` — fazer backup ou migrar para storage
-  externo (S3/R2)
-- ⬜ Cloudflare (WAF, proxy, DNS) — ao ligar, usar `TRUST_PROXY_HEADERS=true`
+- ✅ Apps na SquareCloud (API, Web, Bot, Guima.Site) + PostgreSQL com deploy automático pelo GitHub Actions (`deploy-*.yml`); o site já está no ar. O login Discord em produção segue marcado na Fase 2
+- ✅ **Domínio próprio com subdomínios** (`ninwiki.guima.net` + `api.guima.net`): o cookie `SameSite=Lax` exige os dois no mesmo site
+- ✅ **Uploads em disco local**: o backup completo (banco + imagens de `uploads/`, criptografado) é guardado pelo bot num canal privado do Discord (`app/core/backup.py` + `restaurar_backup.py`); storage externo (S3/R2) fica só como ideia futura
+- ✅ Cloudflare (proxy, DNS e Worker de manutenção em `Cloudflare/`) — com `TRUST_PROXY_HEADERS=true`
 - ✅ **Levar o banco do Docker para a SquareCloud (01/10)**: `NinWiki.Api/scripts/migrar_banco.py exportar|importar` (round-trip testado:
   15 entries e a versão do Alembic preservadas); passo a passo no README 3.3 e 3.4
 - ✅ **Banco da SquareCloud com certificados TLS de cliente (01/10)**: `DATABASE_SSL_CA/CERT/KEY` (asyncpg + Alembic), `scripts/migrar_banco.py`
@@ -511,3 +509,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   Organizações usam as permissões de Lore
 - **Rate limit** é por IP e em memória (sem Redis): serve enquanto houver uma instância só da API; atrás de proxy,
   `TRUST_PROXY_HEADERS=true`
+
+## Limpeza e correção de 18/10
+- ✅ **Bug 500 em `/content-items/slug/{slug}`** (páginas `/detail/...` quebravam): com o Pydantic 2.13 os schemas de dentro de outro schema (atributos, ataques, drops) também precisam de `from_attributes=True`. Corrigido em `app/schemas/content.py` e `masteries.py`; `verificar_projeto.py` agora confere isso sozinho (`checar_schemas_aninhados`).
+- ✅ **Código morto removido**: 31 componentes `components/ui/*` e `data-table.tsx` sem uso, `.eslintrc.json` (o projeto usa `eslint.config.mjs`), `use-toast`, a tela antiga `/admin/users`, os dados de mentira de `lib/data.ts` e 24 bibliotecas do `package.json` que só eles usavam.

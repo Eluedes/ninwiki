@@ -1,6 +1,5 @@
 // components/ui/sonner.tsx
-// Wrapper da lib sonner (nao confundir com hooks/use-toast.ts, que e' outra
-// biblioteca de toast do shadcn). Este e' o Toaster de fato montado em
+// Wrapper da lib sonner (toast). Este e' o Toaster de fato montado em
 // app/layout.tsx e usado em app/(wiki)/detail/[id]/page.tsx
 // (toast.success(...)).
 

@@ -252,6 +252,38 @@ def checar_readme() -> None:
     avisos += r.avisos
 
 
+def checar_schemas_aninhados() -> None:
+    """
+    Todo schema lido do banco (from_attributes) que tem outro schema DENTRO precisa que o de dentro
+    tambem aceite objetos do banco. Sem isso o Pydantic 2.13 recusa ("Input should be a valid dictionary
+    or instance of ...") e a rota devolve 500 - foi o erro de /content-items/slug/{slug} em 18/10.
+    """
+    global problemas
+    import importlib
+    import typing
+
+    from pydantic import BaseModel
+
+    print("\nSchemas aninhados (from_attributes)")
+    ruins: list[str] = []
+    for nome in ("content", "masteries", "villages", "guide", "posts", "roles", "staff", "errors", "reports"):
+        modulo = importlib.import_module(f"app.schemas.{nome}")
+        for classe in vars(modulo).values():
+            if not (isinstance(classe, type) and issubclass(classe, BaseModel)) or classe.__module__ != modulo.__name__:
+                continue
+            if not classe.model_config.get("from_attributes"):
+                continue
+            for campo, info in classe.model_fields.items():
+                for arg in (info.annotation, *typing.get_args(info.annotation)):
+                    if isinstance(arg, type) and issubclass(arg, BaseModel) and not arg.model_config.get("from_attributes"):
+                        ruins.append(f"{classe.__name__}.{campo} -> {arg.__name__}")
+    if ruins:
+        erro("schema aninhado sem from_attributes: " + ", ".join(ruins),
+             "ponha from_attributes=True no model_config do schema de dentro")
+    else:
+        ok("todo schema aninhado aceita objetos do banco")
+
+
 def main() -> int:
     """Roda todas as verificacoes e imprime o resultado final."""
     print("=" * 62)
@@ -265,6 +297,7 @@ def main() -> int:
     else:
         print("\n4) Models Python x migracoes\n  [PULADO] resolva os pontos 2/3 primeiro")
     checar_readme()
+    checar_schemas_aninhados()
     checar_frontend()
     print("\n" + "=" * 62)
     if problemas:

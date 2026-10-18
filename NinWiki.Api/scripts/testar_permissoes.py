@@ -549,7 +549,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         check("callback com state certo + staff cadastrada: entra (302 -> /admin)", r.status_code == 302 and r.headers["location"].endswith("/admin"), r.headers.get("location", ""))
         sc = r.headers.get("set-cookie", "").lower()
         check("cookie de sessao criado httpOnly + SameSite=Lax", SESSION_COOKIE in sc and "httponly" in sc and "samesite=lax" in sc)
-        r = await c.get(f"/auth/discord/callback?code=abc&state=OUTRO", headers={"Cookie": f"{STATE_COOKIE}={state}"})
+        r = await c.get("/auth/discord/callback?code=abc&state=OUTRO", headers={"Cookie": f"{STATE_COOKIE}={state}"})
         check("state diferente do cookie e' recusado (invalid_state)", "error=invalid_state" in r.headers["location"])
         r = await c.get("/auth/discord/callback?code=abc&state=x")
         check("callback sem cookie de state e' recusado", "error=invalid_state" in r.headers["location"])
@@ -2242,7 +2242,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
             await db.commit()
 
     secao("31) Backup cifrado (banco + imagens) e versao publicada: so' o bot, nunca sem senha")
-    import gzip as _gz, io as _io, tarfile as _tar
+    import io as _io, tarfile as _tar
     from app.core import backup as _bk
     settings.bot_api_token = "token-de-teste-do-bot-1234567890"
     BK = {"X-Bot-Token": settings.bot_api_token}

@@ -60,9 +60,7 @@ export default function RootLayout({
               {children}
               {/* Reporta erros de JavaScript nao tratados para a equipe (nao desenha nada) */}
               <ErrorReporter />
-              {/* Toaster: renderiza as notificacoes toast (ver
-                  hooks/use-toast.ts) - precisa estar montado uma unica
-                  vez aqui na raiz, nao dentro de cada pagina. */}
+              {/* Toaster (sonner): renderiza as notificacoes toast; montado uma unica vez aqui na raiz. */}
               <Toaster />
             </LanguageProvider>
           </ColorThemeProvider>
