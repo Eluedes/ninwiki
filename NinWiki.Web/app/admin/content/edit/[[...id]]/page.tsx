@@ -117,6 +117,8 @@ const rarityOptions: { value: Rarity; label: string }[] = [
   { value: 'enchanted', label: 'Enchanted' },
   { value: 'unique', label: 'Unique' },
   { value: 'event', label: 'Event' },   // itens de evento do jogo
+  { value: 'premium', label: 'Premium' },
+  { value: 'organization', label: 'Organization' },
 ];
 
 // Atributos que um item/arma pode dar (lista fixa do jogo): escolhidos num seletor no editor.

@@ -46,7 +46,7 @@ USUARIO = "Atlas"
 FAIXA = re.compile(r"^(Over|Below)\s+(\d+(?:\.\d+)?)\s*%$", re.I)
 # Raridade do Atlas -> raridade do wiki (usada so' quando o item do drop ainda nao existe no wiki).
 RARIDADE_ATLAS = {"0": Rarity.COMMON, "1": Rarity.UNCOMMON, "2": Rarity.ENCHANTED, "3": Rarity.RARE, "4": Rarity.UNIQUE,
-                  "5": Rarity.LEGENDARY, "6": Rarity.EPIC, "7": Rarity.EVENT, "8": Rarity.ENCHANTED}
+                  "5": Rarity.LEGENDARY, "6": Rarity.PREMIUM, "7": Rarity.EVENT, "8": Rarity.ORGANIZATION}
 
 
 def retrato(folha: Path) -> Image.Image | None:

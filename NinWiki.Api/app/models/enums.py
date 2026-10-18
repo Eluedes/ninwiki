@@ -19,6 +19,8 @@ class Rarity(str, enum.Enum):
     EVENT = "event"           # itens de evento (ex.: itens que so' saem em eventos do jogo)
     UNIQUE = "unique"         # itens unicos do jogo (etiqueta vermelha "Unique", ex.: Metal Knuckle Blades)
     ENCHANTED = "enchanted"   # itens encantados do jogo (ex.: Hokuto Sphere, Authority)
+    PREMIUM = "premium"   # itens premium do jogo (loja de moeda paga)
+    ORGANIZATION = "organization"   # itens de organizacao (ANBU, Hunter Nin...)
 
 
 class ContentCategory(str, enum.Enum):

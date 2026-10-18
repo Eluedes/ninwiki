@@ -243,6 +243,9 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
           r.status_code == 201 and r.json().get("status") == "draft", f"veio {r.status_code} {r.text[:80]}")
     r = await c.post("/content-items", json={**novo_conteudo("auth"), "category": "items", "itemType": "authority", "rarity": "enchanted", "maxStack": 500}, headers=C)
     check("item tipo Authority com raridade Enchanted e stack 500 e' criado", r.status_code == 201 and r.json()["itemType"] == "authority" and r.json()["rarity"] == "enchanted" and r.json()["maxStack"] == 500, r.text[:200])
+    for raridade in ("premium", "organization"):
+        r = await c.post("/content-items", json={**novo_conteudo(f"rar-{raridade}"), "category": "items", "rarity": raridade}, headers=C)
+        check(f"item com raridade {raridade.capitalize()} e' criado", r.status_code == 201 and r.json()["rarity"] == raridade, r.text[:200])
     r = await c.post("/content-items", json={**novo_conteudo("acess"), "category": "items", "itemType": "accessory", "level": 12}, headers=C)
     check("item tipo Accessory (junto com os Rings) e' criado", r.status_code == 201 and r.json()["itemType"] == "accessory", r.text[:200])
     for i, roupa in enumerate(["shirt", "vest", "pant", "hat", "mask", "shoe"]):

@@ -32,6 +32,9 @@ export const rarityConfig: Record<
   event: { label: 'Event', color: 'text-pink-400', barColor: 'bg-pink-400', glow: '244,114,182', chip: 'border-pink-400/30 bg-pink-400/10 text-pink-300' },
   unique: { label: 'Unique', color: 'text-red-500', barColor: 'bg-red-500', glow: '239,68,68', chip: 'border-red-500/30 bg-red-500/10 text-red-400' },
   enchanted: { label: 'Enchanted', color: 'text-cyan-400', barColor: 'bg-cyan-400', glow: '34,211,238', chip: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-300' },
+  // Premium (laranja) e Organization (indigo): cores que nao se confundem com as demais raridades
+  premium: { label: 'Premium', color: 'text-orange-500', barColor: 'bg-orange-500', glow: '249,115,22', chip: 'border-orange-500/30 bg-orange-500/10 text-orange-400' },
+  organization: { label: 'Organization', color: 'text-indigo-400', barColor: 'bg-indigo-400', glow: '129,140,248', chip: 'border-indigo-400/30 bg-indigo-400/10 text-indigo-300' },
 };
 
 // Cards de areas exibidos na home. A chave `key` tem que bater exatamente

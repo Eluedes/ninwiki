@@ -329,7 +329,7 @@ LABELS_PT = {
     "Stack": "Pilha", "Element": "Elemento", "Tier": "Tier", "Chakra": "Chakra", "Cooldown": "Recarga", "Cast time": "Conjuração", "Effect": "Efeito",
     "Published": "Publicado em",
 }
-RARITY_PT = {"Common": "Comum", "Uncommon": "Incomum", "Rare": "Raro", "Epic": "Épico", "Legendary": "Lendário", "Enchanted": "Encantado", "Unique": "Único", "Event": "Evento"}
+RARITY_PT = {"Common": "Comum", "Uncommon": "Incomum", "Rare": "Raro", "Epic": "Épico", "Legendary": "Lendário", "Enchanted": "Encantado", "Unique": "Único", "Event": "Evento", "Premium": "Premium", "Organization": "Organização"}
 
 
 def _facts(*pairs: tuple[str, object], lang: str = "en") -> list[BotFact]:
