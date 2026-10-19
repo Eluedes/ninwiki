@@ -6,11 +6,12 @@ app/schemas/guide.py).
 
 Rotas:
   GET /professions   lista as profissoes (coleta + criacao)
+  GET /professions/{profession_id}   uma profissao com todos os detalhes (pagina /profession/[id] do site)
   GET /ninja-ranks   lista os ranks, em ordem de hierarquia
   GET /story-arcs    lista os arcos de historia
   GET /summons       lista as invocacoes
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +27,15 @@ async def list_professions(db: AsyncSession = Depends(get_db)):
     """Lista as profissoes (aba do Guia)."""
     result = await db.execute(select(Profession).order_by(Profession.name))
     return result.scalars().all()
+
+
+@router.get("/professions/{profession_id}", response_model=ProfessionRead)
+async def get_profession(profession_id: str, db: AsyncSession = Depends(get_db)):
+    """Uma profissao (com os detalhes: recursos, receitas e ferramentas) - 404 se nao existe."""
+    profession = await db.get(Profession, profession_id)
+    if profession is None:
+        raise HTTPException(status_code=404, detail="Profession not found")
+    return profession
 
 
 @router.get("/ninja-ranks", response_model=list[NinjaRankRead])

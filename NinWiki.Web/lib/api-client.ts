@@ -384,6 +384,7 @@ export interface ApiJutsu {
   debuff: string;
   isNpc: boolean;          // Jutsu NPC: versao do jutsu ensinada/usada por NPC (secao propria no site)
   allowedWeapons: string;  // "Allowed weapons" (ex.: Blunt); vazio = nao aparece
+  status?: 'draft' | 'published';   // rascunho: so' a equipe ve (ausente = publicado)
 }
 
 // Corpo aceito em criar/editar um jutsu - igual a ApiJutsu, mas `id`
@@ -693,6 +694,16 @@ export function deleteOrganization(id: string): Promise<void> {
 
 // ---- Extras de Guia: Profissoes, Ranks Ninja, Story Arcs, Summons ----
 
+/** Referencia a um item do wiki dentro dos detalhes de uma profissao (slug so' vem se a pagina esta' publicada: vira link). */
+export type ItemRef = { name: string; namePt?: string | null; slug?: string | null };
+
+/** O que a pagina da profissao mostra alem da descricao (preenchido por scripts/importar_profissoes_atlas.py). */
+export interface ProfessionDetails {
+  resources?: { name: string; loot: (ItemRef & { min: number; max: number })[] }[];
+  recipes?: { result: ItemRef; level: number; workbench: boolean; needs: (ItemRef & { qty: number })[]; learnedFrom?: ItemRef | null }[];
+  tools?: (ItemRef & { level?: number | null })[];
+}
+
 export interface ApiProfession {
   id: string;
   name: string;
@@ -702,6 +713,7 @@ export interface ApiProfession {
   description: string;
   descriptionPt?: string | null;
   icon: string;
+  details?: ProfessionDetails | null;
 }
 
 export interface ApiNinjaRank {
@@ -741,6 +753,11 @@ export interface ApiSummon {
 /** Lista as profissoes (aba do Guia). */
 export function listProfessions(): Promise<ApiProfession[]> {
   return apiFetch('/professions');
+}
+
+/** Uma profissao com todos os detalhes (pagina /profession/[id]); 404 se nao existe. */
+export function getProfession(id: string): Promise<ApiProfession> {
+  return apiFetch(`/professions/${id}`);
 }
 
 /** Lista os ranks ninja (aba do Guia). */

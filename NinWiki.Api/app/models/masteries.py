@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
-from app.models.enums import MasteryType
+from app.models.enums import ContentStatus, MasteryType
 
 
 class Attribute(Base):
@@ -156,6 +156,9 @@ class Jutsu(Base):
     debuff: Mapped[str] = mapped_column(String(150), default="", server_default="")            # debuff aplicado (texto livre)
     # Jutsu NPC: a versao do jutsu ensinada/usada por NPC (mesmo nome do jutsu de mastery ou de Utilidade, mas com detalhes um pouco diferentes). Fica numa secao propria no site.
     is_npc: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Rascunho (so' a equipe ve) ou publicado. Os jutsus criados em massa a partir da lista do jogo nascem como rascunho.
+    status: Mapped[ContentStatus] = mapped_column(Enum(ContentStatus, name="content_status", create_type=False),
+                                                  default=ContentStatus.PUBLISHED, server_default="PUBLISHED")
     allowed_weapons: Mapped[str] = mapped_column(String(100), default="", server_default="")   # "Allowed weapons" da ficha (ex.: Blunt) - texto livre
     icon: Mapped[str] = mapped_column(String(50))
     # Demonstracao em GIF, opcional - ver components/lore/jutsu-gif.tsx

@@ -57,6 +57,8 @@ export default function ContentListPage() {
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<Category | 'all'>('all');
   const [search, setSearch] = useState('');
+  // Filtro por status (Todos / Rascunhos / Publicados): vale em qualquer categoria e so' esconde linhas da lista (nao recarrega).
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   // Incrementar isso forca o React a montar uma TanstackDataTable NOVA
   // (via key={tableKey}), o que reseta a selecao de linha depois de uma
@@ -81,7 +83,13 @@ export default function ContentListPage() {
     setError(null);
   }
 
-  const filtered = items.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = items.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()) && (statusFilter === 'all' || i.status === statusFilter));
+
+  /** Troca o filtro de status e zera a selecao da tabela (as linhas mudam de posicao). */
+  function changeStatusFilter(next: 'all' | 'draft' | 'published') {
+    setStatusFilter(next);
+    setTableKey((k) => k + 1);
+  }
 
   const handleDelete = useCallback(async (id: string, name: string) => {
     if (!confirm(t.deleteConfirm.replace('{name}', name))) return;
@@ -239,6 +247,24 @@ export default function ContentListPage() {
             )}
           >
             {categoryLabel[f.key]}
+          </button>
+        ))}
+      </div>
+
+      {/* Filtro por status: ver so' os rascunhos (ou so' os publicados) */}
+      <div className="flex flex-wrap gap-1.5">
+        {([['all', t.filterAll], ['draft', t.draft], ['published', t.published]] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => changeStatusFilter(key)}
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+              statusFilter === key
+                ? key === 'draft' ? 'border-amber-400/60 bg-amber-900/30 text-amber-300' : key === 'published' ? 'border-emerald-400/60 bg-emerald-900/30 text-emerald-300' : 'border-primary bg-primary/15 text-primary'
+                : 'border-border text-muted-foreground hover:text-card-foreground'
+            )}
+          >
+            {label}
           </button>
         ))}
       </div>

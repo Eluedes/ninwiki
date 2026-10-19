@@ -4,6 +4,7 @@ e Summons. Espelha lib/guide-data.ts. Mesmo padrao de id=texto
 explicado em models/masteries.py.
 """
 from sqlalchemy import Enum, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -23,6 +24,9 @@ class Profession(Base):
     description: Mapped[str] = mapped_column(Text)
     description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)  # traducao (DeepL)
     icon: Mapped[str] = mapped_column(String(20))  # emoji
+    # O que a pagina da profissao mostra alem da descricao: {"resources": [...], "recipes": [...], "tools": [...]} (recursos coletados e o que cai,
+    # receitas de criacao, ferramentas como varas de pesca). Nulo = a pagina mostra so' a descricao.
+    details: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
 
 class NinjaRank(Base):

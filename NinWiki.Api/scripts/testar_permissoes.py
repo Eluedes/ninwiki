@@ -126,7 +126,7 @@ ROTAS_PUBLICAS = {
     ("PUT", "/posts/{slug}/like"), ("DELETE", "/posts/{slug}/like"),
     ("POST", "/posts/{slug}/comments"), ("DELETE", "/posts/{slug}/comments/{comment_id}"),
     ("GET", "/auth/reader/me"), ("POST", "/auth/reader/logout"), ("POST", "/auth/reader/dev-login"),
-    ("GET", "/professions"), ("GET", "/ninja-ranks"), ("GET", "/story-arcs"), ("GET", "/summons"),
+    ("GET", "/professions"), ("GET", "/professions/{profession_id}"), ("GET", "/ninja-ranks"), ("GET", "/story-arcs"), ("GET", "/summons"),
     # escrita "publica" de proposito: cada uma tem a sua propria protecao
     ("POST", "/auth/dev-login"),   # so' funciona em development + confere a origem
     ("POST", "/auth/logout"),      # sem sessao so' limpa o cookie
@@ -1647,6 +1647,21 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     sem_npc = (await c.get("/jutsus", params={"npc": "false"})).json()
     check("?npc=true lista so' os de NPC e ?npc=false tira eles da lista", any(j["id"] == f"{SLUG}-npc" for j in so_npc) and all(j["isNpc"] for j in so_npc)
           and not any(j["id"] == f"{SLUG}-npc" for j in sem_npc) and any(j["id"] == f"{SLUG}-jf" for j in sem_npc))
+
+    # Jutsu em RASCUNHO: so' a equipe ve (lista, ficha, busca do bot e denuncia) - e' assim que os criados em massa a partir do jogo nascem
+    rasc = {**base_j, "id": f"{SLUG}-rasc", "name": "TESTE Jutsu Rascunho", "status": "draft"}
+    r = await c.post("/jutsus", json=rasc, headers=A)
+    check("jutsu em rascunho e' criado (status draft)", r.status_code == 201 and r.json()["status"] == "draft", r.text[:200])
+    check("jutsu comum nasce publicado por padrao", (await c.get(f"/jutsus/{SLUG}-jf")).json()["status"] == "published")
+    c.cookies.clear()   # o cliente guarda a sessao de logins anteriores: o visitante precisa ser anonimo de verdade
+    check("rascunho NAO aparece na lista publica", not any(j["id"] == f"{SLUG}-rasc" for j in (await c.get("/jutsus")).json()))
+    check("rascunho aparece na lista da equipe", any(j["id"] == f"{SLUG}-rasc" for j in (await c.get("/jutsus", headers=A)).json()))
+    check("ficha de rascunho: 404 para o visitante", (await c.get(f"/jutsus/{SLUG}-rasc")).status_code == 404)
+    check("ficha de rascunho: a equipe abre", (await c.get(f"/jutsus/{SLUG}-rasc", headers=A)).status_code == 200)
+    r = await c.put(f"/jutsus/{SLUG}-rasc", json={**rasc, "status": "published"}, headers=A)
+    check("publicar o rascunho: a ficha abre para o visitante", r.status_code == 200 and (await c.get(f"/jutsus/{SLUG}-rasc")).status_code == 200, r.text[:160])
+    r = await c.delete(f"/jutsus/{SLUG}-rasc", headers=A)
+    check("apagar o jutsu de teste (rascunho)", r.status_code == 204, r.text[:120])
 
     # ataques do mob ligados a um jutsu do catalogo
     jf = (await c.get(f"/jutsus/{SLUG}-jf")).json()

@@ -1,7 +1,7 @@
 'use client';
 
 // Conteudo extra exibido so' dentro da categoria "guides" do catalogo:
-// Atributos, Profissoes, Ranks Ninja, Story Arcs e Summons. Nenhum
+// Atributos, Profissoes (cada uma abre a sua pagina em /profession/[id]), Story Arcs e Summons. Nenhum
 // deles e' um ContentItem (nao tem nivel, raridade, drops, etc.) - por
 // isso nao entram na lista generica de cards do catalogo, e ganham sua
 // propria secao com abas aqui. Todos os 5 vem como prop, ja' buscados
@@ -9,29 +9,26 @@
 // quando category === 'guides', pra' nao desperdicar 5 requisicoes
 // extras nas outras categorias).
 
+import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Pickaxe, Hammer, ArrowUp, ScrollText, Sparkle } from 'lucide-react';
-import type { ApiAttribute, ApiProfession, ApiNinjaRank, ApiStoryArc, ApiSummon } from '@/lib/api-client';
+import { Sparkles, Pickaxe, Hammer, ScrollText, Sparkle } from 'lucide-react';
+import type { ApiAttribute, ApiProfession, ApiStoryArc, ApiSummon } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { alternateName, localizedName, localizedText } from '@/lib/localized';
 
 interface GuideExtrasProps {
   attributes: ApiAttribute[];
   professions: ApiProfession[];
-  ninjaRanks: ApiNinjaRank[];
   storyArcs: ApiStoryArc[];
   summons: ApiSummon[];
 }
 
-/** Abas extras do Guia: atributos, profissoes, ranks, arcos e summons. */
-export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, summons }: GuideExtrasProps) {
+/** Abas extras do Guia: atributos, profissoes, arcos e summons (os ranks ninja saíram do Guia). */
+export function GuideExtras({ attributes, professions, storyArcs, summons }: GuideExtrasProps) {
   const { locale, dict } = useLanguage();
   const t = dict.lore;
   const gathering = professions.filter((p) => p.group === 'gathering');
   const crafting = professions.filter((p) => p.group === 'crafting');
-  // ninjaRanks ja' vem ordenado por hierarquia direto da API
-  // (GET /ninja-ranks ordena por `order` no backend).
-  const ranks = ninjaRanks;
 
   return (
     <div className="mt-10 rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -40,7 +37,6 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="attributes">{t.guideAttributes}</TabsTrigger>
           <TabsTrigger value="professions">{t.guideProfessions}</TabsTrigger>
-          <TabsTrigger value="ranks">{t.guideRanks}</TabsTrigger>
           <TabsTrigger value="arcs">{t.guideArcs}</TabsTrigger>
           <TabsTrigger value="summons">{t.guideSummons}</TabsTrigger>
         </TabsList>
@@ -71,13 +67,14 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {gathering.map((p) => (
-                <div key={p.id} className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3">
+                <Link key={p.id} href={`/profession/${p.id}`} className="group flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3 transition-colors hover:border-primary/50 hover:bg-secondary/60">
                   <span className="text-xl leading-none">{p.icon}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-card-foreground">{localizedName(locale, p.name, p.namePt)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-card-foreground group-hover:text-primary">{localizedName(locale, p.name, p.namePt)}</p>
                     <p className="text-xs text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
+                    <p className="mt-1 text-xs font-medium text-primary">{t.professionOpen} →</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -87,33 +84,16 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {crafting.map((p) => (
-                <div key={p.id} className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3">
+                <Link key={p.id} href={`/profession/${p.id}`} className="group flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3 transition-colors hover:border-primary/50 hover:bg-secondary/60">
                   <span className="text-xl leading-none">{p.icon}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-card-foreground">{localizedName(locale, p.name, p.namePt)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-card-foreground group-hover:text-primary">{localizedName(locale, p.name, p.namePt)}</p>
                     <p className="text-xs text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
+                    <p className="mt-1 text-xs font-medium text-primary">{t.professionOpen} →</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
-          </div>
-        </TabsContent>
-
-        {/* Ranks: exibidos em ordem, do mais baixo ao mais alto, com
-            uma seta indicando a progressao entre eles. */}
-        <TabsContent value="ranks" className="mt-4">
-          <div className="space-y-2">
-            {ranks.map((rank, i) => (
-              <div key={rank.id}>
-                {i > 0 && <ArrowUp className="mx-auto my-1 h-4 w-4 text-muted-foreground" />}
-                <div className="rounded-lg border border-border bg-secondary/30 p-3">
-                  <p className="text-sm font-semibold text-card-foreground">
-                    {localizedName(locale, rank.name, rank.namePt)}{alternateName(locale, rank.name, rank.namePt) && <span className="font-normal text-muted-foreground"> ({alternateName(locale, rank.name, rank.namePt)})</span>}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{localizedText(locale, rank.description, rank.descriptionPt)}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </TabsContent>
 

@@ -411,7 +411,7 @@ async def bot_suggest(
     items = (await db.execute(select(ContentItem).where(
         ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
         .order_by(ContentItem.name).limit(12))).scalars().all()
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
                                .order_by(Jutsu.name).limit(6))).scalars().all()
     masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
                                   .order_by(Mastery.name).limit(4))).scalars().all()
@@ -475,7 +475,7 @@ async def bot_search(
         .order_by(ContentItem.name).limit(6))).scalars().all()
     masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
                                   .order_by(Mastery.name).limit(3))).scalars().all()
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
                                .order_by(Jutsu.name).limit(4))).scalars().all()
     posts = (await db.execute(
         select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),

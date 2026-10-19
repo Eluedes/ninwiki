@@ -34,6 +34,7 @@ export default function JutsusListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [masteryFilter, setMasteryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');   // so' rascunhos / so' publicados
   const [search, setSearch] = useState('');
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [tableKey, setTableKey] = useState(0);
@@ -54,6 +55,7 @@ export default function JutsusListPage() {
 
   const filtered = jutsus
     .filter((j) => masteryFilter === 'all' || (masteryFilter === UTILITY_ID ? j.masteryId === null : j.masteryId === masteryFilter))
+    .filter((j) => statusFilter === 'all' || (j.status ?? 'published') === statusFilter)
     .filter((j) => j.name.toLowerCase().includes(search.toLowerCase()));
 
   async function handleDelete(id: string, name: string) {
@@ -101,6 +103,14 @@ export default function JutsusListPage() {
       accessorFn: (row) => masteryName(row.masteryId),
       header: t.colMastery,
       cell: ({ row }) => <span className="text-muted-foreground">{masteryName(row.original.masteryId)}{row.original.isNpc ? ' · NPC' : ''}</span>,
+    },
+    {
+      id: 'status',
+      accessorFn: (row) => row.status ?? 'published',
+      header: t.colStatus,
+      cell: ({ row }) => (row.original.status === 'draft'
+        ? <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-xs font-semibold text-amber-400">{t.draft}</span>
+        : <span className="text-xs text-muted-foreground">{t.published}</span>),
     },
     { accessorKey: 'tier', header: t.colTier, cell: ({ row }) => `T${row.original.tier}` },
     { accessorKey: 'chakraCost', header: t.colChakra },
@@ -178,6 +188,21 @@ export default function JutsusListPage() {
         >
           Utility
         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {(['all', 'draft', 'published'] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => { setStatusFilter(s); setTableKey((k) => k + 1); }}
+            className={cn(
+              'rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
+              statusFilter === s ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+            )}
+          >
+            {s === 'all' ? t.all : s === 'draft' ? t.draft : t.published}
+          </button>
+        ))}
       </div>
 
       <div className="relative max-w-md">

@@ -73,7 +73,7 @@ export const jutsuSchema = z.object({
   chakraCost: z.coerce.number().int().min(0, 'Chakra cost cannot be negative.'),
   // A descricao curta e' obrigatoria so' para jutsu de jogador (o Jutsu NPC usa apenas a descricao completa): ver superRefine abaixo.
   description: z.string(),
-  longDescription: z.string().min(1, 'The full description is required.'),
+  longDescription: z.string(),   // obrigatoria so' para jutsu publicado: ver superRefine abaixo
   descriptionPt: z.string().nullable().optional(),
   longDescriptionPt: z.string().nullable().optional(),
   effect: z.string(),
@@ -97,7 +97,12 @@ export const jutsuSchema = z.object({
   debuff: z.string().max(150),
   isNpc: z.boolean(),
   allowedWeapons: z.string().max(100),
+  status: z.enum(['draft', 'published']),
 }).superRefine((value, ctx) => {
+  if (value.status === 'draft') return;   // rascunho pode ser salvo incompleto (os jutsus criados em massa vem so' com o nome)
+  if (!value.longDescription.trim()) {
+    ctx.addIssue({ code: 'custom', path: ['longDescription'], message: 'The full description is required.' });
+  }
   if (!value.isNpc && !value.description.trim()) {
     ctx.addIssue({ code: 'custom', path: ['description'], message: 'The short description is required.' });
   }

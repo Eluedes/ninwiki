@@ -60,6 +60,7 @@ const emptyForm: JutsuFormValues = {
   debuff: '',
   isNpc: false,
   allowedWeapons: '',
+  status: 'published',
 };
 
 /** Tabela de niveis a partir do jutsu salvo (uma linha por nivel; pelo menos uma). */
@@ -127,7 +128,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
     Promise.all([loadMasteries, loadJutsu])
       .then(([m, j]) => {
         setMasteries(m);
-        if (j) reset({ ...emptyForm, ...j, masteryId: j.masteryId ?? UTILITY_ID, levels: levelsFromApi(j) });   // sem mastery = categoria Utility
+        if (j) reset({ ...emptyForm, ...j, status: j.status ?? 'published', masteryId: j.masteryId ?? UTILITY_ID, levels: levelsFromApi(j) });   // sem mastery = categoria Utility
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : loadErrorRef.current))
       .finally(() => setLoading(false));
@@ -260,6 +261,24 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             />
             <label htmlFor="jutsu-is-npc" className="text-sm font-semibold">{jf.isNpc}</label>
             <span className="text-xs text-muted-foreground">{jf.isNpcHint}</span>
+          </div>
+
+          {/* Rascunho: so' a equipe ve; publicado aparece no site e na busca do bot */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-card-foreground">{t.status}</label>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="published">{t.statusPublished}</SelectItem>
+                    <SelectItem value="draft">{t.statusDraft}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           {availablePaths.length > 0 && (

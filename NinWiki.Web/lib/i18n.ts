@@ -71,6 +71,7 @@ export interface Dictionary {
     demo: string; jutsuDemoAlt: string;
     guideMore: string; guideAttributes: string; guideProfessions: string; guideRanks: string; guideArcs: string; guideSummons: string;
     guideGathering: string; guideCrafting: string;
+    professionBack: string; professionResources: string; professionRecipes: string; professionTools: string; professionYields: string; professionLevel: string; professionWorkbench: string; professionLearnedFrom: string; professionNeeds: string; professionNoDetails: string; professionOpen: string;
   };
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
@@ -221,7 +222,7 @@ export interface Dictionary {
     jutsusList: {
       title: string; newJutsu: string; all: string; searchPlaceholder: string;
       loading: string; loadError: string; genericLoadError: string; empty: string;
-      colName: string; colMastery: string; colTier: string; colChakra: string;
+      colName: string; colMastery: string; colTier: string; colChakra: string; colStatus: string; published: string; draft: string;
       selectAll: string; selectRow: string; edit: string; delete: string;
       deleteConfirm: string; deleteError: string; bulkDeleteConfirm: string; bulkDeleteError: string;
     };
@@ -229,6 +230,7 @@ export interface Dictionary {
       back: string; editTitle: string; newTitle: string; loading: string; loadError: string; saveError: string; save: string;
       name: string; englishName: string; idSlug: string; idSlugLocked: string; idPlaceholder: string;
       mastery: string; masteryUtility: string; path: string; pathNone: string;
+      status: string; statusPublished: string; statusDraft: string;
       tier: string; chakraCost: string; icon: string;
       range: string; rangePlaceholder: string; castTime: string; castTimePlaceholder: string;
       cooldown: string; cooldownPlaceholder: string; effect: string; effectPlaceholder: string;
@@ -326,6 +328,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       demo: 'Demonstração', jutsuDemoAlt: 'Demonstração do jutsu {name}',
       guideMore: 'Mais em Guias', guideAttributes: 'Atributos', guideProfessions: 'Profissões', guideRanks: 'Ranks Ninja', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Coleta', guideCrafting: 'Criação',
+      professionBack: 'Voltar ao Guia', professionResources: 'O que se coleta', professionRecipes: 'Receitas', professionTools: 'Ferramentas', professionYields: 'Rende', professionLevel: 'Nível', professionWorkbench: 'Bancada', professionLearnedFrom: 'Aprendida com', professionNeeds: 'Ingredientes', professionNoDetails: 'Ainda não há mais informações sobre esta profissão.', professionOpen: 'Ver detalhes',
     },
     siteError: { title: 'Algo deu errado', text: 'A equipe já foi avisada. Tente de novo em instantes.', retry: 'Tentar de novo', home: 'Voltar ao início' },
     blog: {
@@ -898,7 +901,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loadError: 'Não foi possível conectar à API. Ela está rodando em localhost:8000?',
         genericLoadError: 'Erro ao carregar',
         empty: 'Nenhum jutsu encontrado.',
-        colName: 'Nome', colMastery: 'Mastery', colTier: 'Tier', colChakra: 'Chakra',
+        colName: 'Nome', colMastery: 'Mastery', colTier: 'Tier', colChakra: 'Chakra', colStatus: 'Situação', published: 'Publicado', draft: 'Rascunho',
         selectAll: 'Selecionar todos', selectRow: 'Selecionar linha',
         edit: 'Editar', delete: 'Apagar',
         deleteConfirm: 'Apagar o jutsu "{name}"? Essa ação não pode ser desfeita.',
@@ -923,6 +926,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         path: 'Caminho (opcional)',
         pathNone: 'Nenhum',
         masteryUtility: 'Utility (sem mastery — qualquer pessoa pode usar)',
+        status: 'Situação', statusPublished: 'Publicado (aparece no site)', statusDraft: 'Rascunho (só a equipe vê)',
         tier: 'Tier (1-5)',
         chakraCost: 'Custo de chakra',
         icon: 'Ícone',
@@ -1068,6 +1072,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       demo: 'Demonstration', jutsuDemoAlt: 'Demonstration of the jutsu {name}',
       guideMore: 'More in Guides', guideAttributes: 'Attributes', guideProfessions: 'Professions', guideRanks: 'Ninja Ranks', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Gathering', guideCrafting: 'Crafting',
+      professionBack: 'Back to the Guide', professionResources: 'What you gather', professionRecipes: 'Recipes', professionTools: 'Tools', professionYields: 'Yields', professionLevel: 'Level', professionWorkbench: 'Workbench', professionLearnedFrom: 'Learned from', professionNeeds: 'Ingredients', professionNoDetails: 'There is no more information about this profession yet.', professionOpen: 'View details',
     },
     siteError: { title: 'Something went wrong', text: 'The team has been notified. Please try again in a moment.', retry: 'Try again', home: 'Back to home' },
     blog: {
@@ -1640,7 +1645,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loadError: 'Could not connect to the API. Is it running on localhost:8000?',
         genericLoadError: 'Error loading',
         empty: 'No jutsus found.',
-        colName: 'Name', colMastery: 'Mastery', colTier: 'Tier', colChakra: 'Chakra',
+        colName: 'Name', colMastery: 'Mastery', colTier: 'Tier', colChakra: 'Chakra', colStatus: 'Status', published: 'Published', draft: 'Draft',
         selectAll: 'Select all', selectRow: 'Select row',
         edit: 'Edit', delete: 'Delete',
         deleteConfirm: 'Delete jutsu "{name}"? This action cannot be undone.',
@@ -1665,6 +1670,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         path: 'Path (optional)',
         pathNone: 'None',
         masteryUtility: 'Utility (no mastery — anyone can use it)',
+        status: 'Status', statusPublished: 'Published (shown on the site)', statusDraft: 'Draft (staff only)',
         tier: 'Tier (1-5)',
         chakraCost: 'Chakra cost',
         icon: 'Icon',

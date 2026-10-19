@@ -24,6 +24,8 @@ class ProfessionRead(CamelModel):
     description: str
     description_pt: str | None = None  # traducao EN -> PT (DeepL)
     icon: str
+    # Informacao completa da pagina da profissao: {"resources": [...], "recipes": [...], "tools": [...]} (ver scripts/importar_profissoes_atlas.py)
+    details: dict | None = None
 
 
 class NinjaRankRead(CamelModel):

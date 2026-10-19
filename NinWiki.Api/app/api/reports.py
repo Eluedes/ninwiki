@@ -63,7 +63,7 @@ async def _resolve_target(db: AsyncSession, target_type: str, target_id: str) ->
             return item.name, f"/detail/{item.slug}"
     elif target_type == "jutsu":
         jutsu = await db.get(Jutsu, target_id)
-        if jutsu is not None:
+        if jutsu is not None and jutsu.status == ContentStatus.PUBLISHED:   # rascunho nao existe para o visitante
             return jutsu.name, f"/jutsus/{jutsu.id}"
     else:
         mastery = await db.get(Mastery, target_id)

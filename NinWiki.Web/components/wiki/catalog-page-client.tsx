@@ -15,7 +15,7 @@ import { GuideExtras } from '@/components/wiki/guide-extras';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Search, ChevronDown, ChevronUp } from 'lucide-react';
-import type { ApiContentItemSummary, ApiAttribute, ApiProfession, ApiNinjaRank, ApiStoryArc, ApiSummon } from '@/lib/api-client';
+import type { ApiContentItemSummary, ApiAttribute, ApiProfession, ApiStoryArc, ApiSummon } from '@/lib/api-client';
 import type { Category } from '@/lib/types';
 
 // Filtro exclusivo da categoria Items (26/09, pedido do Rafael): nem
@@ -92,7 +92,6 @@ interface CatalogPageClientProps {
   // aqui, com [] como padrao.
   guideAttributes?: ApiAttribute[];
   professions?: ApiProfession[];
-  ninjaRanks?: ApiNinjaRank[];
   storyArcs?: ApiStoryArc[];
   summons?: ApiSummon[];
 }
@@ -103,7 +102,6 @@ export function CatalogPageClient({
   category,
   guideAttributes = [],
   professions = [],
-  ninjaRanks = [],
   storyArcs = [],
   summons = [],
 }: CatalogPageClientProps) {
@@ -273,7 +271,6 @@ export function CatalogPageClient({
         <GuideExtras
           attributes={guideAttributes}
           professions={professions}
-          ninjaRanks={ninjaRanks}
           storyArcs={storyArcs}
           summons={summons}
         />
