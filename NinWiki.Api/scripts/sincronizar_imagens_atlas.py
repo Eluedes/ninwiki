@@ -8,7 +8,7 @@ O QUE FAZ (nesta ordem):
        NAO esta' no Atlas -> `closed` (so' S.Adm ve)
      Imagem que ja tem categoria NUNCA e' mexida (o trabalho manual fica), e nomes fora do padrao (Fire, Earth...) tambem nao.
   2. COMPLETA o que falta: item do Atlas que nao tem imagem no banco e tem `{id}.znin` na pasta do cliente vira `N_item` + `N_fundo`
-     (o arquivo do jogo e' um PNG com 12 bytes de cabecalho, com o icone sem fundo na metade esquerda e com fundo na direita - igual ao fatiar.py).
+     (o arquivo do jogo e' um PNG comprimido com LZ4 (scripts/decodificar_znin.py), com o icone sem fundo na metade esquerda e com fundo na direita - igual ao fatiar.py).
 
 SEGURANCA: por padrao e' SIMULACAO (so' conta e mostra exemplos). So' grava com --aplicar. Faca um backup antes de rodar na producao.
 Recusa banco que nao seja local, a menos que voce passe --permitir-remoto (de proposito, depois de um backup novo).
@@ -38,6 +38,7 @@ from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.media import MediaImage
 from scripts._guarda_banco import exigir_banco_local
+from scripts.decodificar_znin import decodificar
 
 ATLAS_URL = "https://nin-atlas.vercel.app/data/atlas.js"
 CLIENTE_PADRAO = r"E:\Nin Online - Wiki\data files\graphics\items"
@@ -79,16 +80,12 @@ def categoria_do_item(atlas: dict, item_id: str) -> str:
 
 
 def ler_znin(caminho: Path) -> Image.Image | None:
-    """Abre um .znin do cliente (cabecalho curto + PNG normal). None se nao achar um PNG valido."""
-    dados = caminho.read_bytes()
-    inicio = dados.find(b"\x89PNG\r\n\x1a\n")
-    if inicio < 0:
-        return None
+    """Abre um .znin do cliente (PNG comprimido com LZ4; ver scripts/decodificar_znin.py). None se o arquivo estiver corrompido."""
     try:
-        img = Image.open(io.BytesIO(dados[inicio:]))
+        img = Image.open(io.BytesIO(decodificar(caminho.read_bytes())))
         img.load()
         return img
-    except Exception:
+    except (ValueError, OSError):
         return None
 
 
