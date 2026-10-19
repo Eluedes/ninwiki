@@ -59,7 +59,7 @@ export interface Dictionary {
   siteName: string;
   siteTagline: string;
   compare: { title: string; subtitle: string; search: string; noResults: string; change: string; pickBoth: string; button: string };
-  nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; map: string; blog: string };
+  nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; proficiencies: string; map: string; blog: string };
   home: { welcome: string; subtitle: string; browseAll: string };
   news: { title: string; subtitle: string; readMore: string; viewAll: string; empty: string };
   lore: {
@@ -71,6 +71,9 @@ export interface Dictionary {
     demo: string; jutsuDemoAlt: string;
     guideMore: string; guideAttributes: string; guideProfessions: string; guideRanks: string; guideArcs: string; guideSummons: string;
     guideGathering: string; guideCrafting: string;
+    proficienciesTitle: string; proficienciesSubtitle: string; proficienciesCrumb: string; profHowTitle: string; profHowCap: string; profHowBonus: string; profHowFormula: string; profHowExp: string;
+    profCalcTitle: string; profCalcFrom: string; profCalcTo: string; profCalcResult: string; profMilestones: string; profColLevel: string; profColXp: string; profColBonus: string;
+    profRecipesCount: string; profResourcesCount: string; profToolsCount: string; profSearch: string; profNoMatch: string; profPrice: string; profSources: string; profTipsTitle: string; profGuideBannerText: string; profSeeAll: string;
     professionBack: string; professionResources: string; professionRecipes: string; professionTools: string; professionYields: string; professionLevel: string; professionWorkbench: string; professionLearnedFrom: string; professionNeeds: string; professionNoDetails: string; professionOpen: string;
   };
   siteError: { title: string; text: string; retry: string; home: string };
@@ -302,6 +305,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       weapons: 'Armas',
       missions: 'Missões',
       village: 'Vilas',
+      proficiencies: 'Proficiências',
       map: 'Mapa',
     },
     home: {
@@ -328,7 +332,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       demo: 'Demonstração', jutsuDemoAlt: 'Demonstração do jutsu {name}',
       guideMore: 'Mais em Guias', guideAttributes: 'Atributos', guideProfessions: 'Profissões', guideRanks: 'Ranks Ninja', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Coleta', guideCrafting: 'Criação',
-      professionBack: 'Voltar ao Guia', professionResources: 'O que se coleta', professionRecipes: 'Receitas', professionTools: 'Ferramentas', professionYields: 'Rende', professionLevel: 'Nível', professionWorkbench: 'Bancada', professionLearnedFrom: 'Aprendida com', professionNeeds: 'Ingredientes', professionNoDetails: 'Ainda não há mais informações sobre esta profissão.', professionOpen: 'Ver detalhes',
+      proficienciesTitle: 'Proficiências', proficienciesSubtitle: 'As habilidades de coleta e criação do jogo: o que cada uma faz, como evoluir e todas as receitas.', proficienciesCrumb: 'Proficiências',
+      profHowTitle: 'Como funcionam', profHowCap: 'Cada proficiência evolui sozinha, até o nível 500.', profHowBonus: 'A cada 10 níveis você ganha +1% de bônus de habilidade (até +50% no nível 500).',
+      profHowFormula: 'O bônus multiplica a chance base da receita: chance final = base × (1 + bônus). Uma receita de 90% chega a 100% no nível 120; uma de 50% termina em uns 75% no nível 500.',
+      profHowExp: 'XP para passar de um nível L: 128 × L − 64. XP total do nível 1 até o nível N: 64 × (N − 1)².',
+      profCalcTitle: 'Calculadora de XP', profCalcFrom: 'Do nível', profCalcTo: 'Até o nível', profCalcResult: 'XP necessário', profMilestones: 'Marcos', profColLevel: 'Nível', profColXp: 'XP total', profColBonus: 'Bônus',
+      profRecipesCount: '{n} receitas', profResourcesCount: '{n} recursos', profToolsCount: '{n} ferramentas', profSearch: 'Buscar receita...', profNoMatch: 'Nada encontrado.', profPrice: 'Preço', profSources: 'Valores registrados pela comunidade (Nin Online Wiki, no Fandom) e pelo Nin Atlas; o jogo pode mudá-los.', profTipsTitle: 'Dicas', profGuideBannerText: 'Coleta e criação: cada proficiência tem sua página com receitas, recursos e dicas.', profSeeAll: 'Ver todas',
+      professionBack: 'Voltar às Proficiências', professionResources: 'O que se coleta', professionRecipes: 'Receitas', professionTools: 'Ferramentas', professionYields: 'Rende', professionLevel: 'Nível', professionWorkbench: 'Bancada', professionLearnedFrom: 'Aprendida com', professionNeeds: 'Ingredientes', professionNoDetails: 'Ainda não há mais informações sobre esta profissão.', professionOpen: 'Ver detalhes',
     },
     siteError: { title: 'Algo deu errado', text: 'A equipe já foi avisada. Tente de novo em instantes.', retry: 'Tentar de novo', home: 'Voltar ao início' },
     blog: {
@@ -1046,6 +1056,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       weapons: 'Weapons',
       missions: 'Missions',
       village: 'Villages',
+      proficiencies: 'Proficiencies',
       map: 'Map',
     },
     home: {
@@ -1072,7 +1083,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       demo: 'Demonstration', jutsuDemoAlt: 'Demonstration of the jutsu {name}',
       guideMore: 'More in Guides', guideAttributes: 'Attributes', guideProfessions: 'Professions', guideRanks: 'Ninja Ranks', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Gathering', guideCrafting: 'Crafting',
-      professionBack: 'Back to the Guide', professionResources: 'What you gather', professionRecipes: 'Recipes', professionTools: 'Tools', professionYields: 'Yields', professionLevel: 'Level', professionWorkbench: 'Workbench', professionLearnedFrom: 'Learned from', professionNeeds: 'Ingredients', professionNoDetails: 'There is no more information about this profession yet.', professionOpen: 'View details',
+      proficienciesTitle: 'Proficiencies', proficienciesSubtitle: 'The game\'s gathering and crafting skills: what each one does, how to level it and every recipe.', proficienciesCrumb: 'Proficiencies',
+      profHowTitle: 'How they work', profHowCap: 'Every proficiency levels on its own, up to level 500.', profHowBonus: 'Every 10 levels gives +1% skill bonus (up to +50% at level 500).',
+      profHowFormula: 'The bonus multiplies the recipe\'s base rate: final rate = base × (1 + bonus). A 90% recipe reaches 100% at level 120; a 50% one tops out around 75% at level 500.',
+      profHowExp: 'XP to clear level L: 128 × L − 64. Total XP from level 1 to level N: 64 × (N − 1)².',
+      profCalcTitle: 'XP calculator', profCalcFrom: 'From level', profCalcTo: 'To level', profCalcResult: 'XP needed', profMilestones: 'Milestones', profColLevel: 'Level', profColXp: 'Total XP', profColBonus: 'Bonus',
+      profRecipesCount: '{n} recipes', profResourcesCount: '{n} resources', profToolsCount: '{n} tools', profSearch: 'Search recipe...', profNoMatch: 'Nothing found.', profPrice: 'Price', profSources: 'Values recorded by the community (Nin Online Wiki on Fandom) and the Nin Atlas; the game may change them.', profTipsTitle: 'Tips', profGuideBannerText: 'Gathering and crafting: each proficiency has its own page with recipes, resources and tips.', profSeeAll: 'See all',
+      professionBack: 'Back to Proficiencies', professionResources: 'What you gather', professionRecipes: 'Recipes', professionTools: 'Tools', professionYields: 'Yields', professionLevel: 'Level', professionWorkbench: 'Workbench', professionLearnedFrom: 'Learned from', professionNeeds: 'Ingredients', professionNoDetails: 'There is no more information about this profession yet.', professionOpen: 'View details',
     },
     siteError: { title: 'Something went wrong', text: 'The team has been notified. Please try again in a moment.', retry: 'Try again', home: 'Back to home' },
     blog: {

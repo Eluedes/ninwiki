@@ -1,7 +1,7 @@
 'use client';
 
 // Conteudo extra exibido so' dentro da categoria "guides" do catalogo:
-// Atributos, Profissoes (cada uma abre a sua pagina em /profession/[id]), Story Arcs e Summons. Nenhum
+// Atributos, Story Arcs e Summons (as Profissoes tem secao propria em /proficiencies; aqui so' um quadro com atalhos). Nenhum
 // deles e' um ContentItem (nao tem nivel, raridade, drops, etc.) - por
 // isso nao entram na lista generica de cards do catalogo, e ganham sua
 // propria secao com abas aqui. Todos os 5 vem como prop, ja' buscados
@@ -11,7 +11,7 @@
 
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Pickaxe, Hammer, ScrollText, Sparkle } from 'lucide-react';
+import { Sparkles, ScrollText, Sparkle, Hammer } from 'lucide-react';
 import type { ApiAttribute, ApiProfession, ApiStoryArc, ApiSummon } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { alternateName, localizedName, localizedText } from '@/lib/localized';
@@ -27,16 +27,28 @@ interface GuideExtrasProps {
 export function GuideExtras({ attributes, professions, storyArcs, summons }: GuideExtrasProps) {
   const { locale, dict } = useLanguage();
   const t = dict.lore;
-  const gathering = professions.filter((p) => p.group === 'gathering');
-  const crafting = professions.filter((p) => p.group === 'crafting');
 
   return (
     <div className="mt-10 rounded-xl border border-border bg-card p-5 shadow-sm">
       <h2 className="mb-4 text-lg font-bold tracking-tight">{t.guideMore}</h2>
+      {/* Atalho para a secao Proficiencias (coleta e criacao), que saiu das abas do Guia */}
+      <div className="mb-5 rounded-lg border border-border bg-secondary/30 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-2 text-sm font-semibold text-card-foreground"><Hammer className="h-4 w-4 text-primary" /> {dict.nav.proficiencies}</p>
+          <Link href="/proficiencies" className="text-xs font-medium text-primary hover:underline">{t.profSeeAll} →</Link>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">{t.profGuideBannerText}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {professions.map((p) => (
+            <Link key={p.id} href={`/proficiencies/${p.id}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-card-foreground transition-colors hover:border-primary/50 hover:text-primary">
+              <span>{p.icon}</span>{localizedName(locale, p.name, p.namePt)}
+            </Link>
+          ))}
+        </div>
+      </div>
       <Tabs defaultValue="attributes">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="attributes">{t.guideAttributes}</TabsTrigger>
-          <TabsTrigger value="professions">{t.guideProfessions}</TabsTrigger>
           <TabsTrigger value="arcs">{t.guideArcs}</TabsTrigger>
           <TabsTrigger value="summons">{t.guideSummons}</TabsTrigger>
         </TabsList>
@@ -57,43 +69,6 @@ export function GuideExtras({ attributes, professions, storyArcs, summons }: Gui
                 </div>
               </div>
             ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="professions" className="mt-4 space-y-4">
-          <div>
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Pickaxe className="h-3.5 w-3.5" /> {t.guideGathering}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {gathering.map((p) => (
-                <Link key={p.id} href={`/profession/${p.id}`} className="group flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3 transition-colors hover:border-primary/50 hover:bg-secondary/60">
-                  <span className="text-xl leading-none">{p.icon}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-card-foreground group-hover:text-primary">{localizedName(locale, p.name, p.namePt)}</p>
-                    <p className="text-xs text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
-                    <p className="mt-1 text-xs font-medium text-primary">{t.professionOpen} →</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Hammer className="h-3.5 w-3.5" /> {t.guideCrafting}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {crafting.map((p) => (
-                <Link key={p.id} href={`/profession/${p.id}`} className="group flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3 transition-colors hover:border-primary/50 hover:bg-secondary/60">
-                  <span className="text-xl leading-none">{p.icon}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-card-foreground group-hover:text-primary">{localizedName(locale, p.name, p.namePt)}</p>
-                    <p className="text-xs text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
-                    <p className="mt-1 text-xs font-medium text-primary">{t.professionOpen} →</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
           </div>
         </TabsContent>
 

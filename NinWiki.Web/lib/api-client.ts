@@ -695,13 +695,13 @@ export function deleteOrganization(id: string): Promise<void> {
 // ---- Extras de Guia: Profissoes, Ranks Ninja, Story Arcs, Summons ----
 
 /** Referencia a um item do wiki dentro dos detalhes de uma profissao (slug so' vem se a pagina esta' publicada: vira link). */
-export type ItemRef = { name: string; namePt?: string | null; slug?: string | null };
+export type ItemRef = { name: string; namePt?: string | null; slug?: string | null; image?: string | null };   // image: caminho (/uploads/...) - o site poe o endereco da API
 
 /** O que a pagina da profissao mostra alem da descricao (preenchido por scripts/importar_profissoes_atlas.py). */
 export interface ProfessionDetails {
   resources?: { name: string; loot: (ItemRef & { min: number; max: number })[] }[];
   recipes?: { result: ItemRef; level: number; workbench: boolean; needs: (ItemRef & { qty: number })[]; learnedFrom?: ItemRef | null }[];
-  tools?: (ItemRef & { level?: number | null })[];
+  tools?: (ItemRef & { level?: number | null; price?: { amount: number; currency: string } | null })[];
 }
 
 export interface ApiProfession {
