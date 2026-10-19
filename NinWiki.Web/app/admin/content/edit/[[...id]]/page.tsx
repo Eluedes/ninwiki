@@ -226,6 +226,13 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   const itemTypeOptions = getItemTypeOptions(t, itemType);
   const wardrobeOptions = getWardrobeOptions(t);
 
+  // Entrada nova vinda da pagina de uma categoria do menu (?category=mobs): ja' abre com essa categoria escolhida.
+  useEffect(() => {
+    if (isEdit) return;
+    const wanted = new URLSearchParams(window.location.search).get('category');
+    if (wanted && ['mobs', 'items', 'weapons', 'missions', 'guides'].includes(wanted)) setValue('category', wanted as ContentItemFormValues['category']);
+  }, [isEdit, setValue]);
+
   useEffect(() => {
     if (!isEdit || !rawId) return;
     getContentItem(rawId)
@@ -412,7 +419,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
       } else {
         await createContentItem(payload);
       }
-      router.push('/admin/content');
+      router.push(`/admin/content/${values.category}`);   // volta para a lista da categoria
     } catch (err) {
       setApiError(err instanceof ApiError ? err.message : 'Error saving. Is the API running?');
       setSaving(false);
@@ -431,7 +438,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   return (
     <form className="mx-auto max-w-3xl space-y-6">
       <Link
-        href="/admin/content"
+        href={`/admin/content/${category}`}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />

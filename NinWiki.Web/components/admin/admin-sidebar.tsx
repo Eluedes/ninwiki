@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, Bug, MessageSquare, Megaphone, ImageIcon, ArrowLeft, ChevronDown, Flag, Languages, BookOpen, Hammer, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, FileText, Boxes, Sparkles, Zap, FileJson, History, UserCog, Castle, Building2, ShieldCheck, Bug, MessageSquare, Megaphone, ImageIcon, ArrowLeft, ChevronDown, Flag, Languages, BookOpen, Hammer, Package, Sword, ScrollText, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { requiredPermissionFor } from '@/lib/admin-routes';
 import { NinLogo } from '@/components/icons/nin-logo';
@@ -25,7 +25,10 @@ type NavItem = { key: NavKey; href: string; icon: LucideIcon };
 const navGroups: { group: 'wiki' | 'community' | 'world' | 'system' | null; items: NavItem[] }[] = [
   { group: null, items: [{ key: 'overview', href: '/admin', icon: LayoutDashboard }] },
   { group: 'wiki', items: [
-    { key: 'content', href: '/admin/content', icon: Boxes },
+    { key: 'contentMobs', href: '/admin/content/mobs', icon: Bug },
+    { key: 'contentItems', href: '/admin/content/items', icon: Package },
+    { key: 'contentWeapons', href: '/admin/content/weapons', icon: Sword },
+    { key: 'contentMissions', href: '/admin/content/missions', icon: ScrollText },
     { key: 'masteries', href: '/admin/masteries', icon: Sparkles },
     { key: 'jutsus', href: '/admin/jutsus', icon: Zap },
     { key: 'guideArticles', href: '/admin/guides', icon: BookOpen },

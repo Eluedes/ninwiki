@@ -161,7 +161,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
     gameNames: { title: string; subtitle: string; chooseFiles: string; invalidFile: string; find: string; loadError: string; summary: string; truncated: string; search: string; hideJutsu: string; selectShown: string; clear: string; empty: string; moreHidden: string; createDrafts: string; confirm: string; created: string; note: string; categories: Record<string, string>; hints: Record<string, string> };
     translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
@@ -671,6 +671,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         blogPosts: 'Postagens do Blog',
         comments: 'Comentários',
         content: 'Conteúdo',
+        contentMobs: 'Monstros',
+        contentItems: 'Itens',
+        contentWeapons: 'Armas',
+        contentMissions: 'Missões',
         masteries: 'Masteries',
         jutsus: 'Jutsus',
         bulkImport: 'Importar JSON',
@@ -686,7 +690,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         guideArticles: 'Artigos do Guia',
         professions: 'Proficiências',
         backToSite: 'Voltar ao site',
-        groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
+        groups: { wiki: 'Conteúdo', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
         breadcrumbHome: 'Painel',
         viewSite: 'Ver site',
       },
@@ -1438,6 +1442,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         blogPosts: 'Blog Posts',
         comments: 'Comments',
         content: 'Content',
+        contentMobs: 'Bestiary',
+        contentItems: 'Items',
+        contentWeapons: 'Weapons',
+        contentMissions: 'Missions',
         masteries: 'Masteries',
         jutsus: 'Jutsus',
         bulkImport: 'Import JSON',
@@ -1453,7 +1461,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         guideArticles: 'Guide articles',
         professions: 'Proficiencies',
         backToSite: 'Back to site',
-        groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
+        groups: { wiki: 'Content', community: 'Community', world: 'World', system: 'System' },
         breadcrumbHome: 'Admin',
         viewSite: 'View site',
       },

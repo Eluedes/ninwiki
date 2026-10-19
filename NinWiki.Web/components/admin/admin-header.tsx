@@ -23,7 +23,8 @@ export function AdminHeader() {
   const current = adminNavItems
     .filter((i) => i.href !== '/admin' && pathname.startsWith(i.href))
     .sort((a, b) => b.href.length - a.href.length)[0];
-  const currentLabel = current ? dict.admin.sidebar[current.key] : dict.admin.sidebar.overview;
+  // /admin/content (todo o conteudo) e o editor de entradas nao tem item proprio no menu: o breadcrumb mostra "Conteudo" em vez de "Overview".
+  const currentLabel = current ? dict.admin.sidebar[current.key] : pathname.startsWith('/admin/content') ? dict.admin.sidebar.content : dict.admin.sidebar.overview;
 
   /** Troca o PROPRIO nome (so' S.Adm): pergunta o nome novo, salva e atualiza o cabecalho. */
   async function handleEditMyName() {
