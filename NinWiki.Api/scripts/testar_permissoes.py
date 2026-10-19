@@ -322,6 +322,15 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("zona desconhecida num lugar e' recusada (422)", r.status_code == 422, r.text[:120])
     r = await c.post("/content-items", json={**novo_conteudo("lugar-vazio"), "category": "mobs", "spawnLocations": [{"name": "   "}]}, headers=A)
     check("nome de lugar em branco e' recusado (422)", r.status_code == 422, r.text[:120])
+    # Vendido em (lojas de NPC): lista com loja, lugares, quantidade, preco e moeda
+    vendas = [{"shop": "Leaf Clothing I", "places": ["Leaf Village Clothing Shop", "Leaf Village Clothing Shop", "  "], "qty": 5, "price": 100, "currency": "Ryo"}, {"shop": "Halloween Shop", "price": 300, "currency": "Halloween Token"}]
+    r = await c.post("/content-items", json={**novo_conteudo("vendas"), "category": "items", "soldAt": vendas}, headers=A)
+    check("item com lista de lojas: guarda preco, quantidade e moeda (lugares repetidos/em branco somem)",
+          r.status_code == 201 and r.json()["soldAt"][0]["places"] == ["Leaf Village Clothing Shop"] and r.json()["soldAt"][0]["qty"] == 5 and r.json()["soldAt"][1]["qty"] == 1 and r.json()["soldAt"][1]["currency"] == "Halloween Token", r.text[:260])
+    r = await c.post("/content-items", json={**novo_conteudo("venda-ruim"), "category": "items", "soldAt": [{"shop": "X", "price": -1}]}, headers=A)
+    check("preco negativo numa loja e' recusado (422)", r.status_code == 422, r.text[:120])
+    r = await c.post("/content-items", json={**novo_conteudo("venda-vazia"), "category": "items", "soldAt": [{"shop": "   "}]}, headers=A)
+    check("nome de loja em branco e' recusado (422)", r.status_code == 422, r.text[:120])
     r = await c.get(f"/content-items/{drop_item_id}")
     db_mobs = r.json().get("droppedBy", [])
     check("item mostra o mob publicado que o dropa (automatico, chance 10)", len(db_mobs) == 1 and db_mobs[0]["slug"] == f"{SLUG}-drop-mob" and db_mobs[0]["chance"] == 10, r.text[:240])

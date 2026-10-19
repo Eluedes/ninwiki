@@ -39,6 +39,7 @@ import {
   ApiError,
   LOCATION_ZONES,
   type LocationEntry,
+  type SaleEntry,
   type ContentItemInput,
   type ApiVillage,
 } from '@/lib/api-client';
@@ -193,6 +194,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   // Lugares onde o mob aparece (lista com zona) e NPC da arma ligado a uma pagina: tambem fora do Zod, como attacks/drops.
   const [locations, setLocations] = useState<LocationEntry[]>([]);
   const [weaponNpcId, setWeaponNpcId] = useState<string | null>(null);
+  const [sales, setSales] = useState<SaleEntry[]>([]);   // lojas de NPC que vendem o item/arma (so' items e weapons)
   // Vilas de verdade, pro seletor do item tipo Cast - busca uma vez so',
   // ja' que sao poucas (3 hoje) e raramente mudam.
   const [villages, setVillages] = useState<ApiVillage[]>([]);
@@ -270,6 +272,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         setAttacks(item.attacks.map((a) => ({ name: a.name, jutsuId: a.jutsuId ?? null })));
         setLocations(item.spawnLocations ?? []);
         setWeaponNpcId(item.weaponNpcId ?? null);
+        setSales(item.soldAt ?? []);
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : 'Error loading the entry.'))
       .finally(() => setLoading(false));
@@ -306,6 +309,10 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
     const parts = (getValues('spawnLocation') ?? '').split(/[,;\n]/).map((p) => p.trim().replace(/\.$/, '')).filter(Boolean);
     setLocations((prev) => [...prev, ...parts.map((name) => ({ name, zone: null }))]);
     setValue('spawnLocation', '', { shouldDirty: true });
+  }
+
+  function updateSale(index: number, patch: Partial<SaleEntry>) {
+    setSales((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)));
   }
 
   function addAttack() {
@@ -387,6 +394,9 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         weaponRequirement: values.category === 'weapons' ? values.weaponRequirement : null,
         weaponNpc: values.category === 'weapons' ? values.weaponNpc : null,
         weaponNpcId: values.category === 'weapons' ? weaponNpcId : null,
+        soldAt: values.category === 'items' || values.category === 'weapons'
+          ? sales.filter((s) => s.shop.trim()).map((s) => ({ shop: s.shop.trim(), places: s.places ?? [], qty: Math.max(1, Number(s.qty) || 1), price: Math.max(0, Number(s.price) || 0), currency: (s.currency ?? '').trim() || 'Ryo' }))
+          : [],
         weaponType: values.category === 'weapons' ? values.weaponType : null,
         weaponBaseDamage: values.category === 'weapons' ? values.weaponBaseDamage : null,
         weaponSpecialAbility: values.category === 'weapons' ? values.weaponSpecialAbility : null,
@@ -848,6 +858,31 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             </div>
           ))}
           {attributes.length === 0 && <p className="text-sm text-muted-foreground">{t.noAttributes}</p>}
+        </div>
+      )}
+
+      {(category === 'items' || category === 'weapons') && (
+        <div className="space-y-3 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-card-foreground">{t.salesTitle}</h2>
+            <Button type="button" variant="outline" size="sm" onClick={() => setSales((prev) => [...prev, { shop: '', places: [], qty: 1, price: 0, currency: 'Ryo' }])}>
+              <Plus className="mr-1 h-3.5 w-3.5" /> {t.addSale}
+            </Button>
+          </div>
+          {sales.map((sale, i) => (
+            <div key={i} className="space-y-1">
+              <div className="grid grid-cols-[1fr_7rem_5rem_9rem_auto] items-center gap-2">
+                <Input placeholder={t.saleShop} value={sale.shop} onChange={(e) => updateSale(i, { shop: e.target.value })} />
+                <Input type="number" min={0} placeholder={t.salePrice} aria-label={t.salePrice} value={sale.price ?? 0} onChange={(e) => updateSale(i, { price: Number(e.target.value) })} />
+                <Input type="number" min={1} placeholder={t.saleQty} aria-label={t.saleQty} value={sale.qty ?? 1} onChange={(e) => updateSale(i, { qty: Number(e.target.value) })} />
+                <Input placeholder={t.saleCurrency} aria-label={t.saleCurrency} value={sale.currency ?? 'Ryo'} onChange={(e) => updateSale(i, { currency: e.target.value })} />
+                <Button type="button" variant="ghost" size="icon" title={t.removeSale} aria-label={t.removeSale} onClick={() => setSales((prev) => prev.filter((_, k) => k !== i))}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              {(sale.places ?? []).length > 0 && <p className="truncate text-xs text-muted-foreground">{(sale.places ?? []).join(', ')}</p>}
+            </div>
+          ))}
         </div>
       )}
 

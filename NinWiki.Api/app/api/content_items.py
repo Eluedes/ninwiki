@@ -467,6 +467,7 @@ async def create_content_item(
         icon=payload.icon, image=payload.image, rarity=payload.rarity, description=payload.description,
         lore=payload.lore, synergy=payload.synergy, spawn_location=payload.spawn_location,
         spawn_locations=[loc.model_dump() for loc in payload.spawn_locations] or None,
+        sold_at=[sale.model_dump() for sale in payload.sold_at] or None,
         name_pt=payload.name_pt, description_pt=payload.description_pt, lore_pt=payload.lore_pt,
         synergy_pt=payload.synergy_pt, spawn_location_pt=payload.spawn_location_pt,
         mob_health=payload.mob_health, mob_damage=payload.mob_damage, mob_experience=payload.mob_experience,
@@ -544,6 +545,7 @@ async def update_content_item(
     item.synergy = payload.synergy
     item.spawn_location = payload.spawn_location
     item.spawn_locations = [loc.model_dump() for loc in payload.spawn_locations] or None
+    item.sold_at = [sale.model_dump() for sale in payload.sold_at] or None
     # name_pt/description_pt/etc: aceita o que o payload mandou (a
     # pessoa pode ter corrigido a mao no editor) - _fill_missing_translations
     # logo abaixo so' preenche o que CONTINUAR vazio depois disso, nunca

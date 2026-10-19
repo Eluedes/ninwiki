@@ -186,6 +186,38 @@ class LocationEntrySchema(CamelModel):
         return (" ".join(value.split()) or None) if value is not None else None
 
 
+class SaleEntrySchema(CamelModel):
+    """
+    Uma loja de NPC que vende o item: nome da loja, onde ela fica (lugares ou NPCs), quantas unidades por esse preco, o preco e a moeda
+    (o nome de um item, ex.: "Ryo" ou "Halloween Token").
+    """
+    shop: str = Field(min_length=1, max_length=120)
+    places: list[str] = Field(default_factory=list, max_length=30)
+    qty: int = Field(default=1, ge=1, le=100000)
+    price: int = Field(default=0, ge=0, le=1_000_000_000)
+    currency: str = Field(default="Ryo", min_length=1, max_length=80)
+
+    @field_validator("shop", "currency")
+    @classmethod
+    def _clean_text(cls, value: str) -> str:
+        """Tira espacos extras; texto so' com espacos e' recusado."""
+        cleaned = " ".join(value.split())
+        if not cleaned:
+            raise ValueError("This field cannot be blank")
+        return cleaned
+
+    @field_validator("places")
+    @classmethod
+    def _clean_places(cls, value: list[str]) -> list[str]:
+        """Tira espacos e descarta lugares em branco ou repetidos (cada um com no maximo 120 caracteres)."""
+        out: list[str] = []
+        for place in value:
+            cleaned = " ".join(str(place).split())[:120]
+            if cleaned and cleaned not in out:
+                out.append(cleaned)
+        return out
+
+
 class ContentItemBase(CamelModel):
     """Campos compartilhados entre criar e editar - o "miolo" do formulario."""
     slug: str = Field(min_length=1, max_length=150)
@@ -205,6 +237,8 @@ class ContentItemBase(CamelModel):
     spawn_location: str | None = None
     # Lugares onde o mob aparece, em lista (um por linha na ficha, com a zona). Se vier vazia, a ficha usa o texto livre acima.
     spawn_locations: list[LocationEntrySchema] = Field(default_factory=list, max_length=60)
+    # Lojas de NPC que vendem este item/arma, com o preco (uma linha por loja na ficha).
+    sold_at: list[SaleEntrySchema] = Field(default_factory=list, max_length=60)
     # ---- Versoes em portugues (traducao automatica via DeepL, EN->PT) ----
     # Sempre editaveis a mao, mesmo depois de preenchidos pela DeepL -
     # ver app/core/translation.py pro fluxo completo (quando traduz,
@@ -239,7 +273,7 @@ class ContentItemBase(CamelModel):
     attributes: list[AttributeRowSchema] = []
     drops: list[DropEntrySchema] = []
 
-    @field_validator("spawn_locations", mode="before")
+    @field_validator("spawn_locations", "sold_at", mode="before")
     @classmethod
     def _no_locations(cls, value):
         """Coluna nula no banco (mob antigo) vira lista vazia."""

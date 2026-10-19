@@ -79,7 +79,7 @@ export interface Dictionary {
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
-  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; zones: Record<string, string>; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
+  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; zones: Record<string, string>; soldAt: string; forQty: string; free: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
   masteryDetail: {
     notFound: string; backToMasteries: string; elemental: string; nonElemental: string;
     aboutMastery: string; masteryPaths: string; noJutsusInPath: string; jutsusOfMastery: string;
@@ -260,7 +260,7 @@ export interface Dictionary {
       lore: string; loreOptional: string; lorePlaceholder: string;
       synergy: string; synergyOptional: string; synergyPlaceholder: string;
       spawnLocation: string; spawnLocationPlaceholder: string; addLocation: string; locationPlaceholder: string; zoneLabel: string; removeLocation: string; zones: Record<string, string>;
-      weaponNpcHint: string; weaponNpcLinked: string; convertText: string;
+      weaponNpcHint: string; weaponNpcLinked: string; convertText: string; salesTitle: string; addSale: string; saleShop: string; salePrice: string; saleCurrency: string; saleQty: string; removeSale: string;
       mobSheet: string; health: string; healthPlaceholder: string; damage: string; damagePlaceholder: string;
       experience: string; experiencePlaceholder: string; range: string; rangePlaceholder: string;
       respawnTime: string; respawnTimePlaceholder: string;
@@ -374,7 +374,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       droppedBy: 'Dropado por',
       updatedOn: 'Atualizado em', autoTranslated: 'Tradução automática', autoTranslatedHint: 'Este texto em português foi traduzido automaticamente e ainda não foi revisado. Achou um erro? Use o botão Reportar.',
       relatedEntries: 'Relacionados',
-      spawnLocation: 'Onde encontrar', zones: { safe: 'Zona Segura', danger: 'Zona de Perigo', war: 'Zona de Guerra', arena: 'Zona de Arena', parkour: 'Zona de Parkour', none: 'Sem zona' },
+      spawnLocation: 'Onde encontrar', zones: { safe: 'Zona Segura', danger: 'Zona de Perigo', war: 'Zona de Guerra', arena: 'Zona de Arena', parkour: 'Zona de Parkour', none: 'Sem zona' }, soldAt: 'Vendido em', forQty: 'por {n}', free: 'Grátis',
       attacks: 'Jutsu / Attacks',
       noAttacks: 'Nenhum',
       itemDetails: 'Detalhes', itemType: 'Tipo',
@@ -983,7 +983,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         synergy: 'Sinergia', synergyOptional: 'Sinergia (opcional)',
         synergyPlaceholder: 'Dica de estratégia, combinação com outras técnicas...',
         spawnLocation: 'Onde encontrar (lugares)', spawnLocationPlaceholder: '', addLocation: 'Adicionar lugar', locationPlaceholder: 'Nome do lugar (ex.: Larva Road)', zoneLabel: 'Zona', removeLocation: 'Remover lugar', zones: { safe: 'Zona Segura', danger: 'Zona de Perigo', war: 'Zona de Guerra', arena: 'Zona de Arena', parkour: 'Zona de Parkour', none: 'Sem zona' },
-        weaponNpcHint: 'Escolha a página do NPC para virar link; quem DROPA a arma aparece sozinho em "Dropado por".', weaponNpcLinked: 'Ligado à página do NPC (o nome acompanha a página)', convertText: 'Transformar o texto antigo em lista',
+        weaponNpcHint: 'Escolha a página do NPC para virar link; quem DROPA a arma aparece sozinho em "Dropado por".', weaponNpcLinked: 'Ligado à página do NPC (o nome acompanha a página)', convertText: 'Transformar o texto antigo em lista', salesTitle: 'Vendido por NPCs (lojas)', addSale: 'Adicionar loja', saleShop: 'Loja', salePrice: 'Preço', saleCurrency: 'Moeda', saleQty: 'Qtd', removeSale: 'Remover loja',
         mobSheet: 'Ficha do Mob', health: 'Health', healthPlaceholder: '',
         damage: 'Damage', damagePlaceholder: '',
         experience: 'Experience', experiencePlaceholder: '',
@@ -1116,7 +1116,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       droppedBy: 'Dropped by',
       updatedOn: 'Updated', autoTranslated: 'Auto-translated', autoTranslatedHint: 'This Portuguese text was translated automatically and has not been reviewed yet. Found a mistake? Use the Report button.',
       relatedEntries: 'Related',
-      spawnLocation: 'Where to find', zones: { safe: 'Safe Zone', danger: 'Danger Zone', war: 'War Zone', arena: 'Arena Zone', parkour: 'Parkour Zone', none: 'No Zone' },
+      spawnLocation: 'Where to find', zones: { safe: 'Safe Zone', danger: 'Danger Zone', war: 'War Zone', arena: 'Arena Zone', parkour: 'Parkour Zone', none: 'No Zone' }, soldAt: 'Sold at', forQty: 'for {n}', free: 'Free',
       attacks: 'Jutsu / Attacks',
       noAttacks: 'None',
       itemDetails: 'Details', itemType: 'Type',
@@ -1725,7 +1725,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         synergy: 'Synergy', synergyOptional: 'Synergy (optional)',
         synergyPlaceholder: 'Strategy tip, combination with other techniques...',
         spawnLocation: 'Where to find (places)', spawnLocationPlaceholder: '', addLocation: 'Add place', locationPlaceholder: 'Place name (e.g. Larva Road)', zoneLabel: 'Zone', removeLocation: 'Remove place', zones: { safe: 'Safe Zone', danger: 'Danger Zone', war: 'War Zone', arena: 'Arena Zone', parkour: 'Parkour Zone', none: 'No Zone' },
-        weaponNpcHint: 'Pick the NPC page to make it a link; mobs that DROP the weapon show up by themselves under "Dropped by".', weaponNpcLinked: 'Linked to the NPC page (the name follows the page)', convertText: 'Turn the old text into a list',
+        weaponNpcHint: 'Pick the NPC page to make it a link; mobs that DROP the weapon show up by themselves under "Dropped by".', weaponNpcLinked: 'Linked to the NPC page (the name follows the page)', convertText: 'Turn the old text into a list', salesTitle: 'Sold by NPCs (shops)', addSale: 'Add shop', saleShop: 'Shop', salePrice: 'Price', saleCurrency: 'Currency', saleQty: 'Qty', removeSale: 'Remove shop',
         mobSheet: 'Mob Sheet', health: 'Health', healthPlaceholder: '',
         damage: 'Damage', damagePlaceholder: '',
         experience: 'Experience', experiencePlaceholder: '',

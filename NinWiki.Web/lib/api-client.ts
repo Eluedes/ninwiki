@@ -65,6 +65,9 @@ export type AttackInput = { name?: string; jutsuId?: string | null };
 /** Zonas de um lugar (cor do ponto e nome na ficha). */
 export const LOCATION_ZONES = ['safe', 'danger', 'war', 'arena', 'parkour', 'none'] as const;
 export type LocationZone = (typeof LOCATION_ZONES)[number];
+/** Uma loja de NPC que vende o item: onde fica, quantas unidades por esse preco, o preco e a moeda (nome de um item, ex.: Ryo). */
+export type SaleEntry = { shop: string; places?: string[]; qty?: number; price?: number; currency?: string };
+
 /** Um lugar onde o mob aparece (a ficha mostra um por linha, com a zona). */
 export type LocationEntry = { name: string; namePt?: string | null; zone?: LocationZone | null };
 
@@ -84,6 +87,7 @@ export interface ApiContentItem {
   // (texto livre por enquanto, ex: "Floresta Negra, Campos Iniciais").
   spawnLocation: string | null;
   spawnLocations: LocationEntry[];   // lista de lugares (vazia = usa o texto acima)
+  soldAt: SaleEntry[];               // lojas de NPC que vendem este item/arma, com o preco
   // ---- Versoes em portugues (traducao automatica via DeepL, EN->PT) -
   // sempre
   // editaveis a mao, mesmo depois de preenchidas automaticamente. ----
@@ -174,6 +178,7 @@ export interface ContentItemInput {
   synergy?: string | null;
   spawnLocation?: string | null;
   spawnLocations?: LocationEntry[];
+  soldAt?: SaleEntry[];
   namePt?: string | null;
   descriptionPt?: string | null;
   lorePt?: string | null;

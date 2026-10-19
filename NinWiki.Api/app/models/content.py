@@ -83,6 +83,8 @@ class ContentItem(Base, TimestampMixin):
     # Lugares onde o mob aparece, em lista: [{name, name_pt, zone}] (zone: safe/danger/war/arena/parkour/none). Quando existe, a ficha mostra a lista (um lugar por linha, com a zona);
     # vazia/nula = mostra o texto livre `spawn_location` de antes.
     spawn_locations: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    # Onde o ITEM/ARMA e' vendido por NPCs e a que preco: [{shop, places, qty, price, currency}] (a ficha publica mostra uma linha por loja).
+    sold_at: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     # ---- Campos fixos so' de MOBS (melhoria da ficha, 24/09) ----
     # Espelham a ficha do proprio jogo (Health/Damage/Experience/Range/
