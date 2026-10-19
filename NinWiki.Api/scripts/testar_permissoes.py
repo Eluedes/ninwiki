@@ -299,6 +299,29 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id}]}, headers=A)
     check("admin publica o mob com drop ligado", r.status_code == 200, r.text[:160])
     await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "status": "published", "attributes": [], "drops": []}, headers=A)   # o item tambem precisa estar publicado para o anonimo ve-lo
+    # NPC da arma LIGADO a uma pagina + lista de lugares do mob
+    r = await c.post("/content-items", json={**novo_conteudo("npc-arma"), "category": "weapons", "weaponNpc": "texto antigo", "weaponNpcId": mob_id}, headers=A)
+    check("arma com NPC ligado: o nome vem da pagina do NPC e o slug vem (pagina publicada)",
+          r.status_code == 201 and r.json()["weaponNpcId"] == mob_id and r.json()["weaponNpc"] == "TESTE drop-mob" and r.json()["weaponNpcSlug"] == f"{SLUG}-drop-mob", r.text[:240])
+    arma_npc_id = r.json().get("id")
+    r = await c.post("/content-items", json={**novo_conteudo("npc-arma-x"), "category": "weapons", "weaponNpcId": "00000000-0000-0000-0000-000000000000"}, headers=A)
+    check("arma com NPC que nao existe e' recusada (400)", r.status_code == 400, r.text[:160])
+    r = await c.post("/content-items", json={**novo_conteudo("npc-item"), "category": "items", "weaponNpcId": mob_id}, headers=A)
+    check("o NPC ligado so' vale em arma (item ignora)", r.status_code == 201 and r.json()["weaponNpcId"] is None, r.text[:160])
+    r = await c.put(f"/content-items/{mob_id}", json={**novo_conteudo("drop-mob"), "category": "mobs", "status": "draft", "drops": [
+        {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id}]}, headers=A)
+    r = await c.get(f"/content-items/{arma_npc_id}", headers=A)
+    check("NPC ligado em rascunho: a ficha da arma fica so' com o nome (sem slug para link)", r.status_code == 200 and r.json()["weaponNpcSlug"] is None and r.json()["weaponNpc"] == "TESTE drop-mob", r.text[:200])
+    await c.put(f"/content-items/{mob_id}", json={**novo_conteudo("drop-mob"), "category": "mobs", "status": "published", "drops": [
+        {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id}]}, headers=A)   # volta a publicar (os testes seguintes dependem disso)
+    lugares = [{"name": "Larva Road", "namePt": "Estrada das Larvas", "zone": "safe"}, {"name": "Slight Slope"}]
+    r = await c.post("/content-items", json={**novo_conteudo("lugares"), "category": "mobs", "spawnLocations": lugares}, headers=A)
+    check("mob com lista de lugares: guarda nome, traducao e zona (zona opcional)",
+          r.status_code == 201 and r.json()["spawnLocations"][0]["zone"] == "safe" and r.json()["spawnLocations"][0]["namePt"] == "Estrada das Larvas" and r.json()["spawnLocations"][1]["zone"] is None, r.text[:240])
+    r = await c.post("/content-items", json={**novo_conteudo("lugar-ruim"), "category": "mobs", "spawnLocations": [{"name": "X", "zone": "invalida"}]}, headers=A)
+    check("zona desconhecida num lugar e' recusada (422)", r.status_code == 422, r.text[:120])
+    r = await c.post("/content-items", json={**novo_conteudo("lugar-vazio"), "category": "mobs", "spawnLocations": [{"name": "   "}]}, headers=A)
+    check("nome de lugar em branco e' recusado (422)", r.status_code == 422, r.text[:120])
     r = await c.get(f"/content-items/{drop_item_id}")
     db_mobs = r.json().get("droppedBy", [])
     check("item mostra o mob publicado que o dropa (automatico, chance 10)", len(db_mobs) == 1 and db_mobs[0]["slug"] == f"{SLUG}-drop-mob" and db_mobs[0]["chance"] == 10, r.text[:240])

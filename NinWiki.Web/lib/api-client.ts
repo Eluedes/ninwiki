@@ -62,6 +62,12 @@ export interface ApiAttackEntry {
 /** Ataque enviado ao salvar: um jutsu ligado (sem precisar de nome) ou so' o texto. */
 export type AttackInput = { name?: string; jutsuId?: string | null };
 
+/** Zonas de um lugar (cor do ponto e nome na ficha). */
+export const LOCATION_ZONES = ['safe', 'danger', 'war', 'arena', 'parkour', 'none'] as const;
+export type LocationZone = (typeof LOCATION_ZONES)[number];
+/** Um lugar onde o mob aparece (a ficha mostra um por linha, com a zona). */
+export type LocationEntry = { name: string; namePt?: string | null; zone?: LocationZone | null };
+
 export interface ApiContentItem {
   id: string;
   slug: string;
@@ -77,6 +83,7 @@ export interface ApiContentItem {
   // So' usado quando category === 'mobs' - onde o mob spawna no mapa
   // (texto livre por enquanto, ex: "Floresta Negra, Campos Iniciais").
   spawnLocation: string | null;
+  spawnLocations: LocationEntry[];   // lista de lugares (vazia = usa o texto acima)
   // ---- Versoes em portugues (traducao automatica via DeepL, EN->PT) -
   // sempre
   // editaveis a mao, mesmo depois de preenchidas automaticamente. ----
@@ -97,6 +104,9 @@ export interface ApiContentItem {
   weaponSpeed: string | null;
   weaponRequirement: string | null;
   weaponNpc: string | null;
+  weaponNpcId?: string | null;        // NPC ligado a uma pagina do wiki (opcional)
+  weaponNpcSlug?: string | null;      // slug da pagina ligada (so' vem se ela esta' publicada)
+  weaponNpcNamePt?: string | null;    // nome dela em portugues
   weaponType: string | null;
   weaponBaseDamage: string | null;
   weaponSpecialAbility: string | null;
@@ -163,6 +173,7 @@ export interface ContentItemInput {
   lore?: string | null;
   synergy?: string | null;
   spawnLocation?: string | null;
+  spawnLocations?: LocationEntry[];
   namePt?: string | null;
   descriptionPt?: string | null;
   lorePt?: string | null;
@@ -177,6 +188,7 @@ export interface ContentItemInput {
   weaponSpeed?: string | null;
   weaponRequirement?: string | null;
   weaponNpc?: string | null;
+  weaponNpcId?: string | null;
   weaponType?: string | null;
   weaponBaseDamage?: string | null;
   weaponSpecialAbility?: string | null;

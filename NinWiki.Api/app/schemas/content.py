@@ -14,6 +14,7 @@ abaixo faz o Pydantic aceitar E devolver os dois formatos automaticamente,
 sem precisar de nenhum "traducao" manual em cada endpoint.
 """
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -160,6 +161,31 @@ class DroppedByEntry(CamelModel):
     chance_qualifier: DropChanceQualifier | None = None
 
 
+class LocationEntrySchema(CamelModel):
+    """
+    Um lugar onde o mob aparece (ex.: "Larva Road", zona "safe"). A ficha mostra um lugar por linha, com um ponto na cor da zona e o nome da zona.
+    `name_pt` e' opcional (sem ele o site mostra o nome em ingles tambem em portugues).
+    """
+    name: str = Field(min_length=1, max_length=120)
+    name_pt: str | None = Field(default=None, max_length=120)
+    zone: Literal["safe", "danger", "war", "arena", "parkour", "none"] | None = None
+
+    @field_validator("name")
+    @classmethod
+    def _clean_name(cls, value: str) -> str:
+        """Tira espacos extras; nome so' com espacos e' recusado."""
+        cleaned = " ".join(value.split())
+        if not cleaned:
+            raise ValueError("The place name cannot be blank")
+        return cleaned
+
+    @field_validator("name_pt")
+    @classmethod
+    def _clean_name_pt(cls, value: str | None) -> str | None:
+        """Tira espacos extras; em branco vira vazio (sem traducao)."""
+        return (" ".join(value.split()) or None) if value is not None else None
+
+
 class ContentItemBase(CamelModel):
     """Campos compartilhados entre criar e editar - o "miolo" do formulario."""
     slug: str = Field(min_length=1, max_length=150)
@@ -177,6 +203,8 @@ class ContentItemBase(CamelModel):
     # (sem marcador de mapa clicavel ainda - o Mapa em si ainda e' so'
     # um placeholder, ver Fase 5 do roadmap).
     spawn_location: str | None = None
+    # Lugares onde o mob aparece, em lista (um por linha na ficha, com a zona). Se vier vazia, a ficha usa o texto livre acima.
+    spawn_locations: list[LocationEntrySchema] = Field(default_factory=list, max_length=60)
     # ---- Versoes em portugues (traducao automatica via DeepL, EN->PT) ----
     # Sempre editaveis a mao, mesmo depois de preenchidos pela DeepL -
     # ver app/core/translation.py pro fluxo completo (quando traduz,
@@ -198,6 +226,7 @@ class ContentItemBase(CamelModel):
     weapon_speed: str | None = None
     weapon_requirement: str | None = None   # ate' 3 requisitos para usar, um por LINHA (ver _clean_requirements)
     weapon_npc: str | None = None
+    weapon_npc_id: UUID | None = None   # liga o NPC a uma pagina do wiki (o nome mostrado acompanha a pagina; ver ContentItemRead)
     weapon_type: str | None = None
     weapon_base_damage: str | None = None
     weapon_special_ability: str | None = None
@@ -209,6 +238,12 @@ class ContentItemBase(CamelModel):
     item_type: ItemType | None = None
     attributes: list[AttributeRowSchema] = []
     drops: list[DropEntrySchema] = []
+
+    @field_validator("spawn_locations", mode="before")
+    @classmethod
+    def _no_locations(cls, value):
+        """Coluna nula no banco (mob antigo) vira lista vazia."""
+        return value or []
 
     @field_validator("weapon_requirement")
     @classmethod
@@ -258,6 +293,10 @@ class ContentItemRead(ContentItemBase):
     # padrao/motivo de DropEntryRead.dropped_item_slug logo acima (o
     # campo nao existe com esse nome no banco, so' a relacao).
     cast_village_name: str | None = None
+    # NPC da arma ligado a uma pagina (calculado da relacao `weapon_npc_item`): o slug so' vem se a pagina esta' PUBLICADA (link seguro);
+    # `weapon_npc` (nome) passa a ser o da pagina ligada, e o `_pt` e' o nome dela em portugues.
+    weapon_npc_slug: str | None = None
+    weapon_npc_name_pt: str | None = None
     # Mobs que dropam este item (automatico, ver DroppedByEntry); preenchido pelos GETs de ficha - nas demais respostas fica [].
     dropped_by: list[DroppedByEntry] = []
     updated_at: datetime | None = None    # ultima edicao (o site mostra 'Atualizado em')
@@ -269,10 +308,16 @@ class ContentItemRead(ContentItemBase):
         """Preenche o nome da vila do item Cast a partir da relacao carregada do banco."""
         if hasattr(data, "cast_village") and not isinstance(data, dict):
             village = data.cast_village
-            return {
-                **{f: getattr(data, f, None) for f in cls.model_fields if f not in ("cast_village_name", "dropped_by")},
+            npc = getattr(data, "weapon_npc_item", None)
+            out = {
+                **{f: getattr(data, f, None) for f in cls.model_fields if f not in ("cast_village_name", "dropped_by", "weapon_npc_slug", "weapon_npc_name_pt")},
                 "cast_village_name": village.name if village is not None else None,
+                "weapon_npc_slug": npc.slug if (npc is not None and npc.status == ContentStatus.PUBLISHED) else None,
+                "weapon_npc_name_pt": npc.name_pt if npc is not None else None,
             }
+            if npc is not None:   # nome "ao vivo": acompanha a pagina ligada
+                out["weapon_npc"] = npc.name
+            return out
         return data
 
     # from_attributes=True: deixa o Pydantic ler direto de um objeto

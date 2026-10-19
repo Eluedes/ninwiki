@@ -37,6 +37,8 @@ import {
   retranslateContentItem,
   listVillages,
   ApiError,
+  LOCATION_ZONES,
+  type LocationEntry,
   type ContentItemInput,
   type ApiVillage,
 } from '@/lib/api-client';
@@ -188,6 +190,9 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   // attacks: mesmo padrao de attributes/drops - lista dinamica fora do
   // Zod, so' usada quando category === 'mobs'.
   const [attacks, setAttacks] = useState<{ name: string; jutsuId?: string | null }[]>([]);
+  // Lugares onde o mob aparece (lista com zona) e NPC da arma ligado a uma pagina: tambem fora do Zod, como attacks/drops.
+  const [locations, setLocations] = useState<LocationEntry[]>([]);
+  const [weaponNpcId, setWeaponNpcId] = useState<string | null>(null);
   // Vilas de verdade, pro seletor do item tipo Cast - busca uma vez so',
   // ja' que sao poucas (3 hoje) e raramente mudam.
   const [villages, setVillages] = useState<ApiVillage[]>([]);
@@ -215,6 +220,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   const mobTypeOptions = getMobTypeOptions(t);
   const category = useWatch({ control, name: 'category' });
   const itemType = useWatch({ control, name: 'itemType' });
+  const spawnText = useWatch({ control, name: 'spawnLocation' });   // texto livre antigo (para mostrar o botao de transformar em lista)
   const itemTypeOptions = getItemTypeOptions(t, itemType);
   const wardrobeOptions = getWardrobeOptions(t);
 
@@ -262,6 +268,8 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         setAttributes(item.attributes.map((a) => ({ ...a, label: a.label || ATTRIBUTE_NAMES[0] })));
         setDrops(item.drops.map(({ rarity: _rarity, ...rest }) => rest));   // a raridade do drop vem do item ligado (nao e' mais editada aqui)
         setAttacks(item.attacks.map((a) => ({ name: a.name, jutsuId: a.jutsuId ?? null })));
+        setLocations(item.spawnLocations ?? []);
+        setWeaponNpcId(item.weaponNpcId ?? null);
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : 'Error loading the entry.'))
       .finally(() => setLoading(false));
@@ -285,6 +293,19 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   }
   function removeDrop(index: number) {
     setDrops((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function addLocation() {
+    setLocations((prev) => [...prev, { name: '', zone: 'safe' }]);
+  }
+  function updateLocation(index: number, patch: Partial<LocationEntry>) {
+    setLocations((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
+  }
+  /** Transforma o texto livre antigo ("A, B, C") em linhas da lista e limpa o texto. */
+  function convertSpawnText() {
+    const parts = (getValues('spawnLocation') ?? '').split(/[,;\n]/).map((p) => p.trim().replace(/\.$/, '')).filter(Boolean);
+    setLocations((prev) => [...prev, ...parts.map((name) => ({ name, zone: null }))]);
+    setValue('spawnLocation', '', { shouldDirty: true });
   }
 
   function addAttack() {
@@ -355,6 +376,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         synergyPt: null,
         spawnLocation: values.category === 'mobs' ? values.spawnLocation : null,
         spawnLocationPt: values.category === 'mobs' ? values.spawnLocationPt : null,
+        spawnLocations: values.category === 'mobs' ? locations.filter((l) => l.name.trim()).map((l) => ({ name: l.name.trim(), namePt: l.namePt || null, zone: l.zone ?? null })) : [],
         mobHealth: values.category === 'mobs' ? values.mobHealth : null,
         mobDamage: values.category === 'mobs' ? values.mobDamage : null,
         mobExperience: values.category === 'mobs' ? values.mobExperience : null,
@@ -364,6 +386,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         weaponSpeed: values.category === 'weapons' ? values.weaponSpeed : null,
         weaponRequirement: values.category === 'weapons' ? values.weaponRequirement : null,
         weaponNpc: values.category === 'weapons' ? values.weaponNpc : null,
+        weaponNpcId: values.category === 'weapons' ? weaponNpcId : null,
         weaponType: values.category === 'weapons' ? values.weaponType : null,
         weaponBaseDamage: values.category === 'weapons' ? values.weaponBaseDamage : null,
         weaponSpecialAbility: values.category === 'weapons' ? values.weaponSpecialAbility : null,
@@ -522,7 +545,17 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.weaponNpc}</label>
-                <Input {...register('weaponNpc')} placeholder={t.weaponNpcPlaceholder} />
+                <div className="flex items-center gap-2">
+                  <Input {...register('weaponNpc')} placeholder={t.weaponNpcPlaceholder} readOnly={Boolean(weaponNpcId)} />
+                  <DropItemPicker
+                    linkedId={weaponNpcId}
+                    onlyCategories={['mobs']}
+                    onLink={(npc) => { setWeaponNpcId(npc.id); setValue('weaponNpc', npc.name, { shouldDirty: true }); }}
+                    onUnlink={() => setWeaponNpcId(null)}
+                  />
+                </div>
+                {weaponNpcId && <p className="text-xs text-emerald-400">{t.weaponNpcLinked}</p>}
+                <p className="text-xs text-muted-foreground">{t.weaponNpcHint}</p>
                 <FieldHint id="content.weaponNpc" />
               </div>
               <div className="space-y-2">
@@ -696,6 +729,22 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         {category === 'mobs' && (
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.spawnLocation}</label>
+            {locations.map((loc, i) => (
+              <div key={i} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+                <Input placeholder={t.locationPlaceholder} value={loc.name} onChange={(e) => updateLocation(i, { name: e.target.value })} />
+                <select value={loc.zone ?? 'none'} onChange={(e) => updateLocation(i, { zone: e.target.value as LocationEntry['zone'] })} aria-label={t.zoneLabel}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+                  {LOCATION_ZONES.map((z) => <option key={z} value={z}>{t.zones[z]}</option>)}
+                </select>
+                <Button type="button" variant="ghost" size="icon" title={t.removeLocation} aria-label={t.removeLocation} onClick={() => setLocations((prev) => prev.filter((_, k) => k !== i))}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={addLocation}><Plus className="mr-1 h-3.5 w-3.5" />{t.addLocation}</Button>
+              {Boolean((spawnText ?? '').trim()) && <Button type="button" variant="outline" size="sm" onClick={convertSpawnText}>{t.convertText}</Button>}
+            </div>
             <Input {...register('spawnLocation')} placeholder={t.spawnLocationPlaceholder} />
             <FieldHint id="content.spawnLocation" />
           </div>

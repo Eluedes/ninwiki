@@ -80,6 +80,9 @@ class ContentItem(Base, TimestampMixin):
     lore_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     synergy_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     spawn_location_pt: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    # Lugares onde o mob aparece, em lista: [{name, name_pt, zone}] (zone: safe/danger/war/arena/parkour/none). Quando existe, a ficha mostra a lista (um lugar por linha, com a zona);
+    # vazia/nula = mostra o texto livre `spawn_location` de antes.
+    spawn_locations: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     # ---- Campos fixos so' de MOBS (melhoria da ficha, 24/09) ----
     # Espelham a ficha do proprio jogo (Health/Damage/Experience/Range/
@@ -111,6 +114,8 @@ class ContentItem(Base, TimestampMixin):
     # Bonus" = a lista generica de Atributos (ja existe, reaproveitada
     # aqui) - nenhum dos dois precisou de coluna nova.
     weapon_npc: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # NPC da arma LIGADO a uma pagina do wiki (opcional): ligado, o nome mostrado acompanha a pagina e o visitante clica para ir a' ela; sem ligacao vale o texto de `weapon_npc`.
+    weapon_npc_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("content_items.id", ondelete="SET NULL"), nullable=True)
     weapon_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     weapon_base_damage: Mapped[str | None] = mapped_column(String(50), nullable=True)
     weapon_special_ability: Mapped[str | None] = mapped_column(String(150), nullable=True)
@@ -129,6 +134,8 @@ class ContentItem(Base, TimestampMixin):
         String(50), ForeignKey("villages.id", ondelete="SET NULL"), nullable=True
     )
     cast_village: Mapped["Village | None"] = relationship(foreign_keys=[cast_village_id])
+    # selectin: sempre carregado junto (a ficha le o nome/slug dele; sem isso daria erro de carga preguicosa em contexto async)
+    weapon_npc_item: Mapped["ContentItem | None"] = relationship(foreign_keys=[weapon_npc_id], remote_side="ContentItem.id", lazy="selectin", join_depth=1)
 
     # So' preenchido quando category == MOBS / ITEMS respectivamente.
     # Nao ha' um CHECK constraint aqui garantindo essa regra - fica a
