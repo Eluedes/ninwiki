@@ -173,6 +173,36 @@ export const villageSchema = z
 
 export type VillageFormValues = z.infer<typeof villageSchema>;
 
+// Artigo do Guia (espelha GuideArticleWrite em app/schemas/guide.py). O texto rico so' e' validado de verdade na API.
+export const guideArticleSchema = z.object({
+  id: z.string().min(1, 'The id/slug is required.').max(80).regex(slugRegex, slugMessage),
+  section: z.enum(['new-player', 'combat', 'progression', 'interface', 'economy']),
+  position: z.coerce.number().int().min(0, 'Minimum is 0.').max(999, 'Maximum is 999.'),
+  title: z.string().min(1, 'The title is required.').max(150),
+  titlePt: z.string().max(150).nullable().optional(),
+  summary: z.string().max(300, 'Maximum of 300 characters.'),
+  summaryPt: z.string().max(300, 'Maximum of 300 characters.').nullable().optional(),
+  body: z.string(),
+  bodyPt: z.string().nullable().optional(),
+  icon: z.string().min(1, 'Pick an icon.'),
+  status: z.enum(['draft', 'published']),
+});
+
+export type GuideArticleFormValues = z.infer<typeof guideArticleSchema>;
+
+// Proficiencia (espelha ProfessionWrite em app/schemas/guide.py).
+export const professionSchema = z.object({
+  id: z.string().min(1, 'The id/slug is required.').max(50).regex(slugRegex, slugMessage),
+  name: z.string().min(1, 'The name is required.').max(100),
+  namePt: z.string().max(100).nullable().optional(),
+  group: z.enum(['gathering', 'crafting']),
+  description: z.string().min(1, 'The description is required.'),
+  descriptionPt: z.string().nullable().optional(),
+  icon: z.string().min(1, 'The emoji is required.').max(20),
+});
+
+export type ProfessionFormValues = z.infer<typeof professionSchema>;
+
 // ---- Blog (posts) - mesmas regras do backend (app/schemas/posts.py) ----
 
 export const postSchema = z.object({

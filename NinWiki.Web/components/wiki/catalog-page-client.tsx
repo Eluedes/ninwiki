@@ -16,7 +16,7 @@ import { GuideHub } from '@/components/wiki/guide-hub';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Search, ChevronDown, ChevronUp } from 'lucide-react';
-import type { ApiContentItemSummary, ApiAttribute, ApiProfession, ApiStoryArc, ApiSummon } from '@/lib/api-client';
+import type { ApiContentItemSummary, ApiAttribute, ApiStoryArc, ApiSummon, ApiGuideArticle } from '@/lib/api-client';
 import type { Category } from '@/lib/types';
 
 // Filtro exclusivo da categoria Items (26/09, pedido do Rafael): nem
@@ -92,9 +92,9 @@ interface CatalogPageClientProps {
   // requisicoes a toa nas outras categorias) - por isso sao opcionais
   // aqui, com [] como padrao.
   guideAttributes?: ApiAttribute[];
-  professions?: ApiProfession[];
   storyArcs?: ApiStoryArc[];
   summons?: ApiSummon[];
+  guideArticles?: ApiGuideArticle[];   // artigos publicados do Guia (so' category === 'guides')
 }
 
 /** Listagem do catalogo de uma categoria, com busca e filtros. */
@@ -102,9 +102,9 @@ export function CatalogPageClient({
   items,
   category,
   guideAttributes = [],
-  professions = [],
   storyArcs = [],
   summons = [],
+  guideArticles = [],
 }: CatalogPageClientProps) {
   const { dict } = useLanguage();
   const [search, setSearch] = useState('');
@@ -192,7 +192,7 @@ export function CatalogPageClient({
         )}
       </div>
 
-      {category === 'guides' && <GuideHub />}
+      {category === 'guides' && <GuideHub articles={guideArticles} />}
 
       <div className={cn('relative mb-8 max-w-md', noGuideArticles && 'hidden')}>
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -276,7 +276,6 @@ export function CatalogPageClient({
       {category === 'guides' && (
         <GuideExtras
           attributes={guideAttributes}
-          professions={professions}
           storyArcs={storyArcs}
           summons={summons}
         />

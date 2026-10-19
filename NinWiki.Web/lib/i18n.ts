@@ -74,6 +74,8 @@ export interface Dictionary {
     proficienciesTitle: string; proficienciesSubtitle: string; proficienciesCrumb: string; profHowTitle: string; profHowCap: string; profHowBonus: string; profHowFormula: string; profHowExp: string;
     profCalcTitle: string; profCalcFrom: string; profCalcTo: string; profCalcResult: string; profMilestones: string; profColLevel: string; profColXp: string; profColBonus: string;
     profRecipesCount: string; profResourcesCount: string; profToolsCount: string; profSearch: string; profNoMatch: string; profPrice: string; profSources: string; profTipsTitle: string; profGuideBannerText: string; profSeeAll: string;
+    guideSections: { 'new-player': string; combat: string; progression: string; interface: string; economy: string; systems: string };
+    guideBackToGuide: string; guideSystemsMissions: string; guideSystemsProficiencies: string; guideDraftBadge: string;
     professionBack: string; professionResources: string; professionRecipes: string; professionTools: string; professionYields: string; professionLevel: string; professionWorkbench: string; professionLearnedFrom: string; professionNeeds: string; professionNoDetails: string; professionOpen: string;
   };
   siteError: { title: string; text: string; retry: string; home: string };
@@ -129,6 +131,16 @@ export interface Dictionary {
       contentLabel: string; contentPlaceholder: string; saveDraft: string; publish: string; saving: string; saveError: string;
       lockedNote: string; unpublishNote: string;
     };
+    // Artigos do Guia e Proficiencias (painel)
+    guideAdmin: {
+      articlesTitle: string; articlesSubtitle: string; newArticle: string; professionsTitle: string; professionsSubtitle: string; newProfession: string;
+      loading: string; loadError: string; empty: string; colTitle: string; colSection: string; colStatus: string; colGroup: string; colDetails: string; colName: string;
+      edit: string; delete: string; confirmDelete: string; deleteError: string; published: string; draft: string; all: string;
+      back: string; saving: string; save: string; saveError: string; newArticleTitle: string; editArticleTitle: string; newProfessionTitle: string; editProfessionTitle: string;
+      id: string; idLocked: string; section: string; position: string; icon: string; status: string; statusPublished: string; statusDraft: string;
+      title: string; titlePt: string; summary: string; summaryPt: string; body: string; bodyPt: string; translationNote: string;
+      name: string; namePt: string; group: string; groupGathering: string; groupCrafting: string; emoji: string; description: string; descriptionPt: string; detailsNote: string; detailsCount: string;
+    };
     // Edicao de Vilas, Clas e Organizacoes (painel)
     villagesAdmin: {
       title: string; subtitle: string; newVillage: string; manageOrgs: string;
@@ -149,7 +161,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
     gameNames: { title: string; subtitle: string; chooseFiles: string; invalidFile: string; find: string; loadError: string; summary: string; truncated: string; search: string; hideJutsu: string; selectShown: string; clear: string; empty: string; moreHidden: string; createDrafts: string; confirm: string; created: string; note: string; categories: Record<string, string>; hints: Record<string, string> };
     translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
@@ -338,6 +350,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       profHowExp: 'XP para passar de um nível L: 128 × L − 64. XP total do nível 1 até o nível N: 64 × (N − 1)².',
       profCalcTitle: 'Calculadora de XP', profCalcFrom: 'Do nível', profCalcTo: 'Até o nível', profCalcResult: 'XP necessário', profMilestones: 'Marcos', profColLevel: 'Nível', profColXp: 'XP total', profColBonus: 'Bônus',
       profRecipesCount: '{n} receitas', profResourcesCount: '{n} recursos', profToolsCount: '{n} ferramentas', profSearch: 'Buscar receita...', profNoMatch: 'Nada encontrado.', profPrice: 'Preço', profSources: 'Valores registrados pela comunidade (Nin Online Wiki, no Fandom) e pelo Nin Atlas; o jogo pode mudá-los.', profTipsTitle: 'Dicas', profGuideBannerText: 'Coleta e criação: cada proficiência tem sua página com receitas, recursos e dicas.', profSeeAll: 'Ver todas',
+      guideSections: { 'new-player': 'Comece por aqui', combat: 'Combate e PvP', progression: 'Progressão', interface: 'Controles e interface', economy: 'Dinheiro', systems: 'Sistemas do jogo' },
+      guideBackToGuide: 'Voltar ao Guia', guideSystemsMissions: 'Lista de missões, recompensas e passos para concluir.', guideSystemsProficiencies: 'Coleta e criação: níveis, bônus, XP e todas as receitas.', guideDraftBadge: 'Rascunho',
       professionBack: 'Voltar às Proficiências', professionResources: 'O que se coleta', professionRecipes: 'Receitas', professionTools: 'Ferramentas', professionYields: 'Rende', professionLevel: 'Nível', professionWorkbench: 'Bancada', professionLearnedFrom: 'Aprendida com', professionNeeds: 'Ingredientes', professionNoDetails: 'Ainda não há mais informações sobre esta profissão.', professionOpen: 'Ver detalhes',
     },
     siteError: { title: 'Algo deu errado', text: 'A equipe já foi avisada. Tente de novo em instantes.', retry: 'Tentar de novo', home: 'Voltar ao início' },
@@ -618,6 +632,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
         lockedNote: 'Este post já está publicado: só um Adm pode alterá-lo.',
         unpublishNote: 'Este post está publicado. "Salvar rascunho" tira ele do ar; "Publicar" mantém no ar com as mudanças.',
       },
+      guideAdmin: {
+        articlesTitle: 'Artigos do Guia', articlesSubtitle: 'Os artigos do Guia (Zonas, Crime, Equipes, Controles...), por seção. Rascunho só a equipe vê.', newArticle: 'Novo artigo',
+        professionsTitle: 'Proficiências', professionsSubtitle: 'As proficiências de coleta e criação. As receitas, recursos e ferramentas vêm da importação do Atlas.', newProfession: 'Nova proficiência',
+        loading: 'Carregando...', loadError: 'Erro ao carregar.', empty: 'Nada cadastrado ainda.', colTitle: 'Título', colSection: 'Seção', colStatus: 'Situação', colGroup: 'Tipo', colDetails: 'Conteúdo', colName: 'Nome',
+        edit: 'Editar', delete: 'Apagar', confirmDelete: 'Apagar "{name}"? Essa ação não pode ser desfeita.', deleteError: 'Erro ao apagar.', published: 'Publicado', draft: 'Rascunho', all: 'Todos',
+        back: 'Voltar', saving: 'Salvando...', save: 'Salvar', saveError: 'Erro ao salvar.', newArticleTitle: 'Novo artigo', editArticleTitle: 'Editar artigo', newProfessionTitle: 'Nova proficiência', editProfessionTitle: 'Editar proficiência',
+        id: 'ID (slug)', idLocked: '(não pode mudar)', section: 'Seção', position: 'Posição na seção', icon: 'Ícone', status: 'Situação', statusPublished: 'Publicado (aparece no Guia)', statusDraft: 'Rascunho (só a equipe vê)',
+        title: 'Título (inglês)', titlePt: 'Título (português)', summary: 'Resumo (inglês)', summaryPt: 'Resumo (português)', body: 'Texto (inglês)', bodyPt: 'Texto (português)',
+        translationNote: 'O inglês é o idioma principal. O que ficar vazio em português é traduzido pela DeepL ao salvar (se estiver configurada).',
+        name: 'Nome (inglês)', namePt: 'Nome (português)', group: 'Tipo', groupGathering: 'Coleta', groupCrafting: 'Criação', emoji: 'Emoji', description: 'Descrição (inglês)', descriptionPt: 'Descrição (português)',
+        detailsNote: 'Receitas, recursos e ferramentas não são editados aqui: vêm de scripts/importar_profissoes_atlas.py.', detailsCount: '{r} receitas · {s} recursos · {t} ferramentas',
+      },
       villagesAdmin: {
         title: 'Vilas', subtitle: 'Vilas, clãs e organizações do jogo.', newVillage: 'Nova vila', manageOrgs: 'Gerenciar organizações',
         colName: 'Nome', colElement: 'Elemento', colLeader: 'Líder', colClans: 'Clãs', edit: 'Editar', delete: 'Apagar',
@@ -657,6 +683,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
         translations: 'Traduções oficiais',
         villages: 'Vilas',
         organizations: 'Organizações',
+        guideArticles: 'Artigos do Guia',
+        professions: 'Proficiências',
         backToSite: 'Voltar ao site',
         groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
         breadcrumbHome: 'Painel',
@@ -1089,6 +1117,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       profHowExp: 'XP to clear level L: 128 × L − 64. Total XP from level 1 to level N: 64 × (N − 1)².',
       profCalcTitle: 'XP calculator', profCalcFrom: 'From level', profCalcTo: 'To level', profCalcResult: 'XP needed', profMilestones: 'Milestones', profColLevel: 'Level', profColXp: 'Total XP', profColBonus: 'Bonus',
       profRecipesCount: '{n} recipes', profResourcesCount: '{n} resources', profToolsCount: '{n} tools', profSearch: 'Search recipe...', profNoMatch: 'Nothing found.', profPrice: 'Price', profSources: 'Values recorded by the community (Nin Online Wiki on Fandom) and the Nin Atlas; the game may change them.', profTipsTitle: 'Tips', profGuideBannerText: 'Gathering and crafting: each proficiency has its own page with recipes, resources and tips.', profSeeAll: 'See all',
+      guideSections: { 'new-player': 'Start here', combat: 'Combat & PvP', progression: 'Progression', interface: 'Controls & interface', economy: 'Money', systems: 'Gameplay systems' },
+      guideBackToGuide: 'Back to the Guide', guideSystemsMissions: 'Mission list, rewards and steps to complete them.', guideSystemsProficiencies: 'Gathering and crafting: levels, bonuses, XP and every recipe.', guideDraftBadge: 'Draft',
       professionBack: 'Back to Proficiencies', professionResources: 'What you gather', professionRecipes: 'Recipes', professionTools: 'Tools', professionYields: 'Yields', professionLevel: 'Level', professionWorkbench: 'Workbench', professionLearnedFrom: 'Learned from', professionNeeds: 'Ingredients', professionNoDetails: 'There is no more information about this profession yet.', professionOpen: 'View details',
     },
     siteError: { title: 'Something went wrong', text: 'The team has been notified. Please try again in a moment.', retry: 'Try again', home: 'Back to home' },
@@ -1369,6 +1399,18 @@ export const dictionaries: Record<Locale, Dictionary> = {
         lockedNote: 'This post is already published: only an Adm can change it.',
         unpublishNote: 'This post is published. "Save draft" takes it offline; "Publish" keeps it live with the changes.',
       },
+      guideAdmin: {
+        articlesTitle: 'Guide articles', articlesSubtitle: 'The Guide articles (Zones, Crime, Teams, Controls...), by section. Only staff can see drafts.', newArticle: 'New article',
+        professionsTitle: 'Proficiencies', professionsSubtitle: 'The gathering and crafting proficiencies. Recipes, resources and tools come from the Atlas import.', newProfession: 'New proficiency',
+        loading: 'Loading...', loadError: 'Error loading.', empty: 'Nothing registered yet.', colTitle: 'Title', colSection: 'Section', colStatus: 'Status', colGroup: 'Type', colDetails: 'Content', colName: 'Name',
+        edit: 'Edit', delete: 'Delete', confirmDelete: 'Delete "{name}"? This action cannot be undone.', deleteError: 'Error deleting.', published: 'Published', draft: 'Draft', all: 'All',
+        back: 'Back', saving: 'Saving...', save: 'Save', saveError: 'Error saving.', newArticleTitle: 'New article', editArticleTitle: 'Edit article', newProfessionTitle: 'New proficiency', editProfessionTitle: 'Edit proficiency',
+        id: 'ID (slug)', idLocked: '(cannot change)', section: 'Section', position: 'Position in section', icon: 'Icon', status: 'Status', statusPublished: 'Published (shown in the Guide)', statusDraft: 'Draft (staff only)',
+        title: 'Title (English)', titlePt: 'Title (Portuguese)', summary: 'Summary (English)', summaryPt: 'Summary (Portuguese)', body: 'Text (English)', bodyPt: 'Text (Portuguese)',
+        translationNote: 'English is the main language. Anything left empty in Portuguese is translated by DeepL on save (if configured).',
+        name: 'Name (English)', namePt: 'Name (Portuguese)', group: 'Type', groupGathering: 'Gathering', groupCrafting: 'Crafting', emoji: 'Emoji', description: 'Description (English)', descriptionPt: 'Description (Portuguese)',
+        detailsNote: 'Recipes, resources and tools are not edited here: they come from scripts/importar_profissoes_atlas.py.', detailsCount: '{r} recipes · {s} resources · {t} tools',
+      },
       villagesAdmin: {
         title: 'Villages', subtitle: 'The game\'s villages, clans and organizations.', newVillage: 'New village', manageOrgs: 'Manage organizations',
         colName: 'Name', colElement: 'Element', colLeader: 'Leader', colClans: 'Clans', edit: 'Edit', delete: 'Delete',
@@ -1408,6 +1450,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
         translations: 'Official translations',
         villages: 'Villages',
         organizations: 'Organizations',
+        guideArticles: 'Guide articles',
+        professions: 'Proficiencies',
         backToSite: 'Back to site',
         groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
         breadcrumbHome: 'Admin',

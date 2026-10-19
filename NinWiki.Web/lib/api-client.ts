@@ -760,6 +760,72 @@ export function getProfession(id: string): Promise<ApiProfession> {
   return apiFetch(`/professions/${id}`);
 }
 
+/** Corpo de criar/editar uma proficiencia (os `details` vem do importador e nao sao enviados). */
+export type ProfessionInput = Omit<ApiProfession, 'details'>;
+
+/** Cria uma proficiencia (painel; exige lore.edit). */
+export function createProfession(payload: ProfessionInput): Promise<ApiProfession> {
+  return apiFetch('/professions', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+/** Edita uma proficiencia (os `details` ficam como estao). */
+export function updateProfession(id: string, payload: ProfessionInput): Promise<ApiProfession> {
+  return apiFetch(`/professions/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+/** Apaga uma proficiencia (painel; exige lore.delete). */
+export function deleteProfession(id: string): Promise<void> {
+  return apiFetch(`/professions/${id}`, { method: 'DELETE' });
+}
+
+// ---------------- Artigos do Guia ----------------
+
+/** Secoes do Guia, na ordem em que aparecem no site (o rotulo de cada uma fica em lib/i18n.ts). */
+export const GUIDE_SECTIONS = ['new-player', 'combat', 'progression', 'interface', 'economy'] as const;
+export type GuideSection = (typeof GUIDE_SECTIONS)[number];
+
+/** Artigo do Guia como a API devolve (title/summary/body em ingles; `Pt` = traducao). */
+export interface ApiGuideArticle {
+  id: string;
+  section: GuideSection;
+  position: number;
+  title: string;
+  titlePt?: string | null;
+  summary: string;
+  summaryPt?: string | null;
+  body: string;      // texto rico (documento Tiptap em JSON)
+  bodyPt?: string | null;
+  icon: string;      // nome de icone (components/lore/guide-icons.tsx)
+  status: 'draft' | 'published';
+}
+
+export type GuideArticleInput = ApiGuideArticle;
+
+/** Artigos do Guia (o visitante so' recebe os publicados; a equipe logada recebe tambem os rascunhos). */
+export function listGuideArticles(section?: GuideSection): Promise<ApiGuideArticle[]> {
+  return apiFetch(`/guide-articles${section ? `?section=${section}` : ''}`);
+}
+
+/** Um artigo do Guia pelo id (404 se nao existe ou se e' rascunho e voce nao e' da equipe). */
+export function getGuideArticle(id: string): Promise<ApiGuideArticle> {
+  return apiFetch(`/guide-articles/${id}`);
+}
+
+/** Cria um artigo do Guia (painel; exige lore.edit). */
+export function createGuideArticle(payload: GuideArticleInput): Promise<ApiGuideArticle> {
+  return apiFetch('/guide-articles', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+/** Edita um artigo do Guia. */
+export function updateGuideArticle(id: string, payload: GuideArticleInput): Promise<ApiGuideArticle> {
+  return apiFetch(`/guide-articles/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+/** Apaga um artigo do Guia (painel; exige lore.delete). */
+export function deleteGuideArticle(id: string): Promise<void> {
+  return apiFetch(`/guide-articles/${id}`, { method: 'DELETE' });
+}
+
 /** Lista os ranks ninja (aba do Guia). */
 export function listNinjaRanks(): Promise<ApiNinjaRank[]> {
   return apiFetch('/ninja-ranks');

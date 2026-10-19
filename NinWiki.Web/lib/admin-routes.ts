@@ -25,6 +25,8 @@ export const ROUTE_PERMISSIONS: { prefix: string; permission: PermissionName }[]
   { prefix: '/admin/import', permission: 'content.import' },
   { prefix: '/admin/masteries', permission: 'lore.edit' },
   { prefix: '/admin/jutsus', permission: 'lore.edit' },
+  { prefix: '/admin/guides', permission: 'lore.edit' },
+  { prefix: '/admin/professions', permission: 'lore.edit' },
   { prefix: '/admin/villages', permission: 'lore.edit' },
   { prefix: '/admin/organizations', permission: 'lore.edit' },
 ];

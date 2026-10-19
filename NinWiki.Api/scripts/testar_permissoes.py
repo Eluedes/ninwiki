@@ -117,6 +117,7 @@ ROTAS_PUBLICAS = {
     ("GET", "/content-items"), ("GET", "/content-items/{item_id}"), ("GET", "/content-items/slug/{slug}"),
     ("GET", "/attributes"), ("GET", "/masteries"), ("GET", "/masteries/{mastery_id}"),
     ("GET", "/jutsus"), ("GET", "/jutsus/{jutsu_id}"),
+    ("GET", "/guide-articles"), ("GET", "/guide-articles/{article_id}"),   # artigos do Guia (rascunho so' para a equipe)
     ("GET", "/villages"), ("GET", "/villages/{village_id}"), ("GET", "/organizations"),
     ("GET", "/posts"), ("GET", "/posts/{post_id}"), ("GET", "/posts/slug/{slug}"),
     ("GET", "/tags"), ("GET", "/announcement"),   # anuncio da Home: leitura publica; escrever exige announcement.manage
@@ -1662,6 +1663,44 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("publicar o rascunho: a ficha abre para o visitante", r.status_code == 200 and (await c.get(f"/jutsus/{SLUG}-rasc")).status_code == 200, r.text[:160])
     r = await c.delete(f"/jutsus/{SLUG}-rasc", headers=A)
     check("apagar o jutsu de teste (rascunho)", r.status_code == 204, r.text[:120])
+
+    # Artigos do Guia (rascunho so' para a equipe) e edicao de proficiencias (lore.edit / lore.delete)
+    art = {"id": f"{SLUG}-art", "section": "combat", "position": 1, "title": "TESTE Artigo", "titlePt": "TESTE Artigo PT", "summary": "resumo",
+           "summaryPt": "resumo", "body": "", "bodyPt": "", "icon": "book-open", "status": "draft"}
+    r = await c.post("/guide-articles", json=art, headers=C)
+    check("Creator NAO cria artigo do Guia (403)", r.status_code == 403, r.text[:120])
+    r = await c.post("/guide-articles", json=art, headers=A)
+    check("Adm cria artigo do Guia em rascunho (201)", r.status_code == 201 and r.json()["status"] == "draft", r.text[:200])
+    r = await c.post("/guide-articles", json=art, headers=A)
+    check("artigo com id repetido (409)", r.status_code == 409, r.text[:120])
+    r = await c.post("/guide-articles", json={**art, "id": f"{SLUG}-art2", "section": "inexistente"}, headers=A)
+    check("secao inexistente e' recusada (422)", r.status_code == 422, r.text[:120])
+    r = await c.post("/guide-articles", json={**art, "id": f"{SLUG}-art3", "body": '{"type": "script"}'}, headers=A)
+    check("texto rico invalido e' recusado (422)", r.status_code == 422, r.text[:120])
+    c.cookies.clear()   # o visitante precisa ser anonimo de verdade
+    check("rascunho de artigo NAO aparece na lista publica", not any(x["id"] == f"{SLUG}-art" for x in (await c.get("/guide-articles")).json()))
+    check("rascunho de artigo: 404 para o visitante", (await c.get(f"/guide-articles/{SLUG}-art")).status_code == 404)
+    check("rascunho de artigo: a equipe ve na lista", any(x["id"] == f"{SLUG}-art" for x in (await c.get("/guide-articles", headers=A)).json()))
+    check("rascunho de artigo: a equipe abre", (await c.get(f"/guide-articles/{SLUG}-art", headers=A)).status_code == 200)
+    r = await c.put(f"/guide-articles/{SLUG}-art", json={**art, "status": "published", "title": "TESTE Artigo 2"}, headers=A)
+    check("publicar o artigo", r.status_code == 200 and r.json()["title"] == "TESTE Artigo 2", r.text[:160])
+    r = await c.get("/guide-articles", params={"section": "combat"})
+    check("publicado aparece na lista publica, filtrada por secao", any(x["id"] == f"{SLUG}-art" for x in r.json()) and all(x["section"] == "combat" for x in r.json()))
+    r = await c.put(f"/guide-articles/{SLUG}-art", json={**art, "id": "outro"}, headers=A)
+    check("o id do artigo nao muda (400)", r.status_code == 400, r.text[:120])
+    r = await c.delete(f"/guide-articles/{SLUG}-art", headers=C)
+    check("Creator NAO apaga artigo (403)", r.status_code == 403, r.text[:120])
+    r = await c.delete(f"/guide-articles/{SLUG}-art", headers=A)
+    check("Adm apaga o artigo (204)", r.status_code == 204, r.text[:120])
+    prof = {"id": f"{SLUG}-prof", "name": "TESTE Proficiency", "namePt": "TESTE Proficiencia", "group": "crafting", "description": "d", "descriptionPt": "d", "icon": "T"}
+    r = await c.post("/professions", json=prof, headers=C)
+    check("Creator NAO cria proficiencia (403)", r.status_code == 403, r.text[:120])
+    r = await c.post("/professions", json=prof, headers=A)
+    check("Adm cria proficiencia (201)", r.status_code == 201 and r.json()["details"] is None, r.text[:200])
+    r = await c.put(f"/professions/{SLUG}-prof", json={**prof, "name": "TESTE Proficiency 2"}, headers=A)
+    check("Adm edita proficiencia", r.status_code == 200 and r.json()["name"] == "TESTE Proficiency 2", r.text[:160])
+    r = await c.delete(f"/professions/{SLUG}-prof", headers=A)
+    check("Adm apaga proficiencia (204)", r.status_code == 204, r.text[:120])
 
     # ataques do mob ligados a um jutsu do catalogo
     jf = (await c.get(f"/jutsus/{SLUG}-jf")).json()

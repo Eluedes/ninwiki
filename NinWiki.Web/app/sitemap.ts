@@ -1,6 +1,6 @@
 // sitemap.xml do site: paginas fixas + todos os posts do blog que ja' estao no ar (os agendados/rascunhos nao entram).
 import type { MetadataRoute } from 'next';
-import { listPosts } from '@/lib/api-client';
+import { listGuideArticles, listPosts } from '@/lib/api-client';
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
@@ -8,8 +8,12 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').repla
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const fixed: MetadataRoute.Sitemap = ['', '/blog', '/masteries', '/jutsus', '/village', '/proficiencies'].map((path) => ({ url: `${SITE}${path}` }));
   try {
-    const posts = await listPosts('published');
-    return [...fixed, ...posts.map((p) => ({ url: `${SITE}/blog/${p.slug}`, lastModified: p.updatedAt }))];
+    const [posts, articles] = await Promise.all([listPosts('published'), listGuideArticles()]);   // a API ja' entrega so' os artigos publicados ao visitante
+    return [
+      ...fixed,
+      ...posts.map((p) => ({ url: `${SITE}/blog/${p.slug}`, lastModified: p.updatedAt })),
+      ...articles.map((a) => ({ url: `${SITE}/guide/${a.id}` })),
+    ];
   } catch {
     return fixed;
   }

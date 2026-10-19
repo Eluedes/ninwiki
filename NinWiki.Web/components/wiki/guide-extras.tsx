@@ -11,41 +11,25 @@
 
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, ScrollText, Sparkle, Hammer } from 'lucide-react';
-import type { ApiAttribute, ApiProfession, ApiStoryArc, ApiSummon } from '@/lib/api-client';
+import { Sparkles, ScrollText, Sparkle } from 'lucide-react';
+import type { ApiAttribute, ApiStoryArc, ApiSummon } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { alternateName, localizedName, localizedText } from '@/lib/localized';
 
 interface GuideExtrasProps {
   attributes: ApiAttribute[];
-  professions: ApiProfession[];
   storyArcs: ApiStoryArc[];
   summons: ApiSummon[];
 }
 
 /** Abas extras do Guia: atributos, profissoes, arcos e summons (os ranks ninja saíram do Guia). */
-export function GuideExtras({ attributes, professions, storyArcs, summons }: GuideExtrasProps) {
+export function GuideExtras({ attributes, storyArcs, summons }: GuideExtrasProps) {
   const { locale, dict } = useLanguage();
   const t = dict.lore;
 
   return (
     <div className="mt-10 rounded-xl border border-border bg-card p-5 shadow-sm">
       <h2 className="mb-4 text-lg font-bold tracking-tight">{t.guideMore}</h2>
-      {/* Atalho para a secao Proficiencias (coleta e criacao), que saiu das abas do Guia */}
-      <div className="mb-5 rounded-lg border border-border bg-secondary/30 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="flex items-center gap-2 text-sm font-semibold text-card-foreground"><Hammer className="h-4 w-4 text-primary" /> {dict.nav.proficiencies}</p>
-          <Link href="/proficiencies" className="text-xs font-medium text-primary hover:underline">{t.profSeeAll} →</Link>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">{t.profGuideBannerText}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {professions.map((p) => (
-            <Link key={p.id} href={`/proficiencies/${p.id}`} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-card-foreground transition-colors hover:border-primary/50 hover:text-primary">
-              <span>{p.icon}</span>{localizedName(locale, p.name, p.namePt)}
-            </Link>
-          ))}
-        </div>
-      </div>
       <Tabs defaultValue="attributes">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="attributes">{t.guideAttributes}</TabsTrigger>
