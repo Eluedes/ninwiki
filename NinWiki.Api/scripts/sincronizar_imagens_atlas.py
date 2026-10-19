@@ -2,12 +2,13 @@
 Arruma o banco de imagens usando a lista de itens do Nin Atlas (https://nin-atlas.vercel.app) e as imagens do proprio cliente do jogo.
 
 O QUE FAZ (nesta ordem):
-  1. CATEGORIZA as imagens `N_item` / `N_fundo` (o N e' o ID do item no jogo, igual ao do Atlas) que ainda estao SEM categoria:
-       item do Atlas  -> categoria pelo tipo (Weapon=weapon, roupas e acessorios=gear, Ring=ring, Consumable e Cast=consumable, Currency=material (so' Ryo/Token/Coin/Coupon = currency),
+  1. CATEGORIZA as imagens `N_item` / `N_fundo` (o N e' o numero do ICONE no cliente do jogo; NAO e' o ID do item no Atlas: a ligacao e' feita comparando as imagens,
+     ver scripts/atlas_icones.py) que ainda estao SEM categoria:
+       icone de item do Atlas  -> categoria pelo tipo do item (Weapon=weapon, roupas e acessorios=gear, Ring=ring, Consumable e Cast=consumable, Currency=material (so' Ryo/Token/Coin/Coupon = currency),
                          Manual/Scroll=scroll, Furniture=furniture, Cast/Pack/Rod/Recipe/Authority/outros=other)
-       NAO esta' no Atlas -> `closed` (so' S.Adm ve)
+       icone que nenhum item do Atlas usa -> `closed` (so' S.Adm ve)
      Imagem que ja tem categoria NUNCA e' mexida (o trabalho manual fica), e nomes fora do padrao (Fire, Earth...) tambem nao.
-  2. COMPLETA o que falta: item do Atlas que nao tem imagem no banco e tem `{id}.znin` na pasta do cliente vira `N_item` + `N_fundo`
+  2. COMPLETA o que falta: icone de item do Atlas que nao tem imagem no banco e tem `{icone}.znin` na pasta do cliente vira `N_item` + `N_fundo`
      (o arquivo do jogo e' um PNG comprimido com LZ4 (scripts/decodificar_znin.py), com o icone sem fundo na metade esquerda e com fundo na direita - igual ao fatiar.py).
 
 SEGURANCA: por padrao e' SIMULACAO (so' conta e mostra exemplos). So' grava com --aplicar. Faca um backup antes de rodar na producao.
@@ -38,10 +39,10 @@ from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.media import MediaImage
 from scripts._guarda_banco import exigir_banco_local
+from scripts.atlas_icones import CLIENTE_PADRAO, itens_por_icone, mapa_icones
 from scripts.decodificar_znin import decodificar
 
 ATLAS_URL = "https://nin-atlas.vercel.app/data/atlas.js"
-CLIENTE_PADRAO = r"E:\Nin Online - Wiki\data files\graphics\items"
 USUARIO = "Atlas"   # aparece em "enviado por" nas imagens que este script cria
 NOME_IMAGEM = re.compile(r"^(\d+)_(item|fundo)$")
 
@@ -79,6 +80,14 @@ def categoria_do_item(atlas: dict, item_id: str) -> str:
     return CATEGORIA_POR_TIPO.get(tipo, "other")
 
 
+def categoria_do_icone(atlas: dict, por_icone: dict[str, list[str]], icone: str) -> str:
+    """Categoria de um icone do cliente pelo(s) item(ns) do Atlas que o usam (varios itens podem dividir um icone: vale a categoria mais comum). `closed` se nenhum item usa."""
+    itens = por_icone.get(icone)
+    if not itens:
+        return "closed"
+    return Counter(categoria_do_item(atlas, i) for i in itens).most_common(1)[0][0]
+
+
 def ler_znin(caminho: Path) -> Image.Image | None:
     """Abre um .znin do cliente (PNG comprimido com LZ4; ver scripts/decodificar_znin.py). None se o arquivo estiver corrompido."""
     try:
@@ -113,13 +122,15 @@ async def main() -> None:
     ap.add_argument("--corrigir-divergentes", action="store_true",
                     help="tambem corrige as que JA tem categoria mas contradizem o tipo do Atlas (ex.: anel em furniture); `closed` nunca e' mexida")
     ap.add_argument("--atlas", help="arquivo atlas.js local, em vez de baixar")
-    ap.add_argument("--cliente", default=CLIENTE_PADRAO, help="pasta graphics/items do cliente do jogo")
+    ap.add_argument("--cliente", default=CLIENTE_PADRAO, help="pasta graphics/items do cliente do jogo (padrao: %(default)s)")
     args = ap.parse_args()
 
     if not args.permitir_remoto:
         exigir_banco_local(settings.database_url)
     atlas = carregar_atlas(args.atlas)
-    print(f"Atlas: {len(atlas['items'])} itens. Modo: {'GRAVAR' if args.aplicar else 'simulacao (nada e gravado)'}")
+    mapa = mapa_icones(atlas, Path(args.cliente))
+    por_icone = itens_por_icone(mapa)
+    print(f"Atlas: {len(atlas['items'])} itens ({len(mapa)} ligados a um icone do cliente). Modo: {'GRAVAR' if args.aplicar else 'simulacao (nada e gravado)'}")
 
     async with AsyncSessionLocal() as db:
         imagens = (await db.execute(select(MediaImage))).scalars().all()
@@ -134,7 +145,7 @@ async def main() -> None:
                 ignoradas += 1
                 continue
             if m.category:
-                esperado = categoria_do_item(atlas, achou.group(1))
+                esperado = categoria_do_icone(atlas, por_icone, achou.group(1))
                 # categoria do usuario que contradiz o tipo do Atlas (so' com --corrigir-divergentes; `closed` e fora-do-Atlas ficam)
                 if args.corrigir_divergentes and m.category != "closed" and esperado != "closed" and m.category != esperado:
                     corrigidas[f"{m.category} -> {esperado}"] += 1
@@ -143,7 +154,7 @@ async def main() -> None:
                 else:
                     com_categoria += 1
                 continue
-            cat = categoria_do_item(atlas, achou.group(1))
+            cat = categoria_do_icone(atlas, por_icone, achou.group(1))
             por_categoria[cat] += 1
             if args.aplicar:
                 m.category = cat
@@ -158,7 +169,8 @@ async def main() -> None:
 
         # 2) completar o que falta
         existentes = {m.name for m in imagens}
-        faltando = sorted((i for i in atlas["items"] if f"{i}_item" not in existentes), key=int)
+        icones_do_atlas = sorted({icones[0] for icones in mapa.values()}, key=int)   # 1 icone por item (o primeiro, quando a arte se repete no cliente)
+        faltando = [i for i in icones_do_atlas if f"{i}_item" not in existentes]
         pasta = Path(args.cliente)
         criar: list[tuple[str, str, Image.Image, Image.Image]] = []
         sem_arquivo = []
@@ -168,8 +180,8 @@ async def main() -> None:
                 sem_arquivo.append(item_id)
                 continue
             esquerda, direita = metades(img)
-            criar.append((item_id, categoria_do_item(atlas, item_id), esquerda, direita))
-        print(f"\n2) Completar: {len(faltando)} itens do Atlas sem imagem no banco -> {len(criar)} com arquivo no cliente "
+            criar.append((item_id, categoria_do_icone(atlas, por_icone, item_id), esquerda, direita))
+        print(f"\n2) Completar: {len(faltando)} icones de itens do Atlas sem imagem no banco -> {len(criar)} com arquivo no cliente "
               f"({len(sem_arquivo)} sem arquivo em '{pasta}')")
         if criar:
             print("     exemplos:", ", ".join(f"{i}[{c}]" for i, c, _, _ in criar[:8]))

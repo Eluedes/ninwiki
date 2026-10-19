@@ -1,7 +1,8 @@
 """
 Importa os ITENS do Nin Atlas (https://nin-atlas.vercel.app) para o wiki, como RASCUNHO, ligando a imagem do banco de imagens (`N_item`) e os drops soltos dos mobs.
 
-O QUE FAZ, por item do Atlas (o ID do Atlas e' o mesmo ID da imagem `N_item` no banco de imagens):
+O QUE FAZ, por item do Atlas (a imagem vem do ICONE do cliente que o item usa: o ID do item no Atlas NAO e' o numero do icone; a ligacao e' feita comparando as
+imagens, ver scripts/atlas_icones.py; no banco de imagens o icone e' a imagem `N_item`):
   - Se o wiki JA tem um item/arma com esse nome (sem diferenciar maiusculas): so' PREENCHE o que esta' vazio (tipo, nivel, descricao, imagem, stack e,
     nas armas, dano base e requisito de Strength). Raridade so' muda em RASCUNHO que ainda esta' em Common. O que ja tem valor NUNCA e' trocado.
   - Se NAO tem: cria em RASCUNHO, em ingles (o portugues vem pelo importador de traducoes oficiais, /admin/translations).
@@ -14,6 +15,8 @@ NAO importa (fica para voce): bonus de atributo (+Fortitude etc.), vida/chakra/c
 
 NADA e' publicado, a menos que use --publicar (publica so' as paginas que o Atlas cobre, nunca os outros rascunhos). Por padrao e' SIMULACAO; grava com --aplicar. Recusa banco que nao seja local, a menos que use --permitir-remoto (faca um backup antes).
 Rode ANTES o `sincronizar_imagens_atlas.py` (para existir a imagem de cada item).
+--corrigir-imagens: troca a imagem das paginas que foram ligadas pelo ID do Atlas (erro das primeiras versoes deste script) pela imagem do icone certo; imagem que
+voce colocou na mao NUNCA e' trocada (so' a que for exatamente a ligada errada).
 
 Uso (pasta NinWiki.Api, venv ativado, `$env:PYTHONPATH="."`):
     python scripts/importar_itens_atlas.py                 # simulacao
@@ -24,6 +27,7 @@ import argparse
 import asyncio
 import json
 import sys
+from pathlib import Path
 
 from sqlalchemy import select
 
@@ -36,6 +40,7 @@ from app.models.enums import ContentCategory, ContentStatus, ItemType, Rarity
 from app.models.media import MediaImage
 from scripts._guarda_banco import exigir_banco_local
 from scripts.importar_mobs_atlas import RARIDADE_ATLAS
+from scripts.atlas_icones import CLIENTE_PADRAO, mapa_icones
 from scripts.sincronizar_imagens_atlas import carregar_atlas
 
 # Tipo do Atlas -> tipo do item no wiki. O que nao esta' aqui vira `general`. (Weapon vira categoria Weapons, sem item_type.)
@@ -91,12 +96,15 @@ async def main() -> None:
     ap.add_argument("--aplicar", action="store_true", help="grava no banco (sem isso e' so' simulacao)")
     ap.add_argument("--permitir-remoto", action="store_true", help="deixa rodar contra um banco que nao e' local (producao)")
     ap.add_argument("--publicar", action="store_true", help="publica (status published) as paginas de item/arma que o Atlas cobre")
+    ap.add_argument("--corrigir-imagens", action="store_true", help="troca as imagens ligadas pelo ID do Atlas (erradas) pela do icone certo")
+    ap.add_argument("--cliente", default=CLIENTE_PADRAO, help="pasta graphics/items do cliente do jogo (padrao: %(default)s)")
     ap.add_argument("--atlas", help="arquivo atlas.js local, em vez de baixar")
     args = ap.parse_args()
 
     if not args.permitir_remoto:
         exigir_banco_local(settings.database_url)
     atlas = carregar_atlas(args.atlas)
+    mapa = mapa_icones(atlas, Path(args.cliente))   # id do item no Atlas -> icone(s) do cliente
     print(f"Atlas: {len(atlas['items'])} itens. Modo: {'GRAVAR' if args.aplicar else 'simulacao (nada e gravado)'}")
 
     async with AsyncSessionLocal() as db:
@@ -129,7 +137,9 @@ async def main() -> None:
             item_type = None if eh_arma else TIPO_ITEM.get(tipo, ItemType.GENERAL)
             raridade = RARIDADE_ATLAS.get(str(it.get("rarity")), Rarity.COMMON)
             texto = descricao(it)
-            arq = imagens.get(f"{item_id}_item")
+            icone = mapa[item_id][0] if item_id in mapa else None
+            arq = imagens.get(f"{icone}_item") if icone else None
+            arq_errado = imagens.get(f"{item_id}_item")   # o que as primeiras versoes ligavam (ID do Atlas usado como numero de icone)
             url = media_url(arq) if arq else None
             if url is None:
                 sem_imagem += 1
@@ -168,7 +178,9 @@ async def main() -> None:
                 preencher(alvo, "level", it["lvl"])
             if texto and not texto_do_doc(alvo.description):
                 preencher(alvo, "description", doc_simples(texto))
-            if url and not alvo.image:
+            if args.corrigir_imagens and alvo.image and arq_errado and alvo.image == media_url(arq_errado) and arq_errado != arq:
+                preencher(alvo, "image", url)   # ligada errada: troca pela certa (ou limpa, se o icone certo ainda nao esta' no banco)
+            elif url and not alvo.image:
                 preencher(alvo, "image", url)
             if stack and alvo.max_stack is None:
                 preencher(alvo, "max_stack", stack)
