@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import io
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -81,6 +82,57 @@ def mapa_icones(atlas: dict, pasta_cliente: Path, atualizar: bool = False) -> di
         CACHE.parent.mkdir(exist_ok=True)
         CACHE.write_text(json.dumps(cache), encoding="utf-8")
     return {i: cache["mapa"][i] for i in atlas["items"] if i in cache["mapa"]}
+
+
+def _indice_metades(pasta: Path) -> dict[str, list[tuple[str, str]]]:
+    """{assinatura: [(id do icone, 'item' | 'fundo')]} para as DUAS metades de cada icone do cliente (esquerda = item sem fundo, direita = com fundo)."""
+    indice: dict[str, list[tuple[str, str]]] = {}
+    for arquivo in sorted((p for p in pasta.glob("*.znin") if p.stem.isdigit()), key=lambda p: int(p.stem)):
+        try:
+            img = Image.open(io.BytesIO(decodificar(arquivo.read_bytes()))).convert("RGBA")
+        except (ValueError, OSError):
+            continue
+        meio = img.width // 2
+        indice.setdefault(_hash(img.crop((0, 0, meio, img.height))), []).append((arquivo.stem, "item"))
+        indice.setdefault(_hash(img.crop((meio, 0, img.width, img.height))), []).append((arquivo.stem, "fundo"))
+    return indice
+
+
+def identificar_imagens(imagens: list, pasta_uploads: Path, pasta_cliente: Path) -> dict[int, tuple[str, str]]:
+    """
+    {id da imagem no banco: (id do icone, 'item' | 'fundo')} para as imagens cujos PIXELS sao iguais a uma metade de icone do cliente.
+    Reconhece pelo CONTEUDO, entao funciona mesmo se a imagem foi renomeada (ex.: `Sukarabe Omo Fan` em vez de `2375_item`).
+    Quando a mesma arte se repete em varios icones do cliente, vale o numero do proprio nome (`N_item`), se tiver; senao o menor.
+    """
+    indice = _indice_metades(Path(pasta_cliente))
+    achadas: dict[int, tuple[str, str]] = {}
+    for m in imagens:
+        try:
+            candidatos = indice.get(_hash(Image.open(pasta_uploads / m.filename)))
+        except (OSError, ValueError):
+            continue
+        if not candidatos:
+            continue
+        nome = re.match(r"^(\d+)_(item|fundo)$", m.name or "")
+        preferidos = [c for c in candidatos if nome and c == (nome.group(1), nome.group(2))]
+        achadas[m.id] = (preferidos or candidatos)[0]
+    return achadas
+
+
+def arquivo_do_icone(imagens: list, identificadas: dict[int, tuple[str, str]], tipo: str = "item") -> dict[str, str]:
+    """{id do icone: arquivo da imagem `tipo` no banco} (se houver copias, vale a mais antiga). Usa o conteudo e, para o que nao casou, o nome `N_item` / `N_fundo`."""
+    resultado: dict[str, str] = {}
+    for m in sorted(imagens, key=lambda x: x.id):
+        icone = None
+        if m.id in identificadas and identificadas[m.id][1] == tipo:
+            icone = identificadas[m.id][0]
+        else:
+            nome = re.match(r"^(\d+)_(item|fundo)$", m.name or "")
+            if nome and nome.group(2) == tipo and m.id not in identificadas:
+                icone = nome.group(1)
+        if icone is not None:
+            resultado.setdefault(icone, m.filename)
+    return resultado
 
 
 def itens_por_icone(mapa: dict[str, list[str]]) -> dict[str, list[str]]:

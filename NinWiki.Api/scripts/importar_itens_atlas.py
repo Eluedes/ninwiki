@@ -34,13 +34,14 @@ from sqlalchemy import select
 from app.api.content_items import _DEFAULT_ICON_BY_CATEGORY, _slugify
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
+from app.api.uploads import UPLOAD_DIR
 from app.core.media_refs import media_url
 from app.models.content import ContentItem, ContentItemDrop
 from app.models.enums import ContentCategory, ContentStatus, ItemType, Rarity
 from app.models.media import MediaImage
 from scripts._guarda_banco import exigir_banco_local
 from scripts.importar_mobs_atlas import RARIDADE_ATLAS
-from scripts.atlas_icones import CLIENTE_PADRAO, mapa_icones
+from scripts.atlas_icones import CLIENTE_PADRAO, arquivo_do_icone, identificar_imagens, mapa_icones
 from scripts.sincronizar_imagens_atlas import carregar_atlas
 
 # Tipo do Atlas -> tipo do item no wiki. O que nao esta' aqui vira `general`. (Weapon vira categoria Weapons, sem item_type.)
@@ -111,7 +112,9 @@ async def main() -> None:
         todos = (await db.execute(select(ContentItem))).scalars().all()
         paginas = {c.name.lower(): c for c in todos if c.category in (ContentCategory.ITEMS, ContentCategory.WEAPONS)}
         slugs = {c.slug for c in todos}
-        imagens = {m.name: m.filename for m in (await db.execute(select(MediaImage).where(MediaImage.name.like("%\\_item", escape="\\")))).scalars().all()}
+        todas_imagens = (await db.execute(select(MediaImage))).scalars().all()
+        # imagem de cada icone, reconhecida pelo CONTEUDO (funciona mesmo se voce renomeou a imagem, ex.: "Sukarabe Omo Fan")
+        imagem_do_icone = arquivo_do_icone(todas_imagens, identificar_imagens(todas_imagens, UPLOAD_DIR, Path(args.cliente)))
 
         vistos: set[str] = set()
         novos = atualizados = campos = armas_movidas = sem_imagem = repetidos = publicados = 0
@@ -138,8 +141,8 @@ async def main() -> None:
             raridade = RARIDADE_ATLAS.get(str(it.get("rarity")), Rarity.COMMON)
             texto = descricao(it)
             icone = mapa[item_id][0] if item_id in mapa else None
-            arq = imagens.get(f"{icone}_item") if icone else None
-            arq_errado = imagens.get(f"{item_id}_item")   # o que as primeiras versoes ligavam (ID do Atlas usado como numero de icone)
+            arq = imagem_do_icone.get(icone) if icone else None
+            arq_errado = imagem_do_icone.get(item_id)   # o que as primeiras versoes ligavam (ID do Atlas usado como numero de icone)
             url = media_url(arq) if arq else None
             if url is None:
                 sem_imagem += 1

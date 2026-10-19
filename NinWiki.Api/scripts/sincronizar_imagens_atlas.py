@@ -39,7 +39,7 @@ from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.media import MediaImage
 from scripts._guarda_banco import exigir_banco_local
-from scripts.atlas_icones import CLIENTE_PADRAO, itens_por_icone, mapa_icones
+from scripts.atlas_icones import CLIENTE_PADRAO, arquivo_do_icone, identificar_imagens, itens_por_icone, mapa_icones
 from scripts.decodificar_znin import decodificar
 
 ATLAS_URL = "https://nin-atlas.vercel.app/data/atlas.js"
@@ -134,6 +134,7 @@ async def main() -> None:
 
     async with AsyncSessionLocal() as db:
         imagens = (await db.execute(select(MediaImage))).scalars().all()
+        identificadas = identificar_imagens(imagens, UPLOAD_DIR, Path(args.cliente))   # (icone, item|fundo) pelo CONTEUDO: vale mesmo se a imagem foi renomeada
 
         # 1) categorizar o que esta' sem categoria
         por_categoria: Counter = Counter()
@@ -141,11 +142,12 @@ async def main() -> None:
         ignoradas = com_categoria = 0
         for m in imagens:
             achou = NOME_IMAGEM.match(m.name or "")
-            if not achou:
+            icone = identificadas[m.id][0] if m.id in identificadas else (achou.group(1) if achou else None)
+            if icone is None:
                 ignoradas += 1
                 continue
             if m.category:
-                esperado = categoria_do_icone(atlas, por_icone, achou.group(1))
+                esperado = categoria_do_icone(atlas, por_icone, icone)
                 # categoria do usuario que contradiz o tipo do Atlas (so' com --corrigir-divergentes; `closed` e fora-do-Atlas ficam)
                 if args.corrigir_divergentes and m.category != "closed" and esperado != "closed" and m.category != esperado:
                     corrigidas[f"{m.category} -> {esperado}"] += 1
@@ -154,7 +156,7 @@ async def main() -> None:
                 else:
                     com_categoria += 1
                 continue
-            cat = categoria_do_icone(atlas, por_icone, achou.group(1))
+            cat = categoria_do_icone(atlas, por_icone, icone)
             por_categoria[cat] += 1
             if args.aplicar:
                 m.category = cat
@@ -168,9 +170,9 @@ async def main() -> None:
                 print(f"     {troca:<24} {n}")
 
         # 2) completar o que falta
-        existentes = {m.name for m in imagens}
+        cobertos = set(arquivo_do_icone(imagens, identificadas))   # icones que ja tem imagem no banco (pelo conteudo ou pelo nome N_item)
         icones_do_atlas = sorted({icones[0] for icones in mapa.values()}, key=int)   # 1 icone por item (o primeiro, quando a arte se repete no cliente)
-        faltando = [i for i in icones_do_atlas if f"{i}_item" not in existentes]
+        faltando = [i for i in icones_do_atlas if i not in cobertos]
         pasta = Path(args.cliente)
         criar: list[tuple[str, str, Image.Image, Image.Image]] = []
         sem_arquivo = []
