@@ -41,7 +41,9 @@ from urllib.parse import urlsplit, urlunsplit
 ROOT = Path(__file__).resolve().parent.parent
 BACKUPS = ROOT / "backups"
 CONTAINER = "ninwiki-postgres"   # nome definido no docker-compose.yml
-IMAGE = "postgres:16-alpine"     # mesma versao do docker-compose.yml
+# Imagem usada para falar com o banco REMOTO (SquareCloud): o pg_dump precisa ser da MESMA versao do servidor ou mais novo (o banco da SquareCloud e' o
+# PostgreSQL 17; com o pg_dump 16 do container local ele recusa: "server version mismatch"). O banco LOCAL continua no container do docker-compose (16).
+IMAGE = "postgres:17-alpine"
 
 
 def ler_env() -> dict[str, str]:
@@ -185,7 +187,7 @@ def importar(args: argparse.Namespace) -> None:
         r = subprocess.run(["docker", "run", "--rm", "-v", f"{arquivo.parent}:/backup:ro", *extra, IMAGE, "sh", "-c",
                             f"{prefixo}pg_restore {' '.join(opcoes)} -d \"$0\" /backup/{arquivo.name}", url])
     if r.returncode != 0:
-        sys.exit("A importacao falhou (veja a mensagem acima). Causas comuns: URL/senha errada, banco exige ?sslmode=require, versao do Postgres do destino menor que 16.")
+        sys.exit(f"A importacao falhou (veja a mensagem acima). Causas comuns: URL/senha errada, banco exige ?sslmode=require, versao do Postgres do destino MAIOR que a da imagem {IMAGE} (ajuste IMAGE no topo do script).")
     print("Importado! Agora (re)inicie o app da API na SquareCloud.")
 
 
