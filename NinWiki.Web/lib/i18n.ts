@@ -250,7 +250,7 @@ export interface Dictionary {
       back: string; editTitle: string; newTitle: string; loading: string; loadError: string; saveError: string; save: string;
       name: string; englishName: string; idSlug: string; idSlugLocked: string; idPlaceholder: string;
       mastery: string; masteryUtility: string; path: string; pathNone: string;
-      status: string; statusPublished: string; statusDraft: string;
+      status: string; statusPublished: string; statusDraft: string; saveDraft: string; publish: string;
       tier: string; chakraCost: string; icon: string;
       range: string; rangePlaceholder: string; castTime: string; castTimePlaceholder: string;
       cooldown: string; cooldownPlaceholder: string; effect: string; effectPlaceholder: string;
@@ -983,7 +983,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         path: 'Caminho (opcional)',
         pathNone: 'Nenhum',
         masteryUtility: 'Utility (sem mastery — qualquer pessoa pode usar)',
-        status: 'Situação', statusPublished: 'Publicado (aparece no site)', statusDraft: 'Rascunho (só a equipe vê)',
+        status: 'Situação', statusPublished: 'Publicado (aparece no site)', statusDraft: 'Rascunho (só a equipe vê)', saveDraft: 'Salvar rascunho', publish: 'Publicar',
         tier: 'Tier (1-5)',
         chakraCost: 'Custo de chakra',
         icon: 'Ícone',
@@ -1764,7 +1764,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         path: 'Path (optional)',
         pathNone: 'None',
         masteryUtility: 'Utility (no mastery — anyone can use it)',
-        status: 'Status', statusPublished: 'Published (shown on the site)', statusDraft: 'Draft (staff only)',
+        status: 'Status', statusPublished: 'Published (shown on the site)', statusDraft: 'Draft (staff only)', saveDraft: 'Save draft', publish: 'Publish',
         tier: 'Tier (1-5)',
         chakraCost: 'Chakra cost',
         icon: 'Icon',
