@@ -109,3 +109,6 @@ NinWiki.Api/geoip/
 *.pem
 *.key
 NinWiki.Api/**/client.*
+
+# Logs locais (ex.: restore.log tem SQL com Discord IDs e nomes da equipe): nunca vao para o Git nem para a producao.
+*.log
