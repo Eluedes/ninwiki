@@ -48,6 +48,7 @@ export default function MediaPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const { state: up, upload } = useMediaUpload();
   const manage = can('media.manage');
+  const canCategorize = manage || can('media.categorize');   // mudar categoria (uma, em lote ou ao enviar): media.manage OU media.categorize
   const canUpload = can('media.upload');
   const canResetIds = can('media.reset_ids');
   // 'closed' e' privada: so' quem tem media.closed (S.Adm) ve o botao e a opcao; os outros nem sabem que existe
@@ -154,7 +155,7 @@ export default function MediaPage() {
   /** Clique no cartao inteiro (nao so' na caixinha) marca/desmarca; Shift+clique marca o intervalo desde o ultimo clique. */
   const ultimoClicado = useRef<number | null>(null);
   function aoClicarNoCartao(e: React.MouseEvent, posicao: number) {
-    if (!manage || ignoreRowClick(e.target)) return;
+    if (!canCategorize || ignoreRowClick(e.target)) return;
     if (e.shiftKey && ultimoClicado.current !== null && ultimoClicado.current < items.length) {
       const marcar = !selected.has(items[posicao].id);
       const ids = rangeBetween(ultimoClicado.current, posicao).map((i) => items[i].id);
@@ -284,7 +285,7 @@ export default function MediaPage() {
         </div>
         {canUpload && (
           <>
-            {manage && <select value={uploadCat} onChange={(e) => setUploadCat(e.target.value)} aria-label={t.newUploadCategory} title={t.newUploadCategory}
+            {canCategorize && <select value={uploadCat} onChange={(e) => setUploadCat(e.target.value)} aria-label={t.newUploadCategory} title={t.newUploadCategory}
               className="h-10 rounded-md border border-input bg-background px-2 text-sm">
               <option value="">{t.newUploadCategory}: {t.uncategorized}</option>
               {categories.map((c) => <option key={c} value={c}>{t.newUploadCategory}: {t.categories[c]}</option>)}
@@ -349,9 +350,9 @@ export default function MediaPage() {
       {info && <p className="text-sm text-emerald-400">{info}</p>}
 
       {/* Barra FIXA (acompanha o scroll, logo abaixo do cabecalho do painel): selecao em massa (so' quem pode apagar) + botoes de pagina */}
-      {(manage || paginacao) && (
+      {(canCategorize || paginacao) && (
         <div className="sticky top-16 z-30 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background/95 px-3 py-2 text-sm shadow-sm backdrop-blur">
-          {manage && (
+          {canCategorize && (
             <>
           <button type="button" className="text-primary hover:underline" onClick={() => setSelected(new Set(items.map((m) => m.id)))}>{t.selectAll}</button>
           {selected.size > 0 && (
@@ -364,9 +365,11 @@ export default function MediaPage() {
                 <option value="none">{t.uncategorized}</option>
               </select>
               <Button size="sm" variant="outline" disabled={busy === 'bulk' || bulkCat === ''} onClick={handleBulkCategory}>{t.applyCategory}</Button>
-              <Button size="sm" variant="destructive" disabled={busy === 'bulk'} onClick={handleBulkDelete}>
-                {busy === 'bulk' ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1.5 h-4 w-4" />}{t.deleteSelected}
-              </Button>
+              {manage && (
+                <Button size="sm" variant="destructive" disabled={busy === 'bulk'} onClick={handleBulkDelete}>
+                  {busy === 'bulk' ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1.5 h-4 w-4" />}{t.deleteSelected}
+                </Button>
+              )}
             </>
           )}
             </>
@@ -378,8 +381,8 @@ export default function MediaPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {items.map((m, posicao) => (
-          <div key={m.id} onClick={(e) => aoClicarNoCartao(e, posicao)} className={`relative overflow-hidden rounded-xl border bg-card shadow-sm ${manage ? 'cursor-pointer select-none' : ''} ${selected.has(m.id) ? 'border-primary ring-2 ring-primary/40' : 'border-border'}`}>
-            {manage && (
+          <div key={m.id} onClick={(e) => aoClicarNoCartao(e, posicao)} className={`relative overflow-hidden rounded-xl border bg-card shadow-sm ${canCategorize ? 'cursor-pointer select-none' : ''} ${selected.has(m.id) ? 'border-primary ring-2 ring-primary/40' : 'border-border'}`}>
+            {canCategorize && (
               <input
                 type="checkbox" checked={selected.has(m.id)} onChange={() => toggle(m.id)} aria-label={`${t.select} #${m.id}`}
                 className="absolute left-2 top-2 z-10 h-5 w-5 cursor-pointer accent-[hsl(var(--primary))]"
@@ -395,7 +398,7 @@ export default function MediaPage() {
                 <span className="text-[11px] text-muted-foreground">{m.width}×{m.height} · {Math.max(1, Math.round(m.bytes / 1024))} KB</span>
               </div>
               <p className="truncate text-xs text-card-foreground" title={m.name}>{m.name || <span className="text-muted-foreground">{t.unnamed}</span>}</p>
-              {manage ? (
+              {canCategorize ? (
                 <select value={m.category} onChange={(e) => void handleSetCategory(m, e.target.value)} aria-label={t.categoryOf}
                   className="h-7 w-full rounded border border-input bg-background px-1 text-[11px] text-muted-foreground">
                   <option value="">{t.uncategorized}</option>

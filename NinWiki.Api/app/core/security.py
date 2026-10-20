@@ -46,6 +46,17 @@ def create_session_token(user: User) -> str:
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
+# Validade do passe de manutencao: depois disso a equipe passa de novo pela pagina de manutencao (rapido, ja' esta' logada).
+MAINTENANCE_PASS_HOURS = 12
+
+
+def create_maintenance_pass(user: User) -> str:
+    """Passe (JWT typ="maintenance") que deixa um membro da equipe navegar no site durante a manutencao; nao serve como sessao do painel."""
+    now = datetime.now(timezone.utc)
+    payload = {"sub": str(user.id), "typ": "maintenance", "ver": user.token_version, "iat": now, "exp": now + timedelta(hours=MAINTENANCE_PASS_HOURS)}
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
 def create_reader_token(reader_id: str) -> str:
     """JWT da sessao de um LEITOR (typ="reader"): nao serve como sessao da equipe e vice-versa."""
     now = datetime.now(timezone.utc)

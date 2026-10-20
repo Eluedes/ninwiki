@@ -54,6 +54,7 @@ from app.api.notices import router as notices_router
 from app.api.roles import router as roles_router
 from app.api.posts import router as posts_router
 from app.api.search import router as search_router
+from app.api.site import router as site_router
 from app.api.staff import router as staff_router
 from app.api.tags import router as tags_router
 from app.api.uploads import router as uploads_router
@@ -180,6 +181,7 @@ app.include_router(notices_router)
 app.include_router(errors_router)
 app.include_router(client_errors_router)
 app.include_router(reports_router)
+app.include_router(site_router)
 app.include_router(translations_router)
 
 # Serve os arquivos da pasta uploads/ diretamente (ex: uma imagem salva

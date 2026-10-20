@@ -31,7 +31,7 @@ from app.core.rate_limit import client_key, limiter, retry_message
 log = logging.getLogger("ninwiki.errors")
 
 # Rotas cujas respostas nunca devem ficar em cache (sessao, equipe, permissoes, avisos, log, bot).
-_NO_STORE_PREFIXES = ("/auth", "/staff", "/roles", "/notices", "/audit-log", "/bot")
+_NO_STORE_PREFIXES = ("/auth", "/staff", "/roles", "/notices", "/audit-log", "/bot", "/site")
 _READ_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 

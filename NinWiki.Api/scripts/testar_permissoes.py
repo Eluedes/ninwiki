@@ -117,6 +117,7 @@ ROTAS_PUBLICAS = {
     ("GET", "/content-items"), ("GET", "/content-items/{item_id}"), ("GET", "/content-items/slug/{slug}"),
     ("GET", "/attributes"), ("GET", "/masteries"), ("GET", "/masteries/{mastery_id}"),
     ("GET", "/jutsus"), ("GET", "/jutsus/{jutsu_id}"),
+    ("GET", "/site/status"),   # o site pergunta se esta' em manutencao (liga/desliga so' o S.Adm)
     ("GET", "/guide-articles"), ("GET", "/guide-articles/{article_id}"),   # artigos do Guia (rascunho so' para a equipe)
     ("GET", "/villages"), ("GET", "/villages/{village_id}"), ("GET", "/organizations"),
     ("GET", "/posts"), ("GET", "/posts/{post_id}"), ("GET", "/posts/slug/{slug}"),
@@ -1702,6 +1703,35 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.delete(f"/professions/{SLUG}-prof", headers=A)
     check("Adm apaga proficiencia (204)", r.status_code == 204, r.text[:120])
 
+    # Modo manutencao: so' o S.Adm liga/desliga; a equipe logada troca a sessao por um passe e entra no site
+    c.cookies.clear()
+    r = await c.get("/site/status")
+    check("manutencao comeca desligada", r.status_code == 200 and r.json()["maintenance"] is False and r.json()["access"] is False, r.text[:120])
+    check("Adm NAO liga a manutencao (404: so' o S.Adm sabe que existe)", (await c.put("/site/maintenance", json={"enabled": True}, headers=A)).status_code == 404)
+    check("Creator NAO liga a manutencao (404)", (await c.put("/site/maintenance", json={"enabled": True}, headers=C)).status_code == 404)
+    check("visitante NAO liga a manutencao (401)", (await c.put("/site/maintenance", json={"enabled": True})).status_code == 401)
+    check("site.maintenance e' exclusiva do S.Adm em /auth/me", "site.maintenance" in (await c.get("/auth/me", headers=S)).json()["permissions"]
+          and "site.maintenance" not in (await c.get("/auth/me", headers=A)).json()["permissions"])
+    r = await c.put("/site/maintenance", json={"enabled": True, "message": "Back soon", "messagePt": "Voltamos ja"}, headers=S)
+    check("S.Adm liga a manutencao (200)", r.status_code == 200 and r.json()["maintenance"] is True, r.text[:160])
+    r = await c.get("/site/status")
+    check("o visitante ve' manutencao ligada, com a mensagem e SEM acesso", r.json()["maintenance"] is True and r.json()["message"] == "Back soon" and r.json()["messagePt"] == "Voltamos ja" and r.json()["access"] is False, r.text[:160])
+    check("sem login nao ha' passe (401)", (await c.post("/site/pass")).status_code == 401)
+    r = await c.post("/site/pass", headers=C)
+    check("qualquer membro da equipe logado recebe o passe (Creator, 200)", r.status_code == 200 and r.json()["token"] and r.json()["maintenance"] is True, r.text[:160])
+    passe = r.json()["token"]
+    r = await c.get("/site/status", headers={"X-Maintenance-Pass": passe})
+    check("com o passe, o status libera o acesso", r.json()["maintenance"] is True and r.json()["access"] is True, r.text[:120])
+    r = await c.get("/site/status", headers={"X-Maintenance-Pass": passe + "x"})
+    check("passe adulterado nao libera", r.json()["access"] is False)
+    sessao = C["Cookie"].split("=", 1)[1] if "Cookie" in C else ""
+    r = await c.get("/site/status", headers={"X-Maintenance-Pass": sessao})
+    check("o token da SESSAO nao serve como passe", r.json()["access"] is False)
+    r = await c.put("/site/maintenance", json={"enabled": False}, headers=S)
+    check("S.Adm desliga a manutencao", r.status_code == 200 and r.json()["maintenance"] is False)
+    r = await c.get("/site/status", headers={"X-Maintenance-Pass": passe})
+    check("desligada: status sem manutencao", r.json()["maintenance"] is False and r.json()["access"] is False)
+
     # ataques do mob ligados a um jutsu do catalogo
     jf = (await c.get(f"/jutsus/{SLUG}-jf")).json()
     r = await c.post("/content-items", json={**novo_conteudo("mob-atk"), "category": "mobs", "attacks": [
@@ -2034,6 +2064,26 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("S.Adm muda a categoria de varias de uma vez", r.status_code == 200 and r.json()["updated"] == 2, r.text[:120])
     r = await c.post("/media/bulk-category", json={"ids": [ca["id"]], "category": ""}, headers=S)
     check("categoria vazia tira a categoria", r.status_code == 200 and (await c.get(f"/media/{ca['id']}", headers=Cm)).json()["category"] == "")
+
+    # permissao SO' para mudar a categoria (media.categorize): o cargo escolhe a categoria, mas nao renomeia nem apaga
+    atuais_cm = (await c.get("/auth/me", headers=Cm)).json()["permissions"]
+    check("Creator nao tem media.categorize por padrao", "media.categorize" not in atuais_cm)
+    await c.put("/roles/creator/permissions", json={"permissions": sorted(set(atuais_cm) | {"media.categorize"})}, headers=S)
+    check("com media.categorize liberada, ela aparece em /auth/me do cargo", "media.categorize" in (await c.get("/auth/me", headers=Cm)).json()["permissions"])
+    r = await c.patch(f"/media/{cb['id']}", json={"category": "currency"}, headers=Cm)
+    check("Creator com media.categorize muda a categoria (200)", r.status_code == 200 and r.json()["category"] == "currency", r.text[:140])
+    r = await c.patch(f"/media/{cb['id']}", json={"name": "outro nome", "category": "ring"}, headers=Cm)
+    check("...mas NAO renomeia (403) e a categoria nao muda junto", r.status_code == 403 and (await c.get(f"/media/{cb['id']}", headers=Cm)).json()["category"] == "currency", r.text[:140])
+    r = await c.post("/media/bulk-category", json={"ids": [ca["id"], cb["id"]], "category": "ring"}, headers=Cm)
+    check("...e muda a categoria em massa (200)", r.status_code == 200 and r.json()["updated"] == 2, r.text[:140])
+    check("...mas NAO apaga imagem (403)", (await c.delete(f"/media/{cb['id']}", params={"force": "true"}, headers=Cm)).status_code == 403)
+    r = await c.post("/media", files={"file": ("cat.png", _png((9, 8, 7)), "image/png")}, data={"name": f"{SLUG} cat", "category": "npc"}, headers=Cm)
+    check("...e escolhe a categoria ao enviar (se tiver media.upload tambem; senao e' 403)", r.status_code in (201, 403), r.text[:100])
+    if r.status_code == 201:
+        check("a categoria enviada por quem tem media.categorize e' guardada", r.json()["category"] == "npc")
+        await c.delete(f"/media/{r.json()['id']}", params={"force": "true"}, headers=S)
+    await c.put("/roles/creator/permissions", json={"permissions": sorted(set(atuais_cm))}, headers=S)
+    check("o S.Adm tira a permissao e o Creator volta a levar 403", (await c.patch(f"/media/{cb['id']}", json={"category": "ring"}, headers=Cm)).status_code == 403)
     await c.post("/media/bulk-delete", json={"ids": [ca["id"], cb["id"], cc["id"]], "force": True}, headers=S)
 
     # categoria 'closed': privada, so' o S.Adm ve

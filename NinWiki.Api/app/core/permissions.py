@@ -67,6 +67,7 @@ class Permission(str, Enum):
     MEDIA_CAT_TOOLS = "media.cat.tools"
     MEDIA_CAT_OTHER = "media.cat.other"
     MEDIA_CAT_NONE = "media.cat.none"       # a categoria "Sem categoria"
+    MEDIA_CATEGORIZE = "media.categorize"  # SO' mudar a categoria das imagens (uma ou em lote), sem poder renomear nem apagar. Padrao: so' S.Adm; o S.Adm libera para um cargo em /admin/permissions
     MEDIA_MANAGE = "media.manage"          # renomear, escolher categoria, apagar imagens do banco de imagens e sincronizar a pasta. Padrao: so' S.Adm (pode ser liberada em /admin/permissions)
 
     # --- Equipe ---
@@ -82,6 +83,9 @@ class Permission(str, Enum):
 
     # --- Anuncio da pagina inicial do site (aparece para todos os visitantes) ---
     ANNOUNCEMENT_MANAGE = "announcement.manage"
+
+    # --- Modo manutencao do site (liga/desliga a pagina de manutencao) - so' S.Adm (SUPER_ONLY) ---
+    MAINTENANCE_MANAGE = "site.maintenance"
 
     # --- Cargos e permissoes (so' S.Adm: edita o que cada cargo pode) ---
     ROLES_MANAGE = "roles.manage"
@@ -120,6 +124,7 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.ERRORS_VIEW,
     Permission.MEDIA_RESET_IDS,
     Permission.MEDIA_CLOSED,
+    Permission.MAINTENANCE_MANAGE,   # ligar/desligar o modo manutencao do site
 })
 
 _CREATOR: frozenset[Permission] = frozenset({

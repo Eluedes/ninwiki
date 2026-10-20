@@ -826,6 +826,31 @@ export function deleteGuideArticle(id: string): Promise<void> {
   return apiFetch(`/guide-articles/${id}`, { method: 'DELETE' });
 }
 
+// ---------------- Modo manutencao do site ----------------
+
+/** Estado publico do site; `access` = o passe enviado e' valido (so' faz sentido no servidor do site). */
+export interface ApiSiteStatus {
+  maintenance: boolean;
+  message?: string | null;
+  messagePt?: string | null;
+  access: boolean;
+}
+
+/** O site esta' em manutencao? (publico; nunca em cache) */
+export function getSiteStatus(): Promise<ApiSiteStatus> {
+  return apiFetch('/site/status', { cache: 'no-store' }, true);
+}
+
+/** Liga/desliga a manutencao e muda a mensagem (so' S.Adm; os outros recebem 404). */
+export function setMaintenance(payload: { enabled: boolean; message: string; messagePt: string | null }): Promise<ApiSiteStatus> {
+  return apiFetch('/site/maintenance', { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+/** Troca a sessao da equipe por um passe de manutencao (401 = nao esta' logado na equipe; chamada "quiet": nao derruba a sessao). */
+export function createMaintenancePass(): Promise<{ token: string; hours: number; maintenance: boolean }> {
+  return apiFetch('/site/pass', { method: 'POST' }, true);
+}
+
 /** Lista os ranks ninja (aba do Guia). */
 export function listNinjaRanks(): Promise<ApiNinjaRank[]> {
   return apiFetch('/ninja-ranks');
@@ -851,7 +876,7 @@ export type PermissionName =
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'translation.import'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
-  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload' | 'media.reset_ids' | 'media.closed'
+  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.categorize' | 'site.maintenance' | 'media.upload' | 'media.reset_ids' | 'media.closed'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view'
   | `media.cat.${string}`;   // ver uma categoria do banco de imagens (media.cat.weapon, media.cat.none = Sem categoria...)
 

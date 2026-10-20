@@ -80,7 +80,7 @@ export interface Dictionary {
   };
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
-  maintenance: { title: string; text: string; back: string };
+  maintenance: { title: string; text: string; back: string; siteTitle: string; siteText: string; staffLogin: string; staffChecking: string; staffHint: string };
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
@@ -131,6 +131,11 @@ export interface Dictionary {
       contentLabel: string; contentPlaceholder: string; saveDraft: string; publish: string; saving: string; saveError: string;
       lockedNote: string; unpublishNote: string;
     };
+    // Modo manutencao do site (so' S.Adm)
+    maintenanceAdmin: {
+      title: string; subtitle: string; statusOn: string; statusOff: string; enable: string; disable: string; confirmEnable: string; confirmDisable: string;
+      messageEn: string; messagePt: string; messageHint: string; staffNote: string; loading: string; loadError: string; saveError: string; saving: string; savedOn: string; savedOff: string;
+    };
     // Artigos do Guia e Proficiencias (painel)
     guideAdmin: {
       articlesTitle: string; articlesSubtitle: string; newArticle: string; professionsTitle: string; professionsSubtitle: string; newProfession: string;
@@ -161,7 +166,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; maintenance: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
     gameNames: { title: string; subtitle: string; chooseFiles: string; invalidFile: string; find: string; loadError: string; summary: string; truncated: string; search: string; hideJutsu: string; selectShown: string; clear: string; empty: string; moreHidden: string; createDrafts: string; confirm: string; created: string; note: string; categories: Record<string, string>; hints: Record<string, string> };
     translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
@@ -522,7 +527,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       levelsTitle: 'Níveis: nome, dano base e recarga', levelsHint: 'Uma linha por nível do jutsu (o nível máximo é a quantidade de linhas). O nome é opcional: preencha só nos níveis em que o jutsu muda de nome (ex.: nível 4). Clique em "Adicionar nível" quando o jutsu subir de nível.', levelNamePlaceholder: 'Nome neste nível (opcional)', nameByLevel: 'Nome por nível', nameFromLevel: 'A partir do nível {n}: {name}',
       addLevel: 'Adicionar nível', removeLevel: 'Remover nível',
     },
-    maintenance: { title: 'Página em manutenção', text: 'Estamos construindo esta página. Volte em breve!', back: 'Voltar ao início' },
+    maintenance: { title: 'Página em manutenção', text: 'Estamos construindo esta página. Volte em breve!', back: 'Voltar ao início', siteTitle: 'Site em manutenção', siteText: 'Estamos melhorando o wiki. Voltamos em breve!', staffLogin: 'Entrar (equipe)', staffChecking: 'Verificando seu acesso...', staffHint: 'Só a equipe entra durante a manutenção: faça o login e o site abre normalmente.' },
     admin: {
       login: {
         welcome: 'Bem-vindo de volta',
@@ -632,6 +637,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
         lockedNote: 'Este post já está publicado: só um Adm pode alterá-lo.',
         unpublishNote: 'Este post está publicado. "Salvar rascunho" tira ele do ar; "Publicar" mantém no ar com as mudanças.',
       },
+      maintenanceAdmin: {
+        title: 'Modo manutenção', subtitle: 'Liga ou desliga a página de manutenção do site inteiro. Só o S.Adm vê esta tela.',
+        statusOn: 'LIGADA: os visitantes veem a página de manutenção', statusOff: 'Desligada: o site está aberto para todos', enable: 'Ligar manutenção', disable: 'Desligar manutenção',
+        confirmEnable: 'Ligar a manutenção? Os visitantes deixam de ver o site; a equipe continua entrando depois do login.', confirmDisable: 'Desligar a manutenção e abrir o site para todos?',
+        messageEn: 'Mensagem (inglês, opcional)', messagePt: 'Mensagem (português, opcional)', messageHint: 'Vazio = texto padrão da página.',
+        staffNote: 'A equipe (qualquer cargo) entra no site normalmente depois de fazer login pela própria página de manutenção; o painel (/admin) e o login continuam abertos.',
+        loading: 'Carregando...', loadError: 'Não foi possível ler o estado do site.', saveError: 'Erro ao salvar.', saving: 'Salvando...', savedOn: 'Manutenção ligada.', savedOff: 'Manutenção desligada: o site está aberto.',
+      },
       guideAdmin: {
         articlesTitle: 'Artigos do Guia', articlesSubtitle: 'Os artigos do Guia (Zonas, Crime, Equipes, Controles...), por seção. Rascunho só a equipe vê.', newArticle: 'Novo artigo',
         professionsTitle: 'Proficiências', professionsSubtitle: 'As proficiências de coleta e criação. As receitas, recursos e ferramentas vêm da importação do Atlas.', newProfession: 'Nova proficiência',
@@ -689,6 +702,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         organizations: 'Organizações',
         guideArticles: 'Artigos do Guia',
         professions: 'Proficiências',
+        maintenance: 'Manutenção',
         backToSite: 'Voltar ao site',
         groups: { wiki: 'Conteúdo', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
         breadcrumbHome: 'Painel',
@@ -765,7 +779,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
-          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)', 'media.reset_ids': 'Renumerar os IDs do banco de imagens', 'media.closed': 'Ver a categoria fechada do banco de imagens', 'media.cat.weapon': 'Ver imagens: Armas', 'media.cat.gear': 'Ver imagens: Equipamentos', 'media.cat.consumable': 'Ver imagens: Consumíveis', 'media.cat.currency': 'Ver imagens: Moedas', 'media.cat.material': 'Ver imagens: Materiais', 'media.cat.ring': 'Ver imagens: Anéis', 'media.cat.scroll': 'Ver imagens: Pergaminhos', 'media.cat.npc': 'Ver imagens: NPCs', 'media.cat.monster': 'Ver imagens: Monstros', 'media.cat.furniture': 'Ver imagens: Móveis', 'media.cat.hair_beard': 'Ver imagens: Cabelo/Barba', 'media.cat.skin': 'Ver imagens: Skins', 'media.cat.tools': 'Ver imagens: Ferramentas', 'media.cat.other': 'Ver imagens: Outros', 'media.cat.none': 'Ver imagens: Sem categoria',
+          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.categorize': 'Mudar a categoria das imagens do banco de imagens', 'site.maintenance': 'Ligar/desligar o modo manutenção do site', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)', 'media.reset_ids': 'Renumerar os IDs do banco de imagens', 'media.closed': 'Ver a categoria fechada do banco de imagens', 'media.cat.weapon': 'Ver imagens: Armas', 'media.cat.gear': 'Ver imagens: Equipamentos', 'media.cat.consumable': 'Ver imagens: Consumíveis', 'media.cat.currency': 'Ver imagens: Moedas', 'media.cat.material': 'Ver imagens: Materiais', 'media.cat.ring': 'Ver imagens: Anéis', 'media.cat.scroll': 'Ver imagens: Pergaminhos', 'media.cat.npc': 'Ver imagens: NPCs', 'media.cat.monster': 'Ver imagens: Monstros', 'media.cat.furniture': 'Ver imagens: Móveis', 'media.cat.hair_beard': 'Ver imagens: Cabelo/Barba', 'media.cat.skin': 'Ver imagens: Skins', 'media.cat.tools': 'Ver imagens: Ferramentas', 'media.cat.other': 'Ver imagens: Outros', 'media.cat.none': 'Ver imagens: Sem categoria',
           'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'staff.delete': 'Remover alguém da equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
           'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'audit.clear': 'Limpar o log', 'analytics.view': 'Ver os acessos ao site',
         },
@@ -1293,7 +1307,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       levelsTitle: 'Levels: name, base damage and cooldown', levelsHint: 'One row per jutsu level (the maximum level is the number of rows). The name is optional: fill it only on the levels where the jutsu changes name (e.g. level 4). Click "Add level" when the jutsu levels up.', levelNamePlaceholder: 'Name at this level (optional)', nameByLevel: 'Name by level', nameFromLevel: 'From level {n}: {name}',
       addLevel: 'Add level', removeLevel: 'Remove level',
     },
-    maintenance: { title: 'Under maintenance', text: 'We are building this page. Please come back soon!', back: 'Back to home' },
+    maintenance: { title: 'Under maintenance', text: 'We are building this page. Please come back soon!', back: 'Back to home', siteTitle: 'Site under maintenance', siteText: 'We are improving the wiki. We will be back soon!', staffLogin: 'Staff login', staffChecking: 'Checking your access...', staffHint: 'Only the staff can get in during maintenance: log in and the site opens normally.' },
     admin: {
       login: {
         welcome: 'Welcome back',
@@ -1403,6 +1417,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
         lockedNote: 'This post is already published: only an Adm can change it.',
         unpublishNote: 'This post is published. "Save draft" takes it offline; "Publish" keeps it live with the changes.',
       },
+      maintenanceAdmin: {
+        title: 'Maintenance mode', subtitle: 'Turns the maintenance page for the whole site on or off. Only the S.Adm sees this screen.',
+        statusOn: 'ON: visitors see the maintenance page', statusOff: 'Off: the site is open to everyone', enable: 'Turn maintenance on', disable: 'Turn maintenance off',
+        confirmEnable: 'Turn maintenance on? Visitors stop seeing the site; the staff still gets in after logging in.', confirmDisable: 'Turn maintenance off and open the site to everyone?',
+        messageEn: 'Message (English, optional)', messagePt: 'Message (Portuguese, optional)', messageHint: 'Empty = the page default text.',
+        staffNote: 'The staff (any role) gets into the site normally after logging in from the maintenance page itself; the panel (/admin) and the login stay open.',
+        loading: 'Loading...', loadError: 'Could not read the site state.', saveError: 'Error saving.', saving: 'Saving...', savedOn: 'Maintenance is on.', savedOff: 'Maintenance is off: the site is open.',
+      },
       guideAdmin: {
         articlesTitle: 'Guide articles', articlesSubtitle: 'The Guide articles (Zones, Crime, Teams, Controls...), by section. Only staff can see drafts.', newArticle: 'New article',
         professionsTitle: 'Proficiencies', professionsSubtitle: 'The gathering and crafting proficiencies. Recipes, resources and tools come from the Atlas import.', newProfession: 'New proficiency',
@@ -1460,6 +1482,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         organizations: 'Organizations',
         guideArticles: 'Guide articles',
         professions: 'Proficiencies',
+        maintenance: 'Maintenance',
         backToSite: 'Back to site',
         groups: { wiki: 'Content', community: 'Community', world: 'World', system: 'System' },
         breadcrumbHome: 'Admin',
@@ -1536,7 +1559,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
-          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.upload': 'Upload images to the image library (bulk)', 'media.reset_ids': 'Renumber the image library IDs', 'media.closed': 'See the closed category of the image library', 'media.cat.weapon': 'See images: Weapons', 'media.cat.gear': 'See images: Gear', 'media.cat.consumable': 'See images: Consumables', 'media.cat.currency': 'See images: Currency', 'media.cat.material': 'See images: Materials', 'media.cat.ring': 'See images: Rings', 'media.cat.scroll': 'See images: Scrolls', 'media.cat.npc': 'See images: NPCs', 'media.cat.monster': 'See images: Monsters', 'media.cat.furniture': 'See images: Furniture', 'media.cat.hair_beard': 'See images: Hair/Beard', 'media.cat.skin': 'See images: Skins', 'media.cat.tools': 'See images: Tools', 'media.cat.other': 'See images: Other', 'media.cat.none': 'See images: Uncategorized',
+          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.categorize': 'Change the category of images in the image library', 'site.maintenance': 'Turn the site maintenance mode on/off', 'media.upload': 'Upload images to the image library (bulk)', 'media.reset_ids': 'Renumber the image library IDs', 'media.closed': 'See the closed category of the image library', 'media.cat.weapon': 'See images: Weapons', 'media.cat.gear': 'See images: Gear', 'media.cat.consumable': 'See images: Consumables', 'media.cat.currency': 'See images: Currency', 'media.cat.material': 'See images: Materials', 'media.cat.ring': 'See images: Rings', 'media.cat.scroll': 'See images: Scrolls', 'media.cat.npc': 'See images: NPCs', 'media.cat.monster': 'See images: Monsters', 'media.cat.furniture': 'See images: Furniture', 'media.cat.hair_beard': 'See images: Hair/Beard', 'media.cat.skin': 'See images: Skins', 'media.cat.tools': 'See images: Tools', 'media.cat.other': 'See images: Other', 'media.cat.none': 'See images: Uncategorized',
           'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'staff.delete': 'Remove someone from the team', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
           'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'audit.clear': 'Clear the log', 'analytics.view': 'View site traffic',
         },

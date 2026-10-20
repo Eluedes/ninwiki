@@ -4,6 +4,9 @@
 //     copiar a wiki inteira rapidamente (scraping) e floods que tentam derrubar o servidor.
 //  2. Robos de copia conhecidos (curl, python-requests, scrapy, headless...) e requisicoes sem
 //     User-Agent -> 403 (desligue com BLOCK_SCRAPER_UAS=false se usar algum monitor desse tipo).
+//  3. MODO MANUTENCAO (ligado pelo S.Adm em /admin/maintenance): quem nao tem o cookie do passe (ninwiki_pass, valido na API) ve' a pagina de
+//     manutencao no lugar da pagina pedida (status 503, a URL nao muda). /maintenance, /login, /admin e a rota do passe ficam abertos para a equipe
+//     poder entrar. Se a API nao responder, o site continua aberto (nunca tranca todo mundo por um soluco da API).
 //
 // LIMITES HONESTOS: o conteudo publico precisa ser legivel por qualquer visitante, entao ninguem
 // consegue impedir 100% a copia por um scraper decidido (que troca o User-Agent e o IP). O que
@@ -16,6 +19,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { isUnderMaintenance } from '@/lib/maintenance';
 
 const WINDOW_MS = 60_000;
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const PASS_COOKIE = 'ninwiki_pass';
+const STATUS_TTL_MS = 5_000;    // quanto tempo vale a ultima resposta de "esta' em manutencao?" (liga/desliga leva ate' ~5 s para valer)
+const PASS_TTL_MS = 30_000;     // quanto tempo vale a conferencia de um passe
+// Caminhos que continuam abertos com a manutencao ligada (a equipe precisa deles para entrar).
+const MAINTENANCE_OPEN = ['/maintenance', '/maintenance-pass', '/login', '/admin'];
 const LIMIT = Number(process.env.WEB_RATE_LIMIT_PER_MINUTE ?? 300);
 // Prefetch: o Next adianta a busca das paginas dos links visiveis (uma visita normal gera dezenas). Contam em
 // balde separado, com limite maior, para nao punir quem so' navega - mas tambem nao viram brecha ilimitada.
@@ -23,6 +32,40 @@ const PREFETCH_MULTIPLIER = 4;
 const BLOCK_UAS = (process.env.BLOCK_SCRAPER_UAS ?? 'true') !== 'false';
 const SCRAPER_UA =
   /(python-requests|python-urllib|aiohttp|httpx|scrapy|curl\/|wget|libwww|go-http-client|okhttp|java\/|node-fetch|axios|undici|headlesschrome|phantomjs|httrack|selenium|puppeteer|playwright|mj12bot|semrushbot|ahrefsbot|dotbot|bytespider|petalbot|gptbot|ccbot|claudebot|anthropic-ai|amazonbot|dataforseo)/i;
+
+// Cache em memoria do estado da manutencao e da conferencia dos passes.
+let statusCache: { at: number; on: boolean } | null = null;
+const passCache = new Map<string, { at: number; ok: boolean }>();
+
+/** O site esta' em manutencao? Pergunta a' API (resposta guardada por alguns segundos). Falha da API = nao (site aberto). */
+async function maintenanceOn(now: number): Promise<boolean> {
+  if (statusCache && now - statusCache.at < STATUS_TTL_MS) return statusCache.on;
+  try {
+    const res = await fetch(`${API_URL}/site/status`, { cache: 'no-store', signal: AbortSignal.timeout(2000) });
+    const on = res.ok ? Boolean((await res.json()).maintenance) : (statusCache?.on ?? false);
+    statusCache = { at: now, on };
+    return on;
+  } catch {
+    statusCache = { at: now, on: statusCache?.on ?? false };   // API fora do ar: mantem o ultimo estado conhecido (padrao: aberto)
+    return statusCache.on;
+  }
+}
+
+/** O passe (cookie) e' valido na API? Resposta guardada por 30 s por passe (o mapa e' limpo quando passa de 500 entradas). */
+async function passValid(token: string, now: number): Promise<boolean> {
+  const cached = passCache.get(token);
+  if (cached && now - cached.at < PASS_TTL_MS) return cached.ok;
+  let ok = false;
+  try {
+    const res = await fetch(`${API_URL}/site/status`, { headers: { 'X-Maintenance-Pass': token }, cache: 'no-store', signal: AbortSignal.timeout(2000) });
+    ok = res.ok && Boolean((await res.json()).access);
+  } catch {
+    ok = cached?.ok ?? false;
+  }
+  if (passCache.size > 500) passCache.clear();
+  passCache.set(token, { at: now, ok });
+  return ok;
+}
 
 // IP -> instantes (ms) das ultimas requisicoes dentro da janela.
 const hits = new Map<string, number[]>();
@@ -61,10 +104,22 @@ function tag(res: NextResponse): NextResponse {
 }
 
 /** Roda antes de cada pagina: bloqueia robos de copia conhecidos e aplica o limite por IP. */
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const ua = req.headers.get('user-agent') ?? '';
   if (BLOCK_UAS && (ua.length < 8 || SCRAPER_UA.test(ua))) {
     return tag(new NextResponse('Forbidden', { status: 403 }));
+  }
+  // Manutencao do SITE inteiro: sem passe valido, mostra a pagina de manutencao (503) no lugar da pagina pedida.
+  const path = req.nextUrl.pathname;
+  const open = MAINTENANCE_OPEN.some((p) => path === p || path.startsWith(`${p}/`));
+  if (!open) {
+    const now = Date.now();
+    if (await maintenanceOn(now)) {
+      const pass = req.cookies.get(PASS_COOKIE)?.value;
+      if (!pass || !(await passValid(pass, now))) {
+        return tag(NextResponse.rewrite(new URL('/maintenance', req.url), { status: 503, headers: { 'Retry-After': '300' } }));
+      }
+    }
   }
   // Paginas em manutencao (lib/maintenance.ts): vai para /maintenance, mesmo digitando a URL.
   if (isUnderMaintenance(req.nextUrl.pathname)) {
