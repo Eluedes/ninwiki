@@ -396,6 +396,7 @@ python scripts/migrar_banco.py importar backups/NOME-DO-SEU-ARQUIVO.dump --url "
 - O `importar` **substitui** as tabelas do destino (por isso o `--confirmo`). Se o banco da SquareCloud já tem dados, faça antes um backup:
   `python scripts/migrar_banco.py exportar --url "postgresql://..." --ssl-ca ... --ssl-cert ... --ssl-key ...`.
 - O script usa o próprio Docker para rodar `pg_dump`/`pg_restore` e já ajusta a permissão da chave; nada a instalar.
+  Com `--url` (banco da SquareCloud) ele usa a imagem **`postgres:17-alpine`**, porque o banco de lá é o **PostgreSQL 17** e o `pg_dump` 16 do seu container local recusa (`server version mismatch`). O banco local continua no container 16. Um backup da produção feito assim só restaura em Postgres 17 (não no container local 16).
 - **Imagens do blog/wiki** (`NinWiki.Api/uploads/`): o workflow **não** envia essa pasta (para nunca sobrescrever o que está
   em produção). Depois de criar o app da API (3.5), envie as imagens pelo painel do app → *Files* → pasta `uploads/`.
 - Banco sem certificado de cliente (Neon, Supabase…)? Pule os `--ssl-*`, use `?sslmode=require` no `--url` e deixe `DATABASE_SSL_*` vazio.
