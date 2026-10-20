@@ -1,6 +1,6 @@
 'use client';
 
-// Botao do header que alterna entre os 4 temas de cor: Blood/Sangue
+// Botao do header que alterna entre os 5 temas de cor: Orange/Laranja (padrao, a cor do logo do jogo), Blood/Sangue
 // (vermelho), Canary/Canarinho (verde), Gold/Ouro (amarelo) e Indigo/Anil (azul) - juntos
 // formam as cores da bandeira do Brasil. Os nomes seguem o idioma escolhido. Mesmo padrao visual do
 // LanguageSelector (dropdown com as opcoes e a atual em negrito).
@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 // da' uma previa visual da cor sem precisar trocar de tema pra ver.
 // Cores batem com o --primary de cada tema em app/globals.css.
 const swatchClass: Record<ColorTheme, string> = {
+  laranja: 'bg-[#d74309]',
   blood: 'bg-[#dc2626]',
   canarinho: 'bg-[#009739]',
   ouro: 'bg-[#e8b800]',
@@ -29,8 +30,8 @@ const swatchClass: Record<ColorTheme, string> = {
 
 // Nomes dos temas no idioma escolhido (ingles e' o principal; a versao em portugues usa as cores da bandeira).
 const themeLabels = {
-  en: { blood: 'Blood', canarinho: 'Canary', ouro: 'Gold', anil: 'Indigo', title: 'Color theme' },
-  pt: { blood: 'Sangue', canarinho: 'Canarinho', ouro: 'Ouro', anil: 'Anil', title: 'Tema de cor' },
+  en: { laranja: 'Orange', blood: 'Blood', canarinho: 'Canary', ouro: 'Gold', anil: 'Indigo', title: 'Color theme' },
+  pt: { laranja: 'Laranja', blood: 'Sangue', canarinho: 'Canarinho', ouro: 'Ouro', anil: 'Anil', title: 'Tema de cor' },
 } as const;
 
 /** Botao que troca o tema de cor do site. */

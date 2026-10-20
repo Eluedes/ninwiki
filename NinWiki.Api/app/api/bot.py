@@ -329,7 +329,7 @@ LABELS_PT = {
     "Stack": "Pilha", "Element": "Elemento", "Tier": "Tier", "Chakra": "Chakra", "Cooldown": "Recarga", "Cast time": "Conjuração", "Effect": "Efeito",
     "Published": "Publicado em",
 }
-RARITY_PT = {"Common": "Comum", "Uncommon": "Incomum", "Rare": "Raro", "Epic": "Épico", "Legendary": "Lendário", "Enchanted": "Encantado", "Unique": "Único", "Event": "Evento"}
+RARITY_PT = {"Common": "Comum", "Uncommon": "Incomum", "Rare": "Raro", "Epic": "Épico", "Legendary": "Lendário", "Enchanted": "Encantado", "Unique": "Único", "Event": "Evento", "Premium": "Premium", "Organization": "Organização"}
 
 
 def _facts(*pairs: tuple[str, object], lang: str = "en") -> list[BotFact]:
@@ -350,6 +350,12 @@ def _pick(lang: str, en: str | None, pt: str | None) -> str:
     return (pt if lang == "pt" and pt else en) or ""
 
 
+def _spawn_text(i: ContentItem, lang: str) -> str:
+    """Onde o mob aparece: a lista de lugares (nomes separados por virgula, no idioma pedido); sem lista, o texto livre de antes."""
+    places = [(p.get("name_pt") if lang == "pt" and p.get("name_pt") else p.get("name")) for p in (i.spawn_locations or []) if isinstance(p, dict)]
+    return ", ".join(p for p in places if p) or _pick(lang, i.spawn_location, i.spawn_location_pt)
+
+
 def _like(q: str) -> str:
     """Escapa % e _ para o texto digitado nao virar curinga do LIKE."""
     return "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
@@ -361,11 +367,11 @@ def _item_hit(i: ContentItem, lang: str = "en") -> BotSearchHit:
     common = [("Rarity", i.rarity.value.title()), ("Level", i.level)]
     if cat == "mobs":
         facts = _facts(("Health", i.mob_health), ("Damage", i.mob_damage), ("XP", i.mob_experience), ("Range", i.mob_range),
-                       ("Respawn", i.mob_respawn_time), ("Spawns at", _pick(lang, i.spawn_location, i.spawn_location_pt)), *common[1:], lang=lang)   # mob nao tem raridade: so' o nivel
+                       ("Respawn", i.mob_respawn_time), ("Spawns at", _spawn_text(i, lang)), *common[1:], lang=lang)   # mob nao tem raridade: so' o nivel
     elif cat == "weapons":
         facts = _facts(("Type", i.weapon_type), ("Base damage", i.weapon_base_damage), ("Requirement", " · ".join((i.weapon_requirement or "").splitlines()) or None),
                        ("Special", i.weapon_special_ability), ("Speed", i.weapon_speed), ("Knockback", i.weapon_knockback_distance),
-                       ("NPC", i.weapon_npc), *common, lang=lang)
+                       ("NPC", (_pick(lang, i.weapon_npc_item.name, i.weapon_npc_item.name_pt) if i.weapon_npc_item is not None else i.weapon_npc)), *common, lang=lang)
     else:
         facts = _facts(("Stack", f"{i.max_stack:,}" if i.max_stack else None), *common, lang=lang)
     desc = _pick(lang, i.description, i.description_pt)
@@ -405,7 +411,7 @@ async def bot_suggest(
     items = (await db.execute(select(ContentItem).where(
         ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
         .order_by(ContentItem.name).limit(12))).scalars().all()
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
                                .order_by(Jutsu.name).limit(6))).scalars().all()
     masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
                                   .order_by(Mastery.name).limit(4))).scalars().all()
@@ -469,7 +475,7 @@ async def bot_search(
         .order_by(ContentItem.name).limit(6))).scalars().all()
     masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
                                   .order_by(Mastery.name).limit(3))).scalars().all()
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
                                .order_by(Jutsu.name).limit(4))).scalars().all()
     posts = (await db.execute(
         select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),

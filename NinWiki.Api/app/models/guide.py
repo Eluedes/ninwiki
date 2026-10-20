@@ -4,10 +4,11 @@ e Summons. Espelha lib/guide-data.ts. Mesmo padrao de id=texto
 explicado em models/masteries.py.
 """
 from sqlalchemy import Enum, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
-from app.models.enums import ProfessionGroup
+from app.models.enums import ContentStatus, ProfessionGroup
 
 
 class Profession(Base):
@@ -23,6 +24,9 @@ class Profession(Base):
     description: Mapped[str] = mapped_column(Text)
     description_pt: Mapped[str | None] = mapped_column(Text, nullable=True)  # traducao (DeepL)
     icon: Mapped[str] = mapped_column(String(20))  # emoji
+    # O que a pagina da profissao mostra alem da descricao: {"resources": [...], "recipes": [...], "tools": [...]} (recursos coletados e o que cai,
+    # receitas de criacao, ferramentas como varas de pesca). Nulo = a pagina mostra so' a descricao.
+    details: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
 
 class NinjaRank(Base):
@@ -73,3 +77,23 @@ class Summon(Base):
     stage_young_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     stage_teen_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
     stage_adult_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class GuideArticle(Base):
+    """Artigo do Guia (Zonas, Crime, Equipes, Controles...), agrupado por SECAO e em ordem dentro dela."""
+    __tablename__ = "guide_articles"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)  # slug, ex: "crime-system"
+    section: Mapped[str] = mapped_column(String(30), index=True)    # uma de GUIDE_SECTIONS (app/schemas/guide.py)
+    position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")   # ordem dentro da secao (menor primeiro)
+    # Mesmo padrao dos outros textos: sem sufixo = INGLES (principal), `_pt` = traducao (a DeepL preenche se vier vazio).
+    title: Mapped[str] = mapped_column(String(150))
+    title_pt: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    summary: Mapped[str] = mapped_column(String(300), default="", server_default="")    # uma frase, aparece no card do Guia
+    summary_pt: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    body: Mapped[str] = mapped_column(Text, default="", server_default="")               # texto rico (documento Tiptap em JSON)
+    body_pt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    icon: Mapped[str] = mapped_column(String(50), default="book-open", server_default="book-open")   # nome de icone (lucide)
+    # Rascunho: so' a equipe ve; Publicado: aparece no Guia. Reaproveita o tipo `content_status` do conteudo.
+    status: Mapped[ContentStatus] = mapped_column(Enum(ContentStatus, name="content_status", create_type=False),
+                                                  default=ContentStatus.PUBLISHED, server_default="PUBLISHED")

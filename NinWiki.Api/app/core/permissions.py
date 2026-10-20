@@ -53,7 +53,7 @@ class Permission(str, Enum):
     #     O S.Adm TRANCA uma categoria para um cargo desmarcando a permissao em /admin/permissions: para quem nao tem, ela some da lista, da
     #     contagem e da busca, e tentar abrir uma imagem dela (ID chutado, img:12) da' o aviso de acesso negado - igual a 'closed'.
     MEDIA_CAT_WEAPON = "media.cat.weapon"
-    MEDIA_CAT_CLOTHING = "media.cat.clothing"
+    MEDIA_CAT_GEAR = "media.cat.gear"
     MEDIA_CAT_CONSUMABLE = "media.cat.consumable"
     MEDIA_CAT_CURRENCY = "media.cat.currency"
     MEDIA_CAT_MATERIAL = "media.cat.material"
@@ -63,8 +63,11 @@ class Permission(str, Enum):
     MEDIA_CAT_MONSTER = "media.cat.monster"
     MEDIA_CAT_FURNITURE = "media.cat.furniture"
     MEDIA_CAT_HAIR_BEARD = "media.cat.hair_beard"
+    MEDIA_CAT_SKIN = "media.cat.skin"
+    MEDIA_CAT_TOOLS = "media.cat.tools"
     MEDIA_CAT_OTHER = "media.cat.other"
     MEDIA_CAT_NONE = "media.cat.none"       # a categoria "Sem categoria"
+    MEDIA_CATEGORIZE = "media.categorize"  # SO' mudar a categoria das imagens (uma ou em lote), sem poder renomear nem apagar. Padrao: so' S.Adm; o S.Adm libera para um cargo em /admin/permissions
     MEDIA_MANAGE = "media.manage"          # renomear, escolher categoria, apagar imagens do banco de imagens e sincronizar a pasta. Padrao: so' S.Adm (pode ser liberada em /admin/permissions)
 
     # --- Equipe ---
@@ -80,6 +83,9 @@ class Permission(str, Enum):
 
     # --- Anuncio da pagina inicial do site (aparece para todos os visitantes) ---
     ANNOUNCEMENT_MANAGE = "announcement.manage"
+
+    # --- Modo manutencao do site (liga/desliga a pagina de manutencao) - so' S.Adm (SUPER_ONLY) ---
+    MAINTENANCE_MANAGE = "site.maintenance"
 
     # --- Cargos e permissoes (so' S.Adm: edita o que cada cargo pode) ---
     ROLES_MANAGE = "roles.manage"
@@ -118,6 +124,7 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.ERRORS_VIEW,
     Permission.MEDIA_RESET_IDS,
     Permission.MEDIA_CLOSED,
+    Permission.MAINTENANCE_MANAGE,   # ligar/desligar o modo manutencao do site
 })
 
 _CREATOR: frozenset[Permission] = frozenset({

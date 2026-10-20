@@ -3,7 +3,7 @@
 // a parte interativa (busca por texto, secoes recolhidas) fica em
 // components/wiki/catalog-page-client.tsx.
 
-import { listContentItems, listAttributes, listProfessions, listNinjaRanks, listStoryArcs, listSummons } from '@/lib/api-client';
+import { listContentItems, listAttributes, listStoryArcs, listSummons, listGuideArticles } from '@/lib/api-client';
 import { CatalogPageClient } from '@/components/wiki/catalog-page-client';
 import type { Category } from '@/lib/types';
 import type { Metadata } from 'next';
@@ -54,20 +54,19 @@ export default async function CatalogPage({
   // Os "extras" de Guia (Atributos/Profissoes/Ranks/Arcos/Summons) so'
   // sao buscados quando a categoria for realmente 'guides' - nas
   // outras 4 categorias, essas 5 requisicoes nem acontecem.
-  const [guideAttributes, professions, ninjaRanks, storyArcs, summons] =
+  const [guideAttributes, storyArcs, summons, guideArticles] =
     category === 'guides'
-      ? await Promise.all([listAttributes(), listProfessions(), listNinjaRanks(), listStoryArcs(), listSummons()])
-      : [[], [], [], [], []];
+      ? await Promise.all([listAttributes(), listStoryArcs(), listSummons(), listGuideArticles()])
+      : [[], [], [], []];
 
   return (
     <CatalogPageClient
       items={items}
       category={category}
       guideAttributes={guideAttributes}
-      professions={professions}
-      ninjaRanks={ninjaRanks}
       storyArcs={storyArcs}
       summons={summons}
+      guideArticles={guideArticles}
     />
   );
 }

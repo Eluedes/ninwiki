@@ -16,8 +16,8 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { DropRow } from '@/components/wiki/drop-row';
 import { DroppedBy } from '@/components/wiki/dropped-by';
 import { WikiImage } from '@/components/wiki/wiki-image';
-import { Crosshair, Gem, Heart, Layers, MapPin, Skull, Star, Swords, Tag, Timer, type LucideIcon } from 'lucide-react';
-import type { ApiContentItem } from '@/lib/api-client';
+import { Coins, Crosshair, Gem, Heart, Layers, MapPin, Skull, Star, Swords, Tag, Timer, type LucideIcon } from 'lucide-react';
+import type { ApiContentItem, SaleEntry } from '@/lib/api-client';
 
 interface DetailSidebarProps {
   entry: ApiContentItem;
@@ -44,6 +44,39 @@ function WeaponRow({ label, value }: StatRow) {
 }
 
 /** Cabecalho de secao do bestiario (barra na cor do tema + titulo em maiusculas). */
+/** Cor do ponto de cada zona (iguais as do Atlas: verde seguro, laranja perigo, vermelho guerra...). */
+/** Formata o preco sempre igual no servidor e no navegador (evita diferenca de hidratacao). */
+const PRICE_FORMAT = new Intl.NumberFormat('en-US');
+
+/** Lojas de NPC que vendem a entry: uma linha por loja, com onde fica e o preco (moeda = nome de um item). */
+function SoldAt({ sales }: { sales: SaleEntry[] }) {
+  const { dict } = useLanguage();
+  return (
+    <ul className="divide-y divide-border">
+      {sales.map((s, i) => {
+        const places = s.places ?? [];
+        const qty = s.qty ?? 1;
+        return (
+          <li key={i} className="flex items-start justify-between gap-3 px-4 py-2 text-sm">
+            <div className="min-w-0">
+              <p className="font-medium text-card-foreground">{s.shop}</p>
+              {places.length > 0 && <p className="text-xs text-muted-foreground">{places.slice(0, 3).join(', ')}{places.length > 3 ? ` +${places.length - 3}` : ''}</p>}
+            </div>
+            <span className="shrink-0 text-right font-semibold text-primary">
+              {s.price ? `${PRICE_FORMAT.format(s.price)} ${s.currency ?? 'Ryo'}` : dict.detail.free}
+              {qty > 1 && <small className="block font-normal text-muted-foreground">{dict.detail.forQty.replace('{n}', String(qty))}</small>}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+const ZONE_DOT: Record<string, string> = {
+  safe: 'bg-green-400', danger: 'bg-orange-400', war: 'bg-red-400', arena: 'bg-yellow-200', parkour: 'bg-cyan-400', none: 'bg-muted-foreground/50',
+};
+
 function SectionTitle({ icon: Icon, children }: { icon?: LucideIcon; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-1.5 border-y border-border border-l-[3px] border-l-primary bg-secondary/50 px-4 py-2.5">
@@ -59,6 +92,11 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   const isPt = locale === 'pt';
   const name = isPt ? (entry.namePt ?? entry.name) : entry.name;
   const spawnLocation = isPt ? (entry.spawnLocationPt ?? entry.spawnLocation) : entry.spawnLocation;
+  // Lugares do mob: a lista (com zona) vale; sem lista, o texto livre antigo e' quebrado por virgula em linhas (sem zona).
+  const places: { name: string; zone: string | null }[] = (entry.spawnLocations ?? []).length > 0
+    ? (entry.spawnLocations ?? []).map((l) => ({ name: isPt ? (l.namePt ?? l.name) : l.name, zone: l.zone ?? null }))
+    : (spawnLocation ?? '').split(/[,;]/).map((p) => p.trim().replace(/\.$/, '')).filter(Boolean).map((name) => ({ name, zone: null }));
+  const soldAt = entry.soldAt ?? [];   // lojas de NPC que vendem esta entry (`?? []` cobre resposta antiga durante o deploy)
   const droppedBy = entry.droppedBy ?? [];   // mobs que dropam esta entry (a API calcula; `?? []` cobre resposta antiga durante o deploy)
 
   // Ficha de Arma: layout PROPRIO, diferente do resto (secoes que
@@ -74,7 +112,11 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
     if (reqs.length) requirementsRows.push({ label: dict.detail.statReq, value: reqs.map((r, i) => <span key={i} className="block">{r}</span>) });
 
     const acquisitionRows: StatRow[] = [];
-    if (entry.weaponNpc) acquisitionRows.push({ label: dict.detail.npc, value: entry.weaponNpc });
+    if (entry.weaponNpc) {
+      // NPC ligado a uma pagina: o nome acompanha a pagina e vira link (so' se ela esta' publicada; senao fica so' o nome)
+      const npcName = isPt && entry.weaponNpcId ? (entry.weaponNpcNamePt ?? entry.weaponNpc) : entry.weaponNpc;
+      acquisitionRows.push({ label: dict.detail.npc, value: entry.weaponNpcSlug ? <Link href={`/detail/${entry.weaponNpcSlug}`} className="text-primary hover:underline">{npcName}</Link> : npcName });
+    }
 
     const detailsRows: StatRow[] = [{ label: dict.detail.weaponClass, value: entry.rarity }];
     if (entry.weaponType) detailsRows.push({ label: dict.detail.weaponType, value: entry.weaponType });
@@ -128,6 +170,14 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
           <>
             <SectionTitle icon={Skull}>{dict.detail.droppedBy}</SectionTitle>
             <DroppedBy mobs={droppedBy} />
+          </>
+        )}
+
+        {/* Vendido em: lojas de NPC que vendem esta arma, com o preco */}
+        {soldAt.length > 0 && (
+          <>
+            <SectionTitle icon={Coins}>{dict.detail.soldAt}</SectionTitle>
+            <SoldAt sales={soldAt} />
           </>
         )}
 
@@ -198,10 +248,19 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
           )}
         </div>
 
-        {spawnLocation && (
+        {places.length > 0 && (
           <>
             <SectionTitle icon={MapPin}>{dict.detail.spawnLocation}</SectionTitle>
-            <p className="px-4 py-3 text-sm leading-relaxed text-card-foreground">{spawnLocation}</p>
+            {/* um lugar por linha, com um ponto na cor da zona e o nome da zona (como o "Found in" do Atlas) */}
+            <ul className="divide-y divide-border">
+              {places.map((p, i) => (
+                <li key={i} className="flex items-center gap-2.5 px-4 py-2 text-sm">
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${ZONE_DOT[p.zone ?? 'none']}`} aria-hidden />
+                  <span className="min-w-0 flex-1 font-medium text-card-foreground">{p.name}</span>
+                  {p.zone && <span className="shrink-0 text-xs text-muted-foreground">{dict.detail.zones[p.zone] ?? p.zone}</span>}
+                </li>
+              ))}
+            </ul>
           </>
         )}
 
@@ -274,6 +333,14 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
         <>
           <SectionTitle icon={Skull}>{dict.detail.droppedBy}</SectionTitle>
           <DroppedBy mobs={droppedBy} />
+        </>
+      )}
+
+      {/* Vendido em: lojas de NPC que vendem este item, com o preco (preco que o jogador paga). */}
+      {soldAt.length > 0 && (
+        <>
+          <SectionTitle icon={Coins}>{dict.detail.soldAt}</SectionTitle>
+          <SoldAt sales={soldAt} />
         </>
       )}
 

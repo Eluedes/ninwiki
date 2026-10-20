@@ -83,6 +83,13 @@
      E' o valor padrao ja' definido em :root/.dark acima - so' precisa
      de uma regra quando o usuario escolhe outro tema.
      ========================================================================== */
+  /* "laranja" = a cor do anel do logo original do jogo (e' o tema padrao). */
+  :root[data-color-theme='laranja'],
+  .dark[data-color-theme='laranja'] {
+    --primary: 17 92% 44%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 17 92% 44%;
+  }
   :root[data-color-theme='canarinho'],
   .dark[data-color-theme='canarinho'] {
     --primary: 143 100% 30%;
@@ -263,8 +270,8 @@
    4 imagens (uma por tema de cor) empilhadas no mesmo lugar via
    position:absolute, com so' a do tema ATIVO visivel - a troca usa o
    mesmo atributo data-color-theme que controla o resto do site (ver
-   components/providers/color-theme-provider.tsx). Padrao (sem atributo,
-   ou "blood") mostra a imagem vermelha.
+   components/providers/color-theme-provider.tsx). O padrao e' "laranja" (o logo
+   original do jogo); sem atributo mostra a imagem vermelha ("blood").
    ============================================================================ */
 .nin-logo-img {
   display: block;
@@ -272,15 +279,20 @@
   height: 100%;
   object-fit: contain;
 }
+.nin-logo-img-laranja,
 .nin-logo-img-canarinho,
 .nin-logo-img-ouro,
 .nin-logo-img-anil {
   display: none;
 }
+[data-color-theme='laranja'] .nin-logo-img-blood,
 [data-color-theme='canarinho'] .nin-logo-img-blood,
 [data-color-theme='ouro'] .nin-logo-img-blood,
 [data-color-theme='anil'] .nin-logo-img-blood {
   display: none;
+}
+[data-color-theme='laranja'] .nin-logo-img-laranja {
+  display: block;
 }
 [data-color-theme='canarinho'] .nin-logo-img-canarinho {
   display: block;
@@ -405,4 +417,34 @@
 }
 .prose-shinobi-lg .prose-shinobi {
   @apply leading-8;
+}
+
+/* ===== Pagina de manutencao (components/wiki/maintenance-page-client.tsx): tela cheia animada, sem menu ===== */
+@keyframes maint-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes maint-spin { to { transform: rotate(360deg); } }
+@keyframes maint-spin-rev { to { transform: rotate(-360deg); } }
+@keyframes maint-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes maint-pulse { 0%, 100% { opacity: .5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+@keyframes maint-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes maint-ember {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
+  10% { opacity: .9; }
+  100% { transform: translate3d(var(--maint-drift, 20px), -110vh, 0) scale(.3); opacity: 0; }
+}
+@keyframes maint-bar { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+@keyframes maint-grid { to { background-position: 0 44px; } }
+.maint-rise { animation: maint-rise .8s cubic-bezier(.2, .7, .2, 1) both; }
+.maint-float { animation: maint-float 5s ease-in-out infinite; }
+.maint-glow { background: radial-gradient(60% 50% at 50% 38%, hsl(var(--primary) / .22), transparent 70%), radial-gradient(40% 35% at 85% 90%, hsl(var(--primary) / .10), transparent 70%); animation: maint-pulse 6s ease-in-out infinite; }
+.maint-grid { background-image: linear-gradient(hsl(var(--primary) / .07) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary) / .07) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(70% 60% at 50% 40%, #000, transparent 80%); -webkit-mask-image: radial-gradient(70% 60% at 50% 40%, #000, transparent 80%); animation: maint-grid 5s linear infinite; }
+.maint-ring { position: absolute; inset: 0; border-radius: 9999px; border: 2px dashed hsl(var(--primary) / .55); animation: maint-spin 14s linear infinite; }
+.maint-ring-2 { position: absolute; inset: -14px; border-radius: 9999px; border: 1px solid hsl(var(--primary) / .30); border-top-color: hsl(var(--primary)); animation: maint-spin-rev 6s linear infinite; }
+.maint-halo { position: absolute; inset: -28px; border-radius: 9999px; background: radial-gradient(circle, hsl(var(--primary) / .35), transparent 65%); animation: maint-pulse 3.2s ease-in-out infinite; }
+.maint-dot { animation: maint-blink 1.4s ease-in-out infinite; }
+.maint-ember { position: absolute; bottom: -12px; border-radius: 9999px; background: hsl(var(--primary)); box-shadow: 0 0 10px 2px hsl(var(--primary) / .8); opacity: 0; animation: maint-ember linear infinite; }
+.maint-bar-track { position: relative; height: 6px; width: 260px; max-width: 80vw; overflow: hidden; border-radius: 9999px; background: hsl(var(--primary) / .15); }
+.maint-bar-fill { position: absolute; inset: 0 auto 0 0; width: 34%; border-radius: 9999px; background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent); animation: maint-bar 1.9s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .maint-rise, .maint-float, .maint-glow, .maint-grid, .maint-ring, .maint-ring-2, .maint-halo, .maint-dot, .maint-ember, .maint-bar-fill { animation: none !important; }
+  .maint-ember { display: none; }
 }

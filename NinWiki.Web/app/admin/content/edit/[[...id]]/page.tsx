@@ -37,6 +37,9 @@ import {
   retranslateContentItem,
   listVillages,
   ApiError,
+  LOCATION_ZONES,
+  type LocationEntry,
+  type SaleEntry,
   type ContentItemInput,
   type ApiVillage,
 } from '@/lib/api-client';
@@ -117,6 +120,8 @@ const rarityOptions: { value: Rarity; label: string }[] = [
   { value: 'enchanted', label: 'Enchanted' },
   { value: 'unique', label: 'Unique' },
   { value: 'event', label: 'Event' },   // itens de evento do jogo
+  { value: 'premium', label: 'Premium' },
+  { value: 'organization', label: 'Organization' },
 ];
 
 // Atributos que um item/arma pode dar (lista fixa do jogo): escolhidos num seletor no editor.
@@ -186,6 +191,10 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   // attacks: mesmo padrao de attributes/drops - lista dinamica fora do
   // Zod, so' usada quando category === 'mobs'.
   const [attacks, setAttacks] = useState<{ name: string; jutsuId?: string | null }[]>([]);
+  // Lugares onde o mob aparece (lista com zona) e NPC da arma ligado a uma pagina: tambem fora do Zod, como attacks/drops.
+  const [locations, setLocations] = useState<LocationEntry[]>([]);
+  const [weaponNpcId, setWeaponNpcId] = useState<string | null>(null);
+  const [sales, setSales] = useState<SaleEntry[]>([]);   // lojas de NPC que vendem o item/arma (so' items e weapons)
   // Vilas de verdade, pro seletor do item tipo Cast - busca uma vez so',
   // ja' que sao poucas (3 hoje) e raramente mudam.
   const [villages, setVillages] = useState<ApiVillage[]>([]);
@@ -213,8 +222,16 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   const mobTypeOptions = getMobTypeOptions(t);
   const category = useWatch({ control, name: 'category' });
   const itemType = useWatch({ control, name: 'itemType' });
+  const spawnText = useWatch({ control, name: 'spawnLocation' });   // texto livre antigo (para mostrar o botao de transformar em lista)
   const itemTypeOptions = getItemTypeOptions(t, itemType);
   const wardrobeOptions = getWardrobeOptions(t);
+
+  // Entrada nova vinda da pagina de uma categoria do menu (?category=mobs): ja' abre com essa categoria escolhida.
+  useEffect(() => {
+    if (isEdit) return;
+    const wanted = new URLSearchParams(window.location.search).get('category');
+    if (wanted && ['mobs', 'items', 'weapons', 'missions', 'guides'].includes(wanted)) setValue('category', wanted as ContentItemFormValues['category']);
+  }, [isEdit, setValue]);
 
   useEffect(() => {
     if (!isEdit || !rawId) return;
@@ -260,6 +277,9 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         setAttributes(item.attributes.map((a) => ({ ...a, label: a.label || ATTRIBUTE_NAMES[0] })));
         setDrops(item.drops.map(({ rarity: _rarity, ...rest }) => rest));   // a raridade do drop vem do item ligado (nao e' mais editada aqui)
         setAttacks(item.attacks.map((a) => ({ name: a.name, jutsuId: a.jutsuId ?? null })));
+        setLocations(item.spawnLocations ?? []);
+        setWeaponNpcId(item.weaponNpcId ?? null);
+        setSales(item.soldAt ?? []);
       })
       .catch((err) => setApiError(err instanceof ApiError ? err.message : 'Error loading the entry.'))
       .finally(() => setLoading(false));
@@ -283,6 +303,23 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   }
   function removeDrop(index: number) {
     setDrops((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function addLocation() {
+    setLocations((prev) => [...prev, { name: '', zone: 'safe' }]);
+  }
+  function updateLocation(index: number, patch: Partial<LocationEntry>) {
+    setLocations((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
+  }
+  /** Transforma o texto livre antigo ("A, B, C") em linhas da lista e limpa o texto. */
+  function convertSpawnText() {
+    const parts = (getValues('spawnLocation') ?? '').split(/[,;\n]/).map((p) => p.trim().replace(/\.$/, '')).filter(Boolean);
+    setLocations((prev) => [...prev, ...parts.map((name) => ({ name, zone: null }))]);
+    setValue('spawnLocation', '', { shouldDirty: true });
+  }
+
+  function updateSale(index: number, patch: Partial<SaleEntry>) {
+    setSales((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)));
   }
 
   function addAttack() {
@@ -353,6 +390,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         synergyPt: null,
         spawnLocation: values.category === 'mobs' ? values.spawnLocation : null,
         spawnLocationPt: values.category === 'mobs' ? values.spawnLocationPt : null,
+        spawnLocations: values.category === 'mobs' ? locations.filter((l) => l.name.trim()).map((l) => ({ name: l.name.trim(), namePt: l.namePt || null, zone: l.zone ?? null })) : [],
         mobHealth: values.category === 'mobs' ? values.mobHealth : null,
         mobDamage: values.category === 'mobs' ? values.mobDamage : null,
         mobExperience: values.category === 'mobs' ? values.mobExperience : null,
@@ -362,6 +400,10 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         weaponSpeed: values.category === 'weapons' ? values.weaponSpeed : null,
         weaponRequirement: values.category === 'weapons' ? values.weaponRequirement : null,
         weaponNpc: values.category === 'weapons' ? values.weaponNpc : null,
+        weaponNpcId: values.category === 'weapons' ? weaponNpcId : null,
+        soldAt: values.category === 'items' || values.category === 'weapons'
+          ? sales.filter((s) => s.shop.trim()).map((s) => ({ shop: s.shop.trim(), places: s.places ?? [], qty: Math.max(1, Number(s.qty) || 1), price: Math.max(0, Number(s.price) || 0), currency: (s.currency ?? '').trim() || 'Ryo' }))
+          : [],
         weaponType: values.category === 'weapons' ? values.weaponType : null,
         weaponBaseDamage: values.category === 'weapons' ? values.weaponBaseDamage : null,
         weaponSpecialAbility: values.category === 'weapons' ? values.weaponSpecialAbility : null,
@@ -377,7 +419,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
       } else {
         await createContentItem(payload);
       }
-      router.push('/admin/content');
+      router.push(`/admin/content/${values.category}`);   // volta para a lista da categoria
     } catch (err) {
       setApiError(err instanceof ApiError ? err.message : 'Error saving. Is the API running?');
       setSaving(false);
@@ -396,7 +438,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   return (
     <form className="mx-auto max-w-3xl space-y-6">
       <Link
-        href="/admin/content"
+        href={`/admin/content/${category}`}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -520,7 +562,17 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             <>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground">{t.weaponNpc}</label>
-                <Input {...register('weaponNpc')} placeholder={t.weaponNpcPlaceholder} />
+                <div className="flex items-center gap-2">
+                  <Input {...register('weaponNpc')} placeholder={t.weaponNpcPlaceholder} readOnly={Boolean(weaponNpcId)} />
+                  <DropItemPicker
+                    linkedId={weaponNpcId}
+                    onlyCategories={['mobs']}
+                    onLink={(npc) => { setWeaponNpcId(npc.id); setValue('weaponNpc', npc.name, { shouldDirty: true }); }}
+                    onUnlink={() => setWeaponNpcId(null)}
+                  />
+                </div>
+                {weaponNpcId && <p className="text-xs text-emerald-400">{t.weaponNpcLinked}</p>}
+                <p className="text-xs text-muted-foreground">{t.weaponNpcHint}</p>
                 <FieldHint id="content.weaponNpc" />
               </div>
               <div className="space-y-2">
@@ -694,6 +746,22 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         {category === 'mobs' && (
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{t.spawnLocation}</label>
+            {locations.map((loc, i) => (
+              <div key={i} className="grid grid-cols-[1fr_auto_auto] items-center gap-2">
+                <Input placeholder={t.locationPlaceholder} value={loc.name} onChange={(e) => updateLocation(i, { name: e.target.value })} />
+                <select value={loc.zone ?? 'none'} onChange={(e) => updateLocation(i, { zone: e.target.value as LocationEntry['zone'] })} aria-label={t.zoneLabel}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+                  {LOCATION_ZONES.map((z) => <option key={z} value={z}>{t.zones[z]}</option>)}
+                </select>
+                <Button type="button" variant="ghost" size="icon" title={t.removeLocation} aria-label={t.removeLocation} onClick={() => setLocations((prev) => prev.filter((_, k) => k !== i))}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={addLocation}><Plus className="mr-1 h-3.5 w-3.5" />{t.addLocation}</Button>
+              {Boolean((spawnText ?? '').trim()) && <Button type="button" variant="outline" size="sm" onClick={convertSpawnText}>{t.convertText}</Button>}
+            </div>
             <Input {...register('spawnLocation')} placeholder={t.spawnLocationPlaceholder} />
             <FieldHint id="content.spawnLocation" />
           </div>
@@ -797,6 +865,31 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
             </div>
           ))}
           {attributes.length === 0 && <p className="text-sm text-muted-foreground">{t.noAttributes}</p>}
+        </div>
+      )}
+
+      {(category === 'items' || category === 'weapons') && (
+        <div className="space-y-3 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-card-foreground">{t.salesTitle}</h2>
+            <Button type="button" variant="outline" size="sm" onClick={() => setSales((prev) => [...prev, { shop: '', places: [], qty: 1, price: 0, currency: 'Ryo' }])}>
+              <Plus className="mr-1 h-3.5 w-3.5" /> {t.addSale}
+            </Button>
+          </div>
+          {sales.map((sale, i) => (
+            <div key={i} className="space-y-1">
+              <div className="grid grid-cols-[1fr_7rem_5rem_9rem_auto] items-center gap-2">
+                <Input placeholder={t.saleShop} value={sale.shop} onChange={(e) => updateSale(i, { shop: e.target.value })} />
+                <Input type="number" min={0} placeholder={t.salePrice} aria-label={t.salePrice} value={sale.price ?? 0} onChange={(e) => updateSale(i, { price: Number(e.target.value) })} />
+                <Input type="number" min={1} placeholder={t.saleQty} aria-label={t.saleQty} value={sale.qty ?? 1} onChange={(e) => updateSale(i, { qty: Number(e.target.value) })} />
+                <Input placeholder={t.saleCurrency} aria-label={t.saleCurrency} value={sale.currency ?? 'Ryo'} onChange={(e) => updateSale(i, { currency: e.target.value })} />
+                <Button type="button" variant="ghost" size="icon" title={t.removeSale} aria-label={t.removeSale} onClick={() => setSales((prev) => prev.filter((_, k) => k !== i))}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              {(sale.places ?? []).length > 0 && <p className="truncate text-xs text-muted-foreground">{(sale.places ?? []).join(', ')}</p>}
+            </div>
+          ))}
         </div>
       )}
 

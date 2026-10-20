@@ -55,6 +55,7 @@ function LoginContent() {
   const errorMessages: Record<string, string> = {
     not_staff: t.errNotStaff,
     inactive: t.errInactive,
+    mfa_required: t.errMfa,
     discord_failed: t.errDiscordFailed,
     discord_denied: t.errDiscordDenied,
     invalid_state: t.errInvalidState,

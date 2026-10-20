@@ -80,6 +80,19 @@ async def _log_denied(user: User, request: Request, missing: list[Permission], h
         pass
 
 
+def require_any_permission(*permissions: Permission):
+    """Exige PELO MENOS UMA das permissoes (ex.: mudar categoria de imagem: media.manage OU media.categorize). Sem nenhuma: 403 e registra no log."""
+
+    async def dependency(request: Request, user: User = Depends(get_current_user)) -> User:
+        """A checagem em si."""
+        if not any(user_has_permission(user, p) for p in permissions):
+            await _log_denied(user, request, list(permissions), False)
+            raise HTTPException(status_code=403, detail="You do not have permission to do this")
+        return user
+
+    return dependency
+
+
 def require_permission(*permissions: Permission):
     """
     Exige TODAS as permissoes listadas. Sem permissao:

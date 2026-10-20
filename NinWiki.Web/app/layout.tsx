@@ -4,6 +4,7 @@
 
 import './globals.css';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Inter, Cinzel, Playfair_Display, Lora, Oswald, Bebas_Neue, Caveat, Fira_Code } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { LanguageProvider } from '@/components/providers/language-provider';
@@ -34,12 +35,13 @@ export const metadata: Metadata = {
   description: 'The definitive encyclopedia of the Nin Online MMORPG — mobs, items, weapons, masteries, guides and missions.',
 };
 
-/** Layout raiz de todas as paginas: fonte, tema, idioma e avisos. */
-export default function RootLayout({
+/** Layout raiz de todas as paginas: fonte, tema, idioma e avisos. Async: le' o nonce da CSP (proxy.ts), o que tambem faz toda pagina ser gerada a cada pedido (o nonce e' novo a cada um). */
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     // suppressHydrationWarning: necessario porque o ThemeProvider
     // (next-themes) adiciona a classe "dark"/"light" no <html> DIRETO
@@ -47,14 +49,14 @@ export default function RootLayout({
     // React reclamaria (em desenvolvimento) que o HTML do servidor
     // nao bate com o do cliente - um aviso falso-positivo nesse caso
     // especifico, entao e' seguro suprimir so' aqui.
-    <html lang="en" suppressHydrationWarning className={fontVars}>
+    <html lang="en" suppressHydrationWarning className={fontVars} data-color-theme="laranja">
       <body className={inter.className}>
         {/* Ordem dos providers importa: ThemeProvider por fora,
             LanguageProvider e ColorThemeProvider por dentro - nenhum
             dos tres depende do outro hoje, mas manter uma ordem
             consistente evita confusao se um dia um precisar ler o
             valor do outro. */}
-        <ThemeProvider>
+        <ThemeProvider nonce={nonce}>
           <ColorThemeProvider>
             <LanguageProvider>
               {children}

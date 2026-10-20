@@ -1,7 +1,7 @@
 'use client';
 
 // Conteudo extra exibido so' dentro da categoria "guides" do catalogo:
-// Atributos, Profissoes, Ranks Ninja, Story Arcs e Summons. Nenhum
+// Atributos, Story Arcs e Summons (as Profissoes tem secao propria em /proficiencies; aqui so' um quadro com atalhos). Nenhum
 // deles e' um ContentItem (nao tem nivel, raridade, drops, etc.) - por
 // isso nao entram na lista generica de cards do catalogo, e ganham sua
 // propria secao com abas aqui. Todos os 5 vem como prop, ja' buscados
@@ -9,29 +9,23 @@
 // quando category === 'guides', pra' nao desperdicar 5 requisicoes
 // extras nas outras categorias).
 
+import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, Pickaxe, Hammer, ArrowUp, ScrollText, Sparkle } from 'lucide-react';
-import type { ApiAttribute, ApiProfession, ApiNinjaRank, ApiStoryArc, ApiSummon } from '@/lib/api-client';
+import { Sparkles, ScrollText, Sparkle } from 'lucide-react';
+import type { ApiAttribute, ApiStoryArc, ApiSummon } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { alternateName, localizedName, localizedText } from '@/lib/localized';
 
 interface GuideExtrasProps {
   attributes: ApiAttribute[];
-  professions: ApiProfession[];
-  ninjaRanks: ApiNinjaRank[];
   storyArcs: ApiStoryArc[];
   summons: ApiSummon[];
 }
 
-/** Abas extras do Guia: atributos, profissoes, ranks, arcos e summons. */
-export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, summons }: GuideExtrasProps) {
+/** Abas extras do Guia: atributos, profissoes, arcos e summons (os ranks ninja saíram do Guia). */
+export function GuideExtras({ attributes, storyArcs, summons }: GuideExtrasProps) {
   const { locale, dict } = useLanguage();
   const t = dict.lore;
-  const gathering = professions.filter((p) => p.group === 'gathering');
-  const crafting = professions.filter((p) => p.group === 'crafting');
-  // ninjaRanks ja' vem ordenado por hierarquia direto da API
-  // (GET /ninja-ranks ordena por `order` no backend).
-  const ranks = ninjaRanks;
 
   return (
     <div className="mt-10 rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -39,8 +33,6 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
       <Tabs defaultValue="attributes">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="attributes">{t.guideAttributes}</TabsTrigger>
-          <TabsTrigger value="professions">{t.guideProfessions}</TabsTrigger>
-          <TabsTrigger value="ranks">{t.guideRanks}</TabsTrigger>
           <TabsTrigger value="arcs">{t.guideArcs}</TabsTrigger>
           <TabsTrigger value="summons">{t.guideSummons}</TabsTrigger>
         </TabsList>
@@ -58,59 +50,6 @@ export function GuideExtras({ attributes, professions, ninjaRanks, storyArcs, su
                     {attr.name} {attr.namePt && <span className="font-normal text-muted-foreground">({attr.namePt})</span>}
                   </p>
                   <p className="text-xs text-muted-foreground">{localizedText(locale, attr.description, attr.descriptionPt)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="professions" className="mt-4 space-y-4">
-          <div>
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Pickaxe className="h-3.5 w-3.5" /> {t.guideGathering}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {gathering.map((p) => (
-                <div key={p.id} className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3">
-                  <span className="text-xl leading-none">{p.icon}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-card-foreground">{localizedName(locale, p.name, p.namePt)}</p>
-                    <p className="text-xs text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Hammer className="h-3.5 w-3.5" /> {t.guideCrafting}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {crafting.map((p) => (
-                <div key={p.id} className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3">
-                  <span className="text-xl leading-none">{p.icon}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-card-foreground">{localizedName(locale, p.name, p.namePt)}</p>
-                    <p className="text-xs text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Ranks: exibidos em ordem, do mais baixo ao mais alto, com
-            uma seta indicando a progressao entre eles. */}
-        <TabsContent value="ranks" className="mt-4">
-          <div className="space-y-2">
-            {ranks.map((rank, i) => (
-              <div key={rank.id}>
-                {i > 0 && <ArrowUp className="mx-auto my-1 h-4 w-4 text-muted-foreground" />}
-                <div className="rounded-lg border border-border bg-secondary/30 p-3">
-                  <p className="text-sm font-semibold text-card-foreground">
-                    {localizedName(locale, rank.name, rank.namePt)}{alternateName(locale, rank.name, rank.namePt) && <span className="font-normal text-muted-foreground"> ({alternateName(locale, rank.name, rank.namePt)})</span>}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{localizedText(locale, rank.description, rank.descriptionPt)}</p>
                 </div>
               </div>
             ))}

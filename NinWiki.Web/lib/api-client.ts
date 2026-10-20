@@ -62,6 +62,15 @@ export interface ApiAttackEntry {
 /** Ataque enviado ao salvar: um jutsu ligado (sem precisar de nome) ou so' o texto. */
 export type AttackInput = { name?: string; jutsuId?: string | null };
 
+/** Zonas de um lugar (cor do ponto e nome na ficha). */
+export const LOCATION_ZONES = ['safe', 'danger', 'war', 'arena', 'parkour', 'none'] as const;
+export type LocationZone = (typeof LOCATION_ZONES)[number];
+/** Uma loja de NPC que vende o item: onde fica, quantas unidades por esse preco, o preco e a moeda (nome de um item, ex.: Ryo). */
+export type SaleEntry = { shop: string; places?: string[]; qty?: number; price?: number; currency?: string };
+
+/** Um lugar onde o mob aparece (a ficha mostra um por linha, com a zona). */
+export type LocationEntry = { name: string; namePt?: string | null; zone?: LocationZone | null };
+
 export interface ApiContentItem {
   id: string;
   slug: string;
@@ -77,6 +86,8 @@ export interface ApiContentItem {
   // So' usado quando category === 'mobs' - onde o mob spawna no mapa
   // (texto livre por enquanto, ex: "Floresta Negra, Campos Iniciais").
   spawnLocation: string | null;
+  spawnLocations: LocationEntry[];   // lista de lugares (vazia = usa o texto acima)
+  soldAt: SaleEntry[];               // lojas de NPC que vendem este item/arma, com o preco
   // ---- Versoes em portugues (traducao automatica via DeepL, EN->PT) -
   // sempre
   // editaveis a mao, mesmo depois de preenchidas automaticamente. ----
@@ -97,6 +108,9 @@ export interface ApiContentItem {
   weaponSpeed: string | null;
   weaponRequirement: string | null;
   weaponNpc: string | null;
+  weaponNpcId?: string | null;        // NPC ligado a uma pagina do wiki (opcional)
+  weaponNpcSlug?: string | null;      // slug da pagina ligada (so' vem se ela esta' publicada)
+  weaponNpcNamePt?: string | null;    // nome dela em portugues
   weaponType: string | null;
   weaponBaseDamage: string | null;
   weaponSpecialAbility: string | null;
@@ -163,6 +177,8 @@ export interface ContentItemInput {
   lore?: string | null;
   synergy?: string | null;
   spawnLocation?: string | null;
+  spawnLocations?: LocationEntry[];
+  soldAt?: SaleEntry[];
   namePt?: string | null;
   descriptionPt?: string | null;
   lorePt?: string | null;
@@ -177,6 +193,7 @@ export interface ContentItemInput {
   weaponSpeed?: string | null;
   weaponRequirement?: string | null;
   weaponNpc?: string | null;
+  weaponNpcId?: string | null;
   weaponType?: string | null;
   weaponBaseDamage?: string | null;
   weaponSpecialAbility?: string | null;
@@ -367,6 +384,7 @@ export interface ApiJutsu {
   debuff: string;
   isNpc: boolean;          // Jutsu NPC: versao do jutsu ensinada/usada por NPC (secao propria no site)
   allowedWeapons: string;  // "Allowed weapons" (ex.: Blunt); vazio = nao aparece
+  status?: 'draft' | 'published';   // rascunho: so' a equipe ve (ausente = publicado)
 }
 
 // Corpo aceito em criar/editar um jutsu - igual a ApiJutsu, mas `id`
@@ -676,6 +694,16 @@ export function deleteOrganization(id: string): Promise<void> {
 
 // ---- Extras de Guia: Profissoes, Ranks Ninja, Story Arcs, Summons ----
 
+/** Referencia a um item do wiki dentro dos detalhes de uma profissao (slug so' vem se a pagina esta' publicada: vira link). */
+export type ItemRef = { name: string; namePt?: string | null; slug?: string | null; image?: string | null };   // image: caminho (/uploads/...) - o site poe o endereco da API
+
+/** O que a pagina da profissao mostra alem da descricao (preenchido por scripts/importar_profissoes_atlas.py). */
+export interface ProfessionDetails {
+  resources?: { name: string; loot: (ItemRef & { min: number; max: number })[] }[];
+  recipes?: { result: ItemRef; level: number; workbench: boolean; needs: (ItemRef & { qty: number })[]; learnedFrom?: ItemRef | null }[];
+  tools?: (ItemRef & { level?: number | null; price?: { amount: number; currency: string } | null })[];
+}
+
 export interface ApiProfession {
   id: string;
   name: string;
@@ -685,6 +713,7 @@ export interface ApiProfession {
   description: string;
   descriptionPt?: string | null;
   icon: string;
+  details?: ProfessionDetails | null;
 }
 
 export interface ApiNinjaRank {
@@ -726,6 +755,102 @@ export function listProfessions(): Promise<ApiProfession[]> {
   return apiFetch('/professions');
 }
 
+/** Uma profissao com todos os detalhes (pagina /profession/[id]); 404 se nao existe. */
+export function getProfession(id: string): Promise<ApiProfession> {
+  return apiFetch(`/professions/${id}`);
+}
+
+/** Corpo de criar/editar uma proficiencia (os `details` vem do importador e nao sao enviados). */
+export type ProfessionInput = Omit<ApiProfession, 'details'>;
+
+/** Cria uma proficiencia (painel; exige lore.edit). */
+export function createProfession(payload: ProfessionInput): Promise<ApiProfession> {
+  return apiFetch('/professions', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+/** Edita uma proficiencia (os `details` ficam como estao). */
+export function updateProfession(id: string, payload: ProfessionInput): Promise<ApiProfession> {
+  return apiFetch(`/professions/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+/** Apaga uma proficiencia (painel; exige lore.delete). */
+export function deleteProfession(id: string): Promise<void> {
+  return apiFetch(`/professions/${id}`, { method: 'DELETE' });
+}
+
+// ---------------- Artigos do Guia ----------------
+
+/** Secoes do Guia, na ordem em que aparecem no site (o rotulo de cada uma fica em lib/i18n.ts). */
+export const GUIDE_SECTIONS = ['new-player', 'combat', 'progression', 'interface', 'economy'] as const;
+export type GuideSection = (typeof GUIDE_SECTIONS)[number];
+
+/** Artigo do Guia como a API devolve (title/summary/body em ingles; `Pt` = traducao). */
+export interface ApiGuideArticle {
+  id: string;
+  section: GuideSection;
+  position: number;
+  title: string;
+  titlePt?: string | null;
+  summary: string;
+  summaryPt?: string | null;
+  body: string;      // texto rico (documento Tiptap em JSON)
+  bodyPt?: string | null;
+  icon: string;      // nome de icone (components/lore/guide-icons.tsx)
+  status: 'draft' | 'published';
+}
+
+export type GuideArticleInput = ApiGuideArticle;
+
+/** Artigos do Guia (o visitante so' recebe os publicados; a equipe logada recebe tambem os rascunhos). */
+export function listGuideArticles(section?: GuideSection): Promise<ApiGuideArticle[]> {
+  return apiFetch(`/guide-articles${section ? `?section=${section}` : ''}`);
+}
+
+/** Um artigo do Guia pelo id (404 se nao existe ou se e' rascunho e voce nao e' da equipe). */
+export function getGuideArticle(id: string): Promise<ApiGuideArticle> {
+  return apiFetch(`/guide-articles/${id}`);
+}
+
+/** Cria um artigo do Guia (painel; exige lore.edit). */
+export function createGuideArticle(payload: GuideArticleInput): Promise<ApiGuideArticle> {
+  return apiFetch('/guide-articles', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+/** Edita um artigo do Guia. */
+export function updateGuideArticle(id: string, payload: GuideArticleInput): Promise<ApiGuideArticle> {
+  return apiFetch(`/guide-articles/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+/** Apaga um artigo do Guia (painel; exige lore.delete). */
+export function deleteGuideArticle(id: string): Promise<void> {
+  return apiFetch(`/guide-articles/${id}`, { method: 'DELETE' });
+}
+
+// ---------------- Modo manutencao do site ----------------
+
+/** Estado publico do site; `access` = o passe enviado e' valido (so' faz sentido no servidor do site). */
+export interface ApiSiteStatus {
+  maintenance: boolean;
+  message?: string | null;
+  messagePt?: string | null;
+  access: boolean;
+}
+
+/** O site esta' em manutencao? (publico; nunca em cache) */
+export function getSiteStatus(): Promise<ApiSiteStatus> {
+  return apiFetch('/site/status', { cache: 'no-store' }, true);
+}
+
+/** Liga/desliga a manutencao e muda a mensagem (so' S.Adm; os outros recebem 404). */
+export function setMaintenance(payload: { enabled: boolean; message: string; messagePt: string | null }): Promise<ApiSiteStatus> {
+  return apiFetch('/site/maintenance', { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+/** Troca a sessao da equipe por um passe de manutencao (401 = nao esta' logado na equipe; chamada "quiet": nao derruba a sessao). */
+export function createMaintenancePass(): Promise<{ token: string; hours: number; maintenance: boolean }> {
+  return apiFetch('/site/pass', { method: 'POST' }, true);
+}
+
 /** Lista os ranks ninja (aba do Guia). */
 export function listNinjaRanks(): Promise<ApiNinjaRank[]> {
   return apiFetch('/ninja-ranks');
@@ -751,7 +876,7 @@ export type PermissionName =
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'translation.import'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
-  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.upload' | 'media.reset_ids' | 'media.closed'
+  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.categorize' | 'site.maintenance' | 'media.upload' | 'media.reset_ids' | 'media.closed'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view'
   | `media.cat.${string}`;   // ver uma categoria do banco de imagens (media.cat.weapon, media.cat.none = Sem categoria...)
 
@@ -1379,7 +1504,7 @@ export function clearAnnouncement(): Promise<ApiAnnouncement> {
 // ---- Banco de imagens ----
 
 /** Categorias do banco de imagens (a API aceita so' estas; vazio = sem categoria). */
-export const MEDIA_CATEGORIES = ['weapon', 'clothing', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'furniture', 'hair_beard', 'closed', 'other'] as const;
+export const MEDIA_CATEGORIES = ['weapon', 'gear', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'furniture', 'hair_beard', 'skin', 'tools', 'closed', 'other'] as const;
 export type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
 export interface ApiMedia {

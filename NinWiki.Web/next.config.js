@@ -2,28 +2,9 @@
 /** @type {import('next').NextConfig} */
 
 // Endereco da API: entra na politica de seguranca (CSP) para o navegador so' conversar com ele.
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 const isDev = process.env.NODE_ENV !== 'production';
 
-// Content-Security-Policy: diz ao navegador DE ONDE a pagina pode carregar scripts, imagens e dados.
-// Mesmo que alguem consiga injetar um <script> ou um <iframe>, o navegador recusa executar.
-//  - script-src: 'unsafe-inline' e' necessario pro Next.js (scripts de inicializacao inline); 'unsafe-eval' so' no dev.
-//  - img-src: o proprio site, a API (uploads) e qualquer https (o painel aceita colar URL de imagem).
-//  - connect-src: so' o site e a API. frame-ancestors 'none': ninguem embute o site num iframe (anti-clickjacking).
-const csp = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-  "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https: ${API_URL}`,
-  "font-src 'self' data:",
-  `connect-src 'self' ${API_URL}${isDev ? ' ws:' : ''}`,
-  // Videos do blog: so' os players oficiais (YouTube no modo sem cookies e Twitch). Nenhum outro iframe e' permitido.
-  "frame-src https://www.youtube-nocookie.com https://player.twitch.tv",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-].join('; ');
+// A Content-Security-Policy NAO fica aqui: ela leva um nonce novo a cada requisicao e por isso e' montada no proxy.ts (a partir de lib/csp.ts).
 
 const nextConfig = {
   // O projeto ainda não usa a otimização de imagens do Next. Além de
@@ -50,7 +31,6 @@ const nextConfig = {
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
       { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
       { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-      { key: 'Content-Security-Policy', value: csp },
     ];
     // HSTS: depois da primeira visita o navegador so' acessa o site por HTTPS (so' em producao).
     if (!isDev) base.push({ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' });

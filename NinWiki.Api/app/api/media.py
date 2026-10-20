@@ -3,9 +3,9 @@ Banco de imagens do painel: toda imagem enviada ganha um ID (#1, #2...) que a eq
 
   GET    /media?q=&limit=&offset=   lista/busca (por nome ou ID)                  uploads.create
   GET    /media/{id}                uma imagem (o painel usa para trocar o ID pelo endereco)   uploads.create
-  PATCH  /media/{id}                renomeia e/ou muda a categoria                media.manage
+  PATCH  /media/{id}                renomeia (media.manage) e/ou muda a categoria (media.manage OU media.categorize)
   POST   /media/renumber            renumera os IDs a partir de 1                  media.reset_ids (so' S.Adm)
-  POST   /media/bulk-category       muda a categoria de varias imagens             media.manage
+  POST   /media/bulk-category       muda a categoria de varias imagens             media.manage OU media.categorize
   POST   /media                     envia uma imagem (multipart: file, name, category)   media.upload (padrao: so' S.Adm)
 Categoria 'closed': PRIVADA - so' quem tem media.closed (S.Adm) ve; para os outros as imagens dela nao existem (somem da lista e da contagem, 404 no resto).
 Limite: quem digita o ID de uma imagem 'closed' num campo de imagem (img:12) ainda a usa - o ID nao e' mostrado a ninguem que nao seja S.Adm.
@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.uploads import UPLOAD_DIR, store_image
 from app.core.audit import log_action
-from app.core.auth import require_permission
+from app.core.auth import require_any_permission, require_permission
 from app.core.database import get_db
 from app.core.media_refs import CLOSED_MESSAGE, media_url, parse_ref
 from app.core.permissions import Permission, is_category_locked, user_has_permission
@@ -42,7 +42,7 @@ router = APIRouter(prefix="/media", tags=["media"])
 
 
 # Categorias do banco de imagens ('' = sem categoria). Fixas de proposito: o filtro do painel fica pequeno e o nome nao vira lixo digitado.
-MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "clothing", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "closed", "other")
+MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "gear", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "skin", "tools", "closed", "other")
 CLOSED = "closed"   # categoria PRIVADA: so' S.Adm (media.closed). As demais podem ser TRANCADAS por cargo em /admin/permissions (media.cat.<categoria>)
 
 
@@ -188,6 +188,11 @@ async def list_media(
     return MediaPage(items=[_read(m) for m in rows], total=total, counts=counts, restricted=restricted)
 
 
+def _can_categorize(staff: User) -> bool:
+    """Pode escolher/mudar a categoria das imagens? (media.manage OU media.categorize)"""
+    return user_has_permission(staff, Permission.MEDIA_MANAGE) or user_has_permission(staff, Permission.MEDIA_CATEGORIZE)
+
+
 @router.post("/sync")
 async def sync_media(
     staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
@@ -240,17 +245,19 @@ async def upload_media(
     staff: User = Depends(require_permission(Permission.MEDIA_UPLOAD)), db: AsyncSession = Depends(get_db),
 ) -> MediaRead:
     """Envia uma imagem para o banco de imagens (com categoria opcional) e devolve o ID dela. So' quem tem media.upload (padrao: S.Adm)."""
-    # Escolher categoria e' de quem tem media.manage (padrao S.Adm): para os outros a categoria enviada e' ignorada (a imagem entra sem categoria).
-    cat = _valid_category(category, staff) if user_has_permission(staff, Permission.MEDIA_MANAGE) else ""
+    # Escolher categoria e' de quem tem media.manage ou media.categorize (padrao S.Adm): para os outros a categoria enviada e' ignorada (a imagem entra sem categoria).
+    cat = _valid_category(category, staff) if _can_categorize(staff) else ""
     return _read(await store_image(file, staff, db, name, cat))
 
 
 @router.patch("/{media_id}", response_model=MediaRead)
 async def rename_media(
     media_id: int, payload: MediaRename,
-    staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
+    staff: User = Depends(require_any_permission(Permission.MEDIA_MANAGE, Permission.MEDIA_CATEGORIZE)), db: AsyncSession = Depends(get_db),
 ) -> MediaRead:
-    """Muda o nome e/ou a categoria da imagem (o ID e o arquivo nao mudam)."""
+    """Muda o nome (exige media.manage) e/ou a categoria (media.manage OU media.categorize) da imagem; o ID e o arquivo nao mudam."""
+    if payload.name is not None and not user_has_permission(staff, Permission.MEDIA_MANAGE):
+        raise HTTPException(status_code=403, detail="You do not have permission to rename images (only to change their category)")
     m = await _get_visible(db, media_id, staff)
     if m is None:
         raise HTTPException(status_code=404, detail=f"Image #{media_id} was not found")
@@ -272,7 +279,7 @@ async def rename_media(
 @router.post("/bulk-category")
 async def bulk_category(
     payload: MediaBulkCategory,
-    staff: User = Depends(require_permission(Permission.MEDIA_MANAGE)), db: AsyncSession = Depends(get_db),
+    staff: User = Depends(require_any_permission(Permission.MEDIA_MANAGE, Permission.MEDIA_CATEGORIZE)), db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Muda a categoria de varias imagens de uma vez ('' tira a categoria). Devolve quantas mudaram."""
     cat = _valid_category(payload.category, staff)

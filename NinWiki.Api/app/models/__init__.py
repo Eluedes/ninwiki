@@ -13,7 +13,8 @@ from app.models.base import Base, TimestampMixin  # noqa: F401
 from app.models.content import ContentItem, ContentItemAttribute, ContentItemDrop, ContentVersion  # noqa: F401
 from app.models.masteries import Attribute, Jutsu, Mastery, MasteryAttribute, MasteryPath, MasteryPathAttribute  # noqa: F401
 from app.models.villages import Clan, Organization, OrganizationVillage, Village  # noqa: F401
-from app.models.guide import NinjaRank, Profession, StoryArc, Summon  # noqa: F401
+from app.models.guide import GuideArticle, NinjaRank, Profession, StoryArc, Summon  # noqa: F401
+from app.models.site import SiteMaintenance  # noqa: F401
 from app.models.users import AuditLogEntry, User  # noqa: F401
 from app.models.posts import Post  # noqa: F401
 from app.models.roles import CustomRole, RolePermission  # noqa: F401

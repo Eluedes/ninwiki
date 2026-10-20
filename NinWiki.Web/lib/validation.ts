@@ -20,7 +20,7 @@ export const contentItemSchema = z.object({
   level: z.coerce.number().int('Level must be a whole number.').min(0, 'Level cannot be negative.'),
   icon: z.string().min(1, 'Pick an icon (emoji).').max(20),
   image: z.string().nullable().optional(),
-  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'enchanted', 'unique', 'event']),
+  rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'enchanted', 'unique', 'event', 'premium', 'organization']),
   // Opcional para mobs (bestiario) - validado no superRefine abaixo.
   description: z.string(),
   lore: z.string().nullable().optional(),
@@ -73,7 +73,7 @@ export const jutsuSchema = z.object({
   chakraCost: z.coerce.number().int().min(0, 'Chakra cost cannot be negative.'),
   // A descricao curta e' obrigatoria so' para jutsu de jogador (o Jutsu NPC usa apenas a descricao completa): ver superRefine abaixo.
   description: z.string(),
-  longDescription: z.string().min(1, 'The full description is required.'),
+  longDescription: z.string(),   // obrigatoria so' para jutsu publicado: ver superRefine abaixo
   descriptionPt: z.string().nullable().optional(),
   longDescriptionPt: z.string().nullable().optional(),
   effect: z.string(),
@@ -97,7 +97,12 @@ export const jutsuSchema = z.object({
   debuff: z.string().max(150),
   isNpc: z.boolean(),
   allowedWeapons: z.string().max(100),
+  status: z.enum(['draft', 'published']),
 }).superRefine((value, ctx) => {
+  if (value.status === 'draft') return;   // rascunho pode ser salvo incompleto (os jutsus criados em massa vem so' com o nome)
+  if (!value.longDescription.trim()) {
+    ctx.addIssue({ code: 'custom', path: ['longDescription'], message: 'The full description is required.' });
+  }
   if (!value.isNpc && !value.description.trim()) {
     ctx.addIssue({ code: 'custom', path: ['description'], message: 'The short description is required.' });
   }
@@ -167,6 +172,36 @@ export const villageSchema = z
   });
 
 export type VillageFormValues = z.infer<typeof villageSchema>;
+
+// Artigo do Guia (espelha GuideArticleWrite em app/schemas/guide.py). O texto rico so' e' validado de verdade na API.
+export const guideArticleSchema = z.object({
+  id: z.string().min(1, 'The id/slug is required.').max(80).regex(slugRegex, slugMessage),
+  section: z.enum(['new-player', 'combat', 'progression', 'interface', 'economy']),
+  position: z.coerce.number().int().min(0, 'Minimum is 0.').max(999, 'Maximum is 999.'),
+  title: z.string().min(1, 'The title is required.').max(150),
+  titlePt: z.string().max(150).nullable().optional(),
+  summary: z.string().max(300, 'Maximum of 300 characters.'),
+  summaryPt: z.string().max(300, 'Maximum of 300 characters.').nullable().optional(),
+  body: z.string(),
+  bodyPt: z.string().nullable().optional(),
+  icon: z.string().min(1, 'Pick an icon.'),
+  status: z.enum(['draft', 'published']),
+});
+
+export type GuideArticleFormValues = z.infer<typeof guideArticleSchema>;
+
+// Proficiencia (espelha ProfessionWrite em app/schemas/guide.py).
+export const professionSchema = z.object({
+  id: z.string().min(1, 'The id/slug is required.').max(50).regex(slugRegex, slugMessage),
+  name: z.string().min(1, 'The name is required.').max(100),
+  namePt: z.string().max(100).nullable().optional(),
+  group: z.enum(['gathering', 'crafting']),
+  description: z.string().min(1, 'The description is required.'),
+  descriptionPt: z.string().nullable().optional(),
+  icon: z.string().min(1, 'The emoji is required.').max(20),
+});
+
+export type ProfessionFormValues = z.infer<typeof professionSchema>;
 
 // ---- Blog (posts) - mesmas regras do backend (app/schemas/posts.py) ----
 

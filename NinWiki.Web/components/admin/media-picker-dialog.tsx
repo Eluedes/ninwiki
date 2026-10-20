@@ -1,6 +1,6 @@
 'use client';
 
-// Janela "Escolher imagem do banco de imagens": grade com miniaturas, busca por nome ou ID, envio de imagens novas e clique para escolher.
+// Janela "Escolher imagem do banco de imagens": grade com miniaturas, filtro por categoria (sem as contagens), busca por nome ou ID, envio de imagens novas e clique para escolher.
 // Usada pelo campo de imagem (ImageUploadField) e pelo botao de imagem do editor do blog.
 
 import { UploadProgressBar } from '@/components/admin/upload-progress';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
-import { ApiError, listMedia, type ApiMedia } from '@/lib/api-client';
+import { ApiError, listMedia, MEDIA_CATEGORIES, type ApiMedia } from '@/lib/api-client';
 import { DropZone } from '@/components/admin/drop-zone';
 import { useMediaUpload } from '@/components/admin/use-media-upload';
 
@@ -34,13 +34,19 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
   const canUpload = can('media.upload');   // enviar pelo banco de imagens: so' quem tem media.upload (padrao S.Adm); escolher uma imagem existente e' livre
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Filtro de categoria: '' = todas (as que este usuario pode ver), 'none' = sem categoria. Mesmas regras de acesso da tela do banco de imagens:
+  // 'closed' so' para quem tem media.closed e cada categoria pode estar trancada por cargo (media.cat.*).
+  const [category, setCategory] = useState('');
+  const categories = MEDIA_CATEGORIES.filter((c) => (c === 'closed' ? can('media.closed') : can(`media.cat.${c}`)));
+  const canNone = can('media.cat.none');
+  const filtros = [{ key: '', label: t.allCategories }, ...categories.map((c) => ({ key: c as string, label: t.categories[c] })), ...(canNone ? [{ key: 'none', label: t.uncategorized }] : [])];
 
-  /** Carrega a primeira pagina da busca atual (ou acrescenta a proxima). */
-  const load = useCallback(async (query: string, offset: number) => {
+  /** Carrega a primeira pagina da busca atual (ou acrescenta a proxima), ja' filtrada pela categoria. */
+  const load = useCallback(async (query: string, offset: number, cat: string) => {
     setLoading(true);
     setError(null);
     try {
-      const page = await listMedia(query, PAGE, offset);
+      const page = await listMedia(query, PAGE, offset, cat || undefined);
       setItems((prev) => (offset === 0 ? page.items : [...prev, ...page.items]));
       setTotal(page.total);
     } catch (err) {
@@ -53,15 +59,15 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
   // Busca com pequena espera (nao consulta a API a cada tecla).
   useEffect(() => {
     if (!open) return;
-    const timer = setTimeout(() => { load(q, 0); }, q ? 250 : 0);
+    const timer = setTimeout(() => { load(q, 0, category); }, q ? 250 : 0);
     return () => clearTimeout(timer);
-  }, [open, q, load]);
+  }, [open, q, category, load]);
 
   /** Envia as imagens escolhidas no seletor ou soltas na janela (varias de uma vez) e recarrega a grade. */
   async function sendFiles(files: File[]) {
     setError(null);
     const created = await upload(files);
-    if (created.length) await load(q, 0);
+    if (created.length) await load(q, 0, category);
   }
 
   function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -90,6 +96,16 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
             </>
           )}
         </div>
+        <div className="flex flex-wrap gap-1.5">
+          {filtros.map((f) => (
+            <button
+              key={f.key || 'all'} type="button" onClick={() => setCategory(f.key)}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${category === f.key ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'}`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
         {up.busy && <UploadProgressBar loaded={up.loaded} total={up.totalBytes} detail={`${up.done}/${up.total} ${dict.admin.uploadProgress.files}`} />}
         {error && <p className="text-sm text-destructive">{error}</p>}
         {up.errors.map((e) => <p key={e} className="text-sm text-destructive">{e}</p>)}
@@ -117,7 +133,7 @@ export function MediaPickerDialog({ open, onOpenChange, onPick }: {
           <span className="text-xs text-muted-foreground">{t.total.replace('{n}', String(total))}</span>
           {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           {!loading && items.length < total && (
-            <Button type="button" variant="outline" size="sm" onClick={() => load(q, items.length)}>{t.loadMore}</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => load(q, items.length, category)}>{t.loadMore}</Button>
           )}
         </div>
         </DropZone>

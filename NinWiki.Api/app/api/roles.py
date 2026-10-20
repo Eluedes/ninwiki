@@ -33,7 +33,7 @@ from app.schemas.roles import (
 router = APIRouter(prefix="/roles", tags=["roles"])
 
 _GROUPS = {"content": "content", "posts": "posts", "lore": "lore", "uploads": "tools", "media": "tools", "translation": "tools",
-           "notices": "notices", "announcement": "notices", "staff": "staff", "roles": "staff", "audit": "audit", "errors": "audit", "comments": "posts", "reports": "posts", "analytics": "audit"}
+           "notices": "notices", "announcement": "notices", "staff": "staff", "roles": "staff", "site": "staff", "audit": "audit", "errors": "audit", "comments": "posts", "reports": "posts", "analytics": "audit"}
 
 
 def _group(p: Permission) -> str:

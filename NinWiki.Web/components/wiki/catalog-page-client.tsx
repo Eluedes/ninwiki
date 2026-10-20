@@ -12,10 +12,11 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { CatalogCard } from '@/components/wiki/catalog-card';
 import { MobCard } from '@/components/wiki/mob-card';
 import { GuideExtras } from '@/components/wiki/guide-extras';
+import { GuideHub } from '@/components/wiki/guide-hub';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Search, ChevronDown, ChevronUp } from 'lucide-react';
-import type { ApiContentItemSummary, ApiAttribute, ApiProfession, ApiNinjaRank, ApiStoryArc, ApiSummon } from '@/lib/api-client';
+import type { ApiContentItemSummary, ApiAttribute, ApiStoryArc, ApiSummon, ApiGuideArticle } from '@/lib/api-client';
 import type { Category } from '@/lib/types';
 
 // Filtro exclusivo da categoria Items (26/09, pedido do Rafael): nem
@@ -91,10 +92,9 @@ interface CatalogPageClientProps {
   // requisicoes a toa nas outras categorias) - por isso sao opcionais
   // aqui, com [] como padrao.
   guideAttributes?: ApiAttribute[];
-  professions?: ApiProfession[];
-  ninjaRanks?: ApiNinjaRank[];
   storyArcs?: ApiStoryArc[];
   summons?: ApiSummon[];
+  guideArticles?: ApiGuideArticle[];   // artigos publicados do Guia (so' category === 'guides')
 }
 
 /** Listagem do catalogo de uma categoria, com busca e filtros. */
@@ -102,10 +102,9 @@ export function CatalogPageClient({
   items,
   category,
   guideAttributes = [],
-  professions = [],
-  ninjaRanks = [],
   storyArcs = [],
   summons = [],
+  guideArticles = [],
 }: CatalogPageClientProps) {
   const { dict } = useLanguage();
   const [search, setSearch] = useState('');
@@ -178,6 +177,7 @@ export function CatalogPageClient({
   };
 
   const totalFiltered = filteredGroups.reduce((sum, g) => sum + g.entries.length, 0);
+  const noGuideArticles = category === 'guides' && totalFiltered === 0 && search === '';   // Guia ainda sem artigos: so' o 'Comece por aqui' e as abas (sem busca nem 'nenhum resultado')
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -185,12 +185,16 @@ export function CatalogPageClient({
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
           {dict.nav[category]}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {totalFiltered} {dict.catalog.results}
-        </p>
+        {!noGuideArticles && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {totalFiltered} {dict.catalog.results}
+          </p>
+        )}
       </div>
 
-      <div className="relative mb-8 max-w-md">
+      {category === 'guides' && <GuideHub articles={guideArticles} />}
+
+      <div className={cn('relative mb-8 max-w-md', noGuideArticles && 'hidden')}>
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
@@ -224,7 +228,7 @@ export function CatalogPageClient({
         </div>
       )}
 
-      {filteredGroups.length === 0 ? (
+      {noGuideArticles ? null : filteredGroups.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Search className="mb-4 h-12 w-12 text-muted-foreground/40" />
           <p className="text-muted-foreground">{dict.catalog.noResults}</p>
@@ -272,8 +276,6 @@ export function CatalogPageClient({
       {category === 'guides' && (
         <GuideExtras
           attributes={guideAttributes}
-          professions={professions}
-          ninjaRanks={ninjaRanks}
           storyArcs={storyArcs}
           summons={summons}
         />

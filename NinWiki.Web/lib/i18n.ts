@@ -59,7 +59,7 @@ export interface Dictionary {
   siteName: string;
   siteTagline: string;
   compare: { title: string; subtitle: string; search: string; noResults: string; change: string; pickBoth: string; button: string };
-  nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; map: string; blog: string };
+  nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; proficiencies: string; map: string; blog: string };
   home: { welcome: string; subtitle: string; browseAll: string };
   news: { title: string; subtitle: string; readMore: string; viewAll: string; empty: string };
   lore: {
@@ -71,15 +71,21 @@ export interface Dictionary {
     demo: string; jutsuDemoAlt: string;
     guideMore: string; guideAttributes: string; guideProfessions: string; guideRanks: string; guideArcs: string; guideSummons: string;
     guideGathering: string; guideCrafting: string;
+    proficienciesTitle: string; proficienciesSubtitle: string; proficienciesCrumb: string; profHowTitle: string; profHowCap: string; profHowBonus: string; profHowFormula: string; profHowExp: string;
+    profCalcTitle: string; profCalcFrom: string; profCalcTo: string; profCalcResult: string; profMilestones: string; profColLevel: string; profColXp: string; profColBonus: string;
+    profRecipesCount: string; profResourcesCount: string; profToolsCount: string; profSearch: string; profNoMatch: string; profPrice: string; profSources: string; profTipsTitle: string; profGuideBannerText: string; profSeeAll: string;
+    guideSections: { 'new-player': string; combat: string; progression: string; interface: string; economy: string; systems: string };
+    guideBackToGuide: string; guideSystemsMissions: string; guideSystemsProficiencies: string; guideDraftBadge: string;
+    professionBack: string; professionResources: string; professionRecipes: string; professionTools: string; professionYields: string; professionLevel: string; professionWorkbench: string; professionLearnedFrom: string; professionNeeds: string; professionNoDetails: string; professionOpen: string;
   };
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
-  maintenance: { title: string; text: string; back: string };
+  maintenance: { title: string; text: string; back: string; siteTitle: string; siteText: string; staffLogin: string; staffChecking: string; staffHint: string; badge: string };
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; allLevels: string; filterByLevel: string; itemsFilterAll: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
-  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
+  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copyAttributes: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; zones: Record<string, string>; soldAt: string; forQty: string; free: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
   masteryDetail: {
     notFound: string; backToMasteries: string; elemental: string; nonElemental: string;
     aboutMastery: string; masteryPaths: string; noJutsusInPath: string; jutsusOfMastery: string;
@@ -102,7 +108,7 @@ export interface Dictionary {
     auth: {
       checkingSession: string; logout: string; sessionExpired: string; apiUnreachable: string; retry: string;
       noAccessTitle: string; noAccessBody: string; backToOverview: string;
-      errNotStaff: string; errInactive: string; errDiscordFailed: string; errDiscordDenied: string;
+      errNotStaff: string; errMfa: string; errInactive: string; errDiscordFailed: string; errDiscordDenied: string;
       errInvalidState: string; errNotConfigured: string; errGeneric: string; errRateLimited: string;
       devTitle: string; devHint: string; devPlaceholder: string; devButton: string; devError: string;
       roleSuperAdmin: string; roleAdmin: string; roleCreator: string;
@@ -125,6 +131,21 @@ export interface Dictionary {
       contentLabel: string; contentPlaceholder: string; saveDraft: string; publish: string; saving: string; saveError: string;
       lockedNote: string; unpublishNote: string;
     };
+    // Modo manutencao do site (so' S.Adm)
+    maintenanceAdmin: {
+      title: string; subtitle: string; statusOn: string; statusOff: string; enable: string; disable: string; confirmEnable: string; confirmDisable: string;
+      messageEn: string; messagePt: string; messageHint: string; staffNote: string; loading: string; loadError: string; saveError: string; saving: string; savedOn: string; savedOff: string;
+    };
+    // Artigos do Guia e Proficiencias (painel)
+    guideAdmin: {
+      articlesTitle: string; articlesSubtitle: string; newArticle: string; professionsTitle: string; professionsSubtitle: string; newProfession: string;
+      loading: string; loadError: string; empty: string; colTitle: string; colSection: string; colStatus: string; colGroup: string; colDetails: string; colName: string;
+      edit: string; delete: string; confirmDelete: string; deleteError: string; published: string; draft: string; all: string;
+      back: string; saving: string; save: string; saveError: string; newArticleTitle: string; editArticleTitle: string; newProfessionTitle: string; editProfessionTitle: string;
+      id: string; idLocked: string; section: string; position: string; icon: string; status: string; statusPublished: string; statusDraft: string;
+      title: string; titlePt: string; summary: string; summaryPt: string; body: string; bodyPt: string; translationNote: string;
+      name: string; namePt: string; group: string; groupGathering: string; groupCrafting: string; emoji: string; description: string; descriptionPt: string; detailsNote: string; detailsCount: string;
+    };
     // Edicao de Vilas, Clas e Organizacoes (painel)
     villagesAdmin: {
       title: string; subtitle: string; newVillage: string; manageOrgs: string;
@@ -145,7 +166,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; maintenance: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string };
     gameNames: { title: string; subtitle: string; chooseFiles: string; invalidFile: string; find: string; loadError: string; summary: string; truncated: string; search: string; hideJutsu: string; selectShown: string; clear: string; empty: string; moreHidden: string; createDrafts: string; confirm: string; created: string; note: string; categories: Record<string, string>; hints: Record<string, string> };
     translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
@@ -221,7 +242,7 @@ export interface Dictionary {
     jutsusList: {
       title: string; newJutsu: string; all: string; searchPlaceholder: string;
       loading: string; loadError: string; genericLoadError: string; empty: string;
-      colName: string; colMastery: string; colTier: string; colChakra: string;
+      colName: string; colMastery: string; colTier: string; colChakra: string; colStatus: string; published: string; draft: string;
       selectAll: string; selectRow: string; edit: string; delete: string;
       deleteConfirm: string; deleteError: string; bulkDeleteConfirm: string; bulkDeleteError: string;
     };
@@ -229,6 +250,7 @@ export interface Dictionary {
       back: string; editTitle: string; newTitle: string; loading: string; loadError: string; saveError: string; save: string;
       name: string; englishName: string; idSlug: string; idSlugLocked: string; idPlaceholder: string;
       mastery: string; masteryUtility: string; path: string; pathNone: string;
+      status: string; statusPublished: string; statusDraft: string;
       tier: string; chakraCost: string; icon: string;
       range: string; rangePlaceholder: string; castTime: string; castTimePlaceholder: string;
       cooldown: string; cooldownPlaceholder: string; effect: string; effectPlaceholder: string;
@@ -259,7 +281,8 @@ export interface Dictionary {
       description: string; descriptionPlaceholder: string; optionalSuffix: string;
       lore: string; loreOptional: string; lorePlaceholder: string;
       synergy: string; synergyOptional: string; synergyPlaceholder: string;
-      spawnLocation: string; spawnLocationPlaceholder: string;
+      spawnLocation: string; spawnLocationPlaceholder: string; addLocation: string; locationPlaceholder: string; zoneLabel: string; removeLocation: string; zones: Record<string, string>;
+      weaponNpcHint: string; weaponNpcLinked: string; convertText: string; salesTitle: string; addSale: string; saleShop: string; salePrice: string; saleCurrency: string; saleQty: string; removeSale: string;
       mobSheet: string; health: string; healthPlaceholder: string; damage: string; damagePlaceholder: string;
       experience: string; experiencePlaceholder: string; range: string; rangePlaceholder: string;
       respawnTime: string; respawnTimePlaceholder: string;
@@ -299,6 +322,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       weapons: 'Armas',
       missions: 'Missões',
       village: 'Vilas',
+      proficiencies: 'Proficiências',
       map: 'Mapa',
     },
     home: {
@@ -325,6 +349,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
       demo: 'Demonstração', jutsuDemoAlt: 'Demonstração do jutsu {name}',
       guideMore: 'Mais em Guias', guideAttributes: 'Atributos', guideProfessions: 'Profissões', guideRanks: 'Ranks Ninja', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Coleta', guideCrafting: 'Criação',
+      proficienciesTitle: 'Proficiências', proficienciesSubtitle: 'As habilidades de coleta e criação do jogo: o que cada uma faz, como evoluir e todas as receitas.', proficienciesCrumb: 'Proficiências',
+      profHowTitle: 'Como funcionam', profHowCap: 'Cada proficiência evolui sozinha, até o nível 500.', profHowBonus: 'A cada 10 níveis você ganha +1% de bônus de habilidade (até +50% no nível 500).',
+      profHowFormula: 'O bônus multiplica a chance base da receita: chance final = base × (1 + bônus). Uma receita de 90% chega a 100% no nível 120; uma de 50% termina em uns 75% no nível 500.',
+      profHowExp: 'XP para passar de um nível L: 128 × L − 64. XP total do nível 1 até o nível N: 64 × (N − 1)².',
+      profCalcTitle: 'Calculadora de XP', profCalcFrom: 'Do nível', profCalcTo: 'Até o nível', profCalcResult: 'XP necessário', profMilestones: 'Marcos', profColLevel: 'Nível', profColXp: 'XP total', profColBonus: 'Bônus',
+      profRecipesCount: '{n} receitas', profResourcesCount: '{n} recursos', profToolsCount: '{n} ferramentas', profSearch: 'Buscar receita...', profNoMatch: 'Nada encontrado.', profPrice: 'Preço', profSources: 'Valores registrados pela comunidade (Nin Online Wiki, no Fandom) e pelo Nin Atlas; o jogo pode mudá-los.', profTipsTitle: 'Dicas', profGuideBannerText: 'Coleta e criação: cada proficiência tem sua página com receitas, recursos e dicas.', profSeeAll: 'Ver todas',
+      guideSections: { 'new-player': 'Comece por aqui', combat: 'Combate e PvP', progression: 'Progressão', interface: 'Controles e interface', economy: 'Dinheiro', systems: 'Sistemas do jogo' },
+      guideBackToGuide: 'Voltar ao Guia', guideSystemsMissions: 'Lista de missões, recompensas e passos para concluir.', guideSystemsProficiencies: 'Coleta e criação: níveis, bônus, XP e todas as receitas.', guideDraftBadge: 'Rascunho',
+      professionBack: 'Voltar às Proficiências', professionResources: 'O que se coleta', professionRecipes: 'Receitas', professionTools: 'Ferramentas', professionYields: 'Rende', professionLevel: 'Nível', professionWorkbench: 'Bancada', professionLearnedFrom: 'Aprendida com', professionNeeds: 'Ingredientes', professionNoDetails: 'Ainda não há mais informações sobre esta profissão.', professionOpen: 'Ver detalhes',
     },
     siteError: { title: 'Algo deu errado', text: 'A equipe já foi avisada. Tente de novo em instantes.', retry: 'Tentar de novo', home: 'Voltar ao início' },
     blog: {
@@ -373,7 +406,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       droppedBy: 'Dropado por',
       updatedOn: 'Atualizado em', autoTranslated: 'Tradução automática', autoTranslatedHint: 'Este texto em português foi traduzido automaticamente e ainda não foi revisado. Achou um erro? Use o botão Reportar.',
       relatedEntries: 'Relacionados',
-      spawnLocation: 'Onde encontrar',
+      spawnLocation: 'Onde encontrar', zones: { safe: 'Zona Segura', danger: 'Zona de Perigo', war: 'Zona de Guerra', arena: 'Zona de Arena', parkour: 'Zona de Parkour', none: 'Sem zona' }, soldAt: 'Vendido em', forQty: 'por {n}', free: 'Grátis',
       attacks: 'Jutsu / Attacks',
       noAttacks: 'Nenhum',
       itemDetails: 'Detalhes', itemType: 'Tipo',
@@ -494,7 +527,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       levelsTitle: 'Níveis: nome, dano base e recarga', levelsHint: 'Uma linha por nível do jutsu (o nível máximo é a quantidade de linhas). O nome é opcional: preencha só nos níveis em que o jutsu muda de nome (ex.: nível 4). Clique em "Adicionar nível" quando o jutsu subir de nível.', levelNamePlaceholder: 'Nome neste nível (opcional)', nameByLevel: 'Nome por nível', nameFromLevel: 'A partir do nível {n}: {name}',
       addLevel: 'Adicionar nível', removeLevel: 'Remover nível',
     },
-    maintenance: { title: 'Página em manutenção', text: 'Estamos construindo esta página. Volte em breve!', back: 'Voltar ao início' },
+    maintenance: { title: 'Página em manutenção', text: 'Estamos construindo esta página. Volte em breve!', back: 'Voltar ao início', siteTitle: 'Site em manutenção', siteText: 'Estamos melhorando o wiki. Voltamos em breve!', staffLogin: 'Entrar (equipe)', staffChecking: 'Verificando seu acesso...', staffHint: 'Só a equipe entra durante a manutenção: faça o login e o site abre normalmente.', badge: 'Em manutenção' },
     admin: {
       login: {
         welcome: 'Bem-vindo de volta',
@@ -510,6 +543,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         noAccessTitle: 'Sem acesso a esta página',
         noAccessBody: 'O seu cargo não tem permissão para ver esta área.',
         backToOverview: 'Voltar à Visão Geral',
+        errMfa: 'Para entrar no painel, a sua conta do Discord precisa ter a verificação em duas etapas (2FA) ligada. Ative em Discord > Configurações > Minha conta > Ativar autenticação de dois fatores e tente de novo.',
         errNotStaff: 'Essa conta do Discord não faz parte da equipe. Peça a um Adm para te cadastrar.',
         errInactive: 'Sua conta da equipe está desativada.',
         errDiscordFailed: 'Não foi possível falar com o Discord. Tente de novo em instantes.',
@@ -573,7 +607,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sync: 'Importar da pasta de uploads', syncing: 'Importando...', syncDone: '{n} imagem(ns) importada(s).',
         rename: 'Renomear', renamePrompt: 'Nome da imagem #{id}:', delete: 'Apagar', confirmDelete: 'Apagar a imagem #{id}? O arquivo some do servidor.',
         confirmForce: 'A imagem #{id} está em uso ({uses}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.', copyId: 'Copiar ID', copyUrl: 'Copiar endereço', copied: 'Copiado!',
-        dropHere: 'Solte as imagens aqui para enviar', progress: 'Enviando {done}/{total}...', skipped: '{n} arquivo(s) ignorado(s): só PNG, JPG, GIF e WEBP.', failedFile: '{name}: {error}', retryFailed: 'Tentar de novo ({n} com falha)', allCategories: 'Todas', uncategorized: 'Sem categoria', categoryOf: 'Categoria', newUploadCategory: 'Categoria dos novos envios', setCategory: 'Mudar categoria...', applyCategory: 'Aplicar', pageOf: 'Página {page} de {pages}', prev: 'Anterior', next: 'Próxima', noUploadPermission: 'Você não tem permissão para enviar imagens aqui (peça ao S.Adm).', resetIds: 'Resetar IDs', searchingAll: 'Buscando em todas as categorias (as visíveis para você).', restrictedNotice: 'Existe imagem com esse nome/ID numa categoria fechada. Você não tem acesso para ver essa informação.', closedDenied: 'Acesso negado: essa imagem está numa categoria fechada e você não tem acesso para vê-la.', resetIdsConfirm: 'Renumerar TODAS as imagens a partir do #1 (a mais antiga vira #1)? Os arquivos e o conteúdo já salvo não mudam, mas quem digitou um ID e ainda não salvou perde a referência. Com a biblioteca vazia, a contagem volta para #1.', resetIdsDone: 'IDs renumerados ({n} imagens).', categories: { weapon: 'Armas', clothing: 'Roupas', consumable: 'Consumíveis', currency: 'Moedas', material: 'Materiais', ring: 'Anéis', scroll: 'Pergaminhos', npc: 'NPCs', monster: 'Monstros', furniture: 'Móveis', hair_beard: 'Cabelo/Barba', closed: 'Fechadas (só S.Adm)', other: 'Outros' },
+        dropHere: 'Solte as imagens aqui para enviar', progress: 'Enviando {done}/{total}...', skipped: '{n} arquivo(s) ignorado(s): só PNG, JPG, GIF e WEBP.', failedFile: '{name}: {error}', retryFailed: 'Tentar de novo ({n} com falha)', allCategories: 'Todas', uncategorized: 'Sem categoria', categoryOf: 'Categoria', newUploadCategory: 'Categoria dos novos envios', setCategory: 'Mudar categoria...', applyCategory: 'Aplicar', pageOf: 'Página {page} de {pages}', prev: 'Anterior', next: 'Próxima', noUploadPermission: 'Você não tem permissão para enviar imagens aqui (peça ao S.Adm).', resetIds: 'Resetar IDs', searchingAll: 'Buscando em todas as categorias (as visíveis para você).', restrictedNotice: 'Existe imagem com esse nome/ID numa categoria fechada. Você não tem acesso para ver essa informação.', closedDenied: 'Acesso negado: essa imagem está numa categoria fechada e você não tem acesso para vê-la.', resetIdsConfirm: 'Renumerar TODAS as imagens a partir do #1 (a mais antiga vira #1)? Os arquivos e o conteúdo já salvo não mudam, mas quem digitou um ID e ainda não salvou perde a referência. Com a biblioteca vazia, a contagem volta para #1.', resetIdsDone: 'IDs renumerados ({n} imagens).', categories: { weapon: 'Armas', gear: 'Equipamentos', consumable: 'Consumíveis', currency: 'Moedas', material: 'Materiais', ring: 'Anéis', scroll: 'Pergaminhos', npc: 'NPCs', monster: 'Monstros', furniture: 'Móveis', hair_beard: 'Cabelo/Barba', skin: 'Skins', tools: 'Ferramentas', closed: 'Fechadas (só S.Adm)', other: 'Outros' },
         selected: '{n} selecionada(s)', selectAll: 'Selecionar todas desta página', clearSel: 'Limpar seleção', deleteSelected: 'Apagar selecionadas',
         confirmBulk: 'Apagar {n} imagem(ns)? Os arquivos somem do servidor.', confirmBulkForce: '{n} imagem(ns) estão em uso (ex.: {where}). Apagar mesmo assim? Esses lugares ficarão com a imagem quebrada.',
         bulkDone: '{n} imagem(ns) apagada(s).', select: 'Selecionar',
@@ -604,6 +638,26 @@ export const dictionaries: Record<Locale, Dictionary> = {
         lockedNote: 'Este post já está publicado: só um Adm pode alterá-lo.',
         unpublishNote: 'Este post está publicado. "Salvar rascunho" tira ele do ar; "Publicar" mantém no ar com as mudanças.',
       },
+      maintenanceAdmin: {
+        title: 'Modo manutenção', subtitle: 'Liga ou desliga a página de manutenção do site inteiro. Só o S.Adm vê esta tela.',
+        statusOn: 'LIGADA: os visitantes veem a página de manutenção', statusOff: 'Desligada: o site está aberto para todos', enable: 'Ligar manutenção', disable: 'Desligar manutenção',
+        confirmEnable: 'Ligar a manutenção? Os visitantes deixam de ver o site; a equipe continua entrando depois do login.', confirmDisable: 'Desligar a manutenção e abrir o site para todos?',
+        messageEn: 'Mensagem (inglês, opcional)', messagePt: 'Mensagem (português, opcional)', messageHint: 'Vazio = texto padrão da página.',
+        staffNote: 'A equipe (qualquer cargo) entra no site normalmente depois de fazer login pela própria página de manutenção; o painel (/admin) e o login continuam abertos.',
+        loading: 'Carregando...', loadError: 'Não foi possível ler o estado do site.', saveError: 'Erro ao salvar.', saving: 'Salvando...', savedOn: 'Manutenção ligada.', savedOff: 'Manutenção desligada: o site está aberto.',
+      },
+      guideAdmin: {
+        articlesTitle: 'Artigos do Guia', articlesSubtitle: 'Os artigos do Guia (Zonas, Crime, Equipes, Controles...), por seção. Rascunho só a equipe vê.', newArticle: 'Novo artigo',
+        professionsTitle: 'Proficiências', professionsSubtitle: 'As proficiências de coleta e criação. As receitas, recursos e ferramentas vêm da importação do Atlas.', newProfession: 'Nova proficiência',
+        loading: 'Carregando...', loadError: 'Erro ao carregar.', empty: 'Nada cadastrado ainda.', colTitle: 'Título', colSection: 'Seção', colStatus: 'Situação', colGroup: 'Tipo', colDetails: 'Conteúdo', colName: 'Nome',
+        edit: 'Editar', delete: 'Apagar', confirmDelete: 'Apagar "{name}"? Essa ação não pode ser desfeita.', deleteError: 'Erro ao apagar.', published: 'Publicado', draft: 'Rascunho', all: 'Todos',
+        back: 'Voltar', saving: 'Salvando...', save: 'Salvar', saveError: 'Erro ao salvar.', newArticleTitle: 'Novo artigo', editArticleTitle: 'Editar artigo', newProfessionTitle: 'Nova proficiência', editProfessionTitle: 'Editar proficiência',
+        id: 'ID (slug)', idLocked: '(não pode mudar)', section: 'Seção', position: 'Posição na seção', icon: 'Ícone', status: 'Situação', statusPublished: 'Publicado (aparece no Guia)', statusDraft: 'Rascunho (só a equipe vê)',
+        title: 'Título (inglês)', titlePt: 'Título (português)', summary: 'Resumo (inglês)', summaryPt: 'Resumo (português)', body: 'Texto (inglês)', bodyPt: 'Texto (português)',
+        translationNote: 'O inglês é o idioma principal. O que ficar vazio em português é traduzido pela DeepL ao salvar (se estiver configurada).',
+        name: 'Nome (inglês)', namePt: 'Nome (português)', group: 'Tipo', groupGathering: 'Coleta', groupCrafting: 'Criação', emoji: 'Emoji', description: 'Descrição (inglês)', descriptionPt: 'Descrição (português)',
+        detailsNote: 'Receitas, recursos e ferramentas não são editados aqui: vêm de scripts/importar_profissoes_atlas.py.', detailsCount: '{r} receitas · {s} recursos · {t} ferramentas',
+      },
       villagesAdmin: {
         title: 'Vilas', subtitle: 'Vilas, clãs e organizações do jogo.', newVillage: 'Nova vila', manageOrgs: 'Gerenciar organizações',
         colName: 'Nome', colElement: 'Elemento', colLeader: 'Líder', colClans: 'Clãs', edit: 'Editar', delete: 'Apagar',
@@ -631,6 +685,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         blogPosts: 'Postagens do Blog',
         comments: 'Comentários',
         content: 'Conteúdo',
+        contentMobs: 'Monstros',
+        contentItems: 'Itens',
+        contentWeapons: 'Armas',
+        contentMissions: 'Missões',
         masteries: 'Masteries',
         jutsus: 'Jutsus',
         bulkImport: 'Importar JSON',
@@ -643,8 +701,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
         translations: 'Traduções oficiais',
         villages: 'Vilas',
         organizations: 'Organizações',
+        guideArticles: 'Artigos do Guia',
+        professions: 'Proficiências',
+        maintenance: 'Manutenção',
         backToSite: 'Voltar ao site',
-        groups: { wiki: 'Wiki', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
+        groups: { wiki: 'Conteúdo', community: 'Comunidade', world: 'Mundo', system: 'Sistema' },
         breadcrumbHome: 'Painel',
         viewSite: 'Ver site',
       },
@@ -719,7 +780,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
-          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)', 'media.reset_ids': 'Renumerar os IDs do banco de imagens', 'media.closed': 'Ver a categoria fechada do banco de imagens', 'media.cat.weapon': 'Ver imagens: Armas', 'media.cat.clothing': 'Ver imagens: Roupas', 'media.cat.consumable': 'Ver imagens: Consumíveis', 'media.cat.currency': 'Ver imagens: Moedas', 'media.cat.material': 'Ver imagens: Materiais', 'media.cat.ring': 'Ver imagens: Anéis', 'media.cat.scroll': 'Ver imagens: Pergaminhos', 'media.cat.npc': 'Ver imagens: NPCs', 'media.cat.monster': 'Ver imagens: Monstros', 'media.cat.furniture': 'Ver imagens: Móveis', 'media.cat.hair_beard': 'Ver imagens: Cabelo/Barba', 'media.cat.other': 'Ver imagens: Outros', 'media.cat.none': 'Ver imagens: Sem categoria',
+          'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.categorize': 'Mudar a categoria das imagens do banco de imagens', 'site.maintenance': 'Ligar/desligar o modo manutenção do site', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)', 'media.reset_ids': 'Renumerar os IDs do banco de imagens', 'media.closed': 'Ver a categoria fechada do banco de imagens', 'media.cat.weapon': 'Ver imagens: Armas', 'media.cat.gear': 'Ver imagens: Equipamentos', 'media.cat.consumable': 'Ver imagens: Consumíveis', 'media.cat.currency': 'Ver imagens: Moedas', 'media.cat.material': 'Ver imagens: Materiais', 'media.cat.ring': 'Ver imagens: Anéis', 'media.cat.scroll': 'Ver imagens: Pergaminhos', 'media.cat.npc': 'Ver imagens: NPCs', 'media.cat.monster': 'Ver imagens: Monstros', 'media.cat.furniture': 'Ver imagens: Móveis', 'media.cat.hair_beard': 'Ver imagens: Cabelo/Barba', 'media.cat.skin': 'Ver imagens: Skins', 'media.cat.tools': 'Ver imagens: Ferramentas', 'media.cat.other': 'Ver imagens: Outros', 'media.cat.none': 'Ver imagens: Sem categoria',
           'staff.view': 'Ver a equipe', 'staff.create': 'Cadastrar equipe', 'staff.edit': 'Trocar cargo', 'staff.deactivate': 'Desativar / reativar equipe', 'staff.delete': 'Remover alguém da equipe', 'roles.manage': 'Editar permissões dos cargos', 'errors.view': 'Ver erros e problemas do wiki',
           'audit.view': 'Ver o log de conteúdo', 'audit.view_all': 'Ver o log completo (com IPs)', 'audit.clear': 'Limpar o log', 'analytics.view': 'Ver os acessos ao site',
         },
@@ -897,7 +958,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loadError: 'Não foi possível conectar à API. Ela está rodando em localhost:8000?',
         genericLoadError: 'Erro ao carregar',
         empty: 'Nenhum jutsu encontrado.',
-        colName: 'Nome', colMastery: 'Mastery', colTier: 'Tier', colChakra: 'Chakra',
+        colName: 'Nome', colMastery: 'Mastery', colTier: 'Tier', colChakra: 'Chakra', colStatus: 'Situação', published: 'Publicado', draft: 'Rascunho',
         selectAll: 'Selecionar todos', selectRow: 'Selecionar linha',
         edit: 'Editar', delete: 'Apagar',
         deleteConfirm: 'Apagar o jutsu "{name}"? Essa ação não pode ser desfeita.',
@@ -922,6 +983,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         path: 'Caminho (opcional)',
         pathNone: 'Nenhum',
         masteryUtility: 'Utility (sem mastery — qualquer pessoa pode usar)',
+        status: 'Situação', statusPublished: 'Publicado (aparece no site)', statusDraft: 'Rascunho (só a equipe vê)',
         tier: 'Tier (1-5)',
         chakraCost: 'Custo de chakra',
         icon: 'Ícone',
@@ -981,7 +1043,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
         lore: 'Lore', loreOptional: 'Lore (opcional)', lorePlaceholder: 'História, contexto...',
         synergy: 'Sinergia', synergyOptional: 'Sinergia (opcional)',
         synergyPlaceholder: 'Dica de estratégia, combinação com outras técnicas...',
-        spawnLocation: 'Local de spawn (opcional)', spawnLocationPlaceholder: '',
+        spawnLocation: 'Onde encontrar (lugares)', spawnLocationPlaceholder: '', addLocation: 'Adicionar lugar', locationPlaceholder: 'Nome do lugar (ex.: Larva Road)', zoneLabel: 'Zona', removeLocation: 'Remover lugar', zones: { safe: 'Zona Segura', danger: 'Zona de Perigo', war: 'Zona de Guerra', arena: 'Zona de Arena', parkour: 'Zona de Parkour', none: 'Sem zona' },
+        weaponNpcHint: 'Escolha a página do NPC para virar link; quem DROPA a arma aparece sozinho em "Dropado por".', weaponNpcLinked: 'Ligado à página do NPC (o nome acompanha a página)', convertText: 'Transformar o texto antigo em lista', salesTitle: 'Vendido por NPCs (lojas)', addSale: 'Adicionar loja', saleShop: 'Loja', salePrice: 'Preço', saleCurrency: 'Moeda', saleQty: 'Qtd', removeSale: 'Remover loja',
         mobSheet: 'Ficha do Mob', health: 'Health', healthPlaceholder: '',
         damage: 'Damage', damagePlaceholder: '',
         experience: 'Experience', experiencePlaceholder: '',
@@ -1040,6 +1103,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       weapons: 'Weapons',
       missions: 'Missions',
       village: 'Villages',
+      proficiencies: 'Proficiencies',
       map: 'Map',
     },
     home: {
@@ -1066,6 +1130,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
       demo: 'Demonstration', jutsuDemoAlt: 'Demonstration of the jutsu {name}',
       guideMore: 'More in Guides', guideAttributes: 'Attributes', guideProfessions: 'Professions', guideRanks: 'Ninja Ranks', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Gathering', guideCrafting: 'Crafting',
+      proficienciesTitle: 'Proficiencies', proficienciesSubtitle: 'The game\'s gathering and crafting skills: what each one does, how to level it and every recipe.', proficienciesCrumb: 'Proficiencies',
+      profHowTitle: 'How they work', profHowCap: 'Every proficiency levels on its own, up to level 500.', profHowBonus: 'Every 10 levels gives +1% skill bonus (up to +50% at level 500).',
+      profHowFormula: 'The bonus multiplies the recipe\'s base rate: final rate = base × (1 + bonus). A 90% recipe reaches 100% at level 120; a 50% one tops out around 75% at level 500.',
+      profHowExp: 'XP to clear level L: 128 × L − 64. Total XP from level 1 to level N: 64 × (N − 1)².',
+      profCalcTitle: 'XP calculator', profCalcFrom: 'From level', profCalcTo: 'To level', profCalcResult: 'XP needed', profMilestones: 'Milestones', profColLevel: 'Level', profColXp: 'Total XP', profColBonus: 'Bonus',
+      profRecipesCount: '{n} recipes', profResourcesCount: '{n} resources', profToolsCount: '{n} tools', profSearch: 'Search recipe...', profNoMatch: 'Nothing found.', profPrice: 'Price', profSources: 'Values recorded by the community (Nin Online Wiki on Fandom) and the Nin Atlas; the game may change them.', profTipsTitle: 'Tips', profGuideBannerText: 'Gathering and crafting: each proficiency has its own page with recipes, resources and tips.', profSeeAll: 'See all',
+      guideSections: { 'new-player': 'Start here', combat: 'Combat & PvP', progression: 'Progression', interface: 'Controls & interface', economy: 'Money', systems: 'Gameplay systems' },
+      guideBackToGuide: 'Back to the Guide', guideSystemsMissions: 'Mission list, rewards and steps to complete them.', guideSystemsProficiencies: 'Gathering and crafting: levels, bonuses, XP and every recipe.', guideDraftBadge: 'Draft',
+      professionBack: 'Back to Proficiencies', professionResources: 'What you gather', professionRecipes: 'Recipes', professionTools: 'Tools', professionYields: 'Yields', professionLevel: 'Level', professionWorkbench: 'Workbench', professionLearnedFrom: 'Learned from', professionNeeds: 'Ingredients', professionNoDetails: 'There is no more information about this profession yet.', professionOpen: 'View details',
     },
     siteError: { title: 'Something went wrong', text: 'The team has been notified. Please try again in a moment.', retry: 'Try again', home: 'Back to home' },
     blog: {
@@ -1114,7 +1187,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       droppedBy: 'Dropped by',
       updatedOn: 'Updated', autoTranslated: 'Auto-translated', autoTranslatedHint: 'This Portuguese text was translated automatically and has not been reviewed yet. Found a mistake? Use the Report button.',
       relatedEntries: 'Related',
-      spawnLocation: 'Where to find',
+      spawnLocation: 'Where to find', zones: { safe: 'Safe Zone', danger: 'Danger Zone', war: 'War Zone', arena: 'Arena Zone', parkour: 'Parkour Zone', none: 'No Zone' }, soldAt: 'Sold at', forQty: 'for {n}', free: 'Free',
       attacks: 'Jutsu / Attacks',
       noAttacks: 'None',
       itemDetails: 'Details', itemType: 'Type',
@@ -1235,7 +1308,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       levelsTitle: 'Levels: name, base damage and cooldown', levelsHint: 'One row per jutsu level (the maximum level is the number of rows). The name is optional: fill it only on the levels where the jutsu changes name (e.g. level 4). Click "Add level" when the jutsu levels up.', levelNamePlaceholder: 'Name at this level (optional)', nameByLevel: 'Name by level', nameFromLevel: 'From level {n}: {name}',
       addLevel: 'Add level', removeLevel: 'Remove level',
     },
-    maintenance: { title: 'Under maintenance', text: 'We are building this page. Please come back soon!', back: 'Back to home' },
+    maintenance: { title: 'Under maintenance', text: 'We are building this page. Please come back soon!', back: 'Back to home', siteTitle: 'Site under maintenance', siteText: 'We are improving the wiki. We will be back soon!', staffLogin: 'Staff login', staffChecking: 'Checking your access...', staffHint: 'Only the staff can get in during maintenance: log in and the site opens normally.', badge: 'Under maintenance' },
     admin: {
       login: {
         welcome: 'Welcome back',
@@ -1251,6 +1324,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         noAccessTitle: 'No access to this page',
         noAccessBody: 'Your role does not have permission to view this area.',
         backToOverview: 'Back to Overview',
+        errMfa: 'To sign in to the panel, your Discord account must have two-factor authentication (2FA) turned on. Enable it in Discord > Settings > My Account > Enable Two-Factor Auth and try again.',
         errNotStaff: 'This Discord account is not part of the staff. Ask an Adm to register you.',
         errInactive: 'Your staff account is deactivated.',
         errDiscordFailed: 'Could not reach Discord. Please try again in a moment.',
@@ -1314,7 +1388,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         sync: 'Import from the uploads folder', syncing: 'Importing...', syncDone: '{n} image(s) imported.',
         rename: 'Rename', renamePrompt: 'Name of image #{id}:', delete: 'Delete', confirmDelete: 'Delete image #{id}? The file is removed from the server.',
         confirmForce: 'Image #{id} is in use ({uses}). Delete anyway? Those places will end up with a broken image.', copyId: 'Copy ID', copyUrl: 'Copy address', copied: 'Copied!',
-        dropHere: 'Drop the images here to upload', progress: 'Uploading {done}/{total}...', skipped: '{n} file(s) skipped: only PNG, JPG, GIF and WEBP.', failedFile: '{name}: {error}', retryFailed: 'Retry {n} failed', allCategories: 'All', uncategorized: 'Uncategorized', categoryOf: 'Category', newUploadCategory: 'Category for new uploads', setCategory: 'Set category...', applyCategory: 'Apply', pageOf: 'Page {page} of {pages}', prev: 'Previous', next: 'Next', noUploadPermission: 'You are not allowed to upload images here (ask the S.Adm).', resetIds: 'Reset IDs', searchingAll: 'Searching all categories (the ones you can see).', restrictedNotice: 'An image with that name/ID exists in a closed category. You do not have access to view that information.', closedDenied: 'Access denied: this image is in a closed category and you are not allowed to view it.', resetIdsConfirm: 'Renumber ALL images from #1 (the oldest becomes #1)? Files and saved content are not affected, but anyone who typed an ID and has not saved yet loses that reference. With an empty library the count restarts at #1.', resetIdsDone: 'IDs renumbered ({n} images).', categories: { weapon: 'Weapons', clothing: 'Clothing', consumable: 'Consumables', currency: 'Currency', material: 'Materials', ring: 'Rings', scroll: 'Scrolls', npc: 'NPCs', monster: 'Monsters', furniture: 'Furniture', hair_beard: 'Hair/Beard', closed: 'Closed (S.Adm only)', other: 'Other' },
+        dropHere: 'Drop the images here to upload', progress: 'Uploading {done}/{total}...', skipped: '{n} file(s) skipped: only PNG, JPG, GIF and WEBP.', failedFile: '{name}: {error}', retryFailed: 'Retry {n} failed', allCategories: 'All', uncategorized: 'Uncategorized', categoryOf: 'Category', newUploadCategory: 'Category for new uploads', setCategory: 'Set category...', applyCategory: 'Apply', pageOf: 'Page {page} of {pages}', prev: 'Previous', next: 'Next', noUploadPermission: 'You are not allowed to upload images here (ask the S.Adm).', resetIds: 'Reset IDs', searchingAll: 'Searching all categories (the ones you can see).', restrictedNotice: 'An image with that name/ID exists in a closed category. You do not have access to view that information.', closedDenied: 'Access denied: this image is in a closed category and you are not allowed to view it.', resetIdsConfirm: 'Renumber ALL images from #1 (the oldest becomes #1)? Files and saved content are not affected, but anyone who typed an ID and has not saved yet loses that reference. With an empty library the count restarts at #1.', resetIdsDone: 'IDs renumbered ({n} images).', categories: { weapon: 'Weapons', gear: 'Gear', consumable: 'Consumables', currency: 'Currency', material: 'Materials', ring: 'Rings', scroll: 'Scrolls', npc: 'NPCs', monster: 'Monsters', furniture: 'Furniture', hair_beard: 'Hair/Beard', skin: 'Skins', tools: 'Tools', closed: 'Closed (S.Adm only)', other: 'Other' },
         selected: '{n} selected', selectAll: 'Select all on this page', clearSel: 'Clear selection', deleteSelected: 'Delete selected',
         confirmBulk: 'Delete {n} image(s)? The files are removed from the server.', confirmBulkForce: '{n} image(s) are in use (e.g. {where}). Delete anyway? Those places will end up with a broken image.',
         bulkDone: '{n} image(s) deleted.', select: 'Select',
@@ -1345,6 +1419,26 @@ export const dictionaries: Record<Locale, Dictionary> = {
         lockedNote: 'This post is already published: only an Adm can change it.',
         unpublishNote: 'This post is published. "Save draft" takes it offline; "Publish" keeps it live with the changes.',
       },
+      maintenanceAdmin: {
+        title: 'Maintenance mode', subtitle: 'Turns the maintenance page for the whole site on or off. Only the S.Adm sees this screen.',
+        statusOn: 'ON: visitors see the maintenance page', statusOff: 'Off: the site is open to everyone', enable: 'Turn maintenance on', disable: 'Turn maintenance off',
+        confirmEnable: 'Turn maintenance on? Visitors stop seeing the site; the staff still gets in after logging in.', confirmDisable: 'Turn maintenance off and open the site to everyone?',
+        messageEn: 'Message (English, optional)', messagePt: 'Message (Portuguese, optional)', messageHint: 'Empty = the page default text.',
+        staffNote: 'The staff (any role) gets into the site normally after logging in from the maintenance page itself; the panel (/admin) and the login stay open.',
+        loading: 'Loading...', loadError: 'Could not read the site state.', saveError: 'Error saving.', saving: 'Saving...', savedOn: 'Maintenance is on.', savedOff: 'Maintenance is off: the site is open.',
+      },
+      guideAdmin: {
+        articlesTitle: 'Guide articles', articlesSubtitle: 'The Guide articles (Zones, Crime, Teams, Controls...), by section. Only staff can see drafts.', newArticle: 'New article',
+        professionsTitle: 'Proficiencies', professionsSubtitle: 'The gathering and crafting proficiencies. Recipes, resources and tools come from the Atlas import.', newProfession: 'New proficiency',
+        loading: 'Loading...', loadError: 'Error loading.', empty: 'Nothing registered yet.', colTitle: 'Title', colSection: 'Section', colStatus: 'Status', colGroup: 'Type', colDetails: 'Content', colName: 'Name',
+        edit: 'Edit', delete: 'Delete', confirmDelete: 'Delete "{name}"? This action cannot be undone.', deleteError: 'Error deleting.', published: 'Published', draft: 'Draft', all: 'All',
+        back: 'Back', saving: 'Saving...', save: 'Save', saveError: 'Error saving.', newArticleTitle: 'New article', editArticleTitle: 'Edit article', newProfessionTitle: 'New proficiency', editProfessionTitle: 'Edit proficiency',
+        id: 'ID (slug)', idLocked: '(cannot change)', section: 'Section', position: 'Position in section', icon: 'Icon', status: 'Status', statusPublished: 'Published (shown in the Guide)', statusDraft: 'Draft (staff only)',
+        title: 'Title (English)', titlePt: 'Title (Portuguese)', summary: 'Summary (English)', summaryPt: 'Summary (Portuguese)', body: 'Text (English)', bodyPt: 'Text (Portuguese)',
+        translationNote: 'English is the main language. Anything left empty in Portuguese is translated by DeepL on save (if configured).',
+        name: 'Name (English)', namePt: 'Name (Portuguese)', group: 'Type', groupGathering: 'Gathering', groupCrafting: 'Crafting', emoji: 'Emoji', description: 'Description (English)', descriptionPt: 'Description (Portuguese)',
+        detailsNote: 'Recipes, resources and tools are not edited here: they come from scripts/importar_profissoes_atlas.py.', detailsCount: '{r} recipes · {s} resources · {t} tools',
+      },
       villagesAdmin: {
         title: 'Villages', subtitle: 'The game\'s villages, clans and organizations.', newVillage: 'New village', manageOrgs: 'Manage organizations',
         colName: 'Name', colElement: 'Element', colLeader: 'Leader', colClans: 'Clans', edit: 'Edit', delete: 'Delete',
@@ -1372,6 +1466,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         blogPosts: 'Blog Posts',
         comments: 'Comments',
         content: 'Content',
+        contentMobs: 'Bestiary',
+        contentItems: 'Items',
+        contentWeapons: 'Weapons',
+        contentMissions: 'Missions',
         masteries: 'Masteries',
         jutsus: 'Jutsus',
         bulkImport: 'Import JSON',
@@ -1384,8 +1482,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
         translations: 'Official translations',
         villages: 'Villages',
         organizations: 'Organizations',
+        guideArticles: 'Guide articles',
+        professions: 'Proficiencies',
+        maintenance: 'Maintenance',
         backToSite: 'Back to site',
-        groups: { wiki: 'Wiki', community: 'Community', world: 'World', system: 'System' },
+        groups: { wiki: 'Content', community: 'Community', world: 'World', system: 'System' },
         breadcrumbHome: 'Admin',
         viewSite: 'View site',
       },
@@ -1460,7 +1561,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
           'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
-          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.upload': 'Upload images to the image library (bulk)', 'media.reset_ids': 'Renumber the image library IDs', 'media.closed': 'See the closed category of the image library', 'media.cat.weapon': 'See images: Weapons', 'media.cat.clothing': 'See images: Clothing', 'media.cat.consumable': 'See images: Consumables', 'media.cat.currency': 'See images: Currency', 'media.cat.material': 'See images: Materials', 'media.cat.ring': 'See images: Rings', 'media.cat.scroll': 'See images: Scrolls', 'media.cat.npc': 'See images: NPCs', 'media.cat.monster': 'See images: Monsters', 'media.cat.furniture': 'See images: Furniture', 'media.cat.hair_beard': 'See images: Hair/Beard', 'media.cat.other': 'See images: Other', 'media.cat.none': 'See images: Uncategorized',
+          'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.categorize': 'Change the category of images in the image library', 'site.maintenance': 'Turn the site maintenance mode on/off', 'media.upload': 'Upload images to the image library (bulk)', 'media.reset_ids': 'Renumber the image library IDs', 'media.closed': 'See the closed category of the image library', 'media.cat.weapon': 'See images: Weapons', 'media.cat.gear': 'See images: Gear', 'media.cat.consumable': 'See images: Consumables', 'media.cat.currency': 'See images: Currency', 'media.cat.material': 'See images: Materials', 'media.cat.ring': 'See images: Rings', 'media.cat.scroll': 'See images: Scrolls', 'media.cat.npc': 'See images: NPCs', 'media.cat.monster': 'See images: Monsters', 'media.cat.furniture': 'See images: Furniture', 'media.cat.hair_beard': 'See images: Hair/Beard', 'media.cat.skin': 'See images: Skins', 'media.cat.tools': 'See images: Tools', 'media.cat.other': 'See images: Other', 'media.cat.none': 'See images: Uncategorized',
           'staff.view': 'View staff', 'staff.create': 'Add staff', 'staff.edit': 'Change role', 'staff.deactivate': 'Deactivate / reactivate staff', 'staff.delete': 'Remove someone from the team', 'roles.manage': 'Edit role permissions', 'errors.view': 'View wiki errors and problems',
           'audit.view': 'View the content log', 'audit.view_all': 'View the full log (with IPs)', 'audit.clear': 'Clear the log', 'analytics.view': 'View site traffic',
         },
@@ -1638,7 +1739,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         loadError: 'Could not connect to the API. Is it running on localhost:8000?',
         genericLoadError: 'Error loading',
         empty: 'No jutsus found.',
-        colName: 'Name', colMastery: 'Mastery', colTier: 'Tier', colChakra: 'Chakra',
+        colName: 'Name', colMastery: 'Mastery', colTier: 'Tier', colChakra: 'Chakra', colStatus: 'Status', published: 'Published', draft: 'Draft',
         selectAll: 'Select all', selectRow: 'Select row',
         edit: 'Edit', delete: 'Delete',
         deleteConfirm: 'Delete jutsu "{name}"? This action cannot be undone.',
@@ -1663,6 +1764,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         path: 'Path (optional)',
         pathNone: 'None',
         masteryUtility: 'Utility (no mastery — anyone can use it)',
+        status: 'Status', statusPublished: 'Published (shown on the site)', statusDraft: 'Draft (staff only)',
         tier: 'Tier (1-5)',
         chakraCost: 'Chakra cost',
         icon: 'Icon',
@@ -1722,7 +1824,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
         lore: 'Lore', loreOptional: 'Lore (optional)', lorePlaceholder: 'History, context...',
         synergy: 'Synergy', synergyOptional: 'Synergy (optional)',
         synergyPlaceholder: 'Strategy tip, combination with other techniques...',
-        spawnLocation: 'Spawn location (optional)', spawnLocationPlaceholder: '',
+        spawnLocation: 'Where to find (places)', spawnLocationPlaceholder: '', addLocation: 'Add place', locationPlaceholder: 'Place name (e.g. Larva Road)', zoneLabel: 'Zone', removeLocation: 'Remove place', zones: { safe: 'Safe Zone', danger: 'Danger Zone', war: 'War Zone', arena: 'Arena Zone', parkour: 'Parkour Zone', none: 'No Zone' },
+        weaponNpcHint: 'Pick the NPC page to make it a link; mobs that DROP the weapon show up by themselves under "Dropped by".', weaponNpcLinked: 'Linked to the NPC page (the name follows the page)', convertText: 'Turn the old text into a list', salesTitle: 'Sold by NPCs (shops)', addSale: 'Add shop', saleShop: 'Shop', salePrice: 'Price', saleCurrency: 'Currency', saleQty: 'Qty', removeSale: 'Remove shop',
         mobSheet: 'Mob Sheet', health: 'Health', healthPlaceholder: '',
         damage: 'Damage', damagePlaceholder: '',
         experience: 'Experience', experiencePlaceholder: '',

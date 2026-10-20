@@ -16,6 +16,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
 import { cn } from '@/lib/utils';
+import { auditTarget } from '@/lib/audit-target';
 
 const ACTION_STYLE: Record<string, { icon: typeof Plus; className: string }> = {
   create: { icon: Plus, className: 'bg-emerald-900/30 text-emerald-400' },
@@ -165,11 +166,7 @@ export default function AuditLogPage() {
             const actionLabel = a.logActions[entry.action] ?? entry.action;
             const entityLabel = a.logEntities[entry.entityType] ?? entry.entityType;
             // O que mostrar como "alvo": nome da entry, nome da pessoa (equipe/login) ou o id.
-            const target =
-              (entry.diff?.name as string) ??
-              (entry.diff?.after as { name?: string })?.name ??
-              (entry.diff?.username as string) ??
-              entry.entityId;
+            const target = auditTarget(entry.diff, entry.entityId);   // sempre texto (renomear imagem grava o nome como {before, after})
             return (
               <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
                 <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-md', style.className)}>

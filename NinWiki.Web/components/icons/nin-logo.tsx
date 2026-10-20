@@ -1,5 +1,5 @@
-// Logo do site: a arte enviada pelo mantenedor (shuriken com anel),
-// recolorida em 4 variantes (uma por tema de cor) via processamento de
+// Logo do site: o logo ORIGINAL do jogo (shuriken com anel laranja, o `laranja`, tema padrao)
+// e 4 recoloracoes dele (so' o ANEL muda para a cor do tema; a shuriken prateada fica igual) (uma por tema de cor) via processamento de
 // imagem (deslocamento de matiz preservando saturacao/brilho - o
 // mesmo desenho, so' muda a familia de cor do anel).
 //
@@ -11,7 +11,7 @@
 // regras .nin-logo-img-* em app/globals.css) - nenhum JavaScript
 // proprio aqui, e funciona corretamente mesmo antes do React montar.
 //
-// Arquivos em public/images/logo/nin-logo-{tema}.png.
+// Arquivos em public/images/logo/nin-logo-{tema}.png (laranja = o icon.png do cliente do jogo, ampliado para 256x256).
 
 export function NinLogo({ className }: { className?: string }) {
   return (
@@ -20,6 +20,7 @@ export function NinLogo({ className }: { className?: string }) {
           pequenas trocadas por CSS puro; next/image adicionaria complexidade
           (otimizacao/lazy-load) sem beneficio aqui, ja' que os arquivos
           ja' vem pre-otimizados (256x256, ~60KB cada). */}
+      <img src="/images/logo/nin-logo-laranja.png" alt="NinWiki" className="nin-logo-img nin-logo-img-laranja" />
       <img src="/images/logo/nin-logo-blood.png" alt="NinWiki" className="nin-logo-img nin-logo-img-blood" />
       <img src="/images/logo/nin-logo-canarinho.png" alt="NinWiki" className="nin-logo-img nin-logo-img-canarinho" />
       <img src="/images/logo/nin-logo-ouro.png" alt="NinWiki" className="nin-logo-img nin-logo-img-ouro" />

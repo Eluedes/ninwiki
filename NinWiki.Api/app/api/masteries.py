@@ -24,13 +24,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.audit import log_action
-from app.core.auth import require_permission
+from app.core.auth import get_optional_user, require_permission
 from app.core.permissions import Permission
 from app.core.media_refs import resolve_images
 from app.core.database import get_db
 from app.models.users import User
 from app.core.payloads import apply_scalar_fields
 from app.core.translation import fill_missing_translations, translate_field
+from app.models.enums import ContentStatus
 from app.models.masteries import Attribute, Jutsu, Mastery, MasteryPath
 from app.schemas.content import CamelModel
 from app.schemas.masteries import AttributeRead, JutsuRead, JutsuWrite, MasteryRead, MasteryWrite
@@ -210,10 +211,13 @@ async def list_jutsus(
     mastery_id: str | None = Query(None, alias="masteryId", description="Filtra por mastery"),
     utility: bool = Query(False, description="So' os jutsus de Utilidade (sem mastery)"),
     npc: bool | None = Query(None, description="true = so' os Jutsus NPC; false = so' os jutsus normais (sem os de NPC); vazio = todos"),
+    user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Lista jutsus, opcionalmente so' os de uma mastery ou so' os de Utilidade (publico)."""
+    """Lista jutsus, opcionalmente so' os de uma mastery ou so' os de Utilidade (publico; rascunho so' aparece para a equipe)."""
     stmt = select(Jutsu).order_by(Jutsu.name)
+    if user is None:
+        stmt = stmt.where(Jutsu.status == ContentStatus.PUBLISHED)
     if utility:
         stmt = stmt.where(Jutsu.mastery_id.is_(None))
     elif mastery_id:
@@ -225,9 +229,12 @@ async def list_jutsus(
 
 
 @router.get("/jutsus/{jutsu_id}", response_model=JutsuRead)
-async def get_jutsu(jutsu_id: str, db: AsyncSession = Depends(get_db)):
-    """Ficha de UM jutsu (publico)."""
-    return await _get_jutsu_or_404(jutsu_id, db)
+async def get_jutsu(jutsu_id: str, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
+    """Ficha de UM jutsu (publico; rascunho so' para a equipe - para o visitante responde 404)."""
+    jutsu = await _get_jutsu_or_404(jutsu_id, db)
+    if user is None and jutsu.status != ContentStatus.PUBLISHED:
+        raise HTTPException(status_code=404, detail="Jutsu not found")
+    return jutsu
 
 
 async def _translate_level_names(en: list[str], old_en: list[str], old_pt: list[str], given: list[str], force: bool = False) -> list[str]:

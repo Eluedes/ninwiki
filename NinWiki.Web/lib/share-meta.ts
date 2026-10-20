@@ -5,7 +5,7 @@
 import type { Metadata } from 'next';
 import { extractPlainText } from '@/components/lore/rich-text';
 
-const FALLBACK_IMAGE = '/images/logo/nin-logo-blood.png';
+const FALLBACK_IMAGE = '/images/logo/nin-logo-laranja.png';
 
 /** Monta title/description/openGraph/twitter para uma pagina. `html` e' o texto rico (descricao) de onde sai o resumo. */
 export function shareMetadata(opts: { title: string; html?: string | null; path: string; image?: string | null }): Metadata {

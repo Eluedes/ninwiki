@@ -117,6 +117,8 @@ ROTAS_PUBLICAS = {
     ("GET", "/content-items"), ("GET", "/content-items/{item_id}"), ("GET", "/content-items/slug/{slug}"),
     ("GET", "/attributes"), ("GET", "/masteries"), ("GET", "/masteries/{mastery_id}"),
     ("GET", "/jutsus"), ("GET", "/jutsus/{jutsu_id}"),
+    ("GET", "/site/status"),   # o site pergunta se esta' em manutencao (liga/desliga so' o S.Adm)
+    ("GET", "/guide-articles"), ("GET", "/guide-articles/{article_id}"),   # artigos do Guia (rascunho so' para a equipe)
     ("GET", "/villages"), ("GET", "/villages/{village_id}"), ("GET", "/organizations"),
     ("GET", "/posts"), ("GET", "/posts/{post_id}"), ("GET", "/posts/slug/{slug}"),
     ("GET", "/tags"), ("GET", "/announcement"),   # anuncio da Home: leitura publica; escrever exige announcement.manage
@@ -126,7 +128,7 @@ ROTAS_PUBLICAS = {
     ("PUT", "/posts/{slug}/like"), ("DELETE", "/posts/{slug}/like"),
     ("POST", "/posts/{slug}/comments"), ("DELETE", "/posts/{slug}/comments/{comment_id}"),
     ("GET", "/auth/reader/me"), ("POST", "/auth/reader/logout"), ("POST", "/auth/reader/dev-login"),
-    ("GET", "/professions"), ("GET", "/ninja-ranks"), ("GET", "/story-arcs"), ("GET", "/summons"),
+    ("GET", "/professions"), ("GET", "/professions/{profession_id}"), ("GET", "/ninja-ranks"), ("GET", "/story-arcs"), ("GET", "/summons"),
     # escrita "publica" de proposito: cada uma tem a sua propria protecao
     ("POST", "/auth/dev-login"),   # so' funciona em development + confere a origem
     ("POST", "/auth/logout"),      # sem sessao so' limpa o cookie
@@ -243,6 +245,9 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
           r.status_code == 201 and r.json().get("status") == "draft", f"veio {r.status_code} {r.text[:80]}")
     r = await c.post("/content-items", json={**novo_conteudo("auth"), "category": "items", "itemType": "authority", "rarity": "enchanted", "maxStack": 500}, headers=C)
     check("item tipo Authority com raridade Enchanted e stack 500 e' criado", r.status_code == 201 and r.json()["itemType"] == "authority" and r.json()["rarity"] == "enchanted" and r.json()["maxStack"] == 500, r.text[:200])
+    for raridade in ("premium", "organization"):
+        r = await c.post("/content-items", json={**novo_conteudo(f"rar-{raridade}"), "category": "items", "rarity": raridade}, headers=C)
+        check(f"item com raridade {raridade.capitalize()} e' criado", r.status_code == 201 and r.json()["rarity"] == raridade, r.text[:200])
     r = await c.post("/content-items", json={**novo_conteudo("acess"), "category": "items", "itemType": "accessory", "level": 12}, headers=C)
     check("item tipo Accessory (junto com os Rings) e' criado", r.status_code == 201 and r.json()["itemType"] == "accessory", r.text[:200])
     for i, roupa in enumerate(["shirt", "vest", "pant", "hat", "mask", "shoe"]):
@@ -296,6 +301,38 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id}]}, headers=A)
     check("admin publica o mob com drop ligado", r.status_code == 200, r.text[:160])
     await c.put(f"/content-items/{drop_item_id}", json={**novo_conteudo("drop-item"), "category": "items", "rarity": "rare", "status": "published", "attributes": [], "drops": []}, headers=A)   # o item tambem precisa estar publicado para o anonimo ve-lo
+    # NPC da arma LIGADO a uma pagina + lista de lugares do mob
+    r = await c.post("/content-items", json={**novo_conteudo("npc-arma"), "category": "weapons", "weaponNpc": "texto antigo", "weaponNpcId": mob_id}, headers=A)
+    check("arma com NPC ligado: o nome vem da pagina do NPC e o slug vem (pagina publicada)",
+          r.status_code == 201 and r.json()["weaponNpcId"] == mob_id and r.json()["weaponNpc"] == "TESTE drop-mob" and r.json()["weaponNpcSlug"] == f"{SLUG}-drop-mob", r.text[:240])
+    arma_npc_id = r.json().get("id")
+    r = await c.post("/content-items", json={**novo_conteudo("npc-arma-x"), "category": "weapons", "weaponNpcId": "00000000-0000-0000-0000-000000000000"}, headers=A)
+    check("arma com NPC que nao existe e' recusada (400)", r.status_code == 400, r.text[:160])
+    r = await c.post("/content-items", json={**novo_conteudo("npc-item"), "category": "items", "weaponNpcId": mob_id}, headers=A)
+    check("o NPC ligado so' vale em arma (item ignora)", r.status_code == 201 and r.json()["weaponNpcId"] is None, r.text[:160])
+    r = await c.put(f"/content-items/{mob_id}", json={**novo_conteudo("drop-mob"), "category": "mobs", "status": "draft", "drops": [
+        {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id}]}, headers=A)
+    r = await c.get(f"/content-items/{arma_npc_id}", headers=A)
+    check("NPC ligado em rascunho: a ficha da arma fica so' com o nome (sem slug para link)", r.status_code == 200 and r.json()["weaponNpcSlug"] is None and r.json()["weaponNpc"] == "TESTE drop-mob", r.text[:200])
+    await c.put(f"/content-items/{mob_id}", json={**novo_conteudo("drop-mob"), "category": "mobs", "status": "published", "drops": [
+        {"itemName": "Ligado", "chance": 10, "droppedItemId": drop_item_id}]}, headers=A)   # volta a publicar (os testes seguintes dependem disso)
+    lugares = [{"name": "Larva Road", "namePt": "Estrada das Larvas", "zone": "safe"}, {"name": "Slight Slope"}]
+    r = await c.post("/content-items", json={**novo_conteudo("lugares"), "category": "mobs", "spawnLocations": lugares}, headers=A)
+    check("mob com lista de lugares: guarda nome, traducao e zona (zona opcional)",
+          r.status_code == 201 and r.json()["spawnLocations"][0]["zone"] == "safe" and r.json()["spawnLocations"][0]["namePt"] == "Estrada das Larvas" and r.json()["spawnLocations"][1]["zone"] is None, r.text[:240])
+    r = await c.post("/content-items", json={**novo_conteudo("lugar-ruim"), "category": "mobs", "spawnLocations": [{"name": "X", "zone": "invalida"}]}, headers=A)
+    check("zona desconhecida num lugar e' recusada (422)", r.status_code == 422, r.text[:120])
+    r = await c.post("/content-items", json={**novo_conteudo("lugar-vazio"), "category": "mobs", "spawnLocations": [{"name": "   "}]}, headers=A)
+    check("nome de lugar em branco e' recusado (422)", r.status_code == 422, r.text[:120])
+    # Vendido em (lojas de NPC): lista com loja, lugares, quantidade, preco e moeda
+    vendas = [{"shop": "Leaf Clothing I", "places": ["Leaf Village Clothing Shop", "Leaf Village Clothing Shop", "  "], "qty": 5, "price": 100, "currency": "Ryo"}, {"shop": "Halloween Shop", "price": 300, "currency": "Halloween Token"}]
+    r = await c.post("/content-items", json={**novo_conteudo("vendas"), "category": "items", "soldAt": vendas}, headers=A)
+    check("item com lista de lojas: guarda preco, quantidade e moeda (lugares repetidos/em branco somem)",
+          r.status_code == 201 and r.json()["soldAt"][0]["places"] == ["Leaf Village Clothing Shop"] and r.json()["soldAt"][0]["qty"] == 5 and r.json()["soldAt"][1]["qty"] == 1 and r.json()["soldAt"][1]["currency"] == "Halloween Token", r.text[:260])
+    r = await c.post("/content-items", json={**novo_conteudo("venda-ruim"), "category": "items", "soldAt": [{"shop": "X", "price": -1}]}, headers=A)
+    check("preco negativo numa loja e' recusado (422)", r.status_code == 422, r.text[:120])
+    r = await c.post("/content-items", json={**novo_conteudo("venda-vazia"), "category": "items", "soldAt": [{"shop": "   "}]}, headers=A)
+    check("nome de loja em branco e' recusado (422)", r.status_code == 422, r.text[:120])
     r = await c.get(f"/content-items/{drop_item_id}")
     db_mobs = r.json().get("droppedBy", [])
     check("item mostra o mob publicado que o dropa (automatico, chance 10)", len(db_mobs) == 1 and db_mobs[0]["slug"] == f"{SLUG}-drop-mob" and db_mobs[0]["chance"] == 10, r.text[:240])
@@ -555,6 +592,19 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         check("callback sem cookie de state e' recusado", "error=invalid_state" in r.headers["location"])
         r = await c.get("/auth/discord/callback?error=access_denied&state=x")
         check("usuario cancelou no Discord (discord_denied)", "error=discord_denied" in r.headers["location"])
+    # 2FA do Discord obrigatorio (REQUIRE_DISCORD_2FA): conta SEM 2FA nao entra; COM 2FA entra; desligado, volta a entrar
+    sem_2fa = {**perfil, "mfa_enabled": False}
+    with patch("app.core.discord.exchange_code", return_value="tok"), patch("app.core.discord.fetch_profile", return_value=sem_2fa):
+        r = await c.get(f"/auth/discord/callback?code=abc&state={state}", headers={"Cookie": f"{STATE_COOKIE}={state}"})
+        check("staff cuja conta do Discord NAO tem 2FA nao entra (mfa_required) e nao ganha sessao", "error=mfa_required" in r.headers["location"] and SESSION_COOKIE not in r.headers.get("set-cookie", ""), r.headers.get("location", ""))
+        settings.require_discord_2fa = False
+        r = await c.get(f"/auth/discord/callback?code=abc&state={state}", headers={"Cookie": f"{STATE_COOKIE}={state}"})
+        check("com REQUIRE_DISCORD_2FA=false a mesma conta entra", r.status_code == 302 and r.headers["location"].endswith("/admin"), r.headers.get("location", ""))
+        settings.require_discord_2fa = True
+    com_2fa = {**perfil, "mfa_enabled": True}
+    with patch("app.core.discord.exchange_code", return_value="tok"), patch("app.core.discord.fetch_profile", return_value=com_2fa):
+        r = await c.get(f"/auth/discord/callback?code=abc&state={state}", headers={"Cookie": f"{STATE_COOKIE}={state}"})
+        check("staff cuja conta do Discord TEM 2FA entra normalmente", r.status_code == 302 and r.headers["location"].endswith("/admin"), r.headers.get("location", ""))
     perfil_estranho = {"id": BASE + 21, "username": "Qualquer Pessoa", "avatar_url": None}
     with patch("app.core.discord.exchange_code", return_value="tok"), patch("app.core.discord.fetch_profile", return_value=perfil_estranho):
         r = await c.get(f"/auth/discord/callback?code=abc&state={state}", headers={"Cookie": f"{STATE_COOKIE}={state}"})
@@ -1613,6 +1663,88 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("?npc=true lista so' os de NPC e ?npc=false tira eles da lista", any(j["id"] == f"{SLUG}-npc" for j in so_npc) and all(j["isNpc"] for j in so_npc)
           and not any(j["id"] == f"{SLUG}-npc" for j in sem_npc) and any(j["id"] == f"{SLUG}-jf" for j in sem_npc))
 
+    # Jutsu em RASCUNHO: so' a equipe ve (lista, ficha, busca do bot e denuncia) - e' assim que os criados em massa a partir do jogo nascem
+    rasc = {**base_j, "id": f"{SLUG}-rasc", "name": "TESTE Jutsu Rascunho", "status": "draft"}
+    r = await c.post("/jutsus", json=rasc, headers=A)
+    check("jutsu em rascunho e' criado (status draft)", r.status_code == 201 and r.json()["status"] == "draft", r.text[:200])
+    check("jutsu comum nasce publicado por padrao", (await c.get(f"/jutsus/{SLUG}-jf")).json()["status"] == "published")
+    c.cookies.clear()   # o cliente guarda a sessao de logins anteriores: o visitante precisa ser anonimo de verdade
+    check("rascunho NAO aparece na lista publica", not any(j["id"] == f"{SLUG}-rasc" for j in (await c.get("/jutsus")).json()))
+    check("rascunho aparece na lista da equipe", any(j["id"] == f"{SLUG}-rasc" for j in (await c.get("/jutsus", headers=A)).json()))
+    check("ficha de rascunho: 404 para o visitante", (await c.get(f"/jutsus/{SLUG}-rasc")).status_code == 404)
+    check("ficha de rascunho: a equipe abre", (await c.get(f"/jutsus/{SLUG}-rasc", headers=A)).status_code == 200)
+    r = await c.put(f"/jutsus/{SLUG}-rasc", json={**rasc, "status": "published"}, headers=A)
+    check("publicar o rascunho: a ficha abre para o visitante", r.status_code == 200 and (await c.get(f"/jutsus/{SLUG}-rasc")).status_code == 200, r.text[:160])
+    r = await c.delete(f"/jutsus/{SLUG}-rasc", headers=A)
+    check("apagar o jutsu de teste (rascunho)", r.status_code == 204, r.text[:120])
+
+    # Artigos do Guia (rascunho so' para a equipe) e edicao de proficiencias (lore.edit / lore.delete)
+    art = {"id": f"{SLUG}-art", "section": "combat", "position": 1, "title": "TESTE Artigo", "titlePt": "TESTE Artigo PT", "summary": "resumo",
+           "summaryPt": "resumo", "body": "", "bodyPt": "", "icon": "book-open", "status": "draft"}
+    r = await c.post("/guide-articles", json=art, headers=C)
+    check("Creator NAO cria artigo do Guia (403)", r.status_code == 403, r.text[:120])
+    r = await c.post("/guide-articles", json=art, headers=A)
+    check("Adm cria artigo do Guia em rascunho (201)", r.status_code == 201 and r.json()["status"] == "draft", r.text[:200])
+    r = await c.post("/guide-articles", json=art, headers=A)
+    check("artigo com id repetido (409)", r.status_code == 409, r.text[:120])
+    r = await c.post("/guide-articles", json={**art, "id": f"{SLUG}-art2", "section": "inexistente"}, headers=A)
+    check("secao inexistente e' recusada (422)", r.status_code == 422, r.text[:120])
+    r = await c.post("/guide-articles", json={**art, "id": f"{SLUG}-art3", "body": '{"type": "script"}'}, headers=A)
+    check("texto rico invalido e' recusado (422)", r.status_code == 422, r.text[:120])
+    c.cookies.clear()   # o visitante precisa ser anonimo de verdade
+    check("rascunho de artigo NAO aparece na lista publica", not any(x["id"] == f"{SLUG}-art" for x in (await c.get("/guide-articles")).json()))
+    check("rascunho de artigo: 404 para o visitante", (await c.get(f"/guide-articles/{SLUG}-art")).status_code == 404)
+    check("rascunho de artigo: a equipe ve na lista", any(x["id"] == f"{SLUG}-art" for x in (await c.get("/guide-articles", headers=A)).json()))
+    check("rascunho de artigo: a equipe abre", (await c.get(f"/guide-articles/{SLUG}-art", headers=A)).status_code == 200)
+    r = await c.put(f"/guide-articles/{SLUG}-art", json={**art, "status": "published", "title": "TESTE Artigo 2"}, headers=A)
+    check("publicar o artigo", r.status_code == 200 and r.json()["title"] == "TESTE Artigo 2", r.text[:160])
+    r = await c.get("/guide-articles", params={"section": "combat"})
+    check("publicado aparece na lista publica, filtrada por secao", any(x["id"] == f"{SLUG}-art" for x in r.json()) and all(x["section"] == "combat" for x in r.json()))
+    r = await c.put(f"/guide-articles/{SLUG}-art", json={**art, "id": "outro"}, headers=A)
+    check("o id do artigo nao muda (400)", r.status_code == 400, r.text[:120])
+    r = await c.delete(f"/guide-articles/{SLUG}-art", headers=C)
+    check("Creator NAO apaga artigo (403)", r.status_code == 403, r.text[:120])
+    r = await c.delete(f"/guide-articles/{SLUG}-art", headers=A)
+    check("Adm apaga o artigo (204)", r.status_code == 204, r.text[:120])
+    prof = {"id": f"{SLUG}-prof", "name": "TESTE Proficiency", "namePt": "TESTE Proficiencia", "group": "crafting", "description": "d", "descriptionPt": "d", "icon": "T"}
+    r = await c.post("/professions", json=prof, headers=C)
+    check("Creator NAO cria proficiencia (403)", r.status_code == 403, r.text[:120])
+    r = await c.post("/professions", json=prof, headers=A)
+    check("Adm cria proficiencia (201)", r.status_code == 201 and r.json()["details"] is None, r.text[:200])
+    r = await c.put(f"/professions/{SLUG}-prof", json={**prof, "name": "TESTE Proficiency 2"}, headers=A)
+    check("Adm edita proficiencia", r.status_code == 200 and r.json()["name"] == "TESTE Proficiency 2", r.text[:160])
+    r = await c.delete(f"/professions/{SLUG}-prof", headers=A)
+    check("Adm apaga proficiencia (204)", r.status_code == 204, r.text[:120])
+
+    # Modo manutencao: so' o S.Adm liga/desliga; a equipe logada troca a sessao por um passe e entra no site
+    c.cookies.clear()
+    r = await c.get("/site/status")
+    check("manutencao comeca desligada", r.status_code == 200 and r.json()["maintenance"] is False and r.json()["access"] is False, r.text[:120])
+    check("Adm NAO liga a manutencao (404: so' o S.Adm sabe que existe)", (await c.put("/site/maintenance", json={"enabled": True}, headers=A)).status_code == 404)
+    check("Creator NAO liga a manutencao (404)", (await c.put("/site/maintenance", json={"enabled": True}, headers=C)).status_code == 404)
+    check("visitante NAO liga a manutencao (401)", (await c.put("/site/maintenance", json={"enabled": True})).status_code == 401)
+    check("site.maintenance e' exclusiva do S.Adm em /auth/me", "site.maintenance" in (await c.get("/auth/me", headers=S)).json()["permissions"]
+          and "site.maintenance" not in (await c.get("/auth/me", headers=A)).json()["permissions"])
+    r = await c.put("/site/maintenance", json={"enabled": True, "message": "Back soon", "messagePt": "Voltamos ja"}, headers=S)
+    check("S.Adm liga a manutencao (200)", r.status_code == 200 and r.json()["maintenance"] is True, r.text[:160])
+    r = await c.get("/site/status")
+    check("o visitante ve' manutencao ligada, com a mensagem e SEM acesso", r.json()["maintenance"] is True and r.json()["message"] == "Back soon" and r.json()["messagePt"] == "Voltamos ja" and r.json()["access"] is False, r.text[:160])
+    check("sem login nao ha' passe (401)", (await c.post("/site/pass")).status_code == 401)
+    r = await c.post("/site/pass", headers=C)
+    check("qualquer membro da equipe logado recebe o passe (Creator, 200)", r.status_code == 200 and r.json()["token"] and r.json()["maintenance"] is True, r.text[:160])
+    passe = r.json()["token"]
+    r = await c.get("/site/status", headers={"X-Maintenance-Pass": passe})
+    check("com o passe, o status libera o acesso", r.json()["maintenance"] is True and r.json()["access"] is True, r.text[:120])
+    r = await c.get("/site/status", headers={"X-Maintenance-Pass": passe + "x"})
+    check("passe adulterado nao libera", r.json()["access"] is False)
+    sessao = C["Cookie"].split("=", 1)[1] if "Cookie" in C else ""
+    r = await c.get("/site/status", headers={"X-Maintenance-Pass": sessao})
+    check("o token da SESSAO nao serve como passe", r.json()["access"] is False)
+    r = await c.put("/site/maintenance", json={"enabled": False}, headers=S)
+    check("S.Adm desliga a manutencao", r.status_code == 200 and r.json()["maintenance"] is False)
+    r = await c.get("/site/status", headers={"X-Maintenance-Pass": passe})
+    check("desligada: status sem manutencao", r.json()["maintenance"] is False and r.json()["access"] is False)
+
     # ataques do mob ligados a um jutsu do catalogo
     jf = (await c.get(f"/jutsus/{SLUG}-jf")).json()
     r = await c.post("/content-items", json={**novo_conteudo("mob-atk"), "category": "mobs", "attacks": [
@@ -1917,7 +2049,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     cc = r.json()
     r = await c.post("/media", files={"file": ("b.png", _png((3, 2, 1)), "image/png")}, data={"category": "inventada"}, headers=S)
     check("categoria desconhecida e' recusada (422)", r.status_code == 422)
-    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard"):
+    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard", "skin", "tools"):
         r = await c.post("/media", files={"file": (f"{nova}.png", _png((4, 4, len(nova))), "image/png")}, data={"category": nova}, headers=S)
         check(f"categoria nova '{nova}' existe", r.status_code == 201 and r.json()["category"] == nova, r.text[:100])
         if r.status_code == 201:
@@ -1945,6 +2077,26 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("S.Adm muda a categoria de varias de uma vez", r.status_code == 200 and r.json()["updated"] == 2, r.text[:120])
     r = await c.post("/media/bulk-category", json={"ids": [ca["id"]], "category": ""}, headers=S)
     check("categoria vazia tira a categoria", r.status_code == 200 and (await c.get(f"/media/{ca['id']}", headers=Cm)).json()["category"] == "")
+
+    # permissao SO' para mudar a categoria (media.categorize): o cargo escolhe a categoria, mas nao renomeia nem apaga
+    atuais_cm = (await c.get("/auth/me", headers=Cm)).json()["permissions"]
+    check("Creator nao tem media.categorize por padrao", "media.categorize" not in atuais_cm)
+    await c.put("/roles/creator/permissions", json={"permissions": sorted(set(atuais_cm) | {"media.categorize"})}, headers=S)
+    check("com media.categorize liberada, ela aparece em /auth/me do cargo", "media.categorize" in (await c.get("/auth/me", headers=Cm)).json()["permissions"])
+    r = await c.patch(f"/media/{cb['id']}", json={"category": "currency"}, headers=Cm)
+    check("Creator com media.categorize muda a categoria (200)", r.status_code == 200 and r.json()["category"] == "currency", r.text[:140])
+    r = await c.patch(f"/media/{cb['id']}", json={"name": "outro nome", "category": "ring"}, headers=Cm)
+    check("...mas NAO renomeia (403) e a categoria nao muda junto", r.status_code == 403 and (await c.get(f"/media/{cb['id']}", headers=Cm)).json()["category"] == "currency", r.text[:140])
+    r = await c.post("/media/bulk-category", json={"ids": [ca["id"], cb["id"]], "category": "ring"}, headers=Cm)
+    check("...e muda a categoria em massa (200)", r.status_code == 200 and r.json()["updated"] == 2, r.text[:140])
+    check("...mas NAO apaga imagem (403)", (await c.delete(f"/media/{cb['id']}", params={"force": "true"}, headers=Cm)).status_code == 403)
+    r = await c.post("/media", files={"file": ("cat.png", _png((9, 8, 7)), "image/png")}, data={"name": f"{SLUG} cat", "category": "npc"}, headers=Cm)
+    check("...e escolhe a categoria ao enviar (se tiver media.upload tambem; senao e' 403)", r.status_code in (201, 403), r.text[:100])
+    if r.status_code == 201:
+        check("a categoria enviada por quem tem media.categorize e' guardada", r.json()["category"] == "npc")
+        await c.delete(f"/media/{r.json()['id']}", params={"force": "true"}, headers=S)
+    await c.put("/roles/creator/permissions", json={"permissions": sorted(set(atuais_cm))}, headers=S)
+    check("o S.Adm tira a permissao e o Creator volta a levar 403", (await c.patch(f"/media/{cb['id']}", json={"category": "ring"}, headers=Cm)).status_code == 403)
     await c.post("/media/bulk-delete", json={"ids": [ca["id"], cb["id"], cc["id"]], "force": True}, headers=S)
 
     # categoria 'closed': privada, so' o S.Adm ve
@@ -1993,7 +2145,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     # TRANCAR categorias por cargo (permissao media.cat.<categoria>): igual a 'closed', mas escolhido pelo S.Adm
     r = await c.get("/roles/permissions", headers=S)
     nomes = {p["name"] for p in r.json()["permissions"]}
-    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.none"} <= nomes)
+    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.skin", "media.cat.tools", "media.cat.none"} <= nomes)
     me_cr = (await c.get("/auth/me", headers=Cm)).json()["permissions"]
     check("por padrao o Creator ve todas as categorias (menos closed)", "media.cat.weapon" in me_cr and "media.cat.none" in me_cr and "media.closed" not in me_cr)
     trancada = (await c.post("/media", files={"file": ("tr.png", _png((31, 3, 3)), "image/png")}, data={"name": f"{SLUG} trancada", "category": "weapon"}, headers=S)).json()

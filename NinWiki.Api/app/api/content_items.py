@@ -369,6 +369,21 @@ async def _attack_jutsu_names(attacks: list, db: AsyncSession) -> dict[str, str]
     return found
 
 
+async def _weapon_npc_link(npc_id, category, db: AsyncSession, own_id=None) -> "ContentItem | None":
+    """
+    Confere que o NPC ligado a uma ARMA existe (e nao e' a propria arma) e o devolve. Sem ligacao, ou em categoria que nao e' arma, devolve None
+    (o editor so' manda o vinculo em armas; qualquer outra coisa e' ignorada).
+    """
+    if npc_id is None or category != ContentCategory.WEAPONS:
+        return None
+    if own_id is not None and npc_id == own_id:
+        raise HTTPException(status_code=400, detail="A weapon cannot be linked to itself")
+    npc = await db.get(ContentItem, npc_id)
+    if npc is None:
+        raise HTTPException(status_code=400, detail=f"The NPC linked to the weapon does not exist: {npc_id}")
+    return npc
+
+
 def _rarity_of_drop(drop, linked_rarities: dict) -> Rarity:
     """Raridade gravada no drop: a do item ligado; sem ligacao, a enviada (ou Common)."""
     if drop.dropped_item_id is not None and drop.dropped_item_id in linked_rarities:
@@ -445,17 +460,20 @@ async def create_content_item(
     linked_rarities = await _drop_rarities(payload.drops, db)
     jutsu_names = await _attack_jutsu_names(payload.attacks, db)
     await _validate_cast_village_id(payload.cast_village_id, db)
+    npc = await _weapon_npc_link(payload.weapon_npc_id, payload.category, db)
 
     item = ContentItem(
         slug=payload.slug, category=payload.category, name=payload.name, level=payload.level,
         icon=payload.icon, image=payload.image, rarity=payload.rarity, description=payload.description,
         lore=payload.lore, synergy=payload.synergy, spawn_location=payload.spawn_location,
+        spawn_locations=[loc.model_dump() for loc in payload.spawn_locations] or None,
+        sold_at=[sale.model_dump() for sale in payload.sold_at] or None,
         name_pt=payload.name_pt, description_pt=payload.description_pt, lore_pt=payload.lore_pt,
         synergy_pt=payload.synergy_pt, spawn_location_pt=payload.spawn_location_pt,
         mob_health=payload.mob_health, mob_damage=payload.mob_damage, mob_experience=payload.mob_experience,
         mob_range=payload.mob_range, mob_respawn_time=payload.mob_respawn_time,
         weapon_speed=payload.weapon_speed, weapon_requirement=payload.weapon_requirement,
-        weapon_npc=payload.weapon_npc, weapon_type=payload.weapon_type,
+        weapon_npc=npc.name if npc is not None else payload.weapon_npc, weapon_npc_id=npc.id if npc is not None else None, weapon_type=payload.weapon_type,
         weapon_base_damage=payload.weapon_base_damage, weapon_special_ability=payload.weapon_special_ability,
         weapon_knockback_distance=payload.weapon_knockback_distance,
         max_stack=payload.max_stack, cast_village_id=payload.cast_village_id,
@@ -514,6 +532,7 @@ async def update_content_item(
     linked_rarities = await _drop_rarities(payload.drops, db)
     jutsu_names = await _attack_jutsu_names(payload.attacks, db)
     await _validate_cast_village_id(payload.cast_village_id, db)
+    npc = await _weapon_npc_link(payload.weapon_npc_id, payload.category, db, own_id=item.id)
 
     item.category = payload.category
     item.name = payload.name
@@ -525,6 +544,8 @@ async def update_content_item(
     item.lore = payload.lore
     item.synergy = payload.synergy
     item.spawn_location = payload.spawn_location
+    item.spawn_locations = [loc.model_dump() for loc in payload.spawn_locations] or None
+    item.sold_at = [sale.model_dump() for sale in payload.sold_at] or None
     # name_pt/description_pt/etc: aceita o que o payload mandou (a
     # pessoa pode ter corrigido a mao no editor) - _fill_missing_translations
     # logo abaixo so' preenche o que CONTINUAR vazio depois disso, nunca
@@ -541,7 +562,8 @@ async def update_content_item(
     item.mob_respawn_time = payload.mob_respawn_time
     item.weapon_speed = payload.weapon_speed
     item.weapon_requirement = payload.weapon_requirement
-    item.weapon_npc = payload.weapon_npc
+    item.weapon_npc = npc.name if npc is not None else payload.weapon_npc
+    item.weapon_npc_id = npc.id if npc is not None else None
     item.weapon_type = payload.weapon_type
     item.weapon_base_damage = payload.weapon_base_damage
     item.weapon_special_ability = payload.weapon_special_ability

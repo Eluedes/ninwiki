@@ -17,10 +17,12 @@ interface DropItemPickerProps {
   linkedId: string | null | undefined;
   onLink: (item: ApiContentItemSummary) => void;
   onUnlink: () => void;
+  /** Se vier, so' mostra resultados dessas categorias (ex.: ['mobs'] para o NPC de uma arma). */
+  onlyCategories?: string[];
 }
 
 /** Busca uma entry do catalogo para ligar a um drop de mob. */
-export function DropItemPicker({ linkedId, onLink, onUnlink }: DropItemPickerProps) {
+export function DropItemPicker({ linkedId, onLink, onUnlink, onlyCategories }: DropItemPickerProps) {
   const { dict } = useLanguage();
   const t = dict.admin.dropPicker;
   const categoryLabels: Record<string, string> = {
@@ -33,7 +35,7 @@ export function DropItemPicker({ linkedId, onLink, onUnlink }: DropItemPickerPro
   const [open, setOpen] = useState(false);
 
   // Sem texto digitado nao ha' resultado a mostrar (derivado - sem limpar estado dentro de efeito).
-  const results = query.trim() ? rawResults : [];
+  const results = query.trim() ? rawResults.filter((r) => !onlyCategories || onlyCategories.includes(r.category)) : [];
 
   useEffect(() => {
     if (!query.trim()) return;

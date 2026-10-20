@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { NoticeBoard } from '@/components/admin/notice-board';
 import { TrafficCard } from '@/components/admin/traffic-card';
 import { cn } from '@/lib/utils';
+import { auditTarget } from '@/lib/audit-target';
 
 // Quantos dias sem edicao pra uma entry contar como "desatualizada" -
 // numero redondo, sem significado especial do jogo, so' um ponto de
@@ -150,7 +151,7 @@ export default function AdminOverviewPage() {
             {recentActivity.map((entry) => {
               const cfg = actionConfig[entry.action] ?? { label: dict.admin.auth.logActions[entry.action] ?? entry.action, icon: History, className: 'bg-secondary text-muted-foreground' };
               const Icon = cfg.icon;
-              const name = (entry.diff?.name as string) ?? (entry.diff?.after as { name?: string })?.name ?? entry.entityId;
+              const name = auditTarget(entry.diff, entry.entityId);   // sempre texto (renomear imagem grava o nome como {before, after})
               return (
                 <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border bg-secondary/30 px-3 py-2">
                   <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-md', cfg.className)}>

@@ -3,25 +3,28 @@
 // Provider do TEMA DE CORES do site (diferente do provider claro/escuro
 // em theme-provider.tsx, que so' controla luminosidade). Isso controla
 // a PALETA de destaque (cor dos botoes, links, foco, e o anel do logo)
-// - quatro temas, nomeados com a mesma brasilidade: "blood" (o vermelho
-// original), "canarinho" (verde), "ouro" (amarelo) e "anil" (azul).
+// - cinco temas: "laranja" (a cor do logo original do jogo; e' o PADRAO), "blood" (vermelho),
+// "canarinho" (verde), "ouro" (amarelo) e "anil" (azul).
 //
 // Funciona aplicando o atributo data-color-theme="..." no <html>. As
 // variaveis CSS (--primary, --ring) sao redefinidas em app/globals.css
 // dentro de seletores [data-color-theme="..."] para cada tema - "blood"
-// nao precisa de seletor proprio, ele E' o valor padrao ja existente
-// em :root/.dark.
+// nao precisa de seletor proprio, ele E' o valor ja existente
+// em :root/.dark (e o "laranja" tem o seu bloco).
 //
 // A escolha fica guardada no localStorage e e' lida com useSyncExternalStore:
-// no servidor (e na hidratacao) o valor e' sempre 'blood'; assim que o navegador
+// no servidor (e na hidratacao) o valor e' sempre o padrao ('laranja'); assim que o navegador
 // assume, o React troca pro valor salvo SEM erro de hydration (o jeito que o React
 // recomenda pra ler uma fonte externa como o localStorage).
 
 import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from 'react';
 
-export type ColorTheme = 'blood' | 'canarinho' | 'ouro' | 'anil';
+export type ColorTheme = 'laranja' | 'blood' | 'canarinho' | 'ouro' | 'anil';
 
-const VALID_THEMES: ColorTheme[] = ['blood', 'canarinho', 'ouro', 'anil'];
+const VALID_THEMES: ColorTheme[] = ['laranja', 'blood', 'canarinho', 'ouro', 'anil'];
+
+/** Tema padrao (quem nunca escolheu um): laranja, a cor do logo original do jogo. */
+export const DEFAULT_COLOR_THEME: ColorTheme = 'laranja';
 
 const STORAGE_KEY = 'ninwiki-color-theme';
 
@@ -48,15 +51,15 @@ function subscribe(callback: () => void) {
 function getSnapshot(): ColorTheme {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return VALID_THEMES.includes(saved as ColorTheme) ? (saved as ColorTheme) : 'blood';
+    return VALID_THEMES.includes(saved as ColorTheme) ? (saved as ColorTheme) : DEFAULT_COLOR_THEME;
   } catch {
-    return 'blood'; // localStorage indisponivel (ex: navegacao privada restrita)
+    return DEFAULT_COLOR_THEME; // localStorage indisponivel (ex: navegacao privada restrita)
   }
 }
 
 /** Tema de cor padrao usado na renderizacao do servidor. */
 function getServerSnapshot(): ColorTheme {
-  return 'blood';
+  return DEFAULT_COLOR_THEME;
 }
 
 /** Troca o tema de cor, grava a escolha e avisa quem esta' assinando. */

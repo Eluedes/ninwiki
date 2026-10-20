@@ -10,6 +10,7 @@ futura onde nem todo editor vai ter acesso a tudo do painel.
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.alias_generators import to_camel
 
+from app.models.enums import ContentStatus
 from app.schemas.validators import validate_rich_content
 
 
@@ -171,6 +172,7 @@ class JutsuRead(CamelModel):
     debuff: str = ""
     is_npc: bool = False          # Jutsu NPC: versao do jutsu ensinada/usada por NPC (secao propria no site)
     allowed_weapons: str = ""    # "Allowed weapons" (ex.: Blunt)
+    status: ContentStatus = ContentStatus.PUBLISHED   # rascunho: so' a equipe ve
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
@@ -209,6 +211,7 @@ class JutsuWrite(CamelModel):
     debuff: str = Field(default="", max_length=150)
     is_npc: bool = False
     allowed_weapons: str = Field(default="", max_length=100)
+    status: ContentStatus = ContentStatus.PUBLISHED   # padrao publicado; o editor pode salvar como rascunho
 
     @field_validator("effect", "range", "cast_time", "cooldown", "required_level", "required_stat", "scroll_type", "shop",
                      "cast_type", "jutsu_class", "debuff", "allowed_weapons")

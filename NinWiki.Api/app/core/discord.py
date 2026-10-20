@@ -58,7 +58,7 @@ async def exchange_code(code: str) -> str:
 
 
 async def fetch_profile(access_token: str) -> dict:
-    """Devolve {"id": int, "username": str, "avatar_url": str | None}."""
+    """Devolve {"id": int, "username": str, "avatar_url": str | None, "mfa_enabled": bool} (mfa_enabled: a conta tem a verificacao em duas etapas ligada no Discord)."""
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             res = await client.get(f"{_DISCORD_API}/users/@me", headers={"Authorization": f"Bearer {access_token}"})
@@ -72,4 +72,5 @@ async def fetch_profile(access_token: str) -> dict:
         "id": discord_id,
         "username": (data.get("global_name") or data.get("username") or f"Discord {discord_id}")[:100],
         "avatar_url": f"https://cdn.discordapp.com/avatars/{discord_id}/{avatar}.png" if avatar else None,
+        "mfa_enabled": data.get("mfa_enabled") is True,   # o Discord sempre informa; qualquer coisa diferente de true conta como SEM 2FA (falha fechada)
     }

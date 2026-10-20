@@ -108,6 +108,12 @@ class Settings(BaseSettings):
     # log. Ligado sem proxy, qualquer um forjaria o IP que aparece no log.
     trust_proxy_headers: bool = False
 
+    # Exige que a conta do DISCORD de quem entra no painel tenha a verificacao em duas etapas (2FA) ligada: o Discord informa isso no perfil
+    # (escopo identify) e nao guardamos segredo nenhum. Vale para TODA a equipe (inclusive os donos) so' no login real com Discord; o login de
+    # desenvolvimento local nao passa por isso. CUIDADO: antes de ligar em producao, ative o 2FA na SUA conta do Discord (Configuracoes > Minha
+    # conta), senao voce mesmo fica sem entrar; para desligar, REQUIRE_DISCORD_2FA=false e reinicie.
+    require_discord_2fa: bool = True
+
     # SameSite do cookie de SESSAO (equipe e leitor). "lax" (padrao, o mais seguro) exige site e API no MESMO site
     # (ex: wiki.dominio.com + api.dominio.com). Com enderecos *.squareweb.app (sites diferentes) o login so' persiste com
     # "none" (exige HTTPS; navegadores que bloqueiam cookie de terceiros, como o Safari, continuam sem funcionar).

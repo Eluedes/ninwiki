@@ -10,3 +10,4 @@ backups
 scripts
 docker-compose*.yml
 diagnostico_conexao.py
+envio

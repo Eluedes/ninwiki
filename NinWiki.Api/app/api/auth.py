@@ -188,6 +188,15 @@ async def discord_callback(
         await db.commit()
         return _login_redirect("inactive" if user else "not_staff")
 
+    # 2FA do Discord obrigatorio para entrar no painel (REQUIRE_DISCORD_2FA). So' recusa quando o Discord disse claramente que NAO tem 2FA.
+    if settings.require_discord_2fa and profile.get("mfa_enabled") is False:
+        await log_action(
+            db, action="login_denied", entity_type="auth", entity_id=str(profile["id"]),
+            diff={"username": profile["username"], "reason": "no_2fa"}, actor=user, source="auth",
+        )
+        await db.commit()
+        return _login_redirect("mfa_required")
+
     if not user.username_locked:  # nome escolhido a mao no painel nao e' sobrescrito pelo do Discord
         user.username = profile["username"]
     user.avatar_url = profile["avatar_url"]
