@@ -4,6 +4,8 @@
 //     copiar a wiki inteira rapidamente (scraping) e floods que tentam derrubar o servidor.
 //  2. Robos de copia conhecidos (curl, python-requests, scrapy, headless...) e requisicoes sem
 //     User-Agent -> 403 (desligue com BLOCK_SCRAPER_UAS=false se usar algum monitor desse tipo).
+//  4. CSP com NONCE: gera um nonce novo a cada pagina, monta o cabecalho Content-Security-Policy (lib/csp.ts) e o repassa ao Next.js (cabecalhos
+//     x-nonce e Content-Security-Policy da requisicao) - assim os scripts do Next e o do tema levam o nonce e NENHUM script inline sem nonce roda.
 //  3. MODO MANUTENCAO (ligado pelo S.Adm em /admin/maintenance): quem nao tem o cookie do passe (ninwiki_pass, valido na API) ve' a pagina de
 //     manutencao no lugar da pagina pedida (status 503, a URL nao muda). /maintenance, /login, /admin e a rota do passe ficam abertos para a equipe
 //     poder entrar. Se a API nao responder, o site continua aberto (nunca tranca todo mundo por um soluco da API).
@@ -17,6 +19,7 @@
 // proximo anexou; o que vem antes pode ser forjado pelo visitante).
 import { NextResponse, type NextRequest } from 'next/server';
 import { isUnderMaintenance } from '@/lib/maintenance';
+import { buildCsp } from '@/lib/csp';
 
 const WINDOW_MS = 60_000;
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
@@ -105,6 +108,17 @@ function tag(res: NextResponse): NextResponse {
 
 /** Roda antes de cada pagina: bloqueia robos de copia conhecidos e aplica o limite por IP. */
 export async function proxy(req: NextRequest) {
+  // Nonce desta requisicao + CSP; vai tanto na resposta (navegador) quanto na requisicao (o Next le' para colocar o nonce nos seus scripts).
+  const nonce = btoa(crypto.randomUUID());
+  const csp = buildCsp(nonce);
+  const forwarded = new Headers(req.headers);
+  forwarded.set('x-nonce', nonce);
+  forwarded.set('Content-Security-Policy', csp);
+  /** Marca a resposta (x-ninwiki-web) e poe a CSP nela. */
+  const page = (res: NextResponse): NextResponse => {
+    res.headers.set('Content-Security-Policy', csp);
+    return tag(res);
+  };
   const ua = req.headers.get('user-agent') ?? '';
   if (BLOCK_UAS && (ua.length < 8 || SCRAPER_UA.test(ua))) {
     return tag(new NextResponse('Forbidden', { status: 403 }));
@@ -117,7 +131,7 @@ export async function proxy(req: NextRequest) {
     if (await maintenanceOn(now)) {
       const pass = req.cookies.get(PASS_COOKIE)?.value;
       if (!pass || !(await passValid(pass, now))) {
-        return tag(NextResponse.rewrite(new URL('/maintenance', req.url), { status: 503, headers: { 'Retry-After': '300' } }));
+        return page(NextResponse.rewrite(new URL('/maintenance', req.url), { status: 503, headers: { 'Retry-After': '300' }, request: { headers: forwarded } }));
       }
     }
   }
@@ -136,7 +150,7 @@ export async function proxy(req: NextRequest) {
       headers: { 'Retry-After': String(wait) },
     }));
   }
-  return tag(NextResponse.next());
+  return page(NextResponse.next({ request: { headers: forwarded } }));
 }
 
 // Nao passa pelo proxy: arquivos internos do Next (JS/CSS do build), o favicon e os ARQUIVOS ESTATICOS da pasta public (imagens, fontes).

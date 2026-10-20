@@ -108,7 +108,7 @@ export interface Dictionary {
     auth: {
       checkingSession: string; logout: string; sessionExpired: string; apiUnreachable: string; retry: string;
       noAccessTitle: string; noAccessBody: string; backToOverview: string;
-      errNotStaff: string; errInactive: string; errDiscordFailed: string; errDiscordDenied: string;
+      errNotStaff: string; errMfa: string; errInactive: string; errDiscordFailed: string; errDiscordDenied: string;
       errInvalidState: string; errNotConfigured: string; errGeneric: string; errRateLimited: string;
       devTitle: string; devHint: string; devPlaceholder: string; devButton: string; devError: string;
       roleSuperAdmin: string; roleAdmin: string; roleCreator: string;
@@ -543,6 +543,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         noAccessTitle: 'Sem acesso a esta página',
         noAccessBody: 'O seu cargo não tem permissão para ver esta área.',
         backToOverview: 'Voltar à Visão Geral',
+        errMfa: 'Para entrar no painel, a sua conta do Discord precisa ter a verificação em duas etapas (2FA) ligada. Ative em Discord > Configurações > Minha conta > Ativar autenticação de dois fatores e tente de novo.',
         errNotStaff: 'Essa conta do Discord não faz parte da equipe. Peça a um Adm para te cadastrar.',
         errInactive: 'Sua conta da equipe está desativada.',
         errDiscordFailed: 'Não foi possível falar com o Discord. Tente de novo em instantes.',
@@ -1323,6 +1324,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         noAccessTitle: 'No access to this page',
         noAccessBody: 'Your role does not have permission to view this area.',
         backToOverview: 'Back to Overview',
+        errMfa: 'To sign in to the panel, your Discord account must have two-factor authentication (2FA) turned on. Enable it in Discord > Settings > My Account > Enable Two-Factor Auth and try again.',
         errNotStaff: 'This Discord account is not part of the staff. Ask an Adm to register you.',
         errInactive: 'Your staff account is deactivated.',
         errDiscordFailed: 'Could not reach Discord. Please try again in a moment.',

@@ -8,13 +8,14 @@ import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import type { ReactNode } from 'react';
 
 /** Provider do tema claro/escuro. */
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({ children, nonce }: { children: ReactNode; nonce?: string }) {
   return (
     <NextThemesProvider
       attribute="class"       // alterna tema via classe CSS (class="dark"), nao via atributo data-*
       defaultTheme="dark"      // o wiki comeca sempre no tema escuro
       enableSystem={false}      // ignora a preferencia de tema do sistema operacional
       disableTransitionOnChange // evita uma transicao/flash visual estranho ao trocar de tema
+      nonce={nonce}             // o script inline do tema precisa do nonce da CSP (ver lib/csp.ts)
     >
       {children}
     </NextThemesProvider>

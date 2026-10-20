@@ -592,6 +592,19 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         check("callback sem cookie de state e' recusado", "error=invalid_state" in r.headers["location"])
         r = await c.get("/auth/discord/callback?error=access_denied&state=x")
         check("usuario cancelou no Discord (discord_denied)", "error=discord_denied" in r.headers["location"])
+    # 2FA do Discord obrigatorio (REQUIRE_DISCORD_2FA): conta SEM 2FA nao entra; COM 2FA entra; desligado, volta a entrar
+    sem_2fa = {**perfil, "mfa_enabled": False}
+    with patch("app.core.discord.exchange_code", return_value="tok"), patch("app.core.discord.fetch_profile", return_value=sem_2fa):
+        r = await c.get(f"/auth/discord/callback?code=abc&state={state}", headers={"Cookie": f"{STATE_COOKIE}={state}"})
+        check("staff cuja conta do Discord NAO tem 2FA nao entra (mfa_required) e nao ganha sessao", "error=mfa_required" in r.headers["location"] and SESSION_COOKIE not in r.headers.get("set-cookie", ""), r.headers.get("location", ""))
+        settings.require_discord_2fa = False
+        r = await c.get(f"/auth/discord/callback?code=abc&state={state}", headers={"Cookie": f"{STATE_COOKIE}={state}"})
+        check("com REQUIRE_DISCORD_2FA=false a mesma conta entra", r.status_code == 302 and r.headers["location"].endswith("/admin"), r.headers.get("location", ""))
+        settings.require_discord_2fa = True
+    com_2fa = {**perfil, "mfa_enabled": True}
+    with patch("app.core.discord.exchange_code", return_value="tok"), patch("app.core.discord.fetch_profile", return_value=com_2fa):
+        r = await c.get(f"/auth/discord/callback?code=abc&state={state}", headers={"Cookie": f"{STATE_COOKIE}={state}"})
+        check("staff cuja conta do Discord TEM 2FA entra normalmente", r.status_code == 302 and r.headers["location"].endswith("/admin"), r.headers.get("location", ""))
     perfil_estranho = {"id": BASE + 21, "username": "Qualquer Pessoa", "avatar_url": None}
     with patch("app.core.discord.exchange_code", return_value="tok"), patch("app.core.discord.fetch_profile", return_value=perfil_estranho):
         r = await c.get(f"/auth/discord/callback?code=abc&state={state}", headers={"Cookie": f"{STATE_COOKIE}={state}"})
