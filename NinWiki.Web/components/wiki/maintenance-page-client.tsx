@@ -107,7 +107,10 @@ export function MaintenancePageClient() {
           <div className="maint-halo" aria-hidden />
           <div className="maint-ring" aria-hidden />
           <div className="maint-ring-2" aria-hidden />
-          <NinLogo className="maint-float absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] drop-shadow-[0_0_18px_hsl(var(--primary)/0.55)]" />
+          {/* Contêiner absoluto que centraliza a logo (o NinLogo define o proprio position, entao nao da' para posiciona-lo direto) */}
+          <div className="maint-float absolute inset-3 flex items-center justify-center">
+            <NinLogo className="block h-full w-full drop-shadow-[0_0_18px_hsl(var(--primary)/0.55)]" />
+          </div>
         </div>
 
         <span className="maint-rise mb-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary" style={{ animationDelay: '.2s' }}>
