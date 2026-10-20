@@ -18,6 +18,7 @@ export const contentItemSchema = z.object({
   category: z.enum(['mobs', 'items', 'guides', 'weapons', 'missions']),
   name: z.string().min(1, 'The name is required.').max(200, 'The name can have at most 200 characters.'),
   level: z.coerce.number().int('Level must be a whole number.').min(0, 'Level cannot be negative.'),
+  levelUnknown: z.boolean(),
   icon: z.string().min(1, 'Pick an icon (emoji).').max(20),
   image: z.string().nullable().optional(),
   rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary', 'enchanted', 'unique', 'event', 'premium', 'organization']),

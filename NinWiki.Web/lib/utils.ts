@@ -28,11 +28,16 @@ export function cn(...inputs: ClassValue[]) {
 // de Item. Mob/Missao/Guia sempre mostram (nunca chamam esta funcao -
 // so' Weapons e Items passam por ela).
 // `level` (opcional): em itens e armas, NIVEL 0 significa "sem nivel" (pedido do Rafael) - a ficha e o card nao mostram nada.
-export function shouldShowLevel(category: string, itemType: string | null, level?: number): boolean {
-  if ((category === 'weapons' || category === 'items') && level === 0) return false;
+export function shouldShowLevel(category: string, itemType: string | null, level?: number, unknown = false): boolean {
+  if ((category === 'weapons' || category === 'items') && level === 0 && !unknown) return false;   // nivel 0 = sem nivel; "desconhecido" (???) aparece mesmo assim
   if (category === 'weapons') return true;
   if (category === 'items') return isEquipmentType(itemType) || itemType === 'cast';
   return true;
+}
+
+/** Texto do nivel: "???" quando ainda nao se sabe (levelUnknown), senao o numero. */
+export function levelText(entry: { level: number; levelUnknown?: boolean }): string {
+  return entry.levelUnknown ? '???' : String(entry.level);
 }
 
 // Tipos de item que empilham (tem "Max Stack" na ficha do jogo: "Can hold max 500 per Stack"): Moeda, Autoridade, Consumivel, Material e Pack.

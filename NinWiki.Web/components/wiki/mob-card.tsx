@@ -3,6 +3,7 @@
 // Card de um MOB (bestiario) ou de uma ARMA no catalogo (kind='weapon'): sprite grande sobre um fundo com brilho, nome, nivel, selo de tipo
 // (Boss/NPC/Montaria) e raridade com uma faixa colorida na lateral. O resto do wiki usa o CatalogCard mais simples.
 
+import { levelText } from '@/lib/utils';
 import Link from 'next/link';
 import { Skull, Sword } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -46,9 +47,9 @@ export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary;
         <div className="min-w-0 flex-1 space-y-1.5">
           <p className="truncate text-base font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">{name}</p>
           <div className="flex flex-wrap items-center gap-1.5">
-            {!(kind === 'weapon' && entry.level === 0) && (
+            {!(kind === 'weapon' && entry.level === 0 && !entry.levelUnknown) && (
               <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">
-                {kind === 'weapon' ? dict.detail.levelReq : dict.detail.level} {entry.level}
+                {kind === 'weapon' ? dict.detail.levelReq : dict.detail.level} {levelText(entry)}
               </span>
             )}
             {type && (

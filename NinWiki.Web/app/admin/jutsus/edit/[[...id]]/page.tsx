@@ -19,7 +19,7 @@ import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { EntryHistory } from '@/components/admin/entry-history';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ArrowLeft, Save, Loader2, Languages, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Send, Loader2, Languages, Plus, Trash2 } from 'lucide-react';
 import {
   getJutsu,
   createJutsu,
@@ -110,6 +110,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
   });
 
   const masteryId = useWatch({ control, name: 'masteryId' });
+  const currentStatus = useWatch({ control, name: 'status' });   // situacao carregada do jutsu (rascunho/publicado), so' para mostrar
   const isNpc = useWatch({ control, name: 'isNpc' });   // Jutsu NPC: so' nome, imagem e descricao (sem tier, custo, niveis nem ficha)
   const levelRows = useFieldArray({ control, name: 'levels' });
   const jf = dict.jutsuInfo;
@@ -153,7 +154,8 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
     }
   }
 
-  async function onValid(values: JutsuFormValues) {
+  /** Salva o jutsu: `publish` = true publica (aparece no site); false salva como rascunho (so' a equipe ve). */
+  async function onValid(values: JutsuFormValues, publish: boolean) {
     setSaving(true);
     setApiError(null);
     try {
@@ -173,6 +175,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         namePt: values.namePt ?? null,
         descriptionPt: values.descriptionPt ?? null,
         longDescriptionPt: values.longDescriptionPt ?? null,
+        status: publish ? 'published' : 'draft',
       };
       if (isEdit && rawId) {
         await updateJutsu(rawId, payload);
@@ -263,23 +266,15 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
             <span className="text-xs text-muted-foreground">{jf.isNpcHint}</span>
           </div>
 
-          {/* Rascunho: so' a equipe ve; publicado aparece no site e na busca do bot */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-card-foreground">{t.status}</label>
-            <Controller
-              name="status"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="published">{t.statusPublished}</SelectItem>
-                    <SelectItem value="draft">{t.statusDraft}</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
+          {/* Situacao atual (so' ao editar): quem decide e' o botao usado no rodape (Salvar rascunho / Publicar) */}
+          {isEdit && (
+            <div className="flex items-center gap-2 sm:col-span-2">
+              <span className="text-sm font-semibold text-card-foreground">{t.status}:</span>
+              <span className={currentStatus === 'draft' ? 'rounded bg-amber-500/15 px-1.5 py-0.5 text-xs font-semibold text-amber-400' : 'rounded bg-emerald-500/15 px-1.5 py-0.5 text-xs font-semibold text-emerald-400'}>
+                {currentStatus === 'draft' ? t.statusDraft : t.statusPublished}
+              </span>
+            </div>
+          )}
 
           {availablePaths.length > 0 && (
             <div className="space-y-2">
@@ -525,10 +520,14 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
         </div>
       )}
 
-      <div className="flex items-center justify-end">
-        <Button type="button" onClick={handleSubmit(onValid)} disabled={saving}>
+      <div className="flex items-center justify-end gap-3">
+        <Button type="button" variant="outline" onClick={handleSubmit((v) => onValid(v, false))} disabled={saving}>
           {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
-          {t.save}
+          {t.saveDraft}
+        </Button>
+        <Button type="button" onClick={handleSubmit((v) => onValid(v, true))} disabled={saving}>
+          {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />}
+          {t.publish}
         </Button>
       </div>
     </form>

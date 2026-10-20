@@ -463,7 +463,7 @@ async def create_content_item(
     npc = await _weapon_npc_link(payload.weapon_npc_id, payload.category, db)
 
     item = ContentItem(
-        slug=payload.slug, category=payload.category, name=payload.name, level=payload.level,
+        slug=payload.slug, category=payload.category, name=payload.name, level=0 if payload.level_unknown else payload.level, level_unknown=payload.level_unknown,
         icon=payload.icon, image=payload.image, rarity=payload.rarity, description=payload.description,
         lore=payload.lore, synergy=payload.synergy, spawn_location=payload.spawn_location,
         spawn_locations=[loc.model_dump() for loc in payload.spawn_locations] or None,
@@ -536,7 +536,8 @@ async def update_content_item(
 
     item.category = payload.category
     item.name = payload.name
-    item.level = payload.level
+    item.level = 0 if payload.level_unknown else payload.level   # nivel desconhecido: o numero fica 0
+    item.level_unknown = payload.level_unknown
     item.icon = payload.icon
     item.image = payload.image
     item.rarity = payload.rarity

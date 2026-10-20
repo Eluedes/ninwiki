@@ -250,7 +250,7 @@ export interface Dictionary {
       back: string; editTitle: string; newTitle: string; loading: string; loadError: string; saveError: string; save: string;
       name: string; englishName: string; idSlug: string; idSlugLocked: string; idPlaceholder: string;
       mastery: string; masteryUtility: string; path: string; pathNone: string;
-      status: string; statusPublished: string; statusDraft: string;
+      status: string; statusPublished: string; statusDraft: string; saveDraft: string; publish: string;
       tier: string; chakraCost: string; icon: string;
       range: string; rangePlaceholder: string; castTime: string; castTimePlaceholder: string;
       cooldown: string; cooldownPlaceholder: string; effect: string; effectPlaceholder: string;
@@ -276,7 +276,7 @@ export interface Dictionary {
       weaponBaseDamage: string; weaponBaseDamagePlaceholder: string;
       weaponSpecialAbility: string; weaponSpecialAbilityPlaceholder: string;
       weaponKnockbackDistance: string; weaponKnockbackDistancePlaceholder: string;
-      levelZeroHint: string; maxStack: string; maxStackPlaceholder: string; castVillage: string;
+      levelZeroHint: string; levelUnknown: string; maxStack: string; maxStackPlaceholder: string; castVillage: string;
       rarity: string; level: string; image: string;
       description: string; descriptionPlaceholder: string; optionalSuffix: string;
       lore: string; loreOptional: string; lorePlaceholder: string;
@@ -983,7 +983,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         path: 'Caminho (opcional)',
         pathNone: 'Nenhum',
         masteryUtility: 'Utility (sem mastery — qualquer pessoa pode usar)',
-        status: 'Situação', statusPublished: 'Publicado (aparece no site)', statusDraft: 'Rascunho (só a equipe vê)',
+        status: 'Situação', statusPublished: 'Publicado (aparece no site)', statusDraft: 'Rascunho (só a equipe vê)', saveDraft: 'Salvar rascunho', publish: 'Publicar',
         tier: 'Tier (1-5)',
         chakraCost: 'Custo de chakra',
         icon: 'Ícone',
@@ -1037,7 +1037,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         weaponBaseDamage: 'Dano Base', weaponBaseDamagePlaceholder: '',
         weaponSpecialAbility: 'Habilidade Especial', weaponSpecialAbilityPlaceholder: '',
         weaponKnockbackDistance: 'Distância de Knockback', weaponKnockbackDistancePlaceholder: '',
-        levelZeroHint: 'Nível 0 = item sem nível (nada aparece no site).', maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Vila que pode usar',
+        levelZeroHint: 'Nível 0 = item sem nível (nada aparece no site).', levelUnknown: 'Nível desconhecido (o site mostra ???)', maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Vila que pode usar',
         rarity: 'Raridade', level: 'Nível', image: 'Imagem',
         description: 'Descrição', descriptionPlaceholder: 'Descrição curta, sempre visível na página...', optionalSuffix: '(opcional)',
         lore: 'Lore', loreOptional: 'Lore (opcional)', lorePlaceholder: 'História, contexto...',
@@ -1764,7 +1764,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         path: 'Path (optional)',
         pathNone: 'None',
         masteryUtility: 'Utility (no mastery — anyone can use it)',
-        status: 'Status', statusPublished: 'Published (shown on the site)', statusDraft: 'Draft (staff only)',
+        status: 'Status', statusPublished: 'Published (shown on the site)', statusDraft: 'Draft (staff only)', saveDraft: 'Save draft', publish: 'Publish',
         tier: 'Tier (1-5)',
         chakraCost: 'Chakra cost',
         icon: 'Icon',
@@ -1818,7 +1818,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         weaponBaseDamage: 'Base Damage', weaponBaseDamagePlaceholder: '',
         weaponSpecialAbility: 'Special Ability', weaponSpecialAbilityPlaceholder: '',
         weaponKnockbackDistance: 'Knockback Distance', weaponKnockbackDistancePlaceholder: '',
-        levelZeroHint: 'Level 0 = item without a level (nothing is shown on the site).', maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Village that can use it',
+        levelZeroHint: 'Level 0 = item without a level (nothing is shown on the site).', levelUnknown: 'Level unknown (the site shows ???)', maxStack: 'Max Stack', maxStackPlaceholder: '', castVillage: 'Village that can use it',
         rarity: 'Rarity', level: 'Level', image: 'Image',
         description: 'Description', descriptionPlaceholder: 'Short description, always visible on the page...', optionalSuffix: '(optional)',
         lore: 'Lore', loreOptional: 'Lore (optional)', lorePlaceholder: 'History, context...',
