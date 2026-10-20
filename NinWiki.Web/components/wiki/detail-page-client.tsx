@@ -12,7 +12,7 @@ import { DetailSidebar } from '@/components/wiki/detail-sidebar';
 import { CatalogCard } from '@/components/wiki/catalog-card';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import { RichText, extractPlainText } from '@/components/lore/rich-text';
-import { cn, itemHasStack, shouldShowLevel, signedValue } from '@/lib/utils';
+import { cn, itemHasStack, shouldShowLevel, levelText, signedValue } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
 import { ArrowLeft, Heart, Languages, Layers, Scale, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
@@ -96,8 +96,8 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {shouldShowLevel(entry.category, entry.itemType, entry.level) && (
-                    <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.levelReq} {entry.level}</span>
+                  {shouldShowLevel(entry.category, entry.itemType, entry.level, entry.levelUnknown) && (
+                    <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.levelReq} {levelText(entry)}</span>
                   )}
                   {entry.weaponType && <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold uppercase text-card-foreground">{entry.weaponType}</span>}
                   <span className={cn('text-xs font-semibold', rarityConfig[entry.rarity].color)}>{rarityConfig[entry.rarity].label}</span>
@@ -140,7 +140,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.level} {entry.level}</span>
+                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.level} {levelText(entry)}</span>
                   {mobType && (
                     <span className={cn('rounded-md px-2 py-0.5 text-xs font-bold uppercase', mobType.className)}>{isPt ? mobType.pt : mobType.en}</span>
                   )}
@@ -177,8 +177,8 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
                   {entry.category === 'items' && (
                     <span className={cn('rounded-md border px-2 py-0.5 text-xs font-bold uppercase', rarityConfig[entry.rarity].chip)}>{rarityConfig[entry.rarity].label}</span>
                   )}
-                  {shouldShowLevel(entry.category, entry.itemType, entry.level) && (
-                    <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.level} {entry.level}</span>
+                  {shouldShowLevel(entry.category, entry.itemType, entry.level, entry.levelUnknown) && (
+                    <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.level} {levelText(entry)}</span>
                   )}
                 </div>
               </div>

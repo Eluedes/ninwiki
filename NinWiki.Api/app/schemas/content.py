@@ -224,6 +224,7 @@ class ContentItemBase(CamelModel):
     category: ContentCategory
     name: str = Field(min_length=1, max_length=200)
     level: int = Field(default=0, ge=0)
+    level_unknown: bool = False   # nivel ainda nao descoberto: o site mostra "???" (o numero e' ignorado)
     icon: str = Field(min_length=1, max_length=20)
     image: str | None = None
     rarity: Rarity
@@ -381,6 +382,7 @@ class ContentItemSummary(CamelModel):
     category: ContentCategory
     name: str
     level: int
+    level_unknown: bool = False
     icon: str
     image: str | None
     rarity: Rarity

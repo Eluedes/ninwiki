@@ -370,6 +370,17 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("raridade Event (itens de evento) e' aceita", r.status_code == 201 and r.json()["rarity"] == "event", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("rar-ruim"), "rarity": "mitico"}, headers=C)
     check("raridade inexistente continua recusada (422)", r.status_code == 422)
+    # nivel desconhecido: o site mostra "???"; o numero fica 0
+    base_nivel = novo_conteudo("nivel-desc")
+    r = await c.post("/content-items", json={**base_nivel, "level": 35, "levelUnknown": True}, headers=C)
+    check("conteudo com nivel desconhecido guarda o marcador e zera o numero", r.status_code == 201 and r.json()["levelUnknown"] is True and r.json()["level"] == 0, r.text[:160])
+    nivel_id = r.json()["id"]
+    r = await c.put(f"/content-items/{nivel_id}", json={**base_nivel, "level": 12, "levelUnknown": False}, headers=C)
+    check("desmarcar o nivel desconhecido volta a guardar o numero", r.status_code == 200 and r.json()["levelUnknown"] is False and r.json()["level"] == 12, r.text[:160])
+    r = await c.get("/content-items", params={"status": "draft"}, headers=C)
+    check("a lista (resumo) traz levelUnknown", r.status_code == 200 and all("levelUnknown" in x for x in r.json()), r.text[:120])
+    r = await c.post("/content-items", json=novo_conteudo("nivel-padrao"), headers=C)
+    check("sem informar, o nivel nao e' desconhecido (padrao falso)", r.status_code == 201 and r.json()["levelUnknown"] is False, r.text[:120])
     r = await c.get(f"/content-items/{rasc_id}")
     check("anonimo NAO ve rascunho por id (404)", r.status_code == 404)
     r = await c.get(f"/content-items/slug/{SLUG}-rasc")

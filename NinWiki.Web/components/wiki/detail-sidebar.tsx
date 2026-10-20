@@ -9,7 +9,7 @@
 // Drops.
 
 import Link from 'next/link';
-import { cn, itemHasStack, shouldShowLevel, signedValue } from '@/lib/utils';
+import { cn, itemHasStack, shouldShowLevel, levelText, signedValue } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -106,7 +106,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   // pelo menos uma linha - uma arma sem NPC cadastrado, por exemplo,
   // simplesmente nao mostra a secao "Como conseguir" vazia.
   if (entry.category === 'weapons') {
-    const requirementsRows: StatRow[] = shouldShowLevel(entry.category, entry.itemType, entry.level) ? [{ label: dict.detail.levelReq, value: String(entry.level) }] : [];
+    const requirementsRows: StatRow[] = shouldShowLevel(entry.category, entry.itemType, entry.level, entry.levelUnknown) ? [{ label: dict.detail.levelReq, value: levelText(entry) }] : [];
     // ate' 3 requisitos (um por linha): UMA so' linha "Stat Req." com todos empilhados no mesmo bloco
     const reqs = (entry.weaponRequirement ?? '').split('\n').map((r) => r.trim()).filter(Boolean);
     if (reqs.length) requirementsRows.push({ label: dict.detail.statReq, value: reqs.map((r, i) => <span key={i} className="block">{r}</span>) });
@@ -288,7 +288,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   if (entry.category === 'items') {
     if (entry.itemType) detailRows.push({ icon: Tag, label: dict.detail.itemType, value: typeLabels[entry.itemType] ?? entry.itemType });
     detailRows.push({ icon: Gem, label: ce.rarity, value: rarity.label, tone: rarity.color });
-    if (shouldShowLevel(entry.category, entry.itemType, entry.level)) detailRows.push({ icon: Star, label: dict.detail.level, value: String(entry.level), tone: 'text-amber-400' });
+    if (shouldShowLevel(entry.category, entry.itemType, entry.level, entry.levelUnknown)) detailRows.push({ icon: Star, label: dict.detail.level, value: levelText(entry), tone: 'text-amber-400' });
     if (itemHasStack(entry.category, entry.itemType) && entry.maxStack != null) {
       detailRows.push({ icon: Layers, label: dict.detail.maxStack, value: entry.maxStack.toLocaleString(isPt ? 'pt-BR' : 'en-US'), tone: 'text-sky-400' });
     }

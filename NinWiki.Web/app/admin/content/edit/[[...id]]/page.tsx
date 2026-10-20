@@ -132,6 +132,7 @@ const emptyForm: ContentItemFormValues = {
   category: 'mobs',
   name: '',
   level: 1,
+  levelUnknown: false,
   icon: '',
   image: '',
   rarity: 'common',
@@ -222,6 +223,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
   const mobTypeOptions = getMobTypeOptions(t);
   const category = useWatch({ control, name: 'category' });
   const itemType = useWatch({ control, name: 'itemType' });
+  const levelUnknown = useWatch({ control, name: 'levelUnknown' });   // marcado: o numero fica desabilitado e o site mostra ???
   const spawnText = useWatch({ control, name: 'spawnLocation' });   // texto livre antigo (para mostrar o botao de transformar em lista)
   const itemTypeOptions = getItemTypeOptions(t, itemType);
   const wardrobeOptions = getWardrobeOptions(t);
@@ -245,6 +247,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           category: item.category as ContentItemFormValues['category'],
           name: item.name,
           level: item.level,
+          levelUnknown: item.levelUnknown ?? false,
           icon: item.icon,
           image: item.image ?? '',
           rarity: item.rarity,
@@ -372,7 +375,8 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
         // shouldShowLevel em lib/utils.ts) - evita um numero antigo
         // ficar "escondido" mas ainda salvo, de uma epoca em que a
         // entry era, por exemplo, uma Arma antes de virar Material.
-        level: shouldShowLevel(values.category, values.itemType ?? null) ? values.level : 0,
+        level: shouldShowLevel(values.category, values.itemType ?? null) && !values.levelUnknown ? values.level : 0,
+        levelUnknown: shouldShowLevel(values.category, values.itemType ?? null) ? values.levelUnknown : false,   // "???" so' faz sentido onde o nivel aparece
         mobType: values.category === 'mobs' ? values.mobType : null,
         itemType: values.category === 'items' ? values.itemType : null,
         // lore/synergy/spawnLocation: mesmo raciocinio de mobType/
@@ -691,7 +695,11 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           {shouldShowLevel(category, itemType ?? null) && (
             <div className="space-y-2">
               <label className="text-sm font-semibold text-card-foreground">{t.level}</label>
-              <Input type="number" {...register('level')} />
+              <Input type="number" {...register('level')} disabled={levelUnknown} />
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input type="checkbox" {...register('levelUnknown')} className="h-4 w-4 accent-[hsl(var(--primary))]" />
+                {t.levelUnknown}
+              </label>
               {(category === 'items' || category === 'weapons') && <p className="text-xs text-muted-foreground">{t.levelZeroHint}</p>}
               <FieldError message={errors.level?.message} />
             </div>

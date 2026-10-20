@@ -61,6 +61,7 @@ export interface WikiEntry {
   // motivo do mobType - entries antigas nao tem valor.
   itemType?: ItemType;
   level: number;
+  levelUnknown?: boolean;   // nivel ainda nao descoberto: mostrar "???"
   icon: string;        // emoji usado como icone (ex: um bicho)
   // Caminho local ou URL devolvida pelo back-end. Pode ficar vazio/null
   // enquanto a entrada ainda usa o `icon` como fallback visual.

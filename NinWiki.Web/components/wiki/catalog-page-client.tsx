@@ -55,9 +55,13 @@ function groupByLevel(items: ApiContentItemSummary[], levelRangeLabel: string): 
   const groups: Record<string, ApiContentItemSummary[]> = {};
   for (const item of sorted) {
     const tier = Math.floor(item.level / 10);
-    const key = `${tier * 10}-${tier * 10 + 9}`;
+    const key = item.levelUnknown ? '???' : `${tier * 10}-${tier * 10 + 9}`;   // nivel desconhecido: grupo proprio
     (groups[key] ??= []).push(item);
   }
+  // "???" por ultimo (as faixas numericas ja' saem em ordem crescente)
+  const unknown = groups['???'];
+  delete groups['???'];
+  if (unknown) groups['???'] = unknown;
   return Object.entries(groups).map(([range, entries]) => ({ key: range, label: `${levelRangeLabel} ${range}`, entries }));
 }
 

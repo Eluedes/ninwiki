@@ -47,6 +47,8 @@ class ContentItem(Base, TimestampMixin):
     category: Mapped[ContentCategory] = mapped_column(Enum(ContentCategory, name="content_category"), index=True)
     name: Mapped[str] = mapped_column(String(200))
     level: Mapped[int] = mapped_column(default=0)
+    # Nivel ainda NAO descoberto: o site mostra "???" no lugar do numero (e `level` fica 0).
+    level_unknown: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     icon: Mapped[str] = mapped_column(String(20))  # emoji
 
     # Caminho local ou URL devolvida por um servico de storage. Nullable

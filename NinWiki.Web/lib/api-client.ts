@@ -77,6 +77,7 @@ export interface ApiContentItem {
   category: Category;
   name: string;
   level: number;
+  levelUnknown?: boolean;   // nivel ainda nao descoberto: mostrar "???"
   icon: string;
   image: string | null;
   rarity: Rarity;
@@ -152,6 +153,7 @@ export interface ApiContentItemSummary {
   category: Category;
   name: string;
   level: number;
+  levelUnknown?: boolean;   // nivel ainda nao descoberto: mostrar "???"
   icon: string;
   image: string | null;
   rarity: Rarity;
@@ -170,6 +172,7 @@ export interface ContentItemInput {
   category: Category;
   name: string;
   level: number;
+  levelUnknown?: boolean;   // nivel ainda nao descoberto: mostrar "???"
   icon: string;
   image?: string | null;
   rarity: Rarity;

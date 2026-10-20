@@ -4,7 +4,7 @@
 // (usado no catalogo e na secao "entradas relacionadas" do detalhe).
 
 import Link from 'next/link';
-import { cn, shouldShowLevel } from '@/lib/utils';
+import { cn, shouldShowLevel, levelText } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import type { ApiContentItemSummary } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -80,9 +80,9 @@ export function CatalogCard({ entry }: CatalogCardProps) {
               </span>
             )}
           </div>
-          {shouldShowLevel(entry.category, entry.itemType, entry.level) && (
+          {shouldShowLevel(entry.category, entry.itemType, entry.level, entry.levelUnknown) && (
             <p className="text-xs italic text-muted-foreground">
-              {dict.detail.level} {entry.level}
+              {dict.detail.level} {levelText(entry)}
             </p>
           )}
         </div>

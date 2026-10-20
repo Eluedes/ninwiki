@@ -364,7 +364,7 @@ def _like(q: str) -> str:
 def _item_hit(i: ContentItem, lang: str = "en") -> BotSearchHit:
     """Resultado de um item/mob/arma/guia/missao publicado, com os dados certos para cada categoria."""
     cat = i.category.value
-    common = [("Rarity", i.rarity.value.title()), ("Level", i.level)]
+    common = [("Rarity", i.rarity.value.title()), ("Level", "???" if i.level_unknown else i.level)]
     if cat == "mobs":
         facts = _facts(("Health", i.mob_health), ("Damage", i.mob_damage), ("XP", i.mob_experience), ("Range", i.mob_range),
                        ("Respawn", i.mob_respawn_time), ("Spawns at", _spawn_text(i, lang)), *common[1:], lang=lang)   # mob nao tem raridade: so' o nivel

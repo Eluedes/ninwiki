@@ -101,7 +101,7 @@ export function CompareClient({ a, b }: { a: ApiContentItem | null; b: ApiConten
     add(dict.detail.itemType, a?.itemType ? (typeLabels[a.itemType] ?? a.itemType) : (a?.category === 'weapons' ? dict.nav.weapons : null),
         b?.itemType ? (typeLabels[b.itemType] ?? b.itemType) : (b?.category === 'weapons' ? dict.nav.weapons : null));
     add(dict.admin.contentEditor.rarity, a ? rarityConfig[a.rarity].label : null, b ? rarityConfig[b.rarity].label : null);
-    add(dict.detail.level, a?.level ? String(a.level) : null, b?.level ? String(b.level) : null);
+    add(dict.detail.level, a?.levelUnknown ? '???' : a?.level ? String(a.level) : null, b?.levelUnknown ? '???' : b?.level ? String(b.level) : null);
     add(dict.detail.weaponType, a?.weaponType, b?.weaponType);
     add(dict.detail.baseDamage, a?.weaponBaseDamage, b?.weaponBaseDamage);
     add(dict.detail.specialAbility, a?.weaponSpecialAbility, b?.weaponSpecialAbility);
