@@ -80,7 +80,7 @@ export interface Dictionary {
   };
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
-  maintenance: { title: string; text: string; back: string; siteTitle: string; siteText: string; staffLogin: string; staffChecking: string; staffHint: string };
+  maintenance: { title: string; text: string; back: string; siteTitle: string; siteText: string; staffLogin: string; staffChecking: string; staffHint: string; badge: string };
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
@@ -527,7 +527,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       levelsTitle: 'Níveis: nome, dano base e recarga', levelsHint: 'Uma linha por nível do jutsu (o nível máximo é a quantidade de linhas). O nome é opcional: preencha só nos níveis em que o jutsu muda de nome (ex.: nível 4). Clique em "Adicionar nível" quando o jutsu subir de nível.', levelNamePlaceholder: 'Nome neste nível (opcional)', nameByLevel: 'Nome por nível', nameFromLevel: 'A partir do nível {n}: {name}',
       addLevel: 'Adicionar nível', removeLevel: 'Remover nível',
     },
-    maintenance: { title: 'Página em manutenção', text: 'Estamos construindo esta página. Volte em breve!', back: 'Voltar ao início', siteTitle: 'Site em manutenção', siteText: 'Estamos melhorando o wiki. Voltamos em breve!', staffLogin: 'Entrar (equipe)', staffChecking: 'Verificando seu acesso...', staffHint: 'Só a equipe entra durante a manutenção: faça o login e o site abre normalmente.' },
+    maintenance: { title: 'Página em manutenção', text: 'Estamos construindo esta página. Volte em breve!', back: 'Voltar ao início', siteTitle: 'Site em manutenção', siteText: 'Estamos melhorando o wiki. Voltamos em breve!', staffLogin: 'Entrar (equipe)', staffChecking: 'Verificando seu acesso...', staffHint: 'Só a equipe entra durante a manutenção: faça o login e o site abre normalmente.', badge: 'Em manutenção' },
     admin: {
       login: {
         welcome: 'Bem-vindo de volta',
@@ -1308,7 +1308,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       levelsTitle: 'Levels: name, base damage and cooldown', levelsHint: 'One row per jutsu level (the maximum level is the number of rows). The name is optional: fill it only on the levels where the jutsu changes name (e.g. level 4). Click "Add level" when the jutsu levels up.', levelNamePlaceholder: 'Name at this level (optional)', nameByLevel: 'Name by level', nameFromLevel: 'From level {n}: {name}',
       addLevel: 'Add level', removeLevel: 'Remove level',
     },
-    maintenance: { title: 'Under maintenance', text: 'We are building this page. Please come back soon!', back: 'Back to home', siteTitle: 'Site under maintenance', siteText: 'We are improving the wiki. We will be back soon!', staffLogin: 'Staff login', staffChecking: 'Checking your access...', staffHint: 'Only the staff can get in during maintenance: log in and the site opens normally.' },
+    maintenance: { title: 'Under maintenance', text: 'We are building this page. Please come back soon!', back: 'Back to home', siteTitle: 'Site under maintenance', siteText: 'We are improving the wiki. We will be back soon!', staffLogin: 'Staff login', staffChecking: 'Checking your access...', staffHint: 'Only the staff can get in during maintenance: log in and the site opens normally.', badge: 'Under maintenance' },
     admin: {
       login: {
         welcome: 'Welcome back',
