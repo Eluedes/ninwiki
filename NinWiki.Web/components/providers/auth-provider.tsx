@@ -15,6 +15,7 @@ import {
   UNAUTHORIZED_EVENT,
   getMe,
   logout as apiLogout,
+  clearMaintenancePass,
   type ApiMe,
   type PermissionName,
 } from '@/lib/api-client';
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const onUnauthorized = () => {
       setMe(null);
       setStatus('anonymous');
+      void clearMaintenancePass();   // sessao expirou/foi derrubada: o passe de manutencao tambem sai
     };
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);

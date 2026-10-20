@@ -938,9 +938,22 @@ export function devLogin(discordId: string): Promise<ApiMe> {
   return apiFetch('/auth/dev-login', { method: 'POST', body: JSON.stringify({ discordId }) });
 }
 
-/** Encerra a sessao. */
-export function logout(): Promise<{ ok: boolean }> {
-  return apiFetch('/auth/logout', { method: 'POST' });
+/** Apaga o cookie do passe de manutencao (rota do proprio site). Nunca falha: se nao der, o passe so' vence sozinho em 12 h. */
+export async function clearMaintenancePass(): Promise<void> {
+  try {
+    await fetch('/maintenance-pass', { method: 'DELETE' });
+  } catch {
+    /* sem rede: tudo bem */
+  }
+}
+
+/** Encerra a sessao (e tira o passe de manutencao: sair da conta fecha o site de novo durante a manutencao). */
+export async function logout(): Promise<{ ok: boolean }> {
+  try {
+    return await apiFetch<{ ok: boolean }>('/auth/logout', { method: 'POST' });
+  } finally {
+    await clearMaintenancePass();
+  }
 }
 
 /** Lista a equipe (so' S.Adm). */
