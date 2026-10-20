@@ -65,18 +65,18 @@ fi
 rm -f "$ZIP"
 # PREBUILT=true: a pasta ja' e' o pacote final (site compilado: node_modules e .next sao justamente o que deve ir).
 if [ "${PREBUILT:-false}" = "true" ]; then
-  ( cd "$DIR" && zip -qr "$ZIP" . -x ".git/*" ".env" ".env.*" "certs/*" "*.pem" "*.key" "*.crt" "*.md" "*.example" "*.map" "CONTEXTO_PARA_IA*" "ROADMAP*" "FASE2*" )
+  ( cd "$DIR" && zip -qr "$ZIP" . -x ".git/*" ".env" ".env.*" "certs/*" "*.pem" "*.key" "*.crt" "*.md" "*.example" "*.map" "*.log" "CONTEXTO_PARA_IA*" "ROADMAP*" "FASE2*" )
 else
   ( cd "$DIR" && zip -qr "$ZIP" . \
       -x "node_modules/*" ".next/*" "venv/*" ".venv/*" "__pycache__/*" "*/__pycache__/*" \
-         ".env" ".env.*" "certs/*" "*.pem" "*.key" "*.crt" "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" "status_state.json" "language_state.json" ".git/*" \
+         ".env" ".env.*" "certs/*" "*.pem" "*.key" "*.crt" "uploads/*" "staff_files/*" "backups/*" "*.dump" "log_state.json" "error_state.json" "status_state.json" "language_state.json" ".git/*" "*.log" \
          `# so' desenvolvimento/documentacao - nao e' necessario para rodar na SquareCloud:` \
          "*.md" "*.example" "docker-compose*.yml" "scripts/*" "diagnostico_conexao.py" ".squarecloudignore" )
 fi
 
 # TRAVA DE SEGURANCA: documentacao, exemplos, scripts de teste e dumps NUNCA podem ir para a SquareCloud (se alguem extrair o pacote,
 # nao deve achar os .md nem o jeito de rodar o projeto). Se algum escapar das exclusoes acima, o deploy para aqui, antes de enviar.
-LEAKS=$(unzip -Z1 "$ZIP" | grep -Ev '(^|/)node_modules/' | grep -Ei '(^|/)\.env(\..*)?$|(^|/)certs/|\.(pem|key|crt|p12|pfx)$|\.md$|\.example$|\.map$|\.dump$|(^|/)scripts/|docker-compose|CONTEXTO_PARA_IA|ROADMAP|FASE2|diagnostico_conexao|\.git/' || true)
+LEAKS=$(unzip -Z1 "$ZIP" | grep -Ev '(^|/)node_modules/' | grep -Ei '(^|/)\.env(\..*)?$|(^|/)certs/|\.(pem|key|crt|p12|pfx)$|\.md$|\.example$|\.map$|\.dump$|\.log$|(^|/)scripts/|docker-compose|CONTEXTO_PARA_IA|ROADMAP|FASE2|diagnostico_conexao|\.git/' || true)
 if [ -n "$LEAKS" ]; then
   echo "::error::Arquivos que NAO devem ir para a producao estao no pacote:"; echo "$LEAKS" | head -20
   rm -f "$ZIP"; exit 1
