@@ -30,7 +30,8 @@ from PIL import Image
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.api.content_items import _DEFAULT_ICON_BY_CATEGORY, _slugify
+from app.api.content_items import _DEFAULT_ICON_BY_CATEGORY
+from app.core.slug import slugify as _slugify
 from app.api.uploads import UPLOAD_DIR
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal

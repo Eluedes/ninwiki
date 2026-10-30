@@ -31,7 +31,8 @@ from pathlib import Path
 
 from sqlalchemy import select
 
-from app.api.content_items import _DEFAULT_ICON_BY_CATEGORY, _slugify
+from app.api.content_items import _DEFAULT_ICON_BY_CATEGORY
+from app.core.slug import slugify as _slugify
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.api.uploads import UPLOAD_DIR
