@@ -13,7 +13,7 @@ greenlet==3.5.6              # dependencia interna do SQLAlchemy para o modo ass
 psycopg[binary]==3.2.13       # driver SINCRONO de Postgres, usado so' pelo Alembic (migrations rodam em modo sincrono; a API continua 100% assincrona via asyncpg). Usamos a versao 3 (nao psycopg2): o psycopg2 tem um bug conhecido no Windows que quebra ao decodificar mensagens de erro do Postgres localizadas em portugues. Pin em 3.2.13 (nao 3.2.4) porque a 3.2.4 nao tem build pra Python 3.14 - a 3.2.10 foi a primeira versao 3.2.x com build pra 3.14, ficamos na ultima da mesma linha 3.2 por seguranca (evita pular pra 3.3.x sem testar)
 python-multipart==0.0.32     # exigido pelo FastAPI para receber upload de arquivo (UploadFile) - ver app/api/uploads.py
 httpx==0.28.1                 # cliente HTTP assincrono - usado pra chamar a API da DeepL (ver app/core/translation.py)
-Pillow==12.3.0                 # redimensiona imagem no upload (ver app/api/uploads.py) - evita imagem borrada/gigante quando a origem tem resolucao muito maior que o card onde ela aparece
+Pillow==13.0.0                 # redimensiona imagem no upload (ver app/api/uploads.py) - evita imagem borrada/gigante quando a origem tem resolucao muito maior que o card onde ela aparece
 cryptography==50.0.0           # criptografa os backups (AES + HMAC via Fernet; ver app/core/backup.py)
 PyJWT==2.15.0                 # assina/valida o JWT da sessao do painel (ver app/core/security.py)
 maxminddb==3.2.0              # le o banco de paises (DB-IP) para saber de que pais vem cada visita - ver app/core/geoip.py
