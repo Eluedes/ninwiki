@@ -7,17 +7,114 @@
  * As imagens e o indice (`maps.json`) sao gerados por `NinWiki.Api/scripts/extrair_mapas_do_jogo.py` e ficam em `public/game-maps`.
  */
 
-import { useMemo, useState } from 'react';
-import { MapPin, Minus, Plus, Search } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { MapPin, Maximize2, Minus, Plus, Search } from 'lucide-react';
 import { PageHeader } from '@/components/lore/page-header';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { useLanguage } from '@/components/providers/language-provider';
 import { cn } from '@/lib/utils';
 import areas from '@/public/game-maps/maps.json';
+import world from '@/public/game-maps/world.json';
 
 type Area = (typeof areas)[number];
 
 const ZOOMS = [1, 2, 3, 4];
+
+const areaPorId = new Map(areas.map((a) => [a.id, a]));
+const ESCALA_MIN = 0.1;
+const ESCALA_MAX = 8;
+const BOTAO_MAPA = 'rounded-md border border-border bg-card/90 p-2 hover:bg-muted';
+
+/**
+ * Mapa-mundi do jogo: as areas coladas lado a lado (1 pixel por bloco) sobre o papel do jogo.
+ * Arrastar move, a roda do mouse (ou os botoes) da' zoom em volta do cursor; clicar numa area abre a imagem detalhada dela.
+ */
+function WorldViewer({ label, hint, nameOf, onOpen }: { label: string; hint: string; nameOf: (id: number) => string; onOpen: (id: number) => void }) {
+  const [vista, setVista] = useState({ x: 0, y: 0, s: 0.3 });
+  const caixa = useRef<HTMLDivElement | null>(null);
+  const arraste = useRef<{ px: number; py: number; moveu: boolean } | null>(null);
+  const iniciado = useRef(false);
+
+  /** Escala e posicao que mostram o mundo inteiro dentro da caixa. */
+  const encaixar = (el: HTMLElement) => {
+    const s = Math.min(el.clientWidth / world.width, el.clientHeight / world.height);
+    return { s, x: (el.clientWidth - world.width * s) / 2, y: (el.clientHeight - world.height * s) / 2 };
+  };
+  /** Muda o zoom mantendo fixo o ponto (cx, cy) da caixa. */
+  const zoomEm = (fator: number, cx: number, cy: number) =>
+    setVista((v) => {
+      const s = Math.min(ESCALA_MAX, Math.max(ESCALA_MIN, v.s * fator));
+      return { s, x: cx - ((cx - v.x) / v.s) * s, y: cy - ((cy - v.y) / v.s) * s };
+    });
+  const zoomCentro = (fator: number) => caixa.current && zoomEm(fator, caixa.current.clientWidth / 2, caixa.current.clientHeight / 2);
+
+  return (
+    <div className="dossier-panel overflow-hidden">
+      <div
+        ref={(el) => {
+          caixa.current = el;
+          if (el && !iniciado.current) {
+            iniciado.current = true;
+            setVista(encaixar(el));
+          }
+        }}
+        role="img"
+        aria-label={label}
+        className="relative h-[70vh] cursor-grab touch-none select-none overflow-hidden active:cursor-grabbing"
+        style={{ backgroundColor: '#d6b07d' /* cor media do papel do mapa do jogo */ }}
+        onWheel={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          zoomEm(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - r.left, e.clientY - r.top);
+        }}
+        onPointerDown={(e) => {
+          arraste.current = { px: e.clientX, py: e.clientY, moveu: false };
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          const a = arraste.current;
+          if (!a) return;
+          const dx = e.clientX - a.px;
+          const dy = e.clientY - a.py;
+          if (Math.abs(dx) + Math.abs(dy) > 3) a.moveu = true;
+          a.px = e.clientX;
+          a.py = e.clientY;
+          setVista((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
+        }}
+        onPointerUp={() => setTimeout(() => (arraste.current = null), 0)}
+      >
+        <div className="absolute left-0 top-0 origin-top-left" style={{ width: world.width, height: world.height, transform: `translate(${vista.x}px, ${vista.y}px) scale(${vista.s})` }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- mosaico estatico gerado do cliente do jogo */}
+          <img src="/game-maps/world-map.webp" alt="" draggable={false} width={world.width} height={world.height} className="max-w-none [image-rendering:pixelated]" />
+          {world.maps.map((m) =>
+            areaPorId.has(m.id) ? (
+              <button
+                key={m.id}
+                title={nameOf(m.id)}
+                aria-label={nameOf(m.id)}
+                onClick={() => !arraste.current?.moveu && onOpen(m.id)}
+                className="absolute border border-transparent hover:border-primary hover:bg-primary/20"
+                style={{ left: m.x, top: m.y, width: m.w, height: m.h }}
+              />
+            ) : null,
+          )}
+        </div>
+        <div className="absolute right-3 top-3 flex flex-col gap-1">
+          <button onClick={() => zoomCentro(1.4)} onPointerDown={(e) => e.stopPropagation()} className={BOTAO_MAPA}>
+            <Plus className="h-4 w-4" />
+          </button>
+          <button onClick={() => zoomCentro(1 / 1.4)} onPointerDown={(e) => e.stopPropagation()} className={BOTAO_MAPA}>
+            <Minus className="h-4 w-4" />
+          </button>
+          <button onClick={() => caixa.current && setVista(encaixar(caixa.current))} onPointerDown={(e) => e.stopPropagation()} className={BOTAO_MAPA}>
+            <Maximize2 className="h-4 w-4" />
+          </button>
+
+        </div>
+      </div>
+      <p className="px-3 py-2 text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
 
 /** Pagina do mapa: mundo + atlas de areas. */
 export default function MapPage() {
@@ -61,10 +158,7 @@ export default function MapPage() {
       </div>
 
       {tab === 'world' ? (
-        <div className="dossier-panel overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element -- arte estatica do jogo, ja otimizada (webp) */}
-          <img src="/game-maps/world.webp" alt={t.mapAria} width={1314} height={826} className="h-auto w-full" />
-        </div>
+        <WorldViewer label={t.mapAria} hint={t.mapHint} nameOf={(id) => { const a = areaPorId.get(id); return a ? nomeDe(a) : ''; }} onOpen={(id) => { const a = areaPorId.get(id); if (a) setAberta(a); }} />
       ) : (
         <>
           <label className="relative mb-4 block max-w-md">

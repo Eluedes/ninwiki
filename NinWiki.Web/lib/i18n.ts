@@ -66,7 +66,7 @@ export interface Dictionary {
     back: string; pageNotFound: string; backHome: string;
     aboutVillage: string; clans: string; organizations: string; villageSheet: string; otherVillages: string;
     fName: string; fEnglish: string; fPortuguese: string; fElement: string; fMotto: string; fClimate: string; fLeader: string;
-    emblemAlt: string; mapAria: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapWorld: string; mapAreas: string; mapSearch: string; mapCount: string; mapZoomIn: string; mapZoomOut: string; mapSource: string;
+    emblemAlt: string; mapAria: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapHint: string; mapWorld: string; mapAreas: string; mapSearch: string; mapCount: string; mapZoomIn: string; mapZoomOut: string; mapSource: string;
     demo: string; jutsuDemoAlt: string;
     guideMore: string; guideAttributes: string; guideArcs: string; guideSummons: string;
     guideGathering: string; guideCrafting: string;
@@ -343,7 +343,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       aboutVillage: 'Sobre a Vila', clans: 'Clãs', organizations: 'Organizações', villageSheet: 'Ficha da Vila', otherVillages: 'Outras Vilas',
       fName: 'Nome', fEnglish: 'Inglês', fPortuguese: 'Português', fElement: 'Elemento', fMotto: 'Lema', fClimate: 'Clima', fLeader: 'Líder',
       emblemAlt: 'Emblema da {name}', mapAria: 'Mapa do mundo de Nin', mapTitle: 'Mapa do Mundo', mapSubtitle: 'O mapa-múndi e as áreas do jogo.', mapCrumb: 'Mapa',
-      mapWorld: 'Mundo', mapAreas: 'Áreas', mapSearch: 'Buscar área...', mapCount: '{n} áreas', mapZoomIn: 'Aumentar zoom', mapZoomOut: 'Diminuir zoom', mapSource: 'Imagens extraídas do cliente do jogo.',
+      mapHint: 'Arraste para mover, use a roda do mouse para dar zoom e clique numa área para ver o mapa dela.', mapWorld: 'Mundo', mapAreas: 'Áreas', mapSearch: 'Buscar área...', mapCount: '{n} áreas', mapZoomIn: 'Aumentar zoom', mapZoomOut: 'Diminuir zoom', mapSource: 'Imagens extraídas do cliente do jogo.',
       demo: 'Demonstração', jutsuDemoAlt: 'Demonstração do jutsu {name}',
       guideMore: 'Mais em Guias', guideAttributes: 'Atributos', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Coleta', guideCrafting: 'Criação',
@@ -1100,7 +1100,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       aboutVillage: 'About the Village', clans: 'Clans', organizations: 'Organizations', villageSheet: 'Village Sheet', otherVillages: 'Other Villages',
       fName: 'Name', fEnglish: 'English', fPortuguese: 'Portuguese', fElement: 'Element', fMotto: 'Motto', fClimate: 'Climate', fLeader: 'Leader',
       emblemAlt: 'Emblem of {name}', mapAria: 'Map of the Nin world', mapTitle: 'World Map', mapSubtitle: 'The world map and the game areas.', mapCrumb: 'Map',
-      mapWorld: 'World', mapAreas: 'Areas', mapSearch: 'Search area...', mapCount: '{n} areas', mapZoomIn: 'Zoom in', mapZoomOut: 'Zoom out', mapSource: 'Images extracted from the game client.',
+      mapHint: 'Drag to move, use the mouse wheel to zoom and click an area to see its map.', mapWorld: 'World', mapAreas: 'Areas', mapSearch: 'Search area...', mapCount: '{n} areas', mapZoomIn: 'Zoom in', mapZoomOut: 'Zoom out', mapSource: 'Images extracted from the game client.',
       demo: 'Demonstration', jutsuDemoAlt: 'Demonstration of the jutsu {name}',
       guideMore: 'More in Guides', guideAttributes: 'Attributes', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Gathering', guideCrafting: 'Crafting',

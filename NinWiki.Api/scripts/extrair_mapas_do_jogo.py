@@ -2,11 +2,11 @@
 Extrai os MAPAS do cliente do jogo (Nin Online) para o site: a arte do mapa-mundi e a imagem de cada area do jogo.
 
 O QUE E' CADA ARQUIVO (tudo lido da pasta `data files` do cliente, que nunca e' alterada):
-  - graphics/worldmap/1.znin : a arte do mapa-mundi (PNG comprimido em LZ4; mesmo formato do decodificar_znin.py).
+  - worldmap cache/world_2.wmw : as imagens das areas que o jogo cola para formar o mapa-mundi (ver `montar_mundo`).
   - worldmap cache/<id>_<versao>_2_1.wmr : a imagem pronta de UMA area. Cabecalho de 16 bytes ("WMR1", largura, altura, tamanho)
     e depois um bloco LZ4 com os pixels RGBA (largura x altura x 4 bytes).
   - mapscache/<id>/map<id>.map : dados da area; o NOME dela vem logo depois do marcador "PAMN" (texto com tamanho de 4 bytes na frente).
-Grava, na pasta de destino, um .webp sem perdas por area (<id>.webp), o mundo (world.webp) e o indice `maps.json`
+Grava, na pasta de destino, um .webp sem perdas por area (<id>.webp), o mundo (world-map.webp + world.json) e o indice `maps.json`
 ([{id, name, namePt, width, height}], ordenado por nome; o nome em portugues vem do arquivo de idioma do jogo) que o site le. Nenhum arquivo e' enviado para a internet.
 
 Uso (pasta NinWiki.Api):
@@ -14,7 +14,6 @@ Uso (pasta NinWiki.Api):
     py scripts/extrair_mapas_do_jogo.py --cliente "E:\\SteamLibrary\\steamapps\\common\\Nin Online" --destino C:\\saida
 """
 import argparse
-import io
 import json
 import re
 import struct
@@ -23,7 +22,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from scripts.decodificar_znin import decodificar, lz4_bloco
+from scripts.decodificar_znin import lz4_bloco
+from scripts.sincronizar_imagens_atlas import carregar_atlas
 
 CLIENTE_PADRAO = r"E:\SteamLibrary\steamapps\common\Nin Online"
 DESTINO_PADRAO = Path(__file__).resolve().parents[2] / "NinWiki.Web" / "public" / "game-maps"
@@ -57,6 +57,39 @@ def ler_wmr(arquivo: Path) -> Image.Image:
     return Image.frombytes("RGBA", (largura, altura), pixels)
 
 
+def montar_mundo(wmw: Path, destino: Path) -> None:
+    """Remonta o mapa-mundi do jogo: o `world_2.wmw` guarda a imagem de cada area (1 pixel por bloco do mapa) e o jogo as cola lado a lado.
+
+    Formato do .wmw: 16 bytes de cabecalho ("WMW1", 8 bytes de verificacao, quantidade de areas) e, para cada area, id + tamanho bruto + tamanho
+    comprimido (3 inteiros de 4 bytes) seguidos do bloco LZ4 com os pixels RGBA. O arquivo NAO traz a posicao de cada area (ela vem do servidor
+    do jogo); as posicoes (x, y em blocos) e os tamanhos vem do Nin Atlas, e cada imagem so' e' usada se o tamanho bater com o do arquivo.
+    Grava `world-map.webp` (recortado na area usada) e `world.json` ({width, height, maps: [{id, x, y, w, h}]}, posicoes ja' relativas ao recorte).
+    """
+    atlas = carregar_atlas(None)
+    dados = wmw.read_bytes()
+    total = struct.unpack("<I", dados[12:16])[0]
+    tela = Image.new("RGBA", (atlas["world"]["w"], atlas["world"]["h"]), (0, 0, 0, 0))
+    colocadas, puladas = [], []
+    pos = 16
+    for _ in range(total):
+        mapa_id, bruto, comprimido = struct.unpack("<3I", dados[pos:pos + 12])
+        pixels = lz4_bloco(dados[pos + 12:pos + 12 + comprimido])
+        pos += 12 + comprimido
+        m = atlas["maps"].get(str(mapa_id))
+        if not m or "x" not in m or m["w"] * m["h"] * 4 != bruto:
+            puladas.append(mapa_id)
+            continue
+        tela.alpha_composite(Image.frombytes("RGBA", (m["w"], m["h"]), pixels), (m["x"], m["y"]))
+        colocadas.append({"id": mapa_id, "x": m["x"], "y": m["y"], "w": m["w"], "h": m["h"]})
+    esq, topo, dir_, base = tela.getbbox()
+    tela.crop((esq, topo, dir_, base)).save(destino / "world-map.webp", lossless=True, method=6)
+    for m in colocadas:
+        m["x"] -= esq
+        m["y"] -= topo
+    (destino / "world.json").write_text(json.dumps({"width": dir_ - esq, "height": base - topo, "maps": colocadas}), encoding="utf-8")
+    print(f"Mapa-mundi: {len(colocadas)} areas colocadas, {len(puladas)} sem posicao no Atlas {puladas}")
+
+
 def main() -> None:
     """Converte o mundo e todas as areas, grava o indice e imprime o resumo."""
     ap = argparse.ArgumentParser(description="Extrai os mapas do cliente do jogo para o site.")
@@ -70,9 +103,10 @@ def main() -> None:
         sys.exit(f"Pasta do jogo nao encontrada: {dados}")
     destino.mkdir(parents=True, exist_ok=True)
 
-    # Mapa-mundi (arte desenhada do jogo).
-    with Image.open(io.BytesIO(decodificar((dados / "graphics" / "worldmap" / "1.znin").read_bytes()))) as mundo:
-        mundo.convert("RGB").save(destino / "world.webp", quality=90, method=6)
+    try:
+        montar_mundo(dados / "worldmap cache" / "world_2.wmw", destino)
+    except OSError as exc:   # sem internet nao da' para pegar as posicoes; as areas ainda sao extraidas
+        print(f"AVISO: mapa-mundi nao montado ({exc})")
 
     # Nomes em portugues: o arquivo de idioma do jogo mapeia "texto em ingles" -> "texto em portugues" (campo Entries).
     arquivo_pt = dados / "locales" / "Brazilian Portuguese.json"
