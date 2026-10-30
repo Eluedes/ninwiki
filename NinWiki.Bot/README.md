@@ -13,6 +13,11 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 | `/search term [language]` | **qualquer pessoa**: procura no wiki (itens, mobs, armas, guias, missões, masteries, jutsus e posts publicados) e mostra o melhor resultado com **imagem, dados e resumo** (botão para a página completa e um menu para ver os outros resultados) |
 | `/drop item` | **qualquer pessoa**: quais **mobs dropam** o item/arma e a chance de cada um (com link para a página); sugere nomes enquanto você digita |
 | `/patchnotes` | **qualquer pessoa**: as 3 notícias/patch notes mais recentes do blog (título com link, data e resumo) |
+| `/item` `/mob` `/jutsu` `/mastery` `nome` | **qualquer pessoa**: cartão do resultado só do tipo pedido (imagem, dados, resumo, botão da página); sugere nomes |
+| `/compare a b` | **qualquer pessoa**: dois itens/armas/mobs/jutsus lado a lado |
+| `/map área` | **qualquer pessoa**: zona, mobs e saídas da área + link para o mapa do site (lê `SITE_URL/game-maps/areas-info.json`) |
+| `/random` | **qualquer pessoa**: um item/arma/mob sorteado |
+| `/help` | **qualquer pessoa**: lista dos comandos no idioma do servidor (resposta só para quem pediu) |
 
 **Convidar o bot:** use o link `https://discord.com/oauth2/authorize?client_id=SEU_APPLICATION_ID&permissions=117760&scope=bot%20applications.commands` (permissões: ver canais, enviar mensagens, links incorporados, anexar arquivos para o backup e histórico). O site já tem o botão pronto (`NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID`).
 

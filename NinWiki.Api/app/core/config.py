@@ -125,6 +125,8 @@ class Settings(BaseSettings):
     login_fail_limit: int = 5             # logins negados tolerados...
     login_fail_window_minutes: int = 15   # ...dentro desta janela; passou disso, bloqueia ate' a janela andar
     bot_fail_limit: int = 10              # tokens de bot errados tolerados em 10 minutos
+    # O bot so' recebe o IP de quem agiu (canal de log) se a PROPRIA API liberar: assim um token de bot vazado nao entrega o IP da equipe.
+    bot_log_show_ip: bool = False
 
     # Credenciais do OAuth2 do Discord (preenchidas na Fase 2, quando o
     # login "Entrar com Discord" for implementado de verdade).

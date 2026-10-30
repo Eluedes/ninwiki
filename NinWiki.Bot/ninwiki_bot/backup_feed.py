@@ -4,11 +4,12 @@ Este arquivo NAO importa discord.py: so' decide nomes e quais apagar - o main.py
 
 NOME: `ninwiki-AAAAMMDD-HHMM.nbk.NN-of-MM` (ex.: ninwiki-20261003-1200.nbk.01-of-03). Um backup = todas as partes com o mesmo AAAAMMDD-HHMM.
 """
-import json
 import math
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
+
+from ninwiki_bot._util import read_json, write_json_atomic
 
 PART_RE = re.compile(r"^ninwiki-(\d{8}-\d{4})\.nbk\.(\d{2,})-of-(\d{2,})$")
 
@@ -51,13 +52,13 @@ class BackupStore:
     def load(self) -> datetime | None:
         """Hora (UTC) do ultimo backup, ou None."""
         try:
-            return datetime.fromisoformat(json.loads(self.path.read_text(encoding="utf-8"))["last"])
-        except (OSError, ValueError, KeyError, TypeError):
+            return datetime.fromisoformat(read_json(self.path)["last"])
+        except (ValueError, KeyError, TypeError):  # TypeError: arquivo ausente/corrompido (None)
             return None
 
     def save(self, when: datetime) -> None:
         """Grava a hora do ultimo backup."""
-        self.path.write_text(json.dumps({"last": when.isoformat()}), encoding="utf-8")
+        write_json_atomic(self.path, {"last": when.isoformat()})
 
 
 def is_due(last: datetime | None, now: datetime, interval_minutes: int) -> bool:

@@ -20,7 +20,7 @@ from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import backup
@@ -28,6 +28,7 @@ from app.api.uploads import UPLOAD_DIR
 from app.core.config import settings
 from app.core.translation import fill_missing_translations
 from app.core.database import get_db
+from app.core.text import escape_like
 from app.core.rate_limit import BOT_FAIL, client_key, limiter, retry_message
 from app.api.content_items import _dropped_by
 from app.models.content import ContentItem
@@ -50,7 +51,7 @@ async def require_bot(x_bot_token: str | None = Header(default=None)) -> None:
     wait = limiter.blocked(BOT_FAIL, client_key(), settings.bot_fail_limit, window)
     if wait is not None:
         raise HTTPException(status_code=429, detail=retry_message(wait), headers={"Retry-After": str(wait)})
-    if not x_bot_token or not hmac.compare_digest(x_bot_token, settings.bot_api_token):
+    if not x_bot_token or not hmac.compare_digest(x_bot_token.encode(), settings.bot_api_token.encode()):   # bytes: header nao-ASCII nao pode virar erro 500
         limiter.fail(BOT_FAIL, client_key(), window)
         raise HTTPException(status_code=401, detail="Invalid bot token")
 
@@ -92,7 +93,7 @@ async def bot_audit_log(
     if since.tzinfo is None:
         since = since.replace(tzinfo=timezone.utc)
     stmt = select(AuditLogEntry).where(AuditLogEntry.created_at > since).order_by(AuditLogEntry.created_at).limit(limit)
-    model = BotLogEntryWithIp if include_ip else BotLogEntry
+    model = BotLogEntryWithIp if include_ip and settings.bot_log_show_ip else BotLogEntry   # IP so' com BOT_LOG_SHOW_IP=true na API
     return [model.model_validate(row, from_attributes=True) for row in (await db.execute(stmt)).scalars().all()]
 
 
@@ -358,7 +359,19 @@ def _spawn_text(i: ContentItem, lang: str) -> str:
 
 def _like(q: str) -> str:
     """Escapa % e _ para o texto digitado nao virar curinga do LIKE."""
-    return "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+    return "%" + escape_like(q) + "%"
+
+
+async def _search_catalog(db: AsyncSession, like: str, items_limit: int, masteries_limit: int, jutsus_limit: int):
+    """Itens, masteries e jutsus pelo nome (EN ou PT), ja' ordenados. Item e jutsu so' PUBLICADOS (rascunho nunca sai); mastery nao tem rascunho."""
+    items = (await db.execute(select(ContentItem).where(
+        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
+        .order_by(ContentItem.name).limit(items_limit))).scalars().all()
+    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
+                                  .order_by(Mastery.name).limit(masteries_limit))).scalars().all()
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+                               .order_by(Jutsu.name).limit(jutsus_limit))).scalars().all()
+    return items, masteries, jutsus
 
 
 def _item_hit(i: ContentItem, lang: str = "en") -> BotSearchHit:
@@ -408,13 +421,7 @@ async def bot_suggest(
 ) -> list[str]:
     """Nomes para o autocompletar do Discord (itens/mobs/armas publicados, jutsus e masteries), ate' 20, sem repetir."""
     like = _like(q.strip())
-    items = (await db.execute(select(ContentItem).where(
-        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
-        .order_by(ContentItem.name).limit(12))).scalars().all()
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
-                               .order_by(Jutsu.name).limit(6))).scalars().all()
-    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
-                                  .order_by(Mastery.name).limit(4))).scalars().all()
+    items, masteries, jutsus = await _search_catalog(db, like, items_limit=12, masteries_limit=4, jutsus_limit=6)
     names = [_pick(lang, r.name, r.name_pt) for r in (*items, *jutsus, *masteries)]
     return list(dict.fromkeys(n for n in names if n))[:20]
 
@@ -456,6 +463,19 @@ async def bot_latest_posts(
                          href=f"/blog/{p.slug}", published_at=p.published_at) for p in posts]
 
 
+@router.get("/random", response_model=BotSearchHit)
+async def bot_random(lang: str = Query("en", pattern="^(en|pt)$"), db: AsyncSession = Depends(get_db)) -> BotSearchHit:
+    """Um item/mob/arma PUBLICADO sorteado, para o /random do bot (404 se o wiki ainda nao tem nada publicado)."""
+    row = (await db.execute(select(ContentItem).where(
+        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.category.in_([ContentCategory.ITEMS, ContentCategory.MOBS, ContentCategory.WEAPONS]))
+        .order_by(func.random()).limit(1))).scalars().first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Nothing published yet")
+    if lang == "pt":
+        await _fill_pt(db, [row])
+    return _item_hit(row, lang)
+
+
 @router.get("/search", response_model=list[BotSearchHit])
 async def bot_search(
     q: str = Query(..., min_length=2, max_length=60),
@@ -469,14 +489,7 @@ async def bot_search(
     like = _like(q)
     now = datetime.now(timezone.utc)
     hits: list[BotSearchHit] = []
-    items = (await db.execute(
-        select(ContentItem).where(ContentItem.status == ContentStatus.PUBLISHED,
-                                  ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
-        .order_by(ContentItem.name).limit(6))).scalars().all()
-    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
-                                  .order_by(Mastery.name).limit(3))).scalars().all()
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
-                               .order_by(Jutsu.name).limit(4))).scalars().all()
+    items, masteries, jutsus = await _search_catalog(db, like, items_limit=6, masteries_limit=3, jutsus_limit=4)
     posts = (await db.execute(
         select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),
                            Post.title.ilike(like, escape="\\") | Post.title_pt.ilike(like, escape="\\"))

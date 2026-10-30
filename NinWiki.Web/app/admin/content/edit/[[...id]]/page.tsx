@@ -434,7 +434,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
     return (
       <div className="flex items-center justify-center gap-2 py-24 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
-        Carregando...
+        {dict.admin.maintenanceAdmin.loading}
       </div>
     );
   }
@@ -996,7 +996,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
       <div className="flex items-center justify-end gap-3">
         <Button type="button" variant="outline" onClick={handleSubmit((v) => onValid(v, false))} disabled={saving}>
           {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
-          Salvar rascunho
+          {dict.admin.editor.saveDraft}
         </Button>
         {/* So' quem tem a permissao de publicar (Adm/S.Adm) ve o botao. A API
             recusa de qualquer jeito se um Creator tentar por fora. */}

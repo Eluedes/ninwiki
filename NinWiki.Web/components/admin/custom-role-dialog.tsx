@@ -75,7 +75,7 @@ export function CustomRoleDialog({ open, onOpenChange, role, permissions, creato
               <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={30} autoFocus />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Preview</label>
+              <label className="text-xs font-semibold text-muted-foreground">{t.preview}</label>
               <div className="flex h-10 items-center"><RoleBadge role="creator" label={name.trim() || '—'} color={color} /></div>
             </div>
           </div>

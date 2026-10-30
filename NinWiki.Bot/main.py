@@ -7,6 +7,7 @@ Como rodar (na pasta NinWiki.Bot, com o venv DO BOT ativado):
 Pre-requisitos: ver README.md (criar o bot no Discord, .env, API rodando).
 """
 import copy
+import functools
 import io
 import logging
 import sys
@@ -33,6 +34,19 @@ from ninwiki_bot.version_feed import VersionStore, build_embed as build_version_
 log = logging.getLogger("ninwiki_bot")
 
 
+def _safe(tick):
+    """Protege uma volta dos feeds: qualquer erro inesperado (nao so' ApiError/Discord) vai para o log e a proxima volta acontece.
+    Sem isto o discord.ext.tasks PARA o loop de vez na primeira excecao e o feed morre calado ate' o bot reiniciar."""
+    @functools.wraps(tick)
+    async def wrapper() -> None:
+        """Roda a volta; engole (e registra) o que escapar."""
+        try:
+            await tick()
+        except Exception:   # noqa: BLE001 - o feed precisa continuar vivo
+            log.exception("Volta do feed %s falhou (tento de novo no proximo ciclo)", getattr(tick, "__name__", "?"))
+    return wrapper
+
+
 class NinWikiBot(discord.Client):
     """O bot: busca publica (/search, /status, /language) + (opcional) feed do log geral num canal do Discord."""
 
@@ -48,25 +62,25 @@ class NinWikiBot(discord.Client):
         self.feed_state = self.feed_store.load()
         self._health_announced = False  # o aviso "monitor ligado" sai uma vez por inicializacao do bot
         self._feed_failing = False  # so' avisa no terminal na PRIMEIRA falha de uma sequencia (sem spam)
-        self.log_loop = tasks.loop(seconds=settings.log_poll_seconds)(self._log_tick)
+        self.log_loop = tasks.loop(seconds=settings.log_poll_seconds)(_safe(self._log_tick))
         self.log_loop.before_loop(self.wait_until_ready)
         # Feed de ERROS do wiki (+ vigia de API/banco/site): estado em arquivo, mesmo esquema do feed de log.
         self.error_store = ErrorFeedStore(Path(__file__).resolve().parent / "error_state.json")
         self.error_state = self.error_store.load()
         self._errors_failing = False
-        self.error_loop = tasks.loop(seconds=settings.log_poll_seconds)(self._error_tick)
+        self.error_loop = tasks.loop(seconds=settings.log_poll_seconds)(_safe(self._error_tick))
         self.error_loop.before_loop(self.wait_until_ready)
         self.statuses = {"API": ServiceStatus("API"), "Database": ServiceStatus("Database"), "Website": ServiceStatus("Website")}
         self.languages = LanguageStore(Path(__file__).resolve().parent / "language_state.json")
         self.status_store = StatusMessageStore(Path(__file__).resolve().parent / "status_state.json")
-        self.health_loop = tasks.loop(seconds=settings.health_poll_seconds)(self._health_tick)
+        self.health_loop = tasks.loop(seconds=settings.health_poll_seconds)(_safe(self._health_tick))
         self.health_loop.before_loop(self.wait_until_ready)
         # Mensagem "Latest updates" (webhook, editada a cada deploy) e backup periodico (canal privado).
         self.version_store = VersionStore(Path(__file__).resolve().parent / "version_state.json")
-        self.version_loop = tasks.loop(seconds=120)(self._version_tick)
+        self.version_loop = tasks.loop(seconds=120)(_safe(self._version_tick))
         self.version_loop.before_loop(self.wait_until_ready)
         self.backup_store = BackupStore(Path(__file__).resolve().parent / "backup_state.json")
-        self.backup_loop = tasks.loop(minutes=settings.backup_interval_minutes)(self._backup_tick)
+        self.backup_loop = tasks.loop(minutes=settings.backup_interval_minutes)(_safe(self._backup_tick))
         self.backup_loop.before_loop(self.wait_until_ready)
 
         @self.tree.error
@@ -79,10 +93,13 @@ class NinWikiBot(discord.Client):
                 return await interaction.response.send_message(f"⏳ Slow down / Calma - {error.retry_after:.0f}s.", ephemeral=True)
             log.exception("Erro num comando", exc_info=error)
             message = "❌ Something went wrong. Try again; if it keeps happening, tell whoever maintains the bot."
-            if interaction.response.is_done():
-                await interaction.followup.send(message, ephemeral=True)
-            else:
-                await interaction.response.send_message(message, ephemeral=True)
+            try:
+                if interaction.response.is_done():
+                    await interaction.followup.send(message, ephemeral=True)
+                else:
+                    await interaction.response.send_message(message, ephemeral=True)
+            except discord.HTTPException as exc:   # interacao ja' expirou (10062): nao ha' como responder, so' registra
+                log.warning("Nao consegui avisar o erro ao usuario: %s", exc)
 
     async def _log_tick(self) -> None:
         """Uma volta do feed: busca acoes novas na API e posta no canal de log (embeds, ate' 10 por mensagem)."""
@@ -292,15 +309,15 @@ class NinWikiBot(discord.Client):
             log.warning("Backup falhou: %s", detail)
             try:
                 await channel.send(f"⚠️ **Backup {stamp} UTC failed:** {detail[:300]}", allowed_mentions=discord.AllowedMentions.none())
-            except discord.DiscordException:
-                pass
+            except discord.DiscordException as exc2:
+                log.warning("Aviso de falha do backup tambem nao foi enviado: %s", exc2)
             return
         finally:
             if backup_id:
                 try:
                     await self.api.delete_backup(backup_id)
-                except ApiError:
-                    pass
+                except ApiError as exc3:
+                    log.warning("Nao consegui apagar o backup temporario %s: %s", backup_id, exc3.detail)
         # retencao: apaga as partes dos backups mais antigos (so' as mensagens DO BOT com arquivo de backup)
         found: list[tuple[str, discord.Message]] = []
         async for m in channel.history(limit=400):

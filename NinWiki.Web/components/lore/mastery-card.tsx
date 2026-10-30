@@ -36,7 +36,7 @@ export function MasteryCard({ mastery }: { mastery: ApiMastery }) {
         <MasteryVisual
           image={mastery.image}
           icon={mastery.icon}
-          alt={`Imagem da mastery ${name}`}
+          alt={name}
           className="h-14 w-14 rounded-lg"
         />
       </div>

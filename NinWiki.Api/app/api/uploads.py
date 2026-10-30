@@ -170,7 +170,11 @@ async def store_image(file: UploadFile, staff: User, db: AsyncSession, name: str
     await db.flush()
     await log_action(db, action="upload", entity_type="upload", entity_id=filename,
                      diff={"bytes": len(content), "imageId": media.id}, actor=staff)
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        filepath.unlink(missing_ok=True)   # commit falhou: nao deixa o arquivo orfao no disco
+        raise
     return media
 
 

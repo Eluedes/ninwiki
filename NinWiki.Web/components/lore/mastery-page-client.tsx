@@ -33,7 +33,7 @@ export function MasteryPageClient({
   const t = dict.masteryDetail;
   const isPt = locale === 'pt';
   const name = isPt ? (mastery.namePt ?? mastery.name) : mastery.name;
-  const altName = isPt ? mastery.name : mastery.namePt;
+  const altName = isPt ? mastery.name : null;   // em EN nao mostra o nome em portugues
   // Fallback nos DOIS sentidos - ver mesmo comentario em mastery-card.tsx
   // (o texto ja existente e' portugues de verdade, so' vira ingles
   // depois do backfill ou de alguem escrever a mao).
@@ -43,6 +43,9 @@ export function MasteryPageClient({
 
   const attributeMap = new Map(attributes.map((a) => [a.id, a]));
   const jutsusByPath = (pathId: string): ApiJutsu[] => masteryJutsus.filter((j) => j.pathId === pathId);
+  // jutsus sem caminho (ou com caminho que nao existe mais) NAO podem sumir da pagina: vao para a secao "Outros jutsus" abaixo dos caminhos
+  const pathIds = new Set(mastery.paths.map((p) => p.id));
+  const unpathedJutsus = masteryJutsus.filter((j) => !j.pathId || !pathIds.has(j.pathId));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 animate-fade-in">
@@ -62,7 +65,7 @@ export function MasteryPageClient({
           <MasteryVisual
             image={mastery.image}
             icon={mastery.icon}
-            alt={`Imagem da mastery ${name}`}
+            alt={name}
             className="h-12 w-12 rounded-lg"
           />
         }
@@ -119,6 +122,15 @@ export function MasteryPageClient({
                   );
                 })}
               </div>
+
+              {unpathedJutsus.length > 0 && (
+                <div>
+                  <h3 className="mb-3 font-display text-base font-bold text-ink-100">{t.otherJutsus} ({unpathedJutsus.length})</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {unpathedJutsus.map((j) => <JutsuCard key={j.id} jutsu={j} mastery={mastery} />)}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
           <div>
@@ -149,7 +161,7 @@ export function MasteryPageClient({
               <MasteryVisual
                 image={mastery.image}
                 icon={mastery.icon}
-                alt={`Imagem da mastery ${name}`}
+                alt={name}
                 className="h-7 w-7 rounded"
               />
             }

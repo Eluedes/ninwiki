@@ -7,9 +7,6 @@ Tags/categorias dos posts do blog.
 
 O `id` da tag e' o slug do nome em ingles; o nome em portugues vem da DeepL.
 """
-import re
-import unicodedata
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +15,7 @@ from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.permissions import Permission
+from app.core.slug import slugify
 from app.core.translation import translate_field
 from app.models.enums import ContentStatus
 from app.models.posts import Post, Tag, post_tag_links
@@ -25,12 +23,6 @@ from app.models.users import User
 from app.schemas.posts import TagRead, TagWithCount, TagWrite
 
 router = APIRouter(prefix="/tags", tags=["tags"])
-
-
-def slugify(name: str) -> str:
-    """'Patch Notes!' -> 'patch-notes' (sem acentos, so' a-z 0-9 e hifen, ate' 50 chars)."""
-    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z0-9]+", "-", ascii_name.lower()).strip("-")[:50].strip("-")
 
 
 @router.get("", response_model=list[TagWithCount])
@@ -52,7 +44,7 @@ async def create_tag(
     db: AsyncSession = Depends(get_db),
 ):
     """Cria uma tag (o slug nasce do nome; o portugues e' traduzido pela DeepL)."""
-    slug = slugify(payload.name)
+    slug = slugify(payload.name, max_length=50)  # tag: ate' 50 chars
     if len(slug) < 2:
         raise HTTPException(status_code=422, detail="Invalid tag name")
     if await db.get(Tag, slug):

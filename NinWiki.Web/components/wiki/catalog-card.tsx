@@ -63,7 +63,7 @@ export function CatalogCard({ entry }: CatalogCardProps) {
         {/* Brilho atras da imagem na cor da raridade (da' "vida" ao card) */}
         <WikiImage
           src={entry.image}
-          alt={`Imagem de ${name}`}
+          alt={name}
           fallback={entry.icon}
           className="h-16 w-16 shrink-0 rounded-md border border-border/60"
           imageClassName="p-1"
@@ -87,7 +87,7 @@ export function CatalogCard({ entry }: CatalogCardProps) {
           )}
         </div>
         <span className={cn('shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-semibold', rarity.chip)}>
-          {rarity.label}
+          {dict.detail.rarities[entry.rarity]}
         </span>
       </div>
     </Link>

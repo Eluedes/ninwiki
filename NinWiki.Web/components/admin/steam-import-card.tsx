@@ -3,6 +3,7 @@
 // Cartao do importador de noticias da Steam (aparece na lista de posts do blog para quem tem posts.publish, so' se o importador estiver ligado
 // na API: STEAM_NEWS_APP_ID). Mostra o resultado da ultima conferencia e tem o botao "Importar agora".
 
+import { formatDateTime } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { ApiError, getSteamNewsStatus, runSteamNewsImport, type ApiSteamStatus }
 
 /** Cartao "Notícias da Steam": estado, ultima conferencia e importar agora. Some se o importador estiver desligado. */
 export function SteamImportCard({ onImported }: { onImported?: () => void }) {
-  const { dict } = useLanguage();
+  const { dict, locale } = useLanguage();
   const t = dict.admin.steamImport;
   const [status, setStatus] = useState<ApiSteamStatus | null>(null);
   const [busy, setBusy] = useState(false);
@@ -49,7 +50,7 @@ export function SteamImportCard({ onImported }: { onImported?: () => void }) {
         <p className="text-xs text-muted-foreground">{status.mode === 'draft' ? t.draftMode : t.liveMode}</p>
         {run && (
           <p className="text-xs text-muted-foreground">
-            {t.last}: {new Date(run.at).toLocaleString()} — {t.result.replace('{fetched}', String(run.fetched)).replace('{matched}', String(run.matched)).replace('{imported}', String(run.imported)).replace('{skipped}', String(run.skipped))}
+            {t.last}: {formatDateTime(run.at, locale)} — {t.result.replace('{fetched}', String(run.fetched)).replace('{matched}', String(run.matched)).replace('{imported}', String(run.imported)).replace('{skipped}', String(run.skipped))}
             {run.titles.length > 0 && <> ({run.titles.join(', ')})</>}
           </p>
         )}

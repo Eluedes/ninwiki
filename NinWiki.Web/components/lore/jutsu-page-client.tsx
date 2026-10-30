@@ -17,6 +17,7 @@ import { JutsuGif } from '@/components/lore/jutsu-gif';
 import { RichText } from '@/components/lore/rich-text';
 import { Zap } from 'lucide-react';
 import type { ApiJutsu, ApiMastery } from '@/lib/api-client';
+import { masteryHref } from '@/lib/utility-category';
 
 /** Pagina de um jutsu. */
 export function JutsuPageClient({
@@ -30,7 +31,7 @@ export function JutsuPageClient({
   const t = dict.jutsuDetail;
   const isPt = locale === 'pt';
   const name = isPt ? (jutsu.namePt ?? jutsu.name) : jutsu.name;
-  const altName = isPt ? jutsu.name : jutsu.namePt;
+  const altName = isPt ? jutsu.name : null;   // em EN nao mostra o nome em portugues
   // Fallback nos DOIS sentidos - mesmo motivo de mastery-page-client.tsx
   // (o texto ja existente e' portugues de verdade ate' alguem rodar
   // uma traducao ou editar a mao).
@@ -47,7 +48,7 @@ export function JutsuPageClient({
         breadcrumbs={[
           { label: t.home, href: '/' },
           { label: 'Masteries', href: '/masteries' },
-          ...(mastery ? [{ label: masteryName!, href: `/masteries/${mastery.id}` }] : []),
+          ...(mastery ? [{ label: masteryName!, href: masteryHref(mastery) }] : []),
           { label: name },
         ]}
         icon={<MasteryIcon icon={jutsu.icon} className="h-7 w-7" />}

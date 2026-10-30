@@ -30,6 +30,7 @@ from app.core.auth import require_any_permission, require_permission
 from app.core.database import get_db
 from app.core.media_refs import CLOSED_MESSAGE, media_url, parse_ref
 from app.core.permissions import Permission, is_category_locked, user_has_permission
+from app.core.text import escape_like
 from app.models.content import ContentItem
 from app.models.masteries import Jutsu, Mastery
 from app.models.media import MediaImage
@@ -174,7 +175,7 @@ async def list_media(
     q = q.strip()
     if q:
         ref = parse_ref(q)
-        like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        like = "%" + escape_like(q) + "%"
         cond = MediaImage.name.ilike(like, escape="\\")
         stmt = stmt.where(or_(cond, MediaImage.id == ref) if ref is not None else cond)
     restricted = False

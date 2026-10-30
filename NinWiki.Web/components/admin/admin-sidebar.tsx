@@ -64,6 +64,7 @@ const COLLAPSED_KEY = 'ninwiki-admin-collapsed';
 
 /** Versao publicada do site e da API (so' S.Adm): ajuda a saber se o deploy mais recente ja' esta no ar. */
 function VersionInfo() {
+  const { dict } = useLanguage();
   const [apiVersion, setApiVersion] = useState('…');
   useEffect(() => {
     fetch(`${API_URL}/health`)
@@ -73,7 +74,7 @@ function VersionInfo() {
   }, []);
   const web = (process.env.NEXT_PUBLIC_BUILD_SHA ?? 'dev').slice(0, 7);
   return (
-    <p className="px-3 pb-2 text-[11px] leading-tight text-muted-foreground/70" title="Versao publicada (commit do GitHub)">
+    <p className="px-3 pb-2 text-[11px] leading-tight text-muted-foreground/70" title={dict.admin.sidebar.versionTitle}>
       Web {web} · API {apiVersion}
     </p>
   );
@@ -104,7 +105,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <>
       <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-5">
         <NinLogo className="h-8 w-8" />
-        <span className="text-sm font-bold tracking-tight">Admin Panel</span>
+        <span className="text-sm font-bold tracking-tight">{dict.admin.sidebar.panelTitle}</span>
       </div>
 
       <nav className="flex-1 space-y-4 overflow-y-auto p-3">
@@ -183,6 +184,7 @@ export function AdminSidebar() {
 
 /** Botao de menu (hamburguer) + gaveta lateral com o mesmo menu, para celular e tablet (abaixo de lg). Fecha ao escolher uma pagina. */
 export function AdminMobileNav() {
+  const { dict } = useLanguage();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   // Fecha a gaveta quando a rota muda (ex.: botao voltar do navegador): ajusta o estado durante a renderizacao, sem efeito.
@@ -203,7 +205,7 @@ export function AdminMobileNav() {
         </button>
       </SheetTrigger>
       <SheetContent side="left" className="flex w-72 max-w-[85vw] flex-col gap-0 bg-card p-0">
-        <SheetTitle className="sr-only">Admin Panel</SheetTitle>
+        <SheetTitle className="sr-only">{dict.admin.sidebar.panelTitle}</SheetTitle>
         <SidebarContent onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>

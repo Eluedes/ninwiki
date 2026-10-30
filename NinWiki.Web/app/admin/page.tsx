@@ -12,7 +12,7 @@ import { Bug, FileText, Boxes, Users, Zap, Loader2, Plus, Pencil, Trash2, Histor
 import Link from 'next/link';
 import { NoticeBoard } from '@/components/admin/notice-board';
 import { TrafficCard } from '@/components/admin/traffic-card';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 import { auditTarget } from '@/lib/audit-target';
 
 // Quantos dias sem edicao pra uma entry contar como "desatualizada" -
@@ -28,7 +28,7 @@ export default function AdminOverviewPage() {
     document.title = 'Overview - Admin · Nin Online Wiki';
   }, []);
 
-  const { dict } = useLanguage();
+  const { dict, locale } = useLanguage();
   const { can } = useAuth();
   const t = dict.admin.overview;
   const actionConfig: Record<string, { label: string; icon: typeof Plus; className: string }> = {
@@ -163,7 +163,7 @@ export default function AdminOverviewPage() {
                     &quot;{name}&quot;
                   </p>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {new Date(entry.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    {formatDateTime(entry.createdAt, locale, { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               );

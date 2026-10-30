@@ -224,19 +224,9 @@ ROLE_LABEL: dict[StaffRole, str] = {
 }
 
 
-def permissions_of(role: StaffRole) -> frozenset[Permission]:
-    """Permissoes efetivas de um cargo (padrao + ajustes feitos no painel)."""
-    return ROLE_PERMISSIONS[role]
-
-
 def has_permission(role: StaffRole, permission: Permission) -> bool:
     """True se o cargo tem a permissao (usa as permissoes efetivas)."""
     return permission in ROLE_PERMISSIONS[role]
-
-
-def visible_permissions_of(role: StaffRole) -> list[str]:
-    """Permissoes que ESTE cargo pode ver/receber em /auth/me (ordenadas)."""
-    return sorted(p.value for p in ROLE_PERMISSIONS[role])
 
 
 def assignable_roles(actor_role: StaffRole) -> list[StaffRole]:

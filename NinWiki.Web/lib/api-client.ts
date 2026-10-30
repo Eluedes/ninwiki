@@ -242,7 +242,7 @@ async function apiFetch<T>(path: string, options?: RequestInit, quiet = false): 
     // FastAPI/HTTPException) - tenta ler essa mensagem antes de
     // desistir e mostrar so' o codigo HTTP.
     const body = await res.json().catch(() => null);
-    throw new ApiError(res.status, body?.detail ?? `Erro ${res.status}`);
+    throw new ApiError(res.status, body?.detail ?? `Error ${res.status}`);
   }
   // 204 No Content (resposta do DELETE) nao tem corpo pra' converter em JSON.
   if (res.status === 204) return undefined as T;
@@ -852,11 +852,6 @@ export function setMaintenance(payload: { enabled: boolean; message: string; mes
 /** Troca a sessao da equipe por um passe de manutencao (401 = nao esta' logado na equipe; chamada "quiet": nao derruba a sessao). */
 export function createMaintenancePass(): Promise<{ token: string; hours: number; maintenance: boolean }> {
   return apiFetch('/site/pass', { method: 'POST' }, true);
-}
-
-/** Lista os ranks ninja (aba do Guia). */
-export function listNinjaRanks(): Promise<ApiNinjaRank[]> {
-  return apiFetch('/ninja-ranks');
 }
 
 /** Lista os arcos de historia (aba do Guia). */

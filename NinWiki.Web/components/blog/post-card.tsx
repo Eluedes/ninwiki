@@ -5,7 +5,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, Heart, MessageSquare, Newspaper } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { localizedText } from '@/lib/localized';
 import { useLanguage } from '@/components/providers/language-provider';
 import { WikiImage } from '@/components/wiki/wiki-image';
@@ -13,11 +13,8 @@ import type { ApiPostSummary } from '@/lib/api-client';
 
 /** Data do post no formato do idioma (pt-BR ou en-US). */
 export function formatPostDate(iso: string, locale: 'pt' | 'en'): string {
-  return new Date(iso).toLocaleDateString(locale === 'pt' ? 'pt-BR' : 'en-US', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+  // UTC: servidor e navegador geram o mesmo texto (sem erro de hidratacao)
+  return formatDate(iso, locale, { day: '2-digit', month: 'short', year: 'numeric', utc: true });
 }
 
 /** Card de um post: capa, data, autor, titulo e resumo; clicavel para /blog/[slug]. */

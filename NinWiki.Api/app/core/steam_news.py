@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import log_action
 from app.core.config import settings
+from app.core.slug import slugify
 from app.core.translation import fill_missing_translations, translate_field
 from app.models.enums import ContentStatus
 from app.models.posts import Post, Tag
@@ -223,13 +224,6 @@ def first_image(doc: dict) -> str | None:
 
 
 # ---------------------------------------------------------------- busca na Steam e criacao dos posts ------------------------------------------------------
-
-def _slugify(text: str) -> str:
-    """Slug do endereco do post: minusculas, so' letras/numeros/hifen."""
-    import unicodedata
-    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
-    return re.sub(r"[^a-z0-9]+", "-", text).strip("-")
-
 
 async def fetch_news(app_id: str, count: int = 20, transport: httpx.AsyncBaseTransport | None = None) -> list[dict]:
     """Baixa as noticias mais recentes do jogo na API publica da Steam (sem chave). Levanta httpx.HTTPError se a Steam falhar."""
@@ -467,7 +461,7 @@ async def import_news(db: AsyncSession, transport: httpx.AsyncBaseTransport | No
                 doc = {"type": "doc", "content": doc["content"][:1] + [{"type": "paragraph", "content": [_text_node("This post is too long to copy here. Read the full post on Steam using the link above.", [])]}]}
             content = validate_rich_content(json.dumps(doc, ensure_ascii=False))
             when = datetime.fromtimestamp(int(item.get("date") or 0), tz=timezone.utc) if item.get("date") else datetime.now(timezone.utc)
-            slug = f"{_slugify(title)[:120] or 'patch-notes'}-{gid[-6:]}"
+            slug = f"{slugify(title)[:120] or 'patch-notes'}-{gid[-6:]}"
             if (await db.execute(select(Post.id).where(Post.slug == slug))).first():
                 slug = f"{slug}-{gid[-3:]}"
             post = Post(slug=slug, title=title, excerpt=plain_excerpt(doc) or title, content=content, cover_image=await fetch_capsule(settings.steam_news_app_id, gid, notes=run.setdefault("notes", []), account=clan_account_of(doc, str(item.get("contents") or ""))) or first_image(doc),

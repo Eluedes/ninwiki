@@ -31,6 +31,7 @@ from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.permissions import Permission
+from app.core.text import escape_like
 from app.core.rate_limit import COMMENT, LIKE, limiter, retry_message
 from app.core.reader_auth import get_current_reader, get_optional_reader
 from app.models.posts import Post
@@ -172,7 +173,7 @@ async def list_for_moderation(
     if only_hidden:
         stmt = stmt.where(PostComment.hidden.is_(True))
     if q and q.strip():
-        like = "%" + q.strip()[:60].replace("%", "\\%").replace("_", "\\_") + "%"
+        like = "%" + escape_like(q.strip()[:60]) + "%"
         stmt = stmt.join(Reader, Reader.id == PostComment.reader_id).where(
             or_(PostComment.body.ilike(like, escape="\\"), Reader.username.ilike(like, escape="\\")))
     rows = (await db.execute(stmt.order_by(PostComment.created_at.desc()).limit(200))).all()

@@ -12,7 +12,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import {
   ApiError, deleteCommentModeration, listModerationComments, setCommentHidden, setReaderBanned, type ApiModerationComment,
 } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 
 /** Pagina de moderacao de comentarios. */
 export default function CommentsModerationPage() {
@@ -108,10 +108,10 @@ export default function CommentsModerationPage() {
                   {t.hiddenBadge}{c.hiddenBy ? ` · ${t.hiddenBy} ${c.hiddenBy}` : ''}
                 </span>
               )}
-              <span>{new Date(c.createdAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}</span>
+              <span>{formatDateTime(c.createdAt, locale)}</span>
               <span>
                 {t.onPost}{' '}
-                <Link href={`/blog/${c.postSlug}`} className="text-primary hover:underline" target="_blank">{c.postTitle}</Link>
+                <Link href={`/blog/${c.postSlug}`} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">{c.postTitle}</Link>
               </span>
             </div>
             {/* Texto simples: o React escapa tudo, nunca interpreta HTML */}

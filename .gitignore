@@ -112,3 +112,6 @@ NinWiki.Api/**/client.*
 
 # Logs locais (ex.: restore.log tem SQL com Discord IDs e nomes da equipe): nunca vao para o Git nem para a producao.
 *.log
+
+# Backups baixados do bot (/backup): contem dados da producao, nunca vao para o Git
+*.nbk.*

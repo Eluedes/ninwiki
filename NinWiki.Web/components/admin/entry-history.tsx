@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { listEntryHistory, ApiError, type ApiAuditLogEntry, type HistoryEntityType } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 import { Loader2, AlertTriangle, Plus, Pencil, Trash2, History } from 'lucide-react';
 
 /** Resume em texto o que mudou numa linha do historico. */
@@ -91,7 +91,7 @@ export function EntryHistory({ entityType, entityId }: { entityType: HistoryEnti
               {changeSummary && <p className="mt-0.5 text-xs text-muted-foreground">{changeSummary}</p>}
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">
-              {new Date(entry.createdAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}
+              {formatDateTime(entry.createdAt, locale)}
             </span>
           </div>
         );

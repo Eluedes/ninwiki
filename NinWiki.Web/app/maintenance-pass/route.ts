@@ -6,11 +6,13 @@ import { NextResponse, type NextRequest } from 'next/server';
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 const PASS_COOKIE = 'ninwiki_pass';
 const PASS_SECONDS = 12 * 3600;   // mesma validade do passe na API (MAINTENANCE_PASS_HOURS)
+// Em producao o cookie e' sempre Secure (atras de proxy com TLS, nextUrl.protocol pode vir "http:").
+const isSecure = (req: NextRequest) => process.env.NODE_ENV === 'production' || req.nextUrl.protocol === 'https:';
 
 /** Sair da conta: apaga o cookie do passe (sem isso o site continuaria abrindo durante a manutencao por ate' 12 horas depois do logout). */
 export async function DELETE(req: NextRequest) {
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(PASS_COOKIE, '', { httpOnly: true, secure: req.nextUrl.protocol === 'https:', sameSite: 'lax', path: '/', maxAge: 0 });
+  res.cookies.set(PASS_COOKIE, '', { httpOnly: true, secure: isSecure(req), sameSite: 'lax', path: '/', maxAge: 0 });
   return res;
 }
 
@@ -32,7 +34,7 @@ export async function POST(req: NextRequest) {
   const res = NextResponse.json({ ok: true });
   res.cookies.set(PASS_COOKIE, token, {
     httpOnly: true,
-    secure: req.nextUrl.protocol === 'https:',
+    secure: isSecure(req),
     sameSite: 'lax',
     path: '/',
     maxAge: PASS_SECONDS,

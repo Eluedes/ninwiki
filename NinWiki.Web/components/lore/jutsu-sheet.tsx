@@ -11,6 +11,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { MasteryIcon } from '@/components/lore/mastery-icon';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import type { ApiJutsu, ApiMastery } from '@/lib/api-client';
+import { masteryHref } from '@/lib/utility-category';
 
 const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
 
@@ -69,18 +70,20 @@ export function JutsuSheet({ jutsu, mastery, masteryName }: { jutsu: ApiJutsu; m
   const names = (jutsu.nameByLevel ?? []).map((n, i) => (locale === 'pt' ? jutsu.nameByLevelPt?.[i]?.trim() || n : n));
 
   const requirements: SheetRow[] = [
-    ...(mastery ? [{ label: t.mastery, value: <Link href={`/masteries/${mastery.id}`} className="hover:underline" style={{ color }}>{masteryName}</Link> }] : []),
+    ...(mastery ? [{ label: t.mastery, value: <Link href={masteryHref(mastery)} className="hover:underline" style={{ color }}>{masteryName}</Link> }] : []),
     ...(has(jutsu.requiredLevel) ? [{ label: t.level, value: jutsu.requiredLevel }] : []),
     ...(has(jutsu.requiredStat) ? [{ label: t.stat, value: jutsu.requiredStat }] : []),
   ];
+  // ficha PARCIAL (jutsu so' com nome/descricao): tier 1, nivel maximo 1 e 0 CP sao os padroes do rascunho, nao dados reais - nao mostra
+  const hasData = has(jutsu.scrollType) || jutsu.tier > 1 || (jutsu.chakraCost ?? 0) > 0 || (jutsu.maxLevel ?? 1) > 1;
   const acquisition: SheetRow[] = [
-    { label: t.tier, value: `${has(jutsu.scrollType) ? jutsu.scrollType : t.tier} ${ROMAN[jutsu.tier] ?? jutsu.tier}` },
+    ...(hasData ? [{ label: t.tier, value: `${has(jutsu.scrollType) ? jutsu.scrollType : t.tier} ${ROMAN[jutsu.tier] ?? jutsu.tier}` }] : []),
     ...(jutsu.isNpc ? [{ label: t.source, value: t.npcSource }] : []),
   ];
   const details: SheetRow[] = [
-    { label: t.maxLevel, value: String(jutsu.maxLevel ?? 1) },
+    ...(hasData ? [{ label: t.maxLevel, value: String(jutsu.maxLevel ?? 1) }] : []),
     ...(dmg.length ? [{ label: t.baseDamage, value: <PerLevel values={jutsu.damageByLevel} word={t.levelWord} names={names} nameFrom={t.nameFromLevel} /> }] : []),
-    { label: t.chakraCost, value: `${jutsu.chakraCost} ${t.cpUnit}` },
+    ...((jutsu.chakraCost ?? 0) > 0 ? [{ label: t.chakraCost, value: `${jutsu.chakraCost} ${t.cpUnit}` }] : []),
     ...(cds.length
       ? [{ label: t.cooldown, value: <PerLevel values={jutsu.cooldownByLevel} word={t.levelWord} names={names} nameFrom={t.nameFromLevel} /> }]
       : has(jutsu.cooldown) ? [{ label: t.cooldown, value: jutsu.cooldown }] : []),

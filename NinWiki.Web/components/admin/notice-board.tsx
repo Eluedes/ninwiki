@@ -17,7 +17,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 
 // Limite de tamanho por arquivo (igual ao MAX_NOTICE_FILE_MB padrao da API); a API confere de novo.
 const MAX_FILE_MB = 200;
@@ -221,7 +221,7 @@ export function NoticeBoard() {
                     <span className="break-words">{n.title}</span>
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(n.createdAt).toLocaleDateString(locale === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {formatDate(n.createdAt, locale, { day: '2-digit', month: 'short', year: 'numeric' })}
                     {n.authorName ? ` · ${t.by} ${n.authorName}` : ''}
                   </p>
                 </div>

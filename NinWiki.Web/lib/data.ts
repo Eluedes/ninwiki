@@ -21,20 +21,20 @@ import type { CategoryInfo, WikiEntry, Rarity } from './types';
 export const rarityConfig: Record<
   Rarity,
   // glow = cor (rgb "r,g,b") do brilho atras da imagem na pagina do item; chip = selo da raridade (fundo + borda + texto)
-  { label: string; color: string; barColor: string; glow: string; chip: string }
+  { color: string; barColor: string; glow: string; chip: string }
 > = {
-  common: { label: 'Common', color: 'text-slate-400', barColor: 'bg-slate-400', glow: '148,163,184', chip: 'border-slate-400/30 bg-slate-400/10 text-slate-300' },
-  uncommon: { label: 'Uncommon', color: 'text-emerald-500', barColor: 'bg-emerald-500', glow: '16,185,129', chip: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' },
-  rare: { label: 'Rare', color: 'text-sky-500', barColor: 'bg-sky-500', glow: '14,165,233', chip: 'border-sky-500/30 bg-sky-500/10 text-sky-400' },
-  epic: { label: 'Epic', color: 'text-violet-500', barColor: 'bg-violet-500', glow: '139,92,246', chip: 'border-violet-500/30 bg-violet-500/10 text-violet-400' },
-  legendary: { label: 'Legendary', color: 'text-amber-500', barColor: 'bg-amber-500', glow: '245,158,11', chip: 'border-amber-500/30 bg-amber-500/10 text-amber-400' },
+  common: { color: 'text-slate-400', barColor: 'bg-slate-400', glow: '148,163,184', chip: 'border-slate-400/30 bg-slate-400/10 text-slate-300' },
+  uncommon: { color: 'text-emerald-500', barColor: 'bg-emerald-500', glow: '16,185,129', chip: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' },
+  rare: { color: 'text-sky-500', barColor: 'bg-sky-500', glow: '14,165,233', chip: 'border-sky-500/30 bg-sky-500/10 text-sky-400' },
+  epic: { color: 'text-violet-500', barColor: 'bg-violet-500', glow: '139,92,246', chip: 'border-violet-500/30 bg-violet-500/10 text-violet-400' },
+  legendary: { color: 'text-amber-500', barColor: 'bg-amber-500', glow: '245,158,11', chip: 'border-amber-500/30 bg-amber-500/10 text-amber-400' },
   // Event: itens de evento do jogo (rosa/magenta, para nao se confundir com Unique em vermelho nem Enchanted em ciano)
-  event: { label: 'Event', color: 'text-pink-400', barColor: 'bg-pink-400', glow: '244,114,182', chip: 'border-pink-400/30 bg-pink-400/10 text-pink-300' },
-  unique: { label: 'Unique', color: 'text-red-500', barColor: 'bg-red-500', glow: '239,68,68', chip: 'border-red-500/30 bg-red-500/10 text-red-400' },
-  enchanted: { label: 'Enchanted', color: 'text-cyan-400', barColor: 'bg-cyan-400', glow: '34,211,238', chip: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-300' },
+  event: { color: 'text-pink-400', barColor: 'bg-pink-400', glow: '244,114,182', chip: 'border-pink-400/30 bg-pink-400/10 text-pink-300' },
+  unique: { color: 'text-red-500', barColor: 'bg-red-500', glow: '239,68,68', chip: 'border-red-500/30 bg-red-500/10 text-red-400' },
+  enchanted: { color: 'text-cyan-400', barColor: 'bg-cyan-400', glow: '34,211,238', chip: 'border-cyan-400/30 bg-cyan-400/10 text-cyan-300' },
   // Premium (laranja) e Organization (indigo): cores que nao se confundem com as demais raridades
-  premium: { label: 'Premium', color: 'text-orange-500', barColor: 'bg-orange-500', glow: '249,115,22', chip: 'border-orange-500/30 bg-orange-500/10 text-orange-400' },
-  organization: { label: 'Organization', color: 'text-indigo-400', barColor: 'bg-indigo-400', glow: '129,140,248', chip: 'border-indigo-400/30 bg-indigo-400/10 text-indigo-300' },
+  premium: { color: 'text-orange-500', barColor: 'bg-orange-500', glow: '249,115,22', chip: 'border-orange-500/30 bg-orange-500/10 text-orange-400' },
+  organization: { color: 'text-indigo-400', barColor: 'bg-indigo-400', glow: '129,140,248', chip: 'border-indigo-400/30 bg-indigo-400/10 text-indigo-300' },
 };
 
 // Cards de areas exibidos na home. A chave `key` tem que bater exatamente

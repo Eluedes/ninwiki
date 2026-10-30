@@ -4,6 +4,7 @@
 // exportado do Nin Online, ve' o que mudaria (preview, nada e' gravado) e so' entao aplica. Tudo no navegador ate' o clique: o arquivo
 // e' lido aqui e so' o dicionario (texto em ingles -> traducao) vai para a API.
 
+import { formatDateTime, formatNumber } from '@/lib/utils';
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileJson, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -77,8 +78,8 @@ export default function TranslationsPage() {
         {file && (
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-card-foreground">{file.name}</span> — {t.fileInfo
-              .replace('{language}', file.language).replace('{count}', file.count.toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US'))
-              .replace('{date}', file.exportedAt ? new Date(file.exportedAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US') : '?')}
+              .replace('{language}', file.language).replace('{count}', formatNumber(file.count, locale))
+              .replace('{date}', file.exportedAt ? formatDateTime(file.exportedAt, locale) : '?')}
           </p>
         )}
         {error && (

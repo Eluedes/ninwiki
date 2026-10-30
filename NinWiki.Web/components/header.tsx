@@ -129,7 +129,7 @@ export function Header() {
               (painel deslizante) vindo da direita com os mesmos links. */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 md:hidden" aria-label="Abrir menu">
+              <Button variant="ghost" size="icon" className="h-9 w-9 md:hidden" aria-label={dict.nav.openMenu}>
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>

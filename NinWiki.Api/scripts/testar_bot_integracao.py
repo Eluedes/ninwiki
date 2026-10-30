@@ -249,11 +249,19 @@ async def testar() -> None:
     secao("5) Feed do log geral no Discord")
     import tempfile
     from ninwiki_bot.log_feed import FeedState, LogFeedStore, format_entry, pick_new, query_since
+    # Uma linha de log criada aqui mesmo: os comandos /team (que antes geravam as linhas) foram removidos, entao o teste nao pode depender deles.
+    async with AsyncSessionLocal() as db:
+        db.add(AuditLogEntry(action="update", entity_type="content_item", entity_id=f"TESTE-{BASE}", actor_name="TESTE_log", actor_role="admin", source="panel", ip_address="203.0.113.7"))
+        await db.commit()
     desde = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
     linhas = await api.audit_log_since(desde)
     check("API devolve as acoes recentes (lista)", isinstance(linhas, list) and len(linhas) >= 1)
     check("SEM IP nem dados sensiveis nas linhas (padrao)", all("ipAddress" not in l and "ip_address" not in l for l in linhas))
+    sem_liberar = await api.audit_log_since(desde, include_ip=True)
+    check("includeIp sem BOT_LOG_SHOW_IP na API NAO entrega o IP (token vazado nao le IP da equipe)", all("ipAddress" not in l for l in sem_liberar))
+    settings.bot_log_show_ip = True
     com_ip = await api.audit_log_since(desde, include_ip=True)
+    settings.bot_log_show_ip = False
     check("com includeIp o IP de quem agiu vem junto (LOG_SHOW_IP=true no bot)", len(com_ip) == len(linhas) and all("ipAddress" in l for l in com_ip))
     from ninwiki_bot.log_feed import format_entry as _fmt
     check("rodape do embed mostra 'Panel · IP x' quando o IP vem", _fmt({**com_ip[0], "ipAddress": "203.0.113.7"})["footer"].endswith("IP 203.0.113.7")
@@ -613,6 +621,57 @@ async def testar() -> None:
             register_public_commands(arvore2, api, {1}, "", _checar, False, idiomas)
             await arvore2.get_command("status").callback(i2)
             check("/status em servidor nao permitido e' recusado", i2.response.send_message.await_count == 1 and not i2.followup.send.await_count)
+            # ---- comandos de consulta novos (wiki_commands.py) ----
+            nomes = {c.name for c in arvore.get_commands()}
+            check("novos comandos registrados: item, mob, jutsu, mastery, compare, map, random, help", {"item", "mob", "jutsu", "mastery", "compare", "map", "random", "help"} <= nomes, str(nomes))
+            check("todos os comandos tem descricao de 1 a 100 caracteres (limite do Discord)", all(1 <= len(c.description) <= 100 for c in arvore.get_commands()))
+            r = await http.get("/bot/random", params={"lang": "en"}, headers={"X-Bot-Token": TOKEN})
+            check("/bot/random devolve um resultado publicado (nunca rascunho)", r.status_code == 200 and r.json()["href"].startswith("/detail/") and not r.json()["href"].endswith("-rascunho"), r.text[:150])
+            check("/bot/random sem token (401)", (await http.get("/bot/random")).status_code == 401)
+            ia = interacao(IDS["creator"])
+            await arvore.get_command("mob").callback(ia, f"{termo} Larva")
+            check("/mob acha o mob e mostra o cartao (LayoutView)", "Larva" in componentes(ia.followup.send.call_args.kwargs["view"]))
+            ib = interacao(IDS["creator"])
+            await arvore.get_command("mob").callback(ib, f"{termo} Blade")
+            check("/mob nao mostra uma arma (filtra pelo tipo) e diz que nao achou", "No mob found" in componentes(ib.followup.send.call_args.kwargs["view"]))
+            ic = interacao(IDS["creator"])
+            await arvore.get_command("item").callback(ic, f"{termo} Blade")
+            check("/item aceita arma", f"{termo} Blade" in componentes(ic.followup.send.call_args.kwargs["view"]))
+            ik = interacao(IDS["creator"])
+            await arvore.get_command("item").callback(ik, " a")
+            check("/item com 1 letra (depois do strip) avisa em vez de chamar a API", ik.response.send_message.await_count == 1 and not ik.followup.send.await_count and todas_efemeras(ik))
+            icmp = interacao(IDS["creator"])
+            await arvore.get_command("compare").callback(icmp, f"{termo} Blade", f"{termo} Larva")
+            emb = icmp.followup.send.call_args.kwargs["embed"]
+            check("/compare monta o embed A vs B com os dois nomes e linhas de dados", f"{termo} Blade" in emb.title and f"{termo} Larva" in emb.title and "Health" in emb.description and "Type" in emb.description, emb.description)
+            icmp2 = interacao(IDS["creator"])
+            await arvore.get_command("compare").callback(icmp2, f"{termo} Blade", "zzzznadaaqui987")
+            check("/compare com nome inexistente responde so' para quem digitou", todas_efemeras(icmp2) and "zzzznadaaqui987" in texto_enviado(icmp2))
+            iran = interacao(IDS["creator"])
+            await arvore.get_command("random").callback(iran)
+            check("/random responde com um cartao", isinstance(iran.followup.send.call_args.kwargs.get("view"), discord.ui.LayoutView))
+            ihelp = interacao(IDS["creator"], guild_id=42)
+            await arvore.get_command("help").callback(ihelp)
+            check("/help em portugues, so' para quem pediu, lista os comandos", ihelp.response.send_message.call_args.kwargs["ephemeral"] is True and "/compare" in str(ihelp.response.send_message.call_args.kwargs["embed"].to_dict()) and "Bot do NinWiki" in ihelp.response.send_message.call_args.kwargs["embed"].title)
+            # /map com dados de mentira (o bot le' o areas-info.json do SITE; aqui nao ha' site)
+            from ninwiki_bot.wiki_commands import build_area_embed, find_area
+            fake_info = {"names": {"1": ["Leaf Village", "Vila da Folha"], "2": ["Dark Forest", "Floresta Sombria"]},
+                         "areas": {"1": {"z": "Safe Zone", "e": [[2, "North"]], "m": []}, "2": {"z": "Danger Zone", "e": [[1, "South"]], "m": [["Bear", "Urso", 36], ["Wolf", "Lobo", 12]]}}}
+            check("find_area acha por id, nome EN, nome PT e pedaco do nome", [find_area(fake_info, q) for q in ("2", "leaf village", "floresta sombria", "dark")] == ["2", "1", "2", "2"] and find_area(fake_info, "xyz") is None)
+            ea = build_area_embed(fake_info, "2", "https://wiki.exemplo.com/", "en").to_dict()
+            campos = {f["name"]: f["value"] for f in ea["fields"]}
+            check("/map: zona, mobs por nivel, saidas com nome e link #map/<id>", campos["Zone"] == "Danger zone" and campos["Mobs"].index("Wolf") < campos["Mobs"].index("Bear") and "S → Leaf Village" in campos["Exits"] and ea["url"] == "https://wiki.exemplo.com/map#map/2", str(ea))
+            ep = build_area_embed(fake_info, "2", "", "pt").to_dict()
+            check("/map em portugues e sem SITE_URL (sem link nem imagem)", ep["title"].endswith("Floresta Sombria") and "Urso" in str(ep["fields"]) and "url" not in ep and "image" not in ep, str(ep))
+            api.areas_info = AsyncMock(return_value=fake_info)
+            imap = interacao(IDS["creator"])
+            arv3 = app_commands.CommandTree(discord.Client(intents=discord.Intents.default()))
+            register_public_commands(arv3, api, set(), "https://wiki.exemplo.com", _checar, True, idiomas)
+            await arv3.get_command("map").callback(imap, "dark")
+            check("/map responde com o embed da area", imap.followup.send.call_args.kwargs["embed"].title.endswith("Dark Forest"))
+            imap2 = interacao(IDS["creator"])
+            await arv3.get_command("map").callback(imap2, "nao existe")
+            check("/map com area inexistente responde so' para quem digitou", todas_efemeras(imap2))
     finally:
         async with AsyncSessionLocal() as db:
             await db.execute(delete(ContentItem).where(ContentItem.slug.like(f"{termo}%")))

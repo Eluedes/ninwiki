@@ -46,7 +46,7 @@ function Picker({ entry, onPick, onClear }: { entry: ApiContentItem | null; onPi
         <WikiImage src={entry.image} alt="" fallback={entry.icon} className="h-12 w-12 shrink-0 rounded-lg" />
         <div className="min-w-0 flex-1">
           <Link href={`/detail/${entry.slug}`} className="block truncate font-semibold hover:underline">{name}</Link>
-          <span className={cn('text-xs font-semibold', rarityConfig[entry.rarity].color)}>{rarityConfig[entry.rarity].label}</span>
+          <span className={cn('text-xs font-semibold', rarityConfig[entry.rarity].color)}>{dict.detail.rarities[entry.rarity]}</span>
         </div>
         <button type="button" onClick={onClear} title={t.change} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-card-foreground">
           <X className="h-4 w-4" />
@@ -100,7 +100,7 @@ export function CompareClient({ a, b }: { a: ApiContentItem | null; b: ApiConten
   if (a || b) {
     add(dict.detail.itemType, a?.itemType ? (typeLabels[a.itemType] ?? a.itemType) : (a?.category === 'weapons' ? dict.nav.weapons : null),
         b?.itemType ? (typeLabels[b.itemType] ?? b.itemType) : (b?.category === 'weapons' ? dict.nav.weapons : null));
-    add(dict.admin.contentEditor.rarity, a ? rarityConfig[a.rarity].label : null, b ? rarityConfig[b.rarity].label : null);
+    add(dict.admin.contentEditor.rarity, a ? dict.detail.rarities[a.rarity] : null, b ? dict.detail.rarities[b.rarity] : null);
     add(dict.detail.level, a?.levelUnknown ? '???' : a?.level ? String(a.level) : null, b?.levelUnknown ? '???' : b?.level ? String(b.level) : null);
     add(dict.detail.weaponType, a?.weaponType, b?.weaponType);
     add(dict.detail.baseDamage, a?.weaponBaseDamage, b?.weaponBaseDamage);

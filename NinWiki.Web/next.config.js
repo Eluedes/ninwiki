@@ -21,6 +21,15 @@ const nextConfig = {
   // Nao anuncia "X-Powered-By: Next.js" (menos informacao para quem faz varredura de versoes vulneraveis).
   poweredByHeader: false,
 
+  // /jutsus (sem id) nao tem pagina propria: os jutsus ficam dentro das masteries. Em vez de 404, leva para a lista.
+  // /catalog/missions: as missoes sairam do Guia e ganharam secao propria (/missions); a URL antiga continua funcionando.
+  async redirects() {
+    return [
+      { source: '/jutsus', destination: '/masteries', permanent: false },
+      { source: '/catalog/missions', destination: '/missions', permanent: true },
+    ];
+  },
+
   // Cabeçalhos aplicados a todas as páginas para reduzir superfícies comuns
   // de clickjacking, MIME sniffing e vazamento de dados pelo navegador.
   async headers() {

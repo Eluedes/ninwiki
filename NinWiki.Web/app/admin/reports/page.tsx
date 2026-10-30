@@ -11,7 +11,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import {
   ApiError, deleteReport, listReports, setReportStatus, type ApiReport, type ReportKind, type ReportStatus,
 } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 
 const STATUSES: (ReportStatus | 'all')[] = ['open', 'resolved', 'dismissed', 'all'];
 const KINDS: ReportKind[] = ['outdated', 'translation', 'other'];
@@ -129,7 +129,7 @@ export default function ReportsPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className={cn('rounded-full border px-2 py-0.5 text-xs font-semibold', KIND_STYLE[r.kind])}>{t.kinds[r.kind]}</span>
                 <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">{t.targets[r.targetType]}</span>
-                <Link href={r.targetPath} target="_blank" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                <Link href={r.targetPath} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
                   {r.targetName}
                   <ExternalLink className="h-3 w-3" />
                 </Link>
@@ -140,7 +140,7 @@ export default function ReportsPage() {
               <p className="whitespace-pre-wrap break-words text-sm text-card-foreground">{r.message}</p>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs text-muted-foreground">
-                  {t.reportedOn} {new Date(r.createdAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}
+                  {t.reportedOn} {formatDateTime(r.createdAt, locale)}
                   {r.locale ? ` · ${t.language}: ${r.locale.toUpperCase()}` : ''}
                 </span>
                 <div className="flex gap-1.5">

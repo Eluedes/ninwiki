@@ -153,7 +153,7 @@ async def discord_callback(
         return _login_redirect("discord_denied", back)
 
     cookie_state = request.cookies.get(STATE_COOKIE)
-    if not code or not state or not cookie_state or not hmac.compare_digest(state, cookie_state):
+    if not code or not state or not cookie_state or not hmac.compare_digest(state.encode(), cookie_state.encode()):
         _register_failure()
         return _login_redirect("invalid_state", back)
 
@@ -272,8 +272,9 @@ async def reader_dev_login(payload: DevLogin, request: Request, response: Respon
 
 @router.post("/logout")
 async def logout(response: Response, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
-    """Encerra a sessao: apaga o cookie e registra a saida no log."""
+    """Encerra a sessao: apaga o cookie, invalida o token (token_version; um cookie copiado deixa de valer, e o passe de manutencao tambem) e registra a saida."""
     if user is not None:
+        user.token_version += 1   # efeito colateral: derruba tambem as sessoes dessa pessoa em outros aparelhos
         await log_action(db, action="logout", entity_type="auth", entity_id=str(user.discord_id), actor=user, source="auth")
         await db.commit()
     clear_session_cookie(response)

@@ -1,0 +1,53 @@
+# Dependabot: atualizacoes semanais de dependencias.
+# Minor/patch vem agrupado num unico PR por ecossistema (menos PRs); major vem separado.
+version: 2
+updates:
+  # API (FastAPI) - pip
+  - package-ecosystem: "pip"
+    directory: "/NinWiki.Api"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      api-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Bot do Discord - pip
+  - package-ecosystem: "pip"
+    directory: "/NinWiki.Bot"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      bot-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Site (Next.js) - npm
+  - package-ecosystem: "npm"
+    directory: "/NinWiki.Web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      web-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Guima.Site - npm
+  - package-ecosystem: "npm"
+    directory: "/Guima.Site"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      guima-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Workflows do GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]

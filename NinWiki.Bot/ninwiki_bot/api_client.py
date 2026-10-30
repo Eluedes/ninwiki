@@ -8,9 +8,13 @@ acima de 2^53, e um ID do Discord passa disso.
 Este arquivo NAO importa discord.py de proposito, pra poder ser testado sem o
 Discord (ver NinWiki.Api/scripts/testar_bot_integracao.py).
 """
+import logging
+import time
 from typing import Any
 
 import httpx
+
+log = logging.getLogger("ninwiki_bot")
 
 
 class ApiError(Exception):
@@ -30,6 +34,7 @@ class NinWikiApi:
         # O token vai no header X-Bot-Token de TODA chamada - nunca na URL (URLs vao pra log).
         self._headers = {"X-Bot-Token": bot_token}
         self.last_site_detail = ""  # por que a ultima checagem do site falhou (vazio = ok); so' para o log do bot
+        self._cache: dict[tuple, tuple[float, Any]] = {}  # cache em memoria (chave -> (vence em, valor)) das buscas repetidas e do autocompletar
 
     async def aclose(self) -> None:
         """Fecha a conexao HTTP, se foi criada aqui."""
@@ -52,7 +57,7 @@ class NinWikiApi:
                 if isinstance(body, dict) and isinstance(body.get("detail"), str):
                     detail = body["detail"]
             except ValueError:
-                pass
+                log.debug("Resposta de erro da API nao era JSON (HTTP %s)", res.status_code)
             if res.status_code == 401:
                 detail = "The bot is not authorized on the API (BOT_API_TOKEN differs between the two .env files)."
             elif res.status_code == 404 and detail in (None, "Not Found"):
@@ -60,7 +65,26 @@ class NinWikiApi:
             raise ApiError(res.status_code, detail or f"Unexpected API error ({res.status_code}).")
         if raw:
             return res.content
-        return None if res.status_code == 204 else res.json()
+        if res.status_code == 204:
+            return None
+        try:
+            return res.json()
+        except ValueError as e:   # 200 com corpo que nao e' JSON (proxy/pagina de erro): vira ApiError em vez de excecao solta
+            raise ApiError(502, "The NinWiki API sent an unreadable answer. Try again in a moment.") from e
+
+    async def _cached(self, key: tuple, ttl: float, fetch) -> Any:
+        """Resposta guardada por `ttl` segundos (so' acertos: erro nunca fica em cache). Limite de 500 entradas (limpa as vencidas, depois zera)."""
+        now = time.monotonic()
+        hit = self._cache.get(key)
+        if hit and hit[0] > now:
+            return hit[1]
+        value = await fetch()
+        if len(self._cache) >= 500:
+            self._cache = {k: v for k, v in self._cache.items() if v[0] > now}
+            if len(self._cache) >= 500:
+                self._cache.clear()
+        self._cache[key] = (now + ttl, value)
+        return value
 
     async def audit_log_since(self, since_iso: str, limit: int = 50, include_ip: bool = False) -> list[dict]:
         """Linhas do log geral criadas depois de `since_iso` (mais antigas primeiro) - alimenta o canal de log. IP so' com include_ip."""
@@ -74,8 +98,8 @@ class NinWikiApi:
         return await self._request("GET", "/bot/search", params={"q": query, "lang": lang})
 
     async def suggest(self, query: str, lang: str = "en") -> list[str]:
-        """Nomes para o autocompletar do Discord (ate' 20) que combinam com `query`."""
-        return await self._request("GET", "/bot/suggest", params={"q": query, "lang": lang})
+        """Nomes para o autocompletar do Discord (ate' 20) que combinam com `query`. Cache de 2 min e prazo de 2,5 s (o Discord desiste do autocompletar em 3 s)."""
+        return await self._cached(("suggest", query.lower(), lang), 120, lambda: self._request("GET", "/bot/suggest", params={"q": query, "lang": lang}, timeout=2.5))
 
     async def drops(self, query: str, lang: str = "en") -> dict:
         """Quais mobs dropam o item `query` ({found, title, href, image, rarity, mobs:[{name, href, chance, chanceQualifier}]})."""
@@ -84,6 +108,25 @@ class NinWikiApi:
     async def latest_posts(self, limit: int = 3, lang: str = "en") -> list[dict]:
         """Os posts do blog mais recentes que ja' estao no ar (para o /patchnotes)."""
         return await self._request("GET", "/bot/latest-posts", params={"limit": limit, "lang": lang})
+
+    async def random_hit(self, lang: str = "en") -> dict:
+        """Um item/mob/arma publicado sorteado (mesmo formato de um resultado do /search), para o /random."""
+        return await self._request("GET", "/bot/random", params={"lang": lang})
+
+    async def areas_info(self, site_url: str) -> dict | None:
+        """Dados das areas do mapa-mundi (/game-maps/areas-info.json do SITE; cache de 1 h): {names:{id:[en,pt]}, areas:{id:{z,e,m,...}}}, ou None se o site nao respondeu."""
+        async def fetch():
+            try:
+                async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; NinWikiBot/1.0)"}) as client:
+                    res = await client.get(site_url.rstrip("/") + "/game-maps/areas-info.json")
+                    data = res.json() if res.status_code == 200 else None
+            except (httpx.HTTPError, ValueError):
+                return None
+            return data if isinstance(data, dict) and data.get("areas") else None
+        data = await self._cached(("areas", site_url), 3600, fetch)
+        if data is None:
+            self._cache.pop(("areas", site_url), None)   # falha nao fica 1 h em cache
+        return data
 
     async def errors_since(self, since_iso: str, limit: int = 50) -> list[dict]:
         """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""

@@ -416,6 +416,7 @@ export function RichTextEditor({
   variant?: 'default' | 'blog';
 }) {
   const blog = variant === 'blog';
+  const t = useLanguage().dict.admin.richText;
   const editor = useEditor({
     extensions: [
       // link e underline ja' vem no StarterKit (Tiptap v3): desligados aqui porque sao adicionados abaixo com a nossa configuracao (evita extensao duplicada).
@@ -428,7 +429,7 @@ export function RichTextEditor({
       FontFamily,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Link.configure({ openOnClick: false, autolink: true }),
-      Placeholder.configure({ placeholder: placeholder ?? 'Escreva aqui...' }),
+      Placeholder.configure({ placeholder: placeholder ?? t.placeholder }),
       // resizable: false - redimensionar coluna arrastando a borda e'
       // um recurso a mais que exige CSS/JS proprio da Tiptap pra
       // funcionar direito; sem isso ligado, a tabela ainda funciona

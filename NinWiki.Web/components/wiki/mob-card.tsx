@@ -39,7 +39,7 @@ export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary;
         <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-[radial-gradient(circle_at_50%_40%,hsl(var(--primary)/0.18),transparent_70%)] bg-secondary/40">
           <WikiImage
             src={entry.image}
-            alt={`Imagem de ${name}`}
+            alt={name}
             fallback={kind === 'weapon' ? <Sword className="h-8 w-8 text-muted-foreground" /> : <Skull className="h-8 w-8 text-muted-foreground" />}
             className="h-16 w-16"
           />
@@ -57,7 +57,7 @@ export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary;
                 {locale === 'pt' ? type.pt : type.en}
               </span>
             )}
-            {kind === 'weapon' && <span className={cn('text-[11px] font-semibold', rarity.color)}>{rarity.label}</span>}   {/* mobs nao tem raridade */}
+            {kind === 'weapon' && <span className={cn('text-[11px] font-semibold', rarity.color)}>{dict.detail.rarities[entry.rarity]}</span>}   {/* mobs nao tem raridade */}
           </div>
         </div>
       </div>
