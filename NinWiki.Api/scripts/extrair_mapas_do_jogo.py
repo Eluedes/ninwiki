@@ -57,19 +57,22 @@ def ler_wmr(arquivo: Path) -> Image.Image:
     return Image.frombytes("RGBA", (largura, altura), pixels)
 
 
-def montar_mundo(wmw: Path, destino: Path) -> None:
+def montar_mundo(wmw: Path, destino: Path, traducoes: dict[str, str]) -> None:
     """Remonta o mapa-mundi do jogo: o `world_2.wmw` guarda a imagem de cada area (1 pixel por bloco do mapa) e o jogo as cola lado a lado.
 
     Formato do .wmw: 16 bytes de cabecalho ("WMW1", 8 bytes de verificacao, quantidade de areas) e, para cada area, id + tamanho bruto + tamanho
     comprimido (3 inteiros de 4 bytes) seguidos do bloco LZ4 com os pixels RGBA. O arquivo NAO traz a posicao de cada area (ela vem do servidor
     do jogo); as posicoes (x, y em blocos) e os tamanhos vem do Nin Atlas, e cada imagem so' e' usada se o tamanho bater com o do arquivo.
-    Grava `world-map.webp` (recortado na area usada) e `world.json` ({width, height, maps: [{id, x, y, w, h}]}, posicoes ja' relativas ao recorte).
+    Grava `world-map.webp` (recortado na area usada) e `world.json` ({width, height, maps: [{id, x, y, w, h, v}], villages: [{id, name, namePt}],
+    places: [{kind, name, namePt, x, y}]}); posicoes ja' relativas ao recorte. `v` = id da vila dona da area (0 = nenhuma). Os lugares
+    (lojas, calabouços, caixa de correio, mural, padre) vem do Atlas, em blocos dentro da area, e aqui ja' sao somados a' posicao da area.
+    Missoes e bounty nao aparecem no Atlas como lugares fixos, entao ficam de fora.
     """
     atlas = carregar_atlas(None)
     dados = wmw.read_bytes()
     total = struct.unpack("<I", dados[12:16])[0]
     tela = Image.new("RGBA", (atlas["world"]["w"], atlas["world"]["h"]), (0, 0, 0, 0))
-    colocadas, puladas = [], []
+    colocadas, puladas, lugares = [], [], []
     pos = 16
     for _ in range(total):
         mapa_id, bruto, comprimido = struct.unpack("<3I", dados[pos:pos + 12])
@@ -80,14 +83,26 @@ def montar_mundo(wmw: Path, destino: Path) -> None:
             puladas.append(mapa_id)
             continue
         tela.alpha_composite(Image.frombytes("RGBA", (m["w"], m["h"]), pixels), (m["x"], m["y"]))
-        colocadas.append({"id": mapa_id, "x": m["x"], "y": m["y"], "w": m["w"], "h": m["h"]})
+        colocadas.append({"id": mapa_id, "x": m["x"], "y": m["y"], "w": m["w"], "h": m["h"], "v": m.get("village", 0)})
+        # "leaderboards" fica no mesmo ponto do mural (notice): so' um marcador para os dois.
+        for lugar in m.get("places", []):
+            if lugar["kind"] != "leaderboards":
+                lugares.append({"kind": lugar["kind"], "name": lugar["name"], "namePt": traducoes.get(lugar["name"], lugar["name"]),
+                                "x": m["x"] + lugar["x"], "y": m["y"] + lugar["y"]})
     esq, topo, dir_, base = tela.getbbox()
     tela.crop((esq, topo, dir_, base)).save(destino / "world-map.webp", lossless=True, method=6)
     for m in colocadas:
         m["x"] -= esq
         m["y"] -= topo
-    (destino / "world.json").write_text(json.dumps({"width": dir_ - esq, "height": base - topo, "maps": colocadas}), encoding="utf-8")
-    print(f"Mapa-mundi: {len(colocadas)} areas colocadas, {len(puladas)} sem posicao no Atlas {puladas}")
+    for lugar in lugares:
+        lugar["x"] -= esq
+        lugar["y"] -= topo
+    vilas = [{"id": r["village"], "name": r["name"], "namePt": traducoes.get(r["name"], r["name"])} for r in atlas["regions"]]
+    (destino / "world.json").write_text(
+        json.dumps({"width": dir_ - esq, "height": base - topo, "maps": colocadas, "villages": vilas, "places": lugares}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    print(f"Mapa-mundi: {len(colocadas)} areas colocadas, {len(lugares)} lugares, {len(vilas)} vilas, {len(puladas)} sem posicao no Atlas {puladas}")
 
 
 def main() -> None:
@@ -103,14 +118,14 @@ def main() -> None:
         sys.exit(f"Pasta do jogo nao encontrada: {dados}")
     destino.mkdir(parents=True, exist_ok=True)
 
-    try:
-        montar_mundo(dados / "worldmap cache" / "world_2.wmw", destino)
-    except OSError as exc:   # sem internet nao da' para pegar as posicoes; as areas ainda sao extraidas
-        print(f"AVISO: mapa-mundi nao montado ({exc})")
-
     # Nomes em portugues: o arquivo de idioma do jogo mapeia "texto em ingles" -> "texto em portugues" (campo Entries).
     arquivo_pt = dados / "locales" / "Brazilian Portuguese.json"
     traducoes = json.loads(arquivo_pt.read_text(encoding="utf-8")).get("Entries", {}) if arquivo_pt.is_file() else {}
+
+    try:
+        montar_mundo(dados / "worldmap cache" / "world_2.wmw", destino, traducoes)
+    except OSError as exc:   # sem internet nao da' para pegar as posicoes; as areas ainda sao extraidas
+        print(f"AVISO: mapa-mundi nao montado ({exc})")
 
     indice, sem_nome, falhas = [], [], []
     for wmr in sorted((dados / "worldmap cache").glob("*.wmr")):
