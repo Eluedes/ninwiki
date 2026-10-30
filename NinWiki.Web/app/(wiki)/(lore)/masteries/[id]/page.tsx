@@ -4,12 +4,12 @@
 // consciente de idioma (ver comentario la' pro motivo completo de
 // precisar ser Client Component).
 
-import { getMastery, listJutsus, listUtilityJutsus, listNpcJutsus, listAttributes, ApiError } from '@/lib/api-client';
-import { NPC_ID, NPC_MASTERY, UTILITY_ID, UTILITY_MASTERY } from '@/lib/utility-category';
+import { getMastery, listJutsus, listNpcJutsus, listAttributes, ApiError } from '@/lib/api-client';
+import { NPC_ID, NPC_MASTERY, UTILITY_ID } from '@/lib/utility-category';
 import { MasteryPageClient } from '@/components/lore/mastery-page-client';
 import type { Metadata } from 'next';
 import { shareMetadata } from '@/lib/share-meta';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 /** Titulo da aba: o nome da mastery. */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -35,8 +35,7 @@ export default async function MasteryPage({
 
   // /masteries/utility: categoria Utility (jutsus sem mastery) - nao existe como mastery no banco, usa a "virtual"
   if (id === UTILITY_ID) {
-    const [utilityJutsus, attributes] = await Promise.all([listUtilityJutsus(), listAttributes()]);
-    return <MasteryPageClient mastery={UTILITY_MASTERY} masteryJutsus={utilityJutsus} attributes={attributes} />;
+    redirect('/utility');   // Utility nao e' mastery: tem area propria
   }
 
   // /masteries/npc: secao dos Jutsus NPC (de qualquer mastery ou de Utilidade)

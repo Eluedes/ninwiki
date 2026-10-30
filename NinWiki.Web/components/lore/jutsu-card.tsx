@@ -63,7 +63,8 @@ export function JutsuCard({ jutsu, mastery }: { jutsu: ApiJutsu; mastery?: ApiMa
         </div>
 
         {/* Jutsu NPC nao tem tier */}
-        {!jutsu.isNpc && (
+        {/* sem tier real (rascunho publicado so' com nome/descricao: tier 1 e' o padrao) o selo some */}
+        {!jutsu.isNpc && (jutsu.tier > 1 || jutsu.chakraCost > 0 || Boolean(jutsu.scrollType)) && (
           <span
             className={`chip shrink-0 border font-bold ${tierColors[jutsu.tier] ?? tierColors[1]}`}
           >

@@ -7,7 +7,9 @@
 // React, nao funciona num Server Component async).
 
 import { useLanguage } from '@/components/providers/language-provider';
+import Link from 'next/link';
 import { MasteryCard } from '@/components/lore/mastery-card';
+import { MasteryIcon } from '@/components/lore/mastery-icon';
 import { PageHeader } from '@/components/lore/page-header';
 import type { ApiMastery } from '@/lib/api-client';
 
@@ -39,9 +41,23 @@ export function MasteriesPageClient({ masteries, utility }: { masteries: ApiMast
         {masteries.map((m) => (
           <MasteryCard key={m.id} mastery={m} />
         ))}
-        {/* Utility: jutsus que nao sao de nenhuma mastery (qualquer pessoa pode usar) */}
-        {utility && <MasteryCard mastery={utility} />}
       </div>
+
+      {/* Utility NAO e' mastery (qualquer pessoa pode usar): area propria /utility, separada do grid acima */}
+      {utility && (
+        <section className="mt-10">
+          <h2 className="mb-3 font-display text-lg font-bold text-ink-100">{t.utilityTitle}</h2>
+          <Link href="/utility" className="dossier-panel dossier-panel-hover flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${utility.color}15`, color: utility.color }}>
+              <MasteryIcon icon={utility.icon} className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-display text-sm font-bold text-ink-100">{t.utilityCta}</p>
+              <p className="text-sm text-ink-300">{t.utilityIntro}</p>
+            </div>
+          </Link>
+        </section>
+      )}
     </div>
   );
 }

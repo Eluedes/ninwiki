@@ -6,6 +6,11 @@ import type { ApiMastery } from '@/lib/api-client';
 /** Id usado na URL (/masteries/utility) e no seletor do editor para "sem mastery". */
 export const UTILITY_ID = 'utility';
 
+/** Link da "mastery" nas paginas publicas: Utility NAO e' mastery, tem area propria (/utility); as demais vao para /masteries/<id>. */
+export function masteryHref(m: { id: string }): string {
+  return m.id === UTILITY_ID ? '/utility' : `/masteries/${m.id}`;
+}
+
 /** Mastery "virtual" da categoria Utility (nao existe no banco; nao vem de /masteries). */
 export const UTILITY_MASTERY: ApiMastery = {
   id: UTILITY_ID,

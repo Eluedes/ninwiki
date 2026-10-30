@@ -94,6 +94,7 @@ export interface Dictionary {
     noJutsusYet: string; masterySheet: string; nameLabel: string; typeLabel: string; elementLabel: string;
     jutsusLabel: string; relatedAttributes: string; noAttributesConfirmed: string; paths: string;
     home: string; listSubtitle: string;
+    otherJutsus: string; utilityTitle: string; utilitySubtitle: string; utilityIntro: string; utilityEmpty: string; utilityCta: string;
   };
   jutsuDetail: {
     notFound: string; noPath: string;
@@ -439,6 +440,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
       noJutsusInPath: 'Nenhum jutsu classificado neste caminho ainda.',
       jutsusOfMastery: 'Jutsus da Mastery',
       noJutsusYet: 'Nenhum jutsu cadastrado para esta mastery ainda.',
+      otherJutsus: 'Outros jutsus da mastery',
+      utilityTitle: 'Técnicas Utilitárias',
+      utilitySubtitle: 'Fora das masteries',
+      utilityIntro: 'Estas técnicas não pertencem a nenhuma mastery: todo jogador pode aprender e usar, seja qual for a mastery escolhida.',
+      utilityEmpty: 'Nenhuma técnica utilitária cadastrada ainda.',
+      utilityCta: 'Técnicas Utilitárias (todos podem aprender)',
       masterySheet: 'Ficha da Mastery',
       nameLabel: 'Nome',
       typeLabel: 'Tipo',
@@ -1199,6 +1206,12 @@ export const dictionaries: Record<Locale, Dictionary> = {
       noJutsusInPath: 'No jutsu classified in this path yet.',
       jutsusOfMastery: 'Mastery Jutsus',
       noJutsusYet: 'No jutsu registered for this mastery yet.',
+      otherJutsus: 'Other jutsus of this mastery',
+      utilityTitle: 'Utility Techniques',
+      utilitySubtitle: 'Not a mastery',
+      utilityIntro: 'These techniques do not belong to any mastery: every player can learn and use them, whatever mastery they chose.',
+      utilityEmpty: 'No utility technique registered yet.',
+      utilityCta: 'Utility Techniques (anyone can learn)',
       masterySheet: 'Mastery Sheet',
       nameLabel: 'Name',
       typeLabel: 'Type',

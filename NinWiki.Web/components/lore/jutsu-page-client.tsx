@@ -17,6 +17,7 @@ import { JutsuGif } from '@/components/lore/jutsu-gif';
 import { RichText } from '@/components/lore/rich-text';
 import { Zap } from 'lucide-react';
 import type { ApiJutsu, ApiMastery } from '@/lib/api-client';
+import { masteryHref } from '@/lib/utility-category';
 
 /** Pagina de um jutsu. */
 export function JutsuPageClient({
@@ -47,7 +48,7 @@ export function JutsuPageClient({
         breadcrumbs={[
           { label: t.home, href: '/' },
           { label: 'Masteries', href: '/masteries' },
-          ...(mastery ? [{ label: masteryName!, href: `/masteries/${mastery.id}` }] : []),
+          ...(mastery ? [{ label: masteryName!, href: masteryHref(mastery) }] : []),
           { label: name },
         ]}
         icon={<MasteryIcon icon={jutsu.icon} className="h-7 w-7" />}
