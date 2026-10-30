@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import require_permission
 from app.core.database import get_db
 from app.core.permissions import Permission
+from app.core.text import escape_like
 from app.models.content import ContentItem
 from app.models.enums import ContentStatus
 from app.models.masteries import Mastery
@@ -21,8 +22,8 @@ router = APIRouter(prefix="/search", tags=["search"])
 
 
 def _like(q: str) -> str:
-    """Escapa % e _ para o texto digitado nao virar curinga do LIKE."""
-    return "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+    """Padrao LIKE 'contem' com % e _ escapados (o texto digitado nao vira curinga)."""
+    return "%" + escape_like(q) + "%"
 
 
 @router.get("/mentions")

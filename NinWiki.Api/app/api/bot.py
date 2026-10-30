@@ -28,6 +28,7 @@ from app.api.uploads import UPLOAD_DIR
 from app.core.config import settings
 from app.core.translation import fill_missing_translations
 from app.core.database import get_db
+from app.core.text import escape_like
 from app.core.rate_limit import BOT_FAIL, client_key, limiter, retry_message
 from app.api.content_items import _dropped_by
 from app.models.content import ContentItem
@@ -358,7 +359,19 @@ def _spawn_text(i: ContentItem, lang: str) -> str:
 
 def _like(q: str) -> str:
     """Escapa % e _ para o texto digitado nao virar curinga do LIKE."""
-    return "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+    return "%" + escape_like(q) + "%"
+
+
+async def _search_catalog(db: AsyncSession, like: str, items_limit: int, masteries_limit: int, jutsus_limit: int):
+    """Itens, masteries e jutsus pelo nome (EN ou PT), ja' ordenados. Item e jutsu so' PUBLICADOS (rascunho nunca sai); mastery nao tem rascunho."""
+    items = (await db.execute(select(ContentItem).where(
+        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
+        .order_by(ContentItem.name).limit(items_limit))).scalars().all()
+    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
+                                  .order_by(Mastery.name).limit(masteries_limit))).scalars().all()
+    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+                               .order_by(Jutsu.name).limit(jutsus_limit))).scalars().all()
+    return items, masteries, jutsus
 
 
 def _item_hit(i: ContentItem, lang: str = "en") -> BotSearchHit:
@@ -408,13 +421,7 @@ async def bot_suggest(
 ) -> list[str]:
     """Nomes para o autocompletar do Discord (itens/mobs/armas publicados, jutsus e masteries), ate' 20, sem repetir."""
     like = _like(q.strip())
-    items = (await db.execute(select(ContentItem).where(
-        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
-        .order_by(ContentItem.name).limit(12))).scalars().all()
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
-                               .order_by(Jutsu.name).limit(6))).scalars().all()
-    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
-                                  .order_by(Mastery.name).limit(4))).scalars().all()
+    items, masteries, jutsus = await _search_catalog(db, like, items_limit=12, masteries_limit=4, jutsus_limit=6)
     names = [_pick(lang, r.name, r.name_pt) for r in (*items, *jutsus, *masteries)]
     return list(dict.fromkeys(n for n in names if n))[:20]
 
@@ -469,14 +476,7 @@ async def bot_search(
     like = _like(q)
     now = datetime.now(timezone.utc)
     hits: list[BotSearchHit] = []
-    items = (await db.execute(
-        select(ContentItem).where(ContentItem.status == ContentStatus.PUBLISHED,
-                                  ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
-        .order_by(ContentItem.name).limit(6))).scalars().all()
-    masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
-                                  .order_by(Mastery.name).limit(3))).scalars().all()
-    jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
-                               .order_by(Jutsu.name).limit(4))).scalars().all()
+    items, masteries, jutsus = await _search_catalog(db, like, items_limit=6, masteries_limit=3, jutsus_limit=4)
     posts = (await db.execute(
         select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),
                            Post.title.ilike(like, escape="\\") | Post.title_pt.ilike(like, escape="\\"))

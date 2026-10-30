@@ -14,7 +14,6 @@ Rotas (todas sob o prefixo /content-items, definido no main.py):
 PERMISSOES: toda rota de escrita exige login + a permissao certa (content.create/edit/publish/delete/import -
 ver app/core/permissions.py). Rascunho so' aparece para a equipe; o publico so' ve' entries PUBLICADAS.
 """
-import re
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -25,7 +24,10 @@ from sqlalchemy.orm import selectinload
 
 from app.core.audit import log_action
 from app.core.auth import get_optional_user, require_permission
-from app.core.permissions import Permission, user_has_permission
+from app.core.permissions import Permission
+from app.core.publishing import guard_edit, guard_publish
+from app.core.slug import slugify
+from app.core.text import escape_like
 from app.core.media_refs import resolve_images
 from app.core.database import get_db
 from app.models.users import User
@@ -118,18 +120,6 @@ _DEFAULT_ICON_BY_CATEGORY: dict[str, str] = {
 }
 
 
-def _slugify(name: str) -> str:
-    """
-    Vira "Ring of the Sacred Ox" em "ring-of-the-sacred-ox" - minusculo,
-    espaco/pontuacao vira hifen, sem hifen duplicado nem nas pontas.
-    Mesma regra que o slug do content_items ja exige (so' letras
-    minusculas, numero e hifen - ver ContentItemBase.slug no schema).
-    """
-    lowered = name.lower()
-    slug = re.sub(r"[^a-z0-9]+", "-", lowered).strip("-")
-    return slug or "item"
-
-
 class BulkImportEntry(CamelModel):
     """Uma entry da importacao em massa: so' nome e categoria."""
     name: str = Field(min_length=1, max_length=200)
@@ -186,7 +176,8 @@ async def bulk_import(
     new_items: list[ContentItem] = []
 
     for entry in payload.entries:
-        base_slug = _slugify(entry.name)
+        # fold_accents=False: mantem o slug de sempre (letra acentuada vira hifen); "item" se nada sobrar
+        base_slug = slugify(entry.name, fold_accents=False) or "item"
         slug = base_slug
         # Colisao DENTRO do proprio lote (dois nomes que geram o mesmo
         # slug) tambem conta, nao so' contra o banco - por isso
@@ -243,8 +234,7 @@ async def list_content_items(
         stmt = stmt.where(ContentItem.status == ContentStatus.PUBLISHED)
     if search:
         # Escapa % e _ digitados pela pessoa: sem isso "%" casaria com tudo (e "_" com qualquer letra).
-        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        stmt = stmt.where(ContentItem.name.ilike(f"%{escaped}%", escape="\\")).limit(20)
+        stmt = stmt.where(ContentItem.name.ilike(f"%{escape_like(search)}%", escape="\\")).limit(20)
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -715,8 +705,7 @@ def _hide_draft_from_public(item: ContentItem, user: User | None) -> None:
 
 def _guard_publish(staff: User, new_status: ContentStatus) -> None:
     """Quem nao tem CONTENT_PUBLISH (Creator) nao coloca nada no ar."""
-    if new_status == ContentStatus.PUBLISHED and not user_has_permission(staff, Permission.CONTENT_PUBLISH):
-        raise HTTPException(status_code=403, detail="Only an Adm can publish. Save as a draft.")
+    guard_publish(staff, Permission.CONTENT_PUBLISH, new_status)
 
 
 def _guard_edit(staff: User, item: ContentItem, new_status: ContentStatus | None) -> None:
@@ -725,10 +714,8 @@ def _guard_edit(staff: User, item: ContentItem, new_status: ContentStatus | None
     site e so' Adm/S.Adm alteram. (Ver Permission.CONTENT_PUBLISH em
     app/core/permissions.py - a regra segue a permissao, nao o nome do cargo.)
     """
-    if not user_has_permission(staff, Permission.CONTENT_PUBLISH) and item.status == ContentStatus.PUBLISHED:
-        raise HTTPException(status_code=403, detail="This entry is already published. Only an Adm can change it.")
-    if new_status is not None:
-        _guard_publish(staff, new_status)
+    guard_edit(staff, Permission.CONTENT_PUBLISH, item.status, new_status,
+               "This entry is already published. Only an Adm can change it.")
 
 
 async def _get_item_or_404(item_id: UUID, db: AsyncSession) -> ContentItem:

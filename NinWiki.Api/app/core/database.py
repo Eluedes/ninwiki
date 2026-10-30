@@ -5,11 +5,7 @@ Este arquivo cria o "engine" (o objeto que sabe como falar com o banco)
 e a fabrica de sessoes (AsyncSessionLocal), que e' o que cada endpoint
 da API vai usar para consultar/gravar dados.
 """
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core import db_ssl
 from app.core.config import settings

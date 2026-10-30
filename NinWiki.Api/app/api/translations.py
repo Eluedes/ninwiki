@@ -10,9 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.content_items import _slugify
-
 from app.core import official_translations as ot
+from app.core.slug import slugify
 from app.core.audit import log_action
 from app.core.auth import require_permission
 from app.core.database import get_db
@@ -71,7 +70,7 @@ async def new_names(
             continue
         name_like += 1
         n = ot.norm(key)
-        if n in have or _slugify(key) in slugs or n in found:
+        if n in have or (slugify(key, fold_accents=False) or "item") in slugs or n in found:
             continue
         found[n] = NewName(name=key.strip(), name_pt=pt_index.get(n), hint=ot.name_hint(key))
     ordered = sorted(found.values(), key=lambda c: c.name.casefold())
