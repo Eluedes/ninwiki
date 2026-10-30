@@ -253,7 +253,11 @@ async def testar() -> None:
     linhas = await api.audit_log_since(desde)
     check("API devolve as acoes recentes (lista)", isinstance(linhas, list) and len(linhas) >= 1)
     check("SEM IP nem dados sensiveis nas linhas (padrao)", all("ipAddress" not in l and "ip_address" not in l for l in linhas))
+    sem_liberar = await api.audit_log_since(desde, include_ip=True)
+    check("includeIp sem BOT_LOG_SHOW_IP na API NAO entrega o IP (token vazado nao le IP da equipe)", all("ipAddress" not in l for l in sem_liberar))
+    settings.bot_log_show_ip = True
     com_ip = await api.audit_log_since(desde, include_ip=True)
+    settings.bot_log_show_ip = False
     check("com includeIp o IP de quem agiu vem junto (LOG_SHOW_IP=true no bot)", len(com_ip) == len(linhas) and all("ipAddress" in l for l in com_ip))
     from ninwiki_bot.log_feed import format_entry as _fmt
     check("rodape do embed mostra 'Panel · IP x' quando o IP vem", _fmt({**com_ip[0], "ipAddress": "203.0.113.7"})["footer"].endswith("IP 203.0.113.7")

@@ -51,7 +51,7 @@ async def require_bot(x_bot_token: str | None = Header(default=None)) -> None:
     wait = limiter.blocked(BOT_FAIL, client_key(), settings.bot_fail_limit, window)
     if wait is not None:
         raise HTTPException(status_code=429, detail=retry_message(wait), headers={"Retry-After": str(wait)})
-    if not x_bot_token or not hmac.compare_digest(x_bot_token, settings.bot_api_token):
+    if not x_bot_token or not hmac.compare_digest(x_bot_token.encode(), settings.bot_api_token.encode()):   # bytes: header nao-ASCII nao pode virar erro 500
         limiter.fail(BOT_FAIL, client_key(), window)
         raise HTTPException(status_code=401, detail="Invalid bot token")
 
@@ -93,7 +93,7 @@ async def bot_audit_log(
     if since.tzinfo is None:
         since = since.replace(tzinfo=timezone.utc)
     stmt = select(AuditLogEntry).where(AuditLogEntry.created_at > since).order_by(AuditLogEntry.created_at).limit(limit)
-    model = BotLogEntryWithIp if include_ip else BotLogEntry
+    model = BotLogEntryWithIp if include_ip and settings.bot_log_show_ip else BotLogEntry   # IP so' com BOT_LOG_SHOW_IP=true na API
     return [model.model_validate(row, from_attributes=True) for row in (await db.execute(stmt)).scalars().all()]
 
 
