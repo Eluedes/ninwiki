@@ -7,6 +7,7 @@ Comandos PUBLICOS do bot (qualquer pessoa do servidor pode usar), todos com Comp
   /drop <item>               quais mobs dropam o item (e a chance de cada um)
   /patchnotes                as noticias/patch notes mais recentes do blog
   /language <en|pt>          idioma padrao do bot NESTE servidor (so' quem tem "Gerenciar servidor")
+  (/item /mob /jutsu /mastery /compare /map /random /help: ver wiki_commands.py)
   (/search e /drop sugerem nomes enquanto a pessoa digita: autocompletar do Discord)
 
 Nada aqui mostra dado interno: so' online/offline e conteudo PUBLICADO do site. Os construtores de tela (build_*) nao falam
@@ -134,7 +135,7 @@ class SearchView(discord.ui.LayoutView):
                 children.append(discord.ui.TextDisplay("-# " + t["results"].format(n=len(hits), q=shown)))
                 select = discord.ui.Select(
                     placeholder=t["more"],
-                    options=[discord.SelectOption(label=_clean(str(h.get("title", "")))[:100] or "?",
+                    options=[discord.SelectOption(label=str(h.get("title", ""))[:100] or "?",
                                                   description=t["kind"].get(str(h.get("kind", "")), str(h.get("kind", "")).title())[:100],
                                                   value=str(i), default=(i == index)) for i, h in enumerate(hits[:25])],
                 )
@@ -188,7 +189,7 @@ def build_drop_embed(result: dict, query: str, site_url: str, lang: str = DEFAUL
     mobs = result.get("mobs") or []
     if mobs:
         lines = [f"• [{_clean(m['name'])}]({base}{m['href']}) — {_chance(m)}" if base else f"• {_clean(m['name'])} — {_chance(m)}" for m in mobs[:20]]
-        embed.description = "\n".join(lines)
+        embed.description = "\n".join(lines)[:4096]
         if len(mobs) > 20:
             embed.set_footer(text=f"+{len(mobs) - 20}")
     else:
@@ -206,8 +207,9 @@ def build_posts_embed(posts: list[dict], site_url: str, lang: str = DEFAULT) -> 
         return embed
     for p in posts:
         when = f" · <t:{int(datetime.fromisoformat(p['publishedAt'].replace('Z', '+00:00')).timestamp())}:D>" if p.get("publishedAt") else ""
-        title = f"[{_clean(p['title'])}]({base}{p['href']})" if base else _clean(p["title"])
-        embed.add_field(name="\u200b", value=f"**{title}**{when}\n{_clean(p.get('excerpt', ''))[:300]}", inline=False)
+        shown = _clean(p["title"])[:150]
+        title = f"[{shown}]({base}{p['href']})" if base else shown
+        embed.add_field(name="\u200b", value=f"**{title}**{when}\n{_clean(p.get('excerpt', ''))[:300]}"[:1024], inline=False)
     if posts[0].get("image"):
         embed.set_image(url=posts[0]["image"])
     return embed
@@ -217,6 +219,20 @@ def build_search_view(query: str, hits: list[dict], site_url: str, index: int = 
                       lang: str = DEFAULT, owner_name: str | None = None) -> SearchView:
     """Tela do /search (ver SearchView)."""
     return SearchView(query, hits, site_url, index, owner_id, True, lang, owner_name)
+
+
+def _autocomplete_for(api: NinWikiApi, languages: LanguageStore):
+    """Autocompletar do Discord (sugere nomes do wiki enquanto a pessoa digita; 2+ letras; falha em silencio). Compartilhado por /search, /drop, /item..."""
+    async def _autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """Sugestoes (a API guarda em cache e responde em ate' 2,5 s: o Discord desiste em 3 s)."""
+        if len(current.strip()) < 2:
+            return []
+        try:
+            names = await api.suggest(current.strip(), languages.get(interaction.guild_id))
+        except ApiError:
+            return []
+        return [app_commands.Choice(name=n[:100], value=n[:100]) for n in names[:25]]
+    return _autocomplete
 
 
 def register_public_commands(
@@ -254,6 +270,9 @@ def register_public_commands(
         if not await allowed(interaction):
             return
         lang = language.value if language else languages.get(interaction.guild_id)
+        if len(term.strip()) < 2:   # "  a" passa pelo Range mas a API recusa (422): avisa em vez de dizer que o wiki caiu
+            await interaction.response.send_message(TEXT[lang]["short_term"], ephemeral=True)
+            return
         await interaction.response.defer(thinking=True)
         try:
             hits = await api.search(term.strip(), lang)
@@ -264,15 +283,7 @@ def register_public_commands(
         view = build_search_view(term, hits, site_url, owner_id=interaction.user.id, lang=lang, owner_name=name)
         view.message = await interaction.followup.send(view=view, allowed_mentions=NO_MENTIONS, wait=True)
 
-    async def _autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        """Autocompletar do Discord: sugere nomes do wiki enquanto a pessoa digita (precisa de 2+ letras; falha em silencio)."""
-        if len(current.strip()) < 2:
-            return []
-        try:
-            names = await api.suggest(current.strip(), languages.get(interaction.guild_id))
-        except ApiError:
-            return []
-        return [app_commands.Choice(name=n[:100], value=n[:100]) for n in names[:25]]
+    _autocomplete = _autocomplete_for(api, languages)
 
     search.autocomplete("term")(_autocomplete)
 
@@ -285,6 +296,9 @@ def register_public_commands(
         if not await allowed(interaction):
             return
         lang = languages.get(interaction.guild_id)
+        if len(item.strip()) < 2:
+            await interaction.response.send_message(TEXT[lang]["short_term"], ephemeral=True)
+            return
         await interaction.response.defer(thinking=True)
         try:
             result = await api.drops(item.strip(), lang)
@@ -310,6 +324,9 @@ def register_public_commands(
             await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
             return
         await interaction.followup.send(embed=build_posts_embed(posts, site_url, lang), allowed_mentions=NO_MENTIONS)
+
+    from ninwiki_bot.wiki_commands import register_wiki_commands   # import aqui dentro: wiki_commands importa deste arquivo (evita ciclo)
+    register_wiki_commands(tree, api, site_url, languages, allowed)
 
     @tree.command(name="language", description="Set this bot's default language on this server (English or Português)")
     @app_commands.describe(language="Language used by /search and /status here")
