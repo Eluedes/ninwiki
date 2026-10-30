@@ -1,0 +1,1766 @@
+[
+ {
+  "id": 224,
+  "name": "3 Way Road Split",
+  "namePt": "Bifurcação de 3 Vias",
+  "width": 248,
+  "height": 244
+ },
+ {
+  "id": 41,
+  "name": "Abandoned Lair",
+  "namePt": "Covil Abandonado",
+  "width": 404,
+  "height": 444
+ },
+ {
+  "id": 31,
+  "name": "Abandoned Lair Entrance",
+  "namePt": "Entrada do Covil Abandonado",
+  "width": 240,
+  "height": 164
+ },
+ {
+  "id": 270,
+  "name": "Across the Sea",
+  "namePt": "Atravessando o Mar",
+  "width": 244,
+  "height": 324
+ },
+ {
+  "id": 544,
+  "name": "Across the Sea (Interior)",
+  "namePt": "Atravessando o Mar (Interior)",
+  "width": 284,
+  "height": 264
+ },
+ {
+  "id": 214,
+  "name": "Asoki Port",
+  "namePt": "Porto de Asoki",
+  "width": 248,
+  "height": 164
+ },
+ {
+  "id": 373,
+  "name": "Asoki Shop",
+  "namePt": "Loja de Asoki",
+  "width": 204,
+  "height": 120
+ },
+ {
+  "id": 296,
+  "name": "Asoki Village",
+  "namePt": "Vila de Asoki",
+  "width": 884,
+  "height": 196
+ },
+ {
+  "id": 234,
+  "name": "Bamboo Forest",
+  "namePt": "Floresta de Bambu",
+  "width": 248,
+  "height": 284
+ },
+ {
+  "id": 158,
+  "name": "Bandit Chief's Yard",
+  "namePt": "Pátio do Chefe dos Bandidos",
+  "width": 240,
+  "height": 184
+ },
+ {
+  "id": 112,
+  "name": "Bear Hermit Cave",
+  "namePt": "Caverna do Eremita dos Ursos",
+  "width": 244,
+  "height": 364
+ },
+ {
+  "id": 113,
+  "name": "Bear Hermit Hideout",
+  "namePt": "Esconderijo do Eremita dos Ursos",
+  "width": 244,
+  "height": 224
+ },
+ {
+  "id": 225,
+  "name": "Big Slope",
+  "namePt": "Grande Encosta",
+  "width": 240,
+  "height": 196
+ },
+ {
+  "id": 322,
+  "name": "Bloody Peninsula",
+  "namePt": "Península Sangrenta",
+  "width": 484,
+  "height": 244
+ },
+ {
+  "id": 268,
+  "name": "Bloody Pond",
+  "namePt": "Lagoa Sangrenta",
+  "width": 240,
+  "height": 164
+ },
+ {
+  "id": 409,
+  "name": "Bonsai Crossing",
+  "namePt": "Travessia dos Bonsais",
+  "width": 244,
+  "height": 404
+ },
+ {
+  "id": 226,
+  "name": "By The River",
+  "namePt": "Pelo Rio",
+  "width": 364,
+  "height": 196
+ },
+ {
+  "id": 405,
+  "name": "Cascade Trail",
+  "namePt": "Trilha da Cascata",
+  "width": 404,
+  "height": 204
+ },
+ {
+  "id": 133,
+  "name": "Chilling Corridor",
+  "namePt": "Corredor Frio",
+  "width": 304,
+  "height": 204
+ },
+ {
+  "id": 132,
+  "name": "Chilling Inner Cavern",
+  "namePt": "Caverna Interna Fria",
+  "width": 224,
+  "height": 204
+ },
+ {
+  "id": 134,
+  "name": "Chilly Canyon",
+  "namePt": "Cânion Gelado",
+  "width": 284,
+  "height": 204
+ },
+ {
+  "id": 101,
+  "name": "Chilly Pass",
+  "namePt": "Passagem Gelada",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 131,
+  "name": "Cold Cave",
+  "namePt": "Caverna Fria",
+  "width": 484,
+  "height": 304
+ },
+ {
+  "id": 448,
+  "name": "Coral Walk",
+  "namePt": "Caminho do Coral",
+  "width": 304,
+  "height": 1004
+ },
+ {
+  "id": 441,
+  "name": "Crystalflow Falls",
+  "namePt": "Cachoeira do Fluxo de Cristal",
+  "width": 304,
+  "height": 504
+ },
+ {
+  "id": 142,
+  "name": "Cursed Cave (2F)",
+  "namePt": "Caverna Amaldiçoada (2º Andar)",
+  "width": 244,
+  "height": 524
+ },
+ {
+  "id": 139,
+  "name": "Cursed Cave I",
+  "namePt": "Caverna Amaldiçoada I",
+  "width": 324,
+  "height": 204
+ },
+ {
+  "id": 399,
+  "name": "Cursed Cave II",
+  "namePt": "Caverna Amaldiçoada II",
+  "width": 244,
+  "height": 324
+ },
+ {
+  "id": 66,
+  "name": "Dark Clearing",
+  "namePt": "Clareira Sombria",
+  "width": 304,
+  "height": 304
+ },
+ {
+  "id": 147,
+  "name": "Decisions Canyon",
+  "namePt": "Cânion das Decisões",
+  "width": 204,
+  "height": 164
+ },
+ {
+  "id": 218,
+  "name": "Deepclaw Hollow",
+  "namePt": "Fosso da Garra Profunda",
+  "width": 176,
+  "height": 124
+ },
+ {
+  "id": 87,
+  "name": "Desert Cave Entrance",
+  "namePt": "Entrada da Caverna do Deserto",
+  "width": 244,
+  "height": 364
+ },
+ {
+  "id": 105,
+  "name": "Desert Exit",
+  "namePt": "Saída do Deserto",
+  "width": 244,
+  "height": 152
+ },
+ {
+  "id": 377,
+  "name": "Desert Oasis",
+  "namePt": "Oásis do Deserto",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 48,
+  "name": "Desert Palms",
+  "namePt": "Palmeiras do Deserto",
+  "width": 240,
+  "height": 304
+ },
+ {
+  "id": 89,
+  "name": "Desert Plains",
+  "namePt": "Planícies do Deserto",
+  "width": 1024,
+  "height": 1024
+ },
+ {
+  "id": 98,
+  "name": "Desert Pond",
+  "namePt": "Lagoa do Deserto",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 62,
+  "name": "Desert Road",
+  "namePt": "Estrada do Deserto",
+  "width": 304,
+  "height": 204
+ },
+ {
+  "id": 536,
+  "name": "Desert Valley Oasis",
+  "namePt": "Oásis do Vale do Deserto",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 64,
+  "name": "Desert Warzone",
+  "namePt": "Zona de Guerra do Deserto",
+  "width": 484,
+  "height": 484
+ },
+ {
+  "id": 333,
+  "name": "Dry Sand Grounds",
+  "namePt": "Campos de Areia Seca",
+  "width": 284,
+  "height": 244
+ },
+ {
+  "id": 145,
+  "name": "Dryhill Desert",
+  "namePt": "Deserto da Colina Seca",
+  "width": 484,
+  "height": 804
+ },
+ {
+  "id": 532,
+  "name": "Dune Corridor",
+  "namePt": "Corredor das Dunas",
+  "width": 404,
+  "height": 204
+ },
+ {
+  "id": 523,
+  "name": "Dustwallow Canyon",
+  "namePt": "Cânion do Vento Poeirento",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 531,
+  "name": "Dustwallow Pass",
+  "namePt": "Passagem do Vento Poeirento",
+  "width": 196,
+  "height": 196
+ },
+ {
+  "id": 444,
+  "name": "East Forest",
+  "namePt": "Floresta do Leste",
+  "width": 404,
+  "height": 804
+ },
+ {
+  "id": 325,
+  "name": "Eastern Coast",
+  "namePt": "Costa Leste",
+  "width": 1024,
+  "height": 1024
+ },
+ {
+  "id": 60,
+  "name": "Eastern Desert Valley",
+  "namePt": "Vale do Deserto Oriental",
+  "width": 524,
+  "height": 148
+ },
+ {
+  "id": 23,
+  "name": "Edge of Fire",
+  "namePt": "Borda do Fogo",
+  "width": 284,
+  "height": 284
+ },
+ {
+  "id": 188,
+  "name": "End of the Valley",
+  "namePt": "Fim do Vale",
+  "width": 244,
+  "height": 604
+ },
+ {
+  "id": 109,
+  "name": "Entrance to Takumi Village",
+  "namePt": "Entrada para a Vila Takumi",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 450,
+  "name": "Fallen Stones Gorge",
+  "namePt": "Desfiladeiro das Pedras Caídas",
+  "width": 604,
+  "height": 204
+ },
+ {
+  "id": 22,
+  "name": "Forest Near the Ledge",
+  "namePt": "Floresta Perto do Precipício",
+  "width": 284,
+  "height": 284
+ },
+ {
+  "id": 88,
+  "name": "Forest of Ambushes",
+  "namePt": "Floresta das Emboscadas",
+  "width": 1004,
+  "height": 1004
+ },
+ {
+  "id": 436,
+  "name": "Forgotten Sands",
+  "namePt": "Areias Esquecidas",
+  "width": 244,
+  "height": 324
+ },
+ {
+  "id": 427,
+  "name": "Frozen Stream",
+  "namePt": "Riacho Congelado",
+  "width": 240,
+  "height": 184
+ },
+ {
+  "id": 414,
+  "name": "Garden of Eternal Vows",
+  "namePt": "Jardim dos Votos Eternos",
+  "width": 184,
+  "height": 164
+ },
+ {
+  "id": 504,
+  "name": "Grand Spiritfall",
+  "namePt": "Grande Queda Espiritual",
+  "width": 244,
+  "height": 324
+ },
+ {
+  "id": 297,
+  "name": "Hasuka's Hideout",
+  "namePt": "Esconderijo de Hasuka",
+  "width": 128,
+  "height": 116
+ },
+ {
+  "id": 540,
+  "name": "Haunted Hollow",
+  "namePt": "Cova Assombrada",
+  "width": 804,
+  "height": 804
+ },
+ {
+  "id": 6,
+  "name": "Hokami Office",
+  "namePt": "Escritório do Hokami",
+  "width": 128,
+  "height": 112
+ },
+ {
+  "id": 334,
+  "name": "Howling Canyon",
+  "namePt": "Cânion Uivante",
+  "width": 484,
+  "height": 244
+ },
+ {
+  "id": 446,
+  "name": "Howling Canyon II",
+  "namePt": "Cânion Uivante II",
+  "width": 484,
+  "height": 244
+ },
+ {
+  "id": 406,
+  "name": "Hunter's March",
+  "namePt": "Marcha do Caçador",
+  "width": 484,
+  "height": 204
+ },
+ {
+  "id": 461,
+  "name": "Hyoketsu Cave Entrance",
+  "namePt": "Entrada da Caverna de Hyoketsu",
+  "width": 204,
+  "height": 164
+ },
+ {
+  "id": 459,
+  "name": "Hyoketsu Outskirts",
+  "namePt": "Arredores de Hyoketsu",
+  "width": 244,
+  "height": 244
+ },
+ {
+  "id": 458,
+  "name": "Hyoketsu Prison Entrance",
+  "namePt": "Entrada da Prisão de Hyoketsu",
+  "width": 244,
+  "height": 244
+ },
+ {
+  "id": 460,
+  "name": "Hyoketsu Valley",
+  "namePt": "Vale de Hyoketsu",
+  "width": 604,
+  "height": 164
+ },
+ {
+  "id": 149,
+  "name": "Icy Pathway",
+  "namePt": "Caminho Congelado",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 63,
+  "name": "Infested Desert Road",
+  "namePt": "Estrada do Deserto Infestada",
+  "width": 324,
+  "height": 284
+ },
+ {
+  "id": 21,
+  "name": "Into the Valley",
+  "namePt": "Adentrando o Vale",
+  "width": 240,
+  "height": 140
+ },
+ {
+  "id": 287,
+  "name": "Iron City",
+  "namePt": "Cidade do Ferro",
+  "width": 284,
+  "height": 404
+ },
+ {
+  "id": 288,
+  "name": "Iron Forest",
+  "namePt": "Floresta de Ferro",
+  "width": 244,
+  "height": 284
+ },
+ {
+  "id": 65,
+  "name": "Katabami Bridge",
+  "namePt": "Ponte Katabami",
+  "width": 244,
+  "height": 224
+ },
+ {
+  "id": 388,
+  "name": "Kawasaki Bridge",
+  "namePt": "Ponte Kawasaki",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 387,
+  "name": "Kawasaki Station",
+  "namePt": "Estação Kawasaki",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 54,
+  "name": "Kazekami Office",
+  "namePt": "Gabinete do Kazekami",
+  "width": 128,
+  "height": 144
+ },
+ {
+  "id": 452,
+  "name": "Kenko Village",
+  "namePt": "Vila Kenko",
+  "width": 304,
+  "height": 804
+ },
+ {
+  "id": 195,
+  "name": "Kinsen Castle",
+  "namePt": "Castelo Kinsen",
+  "width": 164,
+  "height": 164
+ },
+ {
+  "id": 190,
+  "name": "Kinsen Quarters",
+  "namePt": "Distrito Kinsen",
+  "width": 404,
+  "height": 404
+ },
+ {
+  "id": 189,
+  "name": "Kinsen Quarters Entrance",
+  "namePt": "Entrada do Distrito Kinsen",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 298,
+  "name": "Kumoroi's Forest Lair",
+  "namePt": "Covil da Floresta de Kumoroi",
+  "width": 244,
+  "height": 140
+ },
+ {
+  "id": 378,
+  "name": "Lake Bell",
+  "namePt": "Sino do Lago",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 371,
+  "name": "Lake Stasis",
+  "namePt": "Lago da Estase",
+  "width": 324,
+  "height": 204
+ },
+ {
+  "id": 30,
+  "name": "Land of Rivers Bounty Outpost",
+  "namePt": "Posto Avançado de Recompensas do País dos Rios",
+  "width": 484,
+  "height": 164
+ },
+ {
+  "id": 524,
+  "name": "Land of Rivers Bounty Station",
+  "namePt": "Posto de Recompensas do País dos Rios",
+  "width": 484,
+  "height": 204
+ },
+ {
+  "id": 61,
+  "name": "Land of Rivers Morgue",
+  "namePt": "Necrotério do País dos Rios",
+  "width": 160,
+  "height": 116
+ },
+ {
+  "id": 494,
+  "name": "Land of Spirits",
+  "namePt": "País dos Espíritos",
+  "width": 404,
+  "height": 404
+ },
+ {
+  "id": 274,
+  "name": "Land of Water Bounty Station",
+  "namePt": "Posto de Recompensas do País da Água",
+  "width": 240,
+  "height": 164
+ },
+ {
+  "id": 275,
+  "name": "Land of Water Morgue",
+  "namePt": "Necrotério do País da Água",
+  "width": 160,
+  "height": 116
+ },
+ {
+  "id": 217,
+  "name": "Land of Water Port",
+  "namePt": "Porto do País da Água",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 26,
+  "name": "Larva Road",
+  "namePt": "Estrada das Larvas",
+  "width": 240,
+  "height": 136
+ },
+ {
+  "id": 7,
+  "name": "Leaf Administration Building",
+  "namePt": "Edifício Administrativo da Folha",
+  "width": 128,
+  "height": 336
+ },
+ {
+  "id": 35,
+  "name": "Leaf Aviary",
+  "namePt": "Aviário da Folha",
+  "width": 244,
+  "height": 140
+ },
+ {
+  "id": 462,
+  "name": "Leaf Housing District East I",
+  "namePt": "Distrito Residencial Leste da Folha I",
+  "width": 604,
+  "height": 352
+ },
+ {
+  "id": 463,
+  "name": "Leaf Housing District East II",
+  "namePt": "Distrito Residencial Leste da Folha II",
+  "width": 604,
+  "height": 352
+ },
+ {
+  "id": 312,
+  "name": "Leaf Housing District West I",
+  "namePt": "Distrito Residencial Oeste da Folha I",
+  "width": 604,
+  "height": 352
+ },
+ {
+  "id": 434,
+  "name": "Leaf Housing District West II",
+  "namePt": "Distrito Residencial Oeste da Folha II",
+  "width": 604,
+  "height": 352
+ },
+ {
+  "id": 9,
+  "name": "Leaf Mission Assignment Desk",
+  "namePt": "Balcão de Atribuição de Missões da Folha",
+  "width": 128,
+  "height": 96
+ },
+ {
+  "id": 1,
+  "name": "Leaf Village",
+  "namePt": "Vila da Folha",
+  "width": 804,
+  "height": 884
+ },
+ {
+  "id": 33,
+  "name": "Leaf Village Arena",
+  "namePt": "Arena da Vila da Folha",
+  "width": 240,
+  "height": 148
+ },
+ {
+  "id": 207,
+  "name": "Leaf Village Bar",
+  "namePt": "Bar da Vila da Folha",
+  "width": 184,
+  "height": 104
+ },
+ {
+  "id": 18,
+  "name": "Leaf Village Entrance",
+  "namePt": "Entrada da Vila da Folha",
+  "width": 248,
+  "height": 204
+ },
+ {
+  "id": 4,
+  "name": "Leaf Village Hospital",
+  "namePt": "Hospital da Vila da Folha",
+  "width": 204,
+  "height": 204
+ },
+ {
+  "id": 76,
+  "name": "Leaf Village Inn",
+  "namePt": "Estalagem da Vila da Folha",
+  "width": 184,
+  "height": 244
+ },
+ {
+  "id": 328,
+  "name": "Leaf Village Sewers",
+  "namePt": "Esgotos da Vila da Folha",
+  "width": 524,
+  "height": 204
+ },
+ {
+  "id": 15,
+  "name": "Leaf Village Southern Outskirts",
+  "namePt": "Arredores Sul da Vila da Folha",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 40,
+  "name": "Leaf Village Summit",
+  "namePt": "Cúpula da Vila da Folha",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 38,
+  "name": "Ledge Forest",
+  "namePt": "Floresta do Precipício",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 32,
+  "name": "Ledge Forest Encampment",
+  "namePt": "Acampamento da Floresta do Precipício",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 211,
+  "name": "Map 211",
+  "namePt": "Map 211",
+  "width": 324,
+  "height": 324
+ },
+ {
+  "id": 261,
+  "name": "Map 261",
+  "namePt": "Map 261",
+  "width": 404,
+  "height": 304
+ },
+ {
+  "id": 326,
+  "name": "Map 326",
+  "namePt": "Map 326",
+  "width": 324,
+  "height": 484
+ },
+ {
+  "id": 548,
+  "name": "Map 548",
+  "namePt": "Map 548",
+  "width": 324,
+  "height": 404
+ },
+ {
+  "id": 549,
+  "name": "Map 549",
+  "namePt": "Map 549",
+  "width": 324,
+  "height": 404
+ },
+ {
+  "id": 550,
+  "name": "Map 550",
+  "namePt": "Map 550",
+  "width": 404,
+  "height": 484
+ },
+ {
+  "id": 81,
+  "name": "Map 81",
+  "namePt": "Map 81",
+  "width": 484,
+  "height": 164
+ },
+ {
+  "id": 232,
+  "name": "Mist Administrative Building",
+  "namePt": "Edifício Administrativo da Névoa",
+  "width": 164,
+  "height": 404
+ },
+ {
+  "id": 267,
+  "name": "Mist Aviary",
+  "namePt": "Aviário da Névoa",
+  "width": 132,
+  "height": 100
+ },
+ {
+  "id": 304,
+  "name": "Mist Furniture Shop",
+  "namePt": "Loja de Móveis da Névoa",
+  "width": 132,
+  "height": 100
+ },
+ {
+  "id": 320,
+  "name": "Mist Housing District North I",
+  "namePt": "Distrito Residencial Norte da Névoa I",
+  "width": 304,
+  "height": 604
+ },
+ {
+  "id": 432,
+  "name": "Mist Housing District North II",
+  "namePt": "Distrito Residencial Norte da Névoa II",
+  "width": 304,
+  "height": 604
+ },
+ {
+  "id": 466,
+  "name": "Mist Housing District South  I",
+  "namePt": "Distrito Residencial Sul da Névoa I",
+  "width": 304,
+  "height": 604
+ },
+ {
+  "id": 467,
+  "name": "Mist Housing District South  II",
+  "namePt": "Distrito Residencial Sul da Névoa II",
+  "width": 304,
+  "height": 604
+ },
+ {
+  "id": 311,
+  "name": "Mist Police Force Station",
+  "namePt": "Delegacia da Força Policial da Névoa",
+  "width": 132,
+  "height": 100
+ },
+ {
+  "id": 100,
+  "name": "Mist Village",
+  "namePt": "Vila da Névoa",
+  "width": 1004,
+  "height": 804
+ },
+ {
+  "id": 519,
+  "name": "Mist Village Clothes Shop",
+  "namePt": "Loja de Roupas da Vila da Névoa",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 330,
+  "name": "Mist Village Eastern Entrance",
+  "namePt": "Entrada Leste da Vila da Névoa",
+  "width": 404,
+  "height": 164
+ },
+ {
+  "id": 228,
+  "name": "Mist Village Hospital",
+  "namePt": "Hospital da Vila da Névoa",
+  "width": 164,
+  "height": 132
+ },
+ {
+  "id": 233,
+  "name": "Mist Village Indoor Market",
+  "namePt": "Mercado Coberto da Vila da Névoa",
+  "width": 204,
+  "height": 228
+ },
+ {
+  "id": 479,
+  "name": "Mist Village Inn",
+  "namePt": "Hospedaria da Vila da Névoa",
+  "width": 132,
+  "height": 100
+ },
+ {
+  "id": 262,
+  "name": "Mist Village Scroll Shop",
+  "namePt": "Loja de Pergaminhos da Vila da Névoa",
+  "width": 136,
+  "height": 96
+ },
+ {
+  "id": 264,
+  "name": "Mist Village Spa",
+  "namePt": "Termas da Vila da Névoa",
+  "width": 244,
+  "height": 364
+ },
+ {
+  "id": 210,
+  "name": "Mist Village Western Entrance",
+  "namePt": "Entrada Oeste da Vila da Névoa",
+  "width": 484,
+  "height": 196
+ },
+ {
+  "id": 230,
+  "name": "Misty Hides",
+  "namePt": "Esconderijos Nebulosos",
+  "width": 248,
+  "height": 804
+ },
+ {
+  "id": 301,
+  "name": "Misty Pond",
+  "namePt": "Lago Nebuloso",
+  "width": 248,
+  "height": 164
+ },
+ {
+  "id": 445,
+  "name": "Misty Split Roads",
+  "namePt": "Estradas Bifurcadas Nebulosas",
+  "width": 304,
+  "height": 504
+ },
+ {
+  "id": 231,
+  "name": "Mizukami Office",
+  "namePt": "Escritório do Mizukami",
+  "width": 132,
+  "height": 100
+ },
+ {
+  "id": 99,
+  "name": "Moist Plains",
+  "namePt": "Planícies Úmidas",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 379,
+  "name": "Mountain High Pass",
+  "namePt": "Passo Alto da Montanha",
+  "width": 884,
+  "height": 196
+ },
+ {
+  "id": 335,
+  "name": "Mountain Peak",
+  "namePt": "Pico da Montanha",
+  "width": 404,
+  "height": 304
+ },
+ {
+  "id": 215,
+  "name": "Mountain Sea Path",
+  "namePt": "Caminho do Mar da Montanha",
+  "width": 248,
+  "height": 164
+ },
+ {
+  "id": 216,
+  "name": "Mountain Sea Path II",
+  "namePt": "Caminho do Mar da Montanha II",
+  "width": 844,
+  "height": 164
+ },
+ {
+  "id": 331,
+  "name": "Mountain Side",
+  "namePt": "Encosta da Montanha",
+  "width": 404,
+  "height": 164
+ },
+ {
+  "id": 102,
+  "name": "Mysterious Basement",
+  "namePt": "Porão Misterioso",
+  "width": 164,
+  "height": 164
+ },
+ {
+  "id": 174,
+  "name": "Mysterious Rock Wall",
+  "namePt": "Parede de Rocha Misteriosa",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 19,
+  "name": "Near the Valley",
+  "namePt": "Perto do Vale",
+  "width": 284,
+  "height": 284
+ },
+ {
+  "id": 197,
+  "name": "Nelinel's Hideout",
+  "namePt": "Esconderijo de Nelinel",
+  "width": 128,
+  "height": 116
+ },
+ {
+  "id": 535,
+  "name": "North Desert Valley",
+  "namePt": "Vale do Deserto Norte",
+  "width": 244,
+  "height": 596
+ },
+ {
+  "id": 451,
+  "name": "Oak Trail",
+  "namePt": "Trilha do Carvalho",
+  "width": 304,
+  "height": 504
+ },
+ {
+  "id": 293,
+  "name": "Old Komori Village",
+  "namePt": "Antiga Vila Komori",
+  "width": 244,
+  "height": 324
+ },
+ {
+  "id": 130,
+  "name": "Outskirts Dead End",
+  "namePt": "Beco Sem Saída dos Arredores",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 106,
+  "name": "Path to the River Country",
+  "namePt": "Caminho para o País dos Rios",
+  "width": 364,
+  "height": 156
+ },
+ {
+  "id": 437,
+  "name": "Plains of First Green",
+  "namePt": "Planícies do Primeiro Verde",
+  "width": 244,
+  "height": 324
+ },
+ {
+  "id": 290,
+  "name": "Rebel Encampment",
+  "namePt": "Acampamento Rebelde",
+  "width": 244,
+  "height": 244
+ },
+ {
+  "id": 172,
+  "name": "River Bank",
+  "namePt": "Margem do Rio",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 173,
+  "name": "River Bend",
+  "namePt": "Curva do Rio",
+  "width": 240,
+  "height": 164
+ },
+ {
+  "id": 489,
+  "name": "River Outskirts I",
+  "namePt": "Arredores do Rio I",
+  "width": 404,
+  "height": 604
+ },
+ {
+  "id": 488,
+  "name": "River Outskirts II",
+  "namePt": "Arredores do Rio II",
+  "width": 404,
+  "height": 404
+ },
+ {
+  "id": 440,
+  "name": "Riverbend Vale",
+  "namePt": "Vale da Curva do Rio",
+  "width": 304,
+  "height": 504
+ },
+ {
+  "id": 107,
+  "name": "Rocky Steps",
+  "namePt": "Degraus Rochosos",
+  "width": 240,
+  "height": 284
+ },
+ {
+  "id": 383,
+  "name": "Ryukyu Camp",
+  "namePt": "Acampamento Ryukyu",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 382,
+  "name": "Ryukyu Station",
+  "namePt": "Estação Ryukyu",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 273,
+  "name": "Sakame Clan House",
+  "namePt": "Casa do Clã Sakame",
+  "width": 132,
+  "height": 124
+ },
+ {
+  "id": 83,
+  "name": "Sand Administration Building",
+  "namePt": "Edifício Administrativo da Areia",
+  "width": 128,
+  "height": 128
+ },
+ {
+  "id": 55,
+  "name": "Sand Aviary",
+  "namePt": "Aviário da Areia",
+  "width": 128,
+  "height": 96
+ },
+ {
+  "id": 86,
+  "name": "Sand Hive Grounds",
+  "namePt": "Terrenos da Colmeia da Areia",
+  "width": 324,
+  "height": 324
+ },
+ {
+  "id": 316,
+  "name": "Sand Housing District East I",
+  "namePt": "Distrito Residencial Leste da Areia I",
+  "width": 304,
+  "height": 624
+ },
+ {
+  "id": 433,
+  "name": "Sand Housing District East II",
+  "namePt": "Distrito Residencial Leste da Areia II",
+  "width": 304,
+  "height": 624
+ },
+ {
+  "id": 464,
+  "name": "Sand Housing District West I",
+  "namePt": "Distrito Residencial Oeste da Areia I",
+  "width": 304,
+  "height": 624
+ },
+ {
+  "id": 465,
+  "name": "Sand Housing District West II",
+  "namePt": "Distrito Residencial Oeste da Areia II",
+  "width": 304,
+  "height": 624
+ },
+ {
+  "id": 135,
+  "name": "Sand Mission Assignment Desk",
+  "namePt": "Balcão de Atribuição de Missões da Areia",
+  "width": 244,
+  "height": 404
+ },
+ {
+  "id": 85,
+  "name": "Sand Nesting Ground",
+  "namePt": "Local de Nidificação da Areia",
+  "width": 240,
+  "height": 244
+ },
+ {
+  "id": 51,
+  "name": "Sand Village",
+  "namePt": "Vila da Areia",
+  "width": 844,
+  "height": 1024
+ },
+ {
+  "id": 67,
+  "name": "Sand Village Academy Yard",
+  "namePt": "Pátio da Academia da Vila da Areia",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 185,
+  "name": "Sand Village Arena",
+  "namePt": "Arena da Vila da Areia",
+  "width": 240,
+  "height": 160
+ },
+ {
+  "id": 416,
+  "name": "Sand Village Barber Shop",
+  "namePt": "Barbearia da Vila da Areia",
+  "width": 128,
+  "height": 96
+ },
+ {
+  "id": 80,
+  "name": "Sand Village Clothing Shop",
+  "namePt": "Loja de Roupas da Vila da Areia",
+  "width": 156,
+  "height": 128
+ },
+ {
+  "id": 96,
+  "name": "Sand Village Greenhouse",
+  "namePt": "Estufa da Vila da Areia",
+  "width": 128,
+  "height": 96
+ },
+ {
+  "id": 56,
+  "name": "Sand Village Hospital 1st Floor",
+  "namePt": "Hospital da Vila da Areia 1º Andar",
+  "width": 204,
+  "height": 132
+ },
+ {
+  "id": 57,
+  "name": "Sand Village Hospital 2nd Floor",
+  "namePt": "Hospital da Vila da Areia 2º Andar",
+  "width": 180,
+  "height": 124
+ },
+ {
+  "id": 50,
+  "name": "Sand Village Northern Entrance",
+  "namePt": "Entrada Norte da Vila da Areia",
+  "width": 240,
+  "height": 284
+ },
+ {
+  "id": 103,
+  "name": "Sand Village Scroll Shop",
+  "namePt": "Loja de Pergaminhos da Vila da Areia",
+  "width": 132,
+  "height": 112
+ },
+ {
+  "id": 176,
+  "name": "Sand Village Southern Entrance",
+  "namePt": "Entrada Sul da Vila da Areia",
+  "width": 244,
+  "height": 244
+ },
+ {
+  "id": 245,
+  "name": "Sand Village Spa",
+  "namePt": "Termas da Vila da Areia",
+  "width": 140,
+  "height": 124
+ },
+ {
+  "id": 91,
+  "name": "Sand Village Weapon Shop",
+  "namePt": "Loja de Armas da Vila da Areia",
+  "width": 128,
+  "height": 96
+ },
+ {
+  "id": 449,
+  "name": "Sea Breeze Vale",
+  "namePt": "Vale da Brisa do Mar",
+  "width": 304,
+  "height": 504
+ },
+ {
+  "id": 263,
+  "name": "Sealed Temple",
+  "namePt": "Templo Selado",
+  "width": 244,
+  "height": 244
+ },
+ {
+  "id": 127,
+  "name": "Secret Desert Cavern",
+  "namePt": "Caverna Secreta do Deserto",
+  "width": 304,
+  "height": 304
+ },
+ {
+  "id": 407,
+  "name": "Shinzen Jinja",
+  "namePt": "Shinzen Jinja",
+  "width": 244,
+  "height": 244
+ },
+ {
+  "id": 319,
+  "name": "Shipwreck Cove",
+  "namePt": "Enseada do Naufrágio",
+  "width": 404,
+  "height": 244
+ },
+ {
+  "id": 332,
+  "name": "Silky Crater",
+  "namePt": "Cratera Sedosa",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 223,
+  "name": "Slight Slope",
+  "namePt": "Inclinação Suave",
+  "width": 248,
+  "height": 196
+ },
+ {
+  "id": 159,
+  "name": "Snow Field",
+  "namePt": "Campo de Neve",
+  "width": 404,
+  "height": 204
+ },
+ {
+  "id": 247,
+  "name": "Snowy Path",
+  "namePt": "Caminho Nevado",
+  "width": 240,
+  "height": 264
+ },
+ {
+  "id": 431,
+  "name": "Snowy Track",
+  "namePt": "Trilha Nevada",
+  "width": 240,
+  "height": 184
+ },
+ {
+  "id": 219,
+  "name": "South Eastern Sea",
+  "namePt": "Mar do Sudeste",
+  "width": 964,
+  "height": 204
+ },
+ {
+  "id": 220,
+  "name": "South Eastern Sea II",
+  "namePt": "Mar do Sudeste II",
+  "width": 924,
+  "height": 204
+ },
+ {
+  "id": 221,
+  "name": "South Eastern Sea III",
+  "namePt": "Mar do Sudeste III",
+  "width": 924,
+  "height": 204
+ },
+ {
+  "id": 222,
+  "name": "South Eastern Sea IV",
+  "namePt": "Mar do Sudeste IV",
+  "width": 924,
+  "height": 204
+ },
+ {
+  "id": 323,
+  "name": "South Eastern Sea V",
+  "namePt": "Mar do Sudeste V",
+  "width": 324,
+  "height": 1024
+ },
+ {
+  "id": 157,
+  "name": "Southern Bandit Encampment",
+  "namePt": "Acampamento de Bandidos do Sul",
+  "width": 240,
+  "height": 204
+ },
+ {
+  "id": 79,
+  "name": "Southwest Outskirts",
+  "namePt": "Arredores do Sudoeste",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 499,
+  "name": "Spiritcore Crater",
+  "namePt": "Cratera do Núcleo Espiritual",
+  "width": 404,
+  "height": 404
+ },
+ {
+  "id": 503,
+  "name": "Spiritflow River",
+  "namePt": "Rio do Fluxo Espiritual",
+  "width": 404,
+  "height": 324
+ },
+ {
+  "id": 497,
+  "name": "Spiritveil Falls",
+  "namePt": "Cataratas do Véu Espiritual",
+  "width": 404,
+  "height": 204
+ },
+ {
+  "id": 498,
+  "name": "Spiritwind Ascent",
+  "namePt": "Subida do Vento Espiritual",
+  "width": 404,
+  "height": 684
+ },
+ {
+  "id": 370,
+  "name": "Split Arch",
+  "namePt": "Arco Dividido",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 20,
+  "name": "Stage 1.5: Forest of Death Entrance",
+  "namePt": "Etapa 1.5: Entrada da Floresta da Morte",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 279,
+  "name": "Stage 1.5: Swamp Entrance",
+  "namePt": "Etapa 1.5: Entrada do Pântano",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 90,
+  "name": "Striped Lake",
+  "namePt": "Lago Listrado",
+  "width": 244,
+  "height": 184
+ },
+ {
+  "id": 117,
+  "name": "Takumi Castle",
+  "namePt": "Castelo de Takumi",
+  "width": 140,
+  "height": 120
+ },
+ {
+  "id": 116,
+  "name": "Takumi Hospital 2nd Floor",
+  "namePt": "Hospital de Takumi 2º Andar",
+  "width": 144,
+  "height": 144
+ },
+ {
+  "id": 468,
+  "name": "Takumi Housing District North I",
+  "namePt": "Distrito Residencial de Takumi Norte I",
+  "width": 300,
+  "height": 604
+ },
+ {
+  "id": 469,
+  "name": "Takumi Housing District North II",
+  "namePt": "Distrito Residencial de Takumi Norte II",
+  "width": 300,
+  "height": 604
+ },
+ {
+  "id": 324,
+  "name": "Takumi Housing District South I",
+  "namePt": "Distrito Residencial de Takumi Sul I",
+  "width": 300,
+  "height": 604
+ },
+ {
+  "id": 435,
+  "name": "Takumi Housing District South II",
+  "namePt": "Distrito Residencial de Takumi Sul II",
+  "width": 300,
+  "height": 604
+ },
+ {
+  "id": 118,
+  "name": "Takumi Ninja Tool Shop",
+  "namePt": "Loja de Ferramentas Ninja de Takumi",
+  "width": 144,
+  "height": 144
+ },
+ {
+  "id": 108,
+  "name": "Takumi River",
+  "namePt": "Rio Takumi",
+  "width": 240,
+  "height": 1004
+ },
+ {
+  "id": 114,
+  "name": "Takumi Village",
+  "namePt": "Vila Takumi",
+  "width": 904,
+  "height": 404
+ },
+ {
+  "id": 44,
+  "name": "The Forest Exit",
+  "namePt": "A Saída da Floresta",
+  "width": 244,
+  "height": 324
+ },
+ {
+  "id": 97,
+  "name": "The Mysterious Apartment",
+  "namePt": "O Apartamento Misterioso",
+  "width": 164,
+  "height": 164
+ },
+ {
+  "id": 16,
+  "name": "Third Training Ground",
+  "namePt": "Terceiro Campo de Treinamento",
+  "width": 304,
+  "height": 164
+ },
+ {
+  "id": 490,
+  "name": "Through the Mountain",
+  "namePt": "Através da Montanha",
+  "width": 304,
+  "height": 304
+ },
+ {
+  "id": 418,
+  "name": "Toad Mountain Lake",
+  "namePt": "Lago da Montanha dos Sapos",
+  "width": 284,
+  "height": 284
+ },
+ {
+  "id": 163,
+  "name": "Toad Mountain Passage",
+  "namePt": "Passagem da Montanha dos Sapos",
+  "width": 244,
+  "height": 284
+ },
+ {
+  "id": 165,
+  "name": "Toad Mountain Peak",
+  "namePt": "Pico da Montanha dos Sapos",
+  "width": 244,
+  "height": 140
+ },
+ {
+  "id": 162,
+  "name": "Toad Mountain Route",
+  "namePt": "Rota da Montanha dos Sapos",
+  "width": 284,
+  "height": 144
+ },
+ {
+  "id": 400,
+  "name": "Toad Mountain Trail",
+  "namePt": "Trilha da Montanha dos Sapos",
+  "width": 284,
+  "height": 164
+ },
+ {
+  "id": 155,
+  "name": "Toad Mountain Training Ground",
+  "namePt": "Campo de Treinamento da Montanha dos Sapos",
+  "width": 284,
+  "height": 204
+ },
+ {
+  "id": 154,
+  "name": "Toad Oil Falls",
+  "namePt": "Cachoeiras de Óleo de Sapo",
+  "width": 304,
+  "height": 304
+ },
+ {
+  "id": 153,
+  "name": "Toad Temple",
+  "namePt": "Templo dos Sapos",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 161,
+  "name": "Toad Village",
+  "namePt": "Vila dos Sapos",
+  "width": 364,
+  "height": 524
+ },
+ {
+  "id": 227,
+  "name": "Totori Village",
+  "namePt": "Vila Totori",
+  "width": 240,
+  "height": 284
+ },
+ {
+  "id": 187,
+  "name": "Valley of Fates",
+  "namePt": "Vale dos Destinos",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 438,
+  "name": "Verdant Edge I",
+  "namePt": "Gume Verdejante I",
+  "width": 304,
+  "height": 204
+ },
+ {
+  "id": 439,
+  "name": "Verdant Edge II",
+  "namePt": "Gume Verdejante II",
+  "width": 304,
+  "height": 204
+ },
+ {
+  "id": 389,
+  "name": "Village Southern Limits",
+  "namePt": "Limites Sul da Vila",
+  "width": 524,
+  "height": 164
+ },
+ {
+  "id": 160,
+  "name": "War-torn Shack",
+  "namePt": "Barraco Devastado pela Guerra",
+  "width": 204,
+  "height": 204
+ },
+ {
+  "id": 375,
+  "name": "War-torn Shack",
+  "namePt": "Barraco Devastado pela Guerra",
+  "width": 204,
+  "height": 204
+ },
+ {
+  "id": 199,
+  "name": "Warzone",
+  "namePt": "Zona de Guerra",
+  "width": 128,
+  "height": 96
+ },
+ {
+  "id": 17,
+  "name": "Water Crossing",
+  "namePt": "Travessia de Água",
+  "width": 484,
+  "height": 204
+ },
+ {
+  "id": 391,
+  "name": "Water Way",
+  "namePt": "Caminho da Água",
+  "width": 1024,
+  "height": 164
+ },
+ {
+  "id": 104,
+  "name": "West Desert Valley",
+  "namePt": "Vale do Deserto Oeste",
+  "width": 240,
+  "height": 144
+ },
+ {
+  "id": 186,
+  "name": "West of the Valley",
+  "namePt": "A Oeste do Vale",
+  "width": 604,
+  "height": 164
+ },
+ {
+  "id": 533,
+  "name": "Whispering Dunes",
+  "namePt": "Dunas Sussurrantes",
+  "width": 244,
+  "height": 204
+ },
+ {
+  "id": 496,
+  "name": "Whispering Grove",
+  "namePt": "Bosque Sussurrante",
+  "width": 404,
+  "height": 404
+ },
+ {
+  "id": 381,
+  "name": "Whispering Root Trail",
+  "namePt": "Trilha da Raiz Sussurrante",
+  "width": 244,
+  "height": 244
+ },
+ {
+  "id": 336,
+  "name": "Windy Pond",
+  "namePt": "Lago Ventoso",
+  "width": 244,
+  "height": 164
+ },
+ {
+  "id": 502,
+  "name": "Yokai Riverbend",
+  "namePt": "Curva do Rio Yokai",
+  "width": 244,
+  "height": 404
+ },
+ {
+  "id": 495,
+  "name": "Yokai Village",
+  "namePt": "Vila Yokai",
+  "width": 404,
+  "height": 404
+ },
+ {
+  "id": 512,
+  "name": "Yokai Village (Instanced)",
+  "namePt": "Vila Yokai (Instanciada)",
+  "width": 404,
+  "height": 404
+ }
+]

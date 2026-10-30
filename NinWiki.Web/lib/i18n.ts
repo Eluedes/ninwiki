@@ -66,7 +66,7 @@ export interface Dictionary {
     back: string; pageNotFound: string; backHome: string;
     aboutVillage: string; clans: string; organizations: string; villageSheet: string; otherVillages: string;
     fName: string; fEnglish: string; fPortuguese: string; fElement: string; fMotto: string; fClimate: string; fLeader: string;
-    emblemAlt: string; mapAria: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapMarkerAria: string; mapHint: string;
+    emblemAlt: string; mapAria: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapWorld: string; mapAreas: string; mapSearch: string; mapCount: string; mapZoomIn: string; mapZoomOut: string; mapSource: string;
     demo: string; jutsuDemoAlt: string;
     guideMore: string; guideAttributes: string; guideArcs: string; guideSummons: string;
     guideGathering: string; guideCrafting: string;
@@ -342,8 +342,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       back: 'Voltar', pageNotFound: 'Página não encontrada.', backHome: 'Voltar ao início',
       aboutVillage: 'Sobre a Vila', clans: 'Clãs', organizations: 'Organizações', villageSheet: 'Ficha da Vila', otherVillages: 'Outras Vilas',
       fName: 'Nome', fEnglish: 'Inglês', fPortuguese: 'Português', fElement: 'Elemento', fMotto: 'Lema', fClimate: 'Clima', fLeader: 'Líder',
-      emblemAlt: 'Emblema da {name}', mapAria: 'Mapa vetorial do mundo de Nin', mapTitle: 'Mapa do Mundo', mapSubtitle: 'As três grandes nações shinobi e seus territórios.', mapCrumb: 'Mapa',
-      mapMarkerAria: 'Ver informação sobre {title}', mapHint: 'Passe o mouse sobre um ponto — ou use Tab — para ver informações sobre o local.',
+      emblemAlt: 'Emblema da {name}', mapAria: 'Mapa do mundo de Nin', mapTitle: 'Mapa do Mundo', mapSubtitle: 'O mapa-múndi e as áreas do jogo.', mapCrumb: 'Mapa',
+      mapWorld: 'Mundo', mapAreas: 'Áreas', mapSearch: 'Buscar área...', mapCount: '{n} áreas', mapZoomIn: 'Aumentar zoom', mapZoomOut: 'Diminuir zoom', mapSource: 'Imagens extraídas do cliente do jogo.',
       demo: 'Demonstração', jutsuDemoAlt: 'Demonstração do jutsu {name}',
       guideMore: 'Mais em Guias', guideAttributes: 'Atributos', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Coleta', guideCrafting: 'Criação',
@@ -1099,8 +1099,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
       back: 'Back', pageNotFound: 'Page not found.', backHome: 'Back to home',
       aboutVillage: 'About the Village', clans: 'Clans', organizations: 'Organizations', villageSheet: 'Village Sheet', otherVillages: 'Other Villages',
       fName: 'Name', fEnglish: 'English', fPortuguese: 'Portuguese', fElement: 'Element', fMotto: 'Motto', fClimate: 'Climate', fLeader: 'Leader',
-      emblemAlt: 'Emblem of {name}', mapAria: 'Vector map of the Nin world', mapTitle: 'World Map', mapSubtitle: 'The three great shinobi nations and their territories.', mapCrumb: 'Map',
-      mapMarkerAria: 'View information about {title}', mapHint: 'Hover over a point — or use Tab — to see information about the place.',
+      emblemAlt: 'Emblem of {name}', mapAria: 'Map of the Nin world', mapTitle: 'World Map', mapSubtitle: 'The world map and the game areas.', mapCrumb: 'Map',
+      mapWorld: 'World', mapAreas: 'Areas', mapSearch: 'Search area...', mapCount: '{n} areas', mapZoomIn: 'Zoom in', mapZoomOut: 'Zoom out', mapSource: 'Images extracted from the game client.',
       demo: 'Demonstration', jutsuDemoAlt: 'Demonstration of the jutsu {name}',
       guideMore: 'More in Guides', guideAttributes: 'Attributes', guideArcs: 'Story Arcs', guideSummons: 'Summons',
       guideGathering: 'Gathering', guideCrafting: 'Crafting',

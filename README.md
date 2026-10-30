@@ -219,7 +219,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
   A API só aceita cor/fonte/tamanho em formato conhecido (proteção contra CSS malicioso).
 - **Bestiário e Armas:** páginas com cartões ricos (vida, dano, XP, alcance, respawn; arma com tipo, requisito, NPC, dano base, habilidade especial,
   knockback). No painel, o campo extra de armas chama **Stat Bonus**. A **descrição é opcional nos mobs** (nas demais categorias continua obrigatória); sem texto, a página pública não mostra o cartão de descrição.
-- **Mapa:** está **em manutenção** — sai do menu e qualquer `/map` vai para `/maintenance`. Para liberar, esvazie `MAINTENANCE_PATHS` em `NinWiki.Web/lib/maintenance.ts`.
+- **Mapa:** o mapa-mundi e as 252 áreas vêm das imagens do próprio cliente do jogo (`NinWiki.Web/public/game-maps`, gerado por `py scripts/extrair_mapas_do_jogo.py` em `NinWiki.Api`; rode de novo quando o jogo atualizar). Ainda não há marcadores sobre o mundo (a posição de cada área fica no servidor do jogo). Para pôr a página em manutenção de novo, use `MAINTENANCE_PATHS` em `lib/maintenance.ts`.
 - **Erros e problemas** (`/admin/errors`, só S.Adm): tudo que quebrou no wiki — erros da API, erros de tela do site, falhas da DeepL e
   alertas de flood — agrupados (um problema = uma linha com o contador), com local no código e traceback mascarado. Resolva
   com um clique; se voltar a acontecer, reabre sozinho. O card "Open" da Visão Geral mostra quantos estão abertos.
@@ -253,7 +253,7 @@ A Visão Geral mostra um **gráfico de acessos** (7/30/90 dias: visualizações 
 - **Privacidade:** só contagens por dia/país/página. Sem cookies e sem guardar IP; o "visitante único" é um hash com sal diário que é **apagado em 2 dias**. Robôs e o painel (`/admin`) não contam.
 - **País:** vem do cabeçalho `CF-IPCountry` da **Cloudflare** (precisa de `TRUST_PROXY_HEADERS=true`) ou do banco offline **DB-IP Lite** (CC BY 4.0), que o deploy da API baixa sozinho para `NinWiki.Api/geoip/country.mmdb`. Sem nenhum dos dois, os acessos aparecem como "Desconhecido".
 - Nova migration (`alembic upgrade head`) — o deploy da API já roda.
-- A página **Mapa** está em manutenção: sai do menu e qualquer `/map` vai para `/maintenance` (edite `lib/maintenance.ts` para liberar).
+- A página **Mapa** está liberada (ver a seção do mapa acima); `lib/maintenance.ts` continua servindo para tirar qualquer página do ar.
 
 ### 2.2d Convidar o bot e anúncio da Home
 - **Banco de imagens** (`/admin/media`, menu *Images*): toda imagem enviada (aqui, pelo campo de imagem ou pelo editor) ganha um **ID** (#1, #2...). Nos campos de imagem de
