@@ -6,6 +6,8 @@ O QUE E' CADA ARQUIVO (tudo lido da pasta `data files` do cliente, que nunca e' 
   - worldmap cache/<id>_<versao>_2_1.wmr : a imagem pronta de UMA area. Cabecalho de 16 bytes ("WMR1", largura, altura, tamanho)
     e depois um bloco LZ4 com os pixels RGBA (largura x altura x 4 bytes).
   - mapscache/<id>/map<id>.map : dados da area; o NOME dela vem logo depois do marcador "PAMN" (texto com tamanho de 4 bytes na frente).
+Tambem grava o fundo do mapa-mundi (graphics/worldmap/1.znin -> world-bg.webp), os mapas em PERGAMINHO das vilas (graphics/worldmap/<id da area>.znin
+-> scroll-<id>.webp; so' Sand 51 e Mist 100 tem) e `areas-info.json` (dados enxutos do Atlas por area: zona, lugares, saidas, NPCs, mobs, recursos).
 Grava, na pasta de destino, um .webp sem perdas por area (<id>.webp), o mundo (world-map.webp + world.json) e o indice `maps.json`
 ([{id, name, namePt, width, height}], ordenado por nome; o nome em portugues vem do arquivo de idioma do jogo) que o site le. Nenhum arquivo e' enviado para a internet.
 
@@ -14,6 +16,7 @@ Uso (pasta NinWiki.Api):
     py scripts/extrair_mapas_do_jogo.py --cliente "E:\\SteamLibrary\\steamapps\\common\\Nin Online" --destino C:\\saida
 """
 import argparse
+import io
 import json
 import re
 import struct
@@ -22,7 +25,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from scripts.decodificar_znin import lz4_bloco
+from scripts.decodificar_znin import decodificar, lz4_bloco
 from scripts.sincronizar_imagens_atlas import carregar_atlas
 
 CLIENTE_PADRAO = r"E:\SteamLibrary\steamapps\common\Nin Online"
@@ -105,6 +108,63 @@ def montar_mundo(wmw: Path, destino: Path, traducoes: dict[str, str]) -> None:
     print(f"Mapa-mundi: {len(colocadas)} areas colocadas, {len(lugares)} lugares, {len(vilas)} vilas, {len(puladas)} sem posicao no Atlas {puladas}")
 
 
+def gravar_arte_do_jogo(dados: Path, destino: Path, scrolls: list[int]) -> None:
+    """Decodifica o fundo do mundo (1.znin, ilustracao 1314x826) e os pergaminhos das vilas (<id>.znin) para webp. Falta de arquivo so' avisa."""
+    pasta = dados / "graphics" / "worldmap"
+
+    def abrir(nome: str) -> Image.Image | None:
+        arq = pasta / f"{nome}.znin"
+        if not arq.is_file():
+            print(f"AVISO: {arq} nao encontrado")
+            return None
+        return Image.open(io.BytesIO(decodificar(arq.read_bytes())))
+
+    fundo = abrir("1")
+    if fundo:
+        fundo.convert("RGB").save(destino / "world-bg.webp", quality=82, method=6)
+    for mapa_id in scrolls:
+        img = abrir(str(mapa_id))
+        if img:
+            img.save(destino / f"scroll-{mapa_id}.webp", lossless=True, method=6)
+
+
+def gravar_info_das_areas(atlas: dict, destino: Path, traducoes: dict[str, str]) -> None:
+    """Grava `areas-info.json`: por area do Atlas, so' o que o painel do site usa (carregado sob demanda no navegador).
+
+    {names: {id: [en, pt]} (alvos das saidas), areas: {id: {z zona, v vila, h casas, p [[tipo, nome, pt, x, y]] lugares, e [[id destino, direcao]] saidas,
+    r [[nome, pt, x, y]] predios/salas, n [[nome, pt]] NPCs, m [[nome, pt, nivel]] mobs, res [[nome, pt, qtd]] recursos}}}.
+    """
+    pt = lambda n: traducoes.get(n, n)  # noqa: E731
+    npcs, recursos = atlas["npcs"], atlas["resources"]
+    areas = {}
+    for k, m in atlas["maps"].items():
+        gente, mobs, vistos = [], [], set()
+        for i in m.get("npcs", []):
+            n = npcs.get(str(i))
+            if not n or n["name"] in vistos:
+                continue
+            vistos.add(n["name"])
+            if n.get("fight") and (n.get("hunt") or n.get("damage", 0) > 0):
+                mobs.append([n["name"], pt(n["name"]), n.get("level", 0)])
+            else:
+                gente.append([n["name"], pt(n["name"])])
+        cont: dict[str, int] = {}
+        for _, _, rid in m.get("tiles", {}).get("resource", []):
+            nome = recursos.get(str(rid), {}).get("name")
+            if nome:
+                cont[nome] = cont.get(nome, 0) + 1
+        areas[k] = {
+            "z": m.get("zone", ""), "v": m.get("village", 0), "h": m.get("houses", 0),
+            "p": [[p["kind"], p["name"], pt(p["name"]), p["x"], p["y"]] for p in m.get("places", []) if p["kind"] != "leaderboards"],
+            "e": [[e["to"], e["dir"]] for e in m.get("exits", [])],
+            "r": [[r["name"], pt(r["name"]), r["x"], r["y"]] for r in m.get("rooms", [])],
+            "n": gente, "m": mobs, "res": [[n, pt(n), c] for n, c in sorted(cont.items(), key=lambda kv: -kv[1])],
+        }
+    nomes = {k: [m["name"], pt(m["name"])] for k, m in atlas["maps"].items()}
+    (destino / "areas-info.json").write_text(json.dumps({"names": nomes, "areas": areas}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"areas-info.json: {len(areas)} areas ({(destino / 'areas-info.json').stat().st_size / 1e3:.0f} KB)")
+
+
 def main() -> None:
     """Converte o mundo e todas as areas, grava o indice e imprime o resumo."""
     ap = argparse.ArgumentParser(description="Extrai os mapas do cliente do jogo para o site.")
@@ -122,7 +182,11 @@ def main() -> None:
     arquivo_pt = dados / "locales" / "Brazilian Portuguese.json"
     traducoes = json.loads(arquivo_pt.read_text(encoding="utf-8")).get("Entries", {}) if arquivo_pt.is_file() else {}
 
+    # Pergaminhos: so' as vilas que o jogo desenhou (arquivo <id da area>.znin; os ids 1 e 2 sao outros desenhos).
+    pergaminhos = [51, 100]
+    gravar_arte_do_jogo(dados, destino, pergaminhos)
     try:
+        gravar_info_das_areas(carregar_atlas(None), destino, traducoes)
         montar_mundo(dados / "worldmap cache" / "world_2.wmw", destino, traducoes)
     except OSError as exc:   # sem internet nao da' para pegar as posicoes; as areas ainda sao extraidas
         print(f"AVISO: mapa-mundi nao montado ({exc})")

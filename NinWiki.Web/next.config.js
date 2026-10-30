@@ -21,6 +21,11 @@ const nextConfig = {
   // Nao anuncia "X-Powered-By: Next.js" (menos informacao para quem faz varredura de versoes vulneraveis).
   poweredByHeader: false,
 
+  // /jutsus (sem id) nao tem pagina propria: os jutsus ficam dentro das masteries. Em vez de 404, leva para a lista.
+  async redirects() {
+    return [{ source: '/jutsus', destination: '/masteries', permanent: false }];
+  },
+
   // Cabeçalhos aplicados a todas as páginas para reduzir superfícies comuns
   // de clickjacking, MIME sniffing e vazamento de dados pelo navegador.
   async headers() {
