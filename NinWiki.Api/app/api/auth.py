@@ -153,7 +153,7 @@ async def discord_callback(
         return _login_redirect("discord_denied", back)
 
     cookie_state = request.cookies.get(STATE_COOKIE)
-    if not code or not state or not cookie_state or not hmac.compare_digest(state, cookie_state):
+    if not code or not state or not cookie_state or not hmac.compare_digest(state.encode(), cookie_state.encode()):
         _register_failure()
         return _login_redirect("invalid_state", back)
 
