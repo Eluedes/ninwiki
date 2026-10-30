@@ -38,7 +38,7 @@ export function GuideExtras({ attributes, storyArcs, summons }: GuideExtrasProps
         </TabsList>
 
         {/* Atributos: reaproveita o mesmo array usado nas paginas de
-            Mastery (lib/masteries-data.ts) - um so' lugar de verdade
+            Mastery - um so' lugar de verdade
             pra essa informacao, em vez de duplicar aqui. */}
         <TabsContent value="attributes" className="mt-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -59,7 +59,7 @@ export function GuideExtras({ attributes, storyArcs, summons }: GuideExtrasProps
         {/* Story Arcs: capitulos de conteudo narrativo, mais recente
             primeiro (nao ha ordenacao automatica - a ordem no array de
             dados e' a ordem de exibicao, entao arcos novos entram no
-            topo de lib/guide-data.ts). */}
+            topo da pagina). */}
         <TabsContent value="arcs" className="mt-4">
           <div className="space-y-2">
             {storyArcs.map((arc) => (

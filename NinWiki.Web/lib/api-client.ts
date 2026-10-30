@@ -854,11 +854,6 @@ export function createMaintenancePass(): Promise<{ token: string; hours: number;
   return apiFetch('/site/pass', { method: 'POST' }, true);
 }
 
-/** Lista os ranks ninja (aba do Guia). */
-export function listNinjaRanks(): Promise<ApiNinjaRank[]> {
-  return apiFetch('/ninja-ranks');
-}
-
 /** Lista os arcos de historia (aba do Guia). */
 export function listStoryArcs(): Promise<ApiStoryArc[]> {
   return apiFetch('/story-arcs');

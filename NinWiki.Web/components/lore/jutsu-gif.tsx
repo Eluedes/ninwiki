@@ -1,7 +1,7 @@
 'use client';
 
 // Bloco de demonstracao (GIF) de um jutsu, com fallback gracioso quando
-// o arquivo referenciado em lib/masteries-data.ts (campo `gif`) ainda
+// o arquivo referenciado em campo `gif` do jutsu ainda
 // nao existe em public/images/jutsus/. Sem isso, um `gif` apontando
 // para um arquivo inexistente mostrava o icone de imagem quebrada do
 // navegador na pagina de detalhe do jutsu - extraido para componente
