@@ -16,11 +16,12 @@ Cada problema traz `hintPt`: explicacao em portugues (causa provavel e o que faz
 Privacidade: a API nao manda traceback nem IP para o bot; aqui so' mostramos titulo, mensagem curta (ja' mascarada pela
 API), local no codigo, rota e contador.
 """
-import json
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from ninwiki_bot._util import clip, parse_time, read_json, write_json_atomic
 
 COOLDOWN = timedelta(minutes=10)    # intervalo minimo entre dois avisos do MESMO problema
 OVERLAP = timedelta(minutes=3)      # quanto "voltamos no tempo" a cada consulta (a deduplicacao e' pelo estado abaixo)
@@ -43,15 +44,11 @@ class ErrorFeedState:
 
 
 def _clip(text: str, limit: int = MAX_TEXT) -> str:
-    """Corta texto longo (e tira quebras de linha) para caber no embed."""
-    text = " ".join(str(text).split())
-    return text if len(text) <= limit else text[: limit - 1] + "…"
+    """Corta texto longo para o embed (logica em _util)."""
+    return clip(text, limit)
 
 
-def _parse_time(value: str) -> datetime:
-    """Le o ISO 8601 da API (aceita 'Z') e garante fuso UTC."""
-    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+_parse_time = parse_time
 
 
 def query_since(state: ErrorFeedState) -> datetime:
@@ -188,17 +185,15 @@ class StatusMessageStore:
 
     def load(self) -> tuple[int, int] | None:
         """(id do canal, id da mensagem) salvos, ou None."""
+        raw = read_json(self.path)
         try:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
             return int(raw["channel_id"]), int(raw["message_id"])
-        except (OSError, ValueError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError):
             return None
 
     def save(self, channel_id: int, message_id: int) -> None:
         """Grava os ids (escrita atomica)."""
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"channel_id": str(channel_id), "message_id": str(message_id)}), encoding="utf-8")
-        tmp.replace(self.path)
+        write_json_atomic(self.path, {"channel_id": str(channel_id), "message_id": str(message_id)})
 
 
 def update_status(status: ServiceStatus, ok: bool, now: datetime, down_after: int = DOWN_AFTER) -> dict | None:
@@ -228,17 +223,15 @@ class ErrorFeedStore:
 
     def load(self) -> ErrorFeedState:
         """Estado salvo, ou 'a partir de agora' se nao existir/estiver corrompido (nunca despeja o historico antigo)."""
+        raw = read_json(self.path)
         try:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
             posted = {str(k): {"count": int(v["count"]), "at": str(v["at"])} for k, v in raw.get("posted", {}).items()}
             rs = raw.get("reportsSince")
             return ErrorFeedState(since=_parse_time(raw["since"]), posted=posted, reports_since=_parse_time(rs) if rs else None)
-        except (OSError, ValueError, KeyError, TypeError):
+        except (AttributeError, ValueError, KeyError, TypeError):  # AttributeError: arquivo valido mas nao e' um objeto (ou ausente -> None)
             return ErrorFeedState(since=datetime.now(timezone.utc))
 
     def save(self, state: ErrorFeedState) -> None:
         """Grava o estado (escrita atomica: arquivo temporario + rename)."""
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"since": state.since.isoformat(), "posted": state.posted,
-                                         "reportsSince": state.reports_since.isoformat() if state.reports_since else None}), encoding="utf-8")
-        tmp.replace(self.path)
+        write_json_atomic(self.path, {"since": state.since.isoformat(), "posted": state.posted,
+                                      "reportsSince": state.reports_since.isoformat() if state.reports_since else None})

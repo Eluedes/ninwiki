@@ -13,10 +13,11 @@ Como nao perder nem repetir acao:
 Privacidade: o endpoint da API nao devolve IP, e aqui so' mostramos campos curtos e seguros do
 `diff` (nome, titulo, cargo...). Conteudo de textos nunca vai pro Discord.
 """
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from ninwiki_bot._util import clip, parse_time, read_json, write_json_atomic
 
 OVERLAP = timedelta(minutes=3)       # quanto "voltamos no tempo" a cada consulta (e deduplicamos por id)
 MAX_SEEN = 500                       # quantos ids recentes lembrar
@@ -52,15 +53,11 @@ class FeedState:
 
 
 def _clip(text: str, limit: int = MAX_TEXT) -> str:
-    """Corta texto longo (e tira quebras de linha) para caber no embed."""
-    text = " ".join(str(text).split())
-    return text if len(text) <= limit else text[: limit - 1] + "…"
+    """Corta texto longo para o embed (logica em _util)."""
+    return clip(text, limit)
 
 
-def _parse_time(value: str) -> datetime:
-    """Le o ISO 8601 da API (aceita 'Z') e garante fuso UTC."""
-    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+_parse_time = parse_time
 
 
 def describe_diff(entry: dict) -> str:
@@ -117,17 +114,15 @@ class LogFeedStore:
 
     def load(self) -> FeedState:
         """Estado salvo, ou 'a partir de agora' se nao existir/estiver corrompido (nunca despeja o historico antigo)."""
+        raw = read_json(self.path)
         try:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
             return FeedState(since=_parse_time(raw["since"]), seen=[str(x) for x in raw.get("seen", [])][-MAX_SEEN:])
-        except (OSError, ValueError, KeyError, TypeError):
+        except (AttributeError, ValueError, KeyError, TypeError):  # AttributeError: arquivo valido mas nao e' um objeto (ou ausente -> None)
             return FeedState(since=datetime.now(timezone.utc))
 
     def save(self, state: FeedState) -> None:
         """Grava o estado (escrita atomica: arquivo temporario + rename, para nao corromper se o bot cair no meio)."""
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"since": state.since.isoformat(), "seen": state.seen[-MAX_SEEN:]}), encoding="utf-8")
-        tmp.replace(self.path)
+        write_json_atomic(self.path, {"since": state.since.isoformat(), "seen": state.seen[-MAX_SEEN:]})
 
 
 def query_since(state: FeedState) -> datetime:

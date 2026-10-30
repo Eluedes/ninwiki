@@ -8,9 +8,12 @@ acima de 2^53, e um ID do Discord passa disso.
 Este arquivo NAO importa discord.py de proposito, pra poder ser testado sem o
 Discord (ver NinWiki.Api/scripts/testar_bot_integracao.py).
 """
+import logging
 from typing import Any
 
 import httpx
+
+log = logging.getLogger("ninwiki_bot")
 
 
 class ApiError(Exception):
@@ -52,7 +55,7 @@ class NinWikiApi:
                 if isinstance(body, dict) and isinstance(body.get("detail"), str):
                     detail = body["detail"]
             except ValueError:
-                pass
+                log.debug("Resposta de erro da API nao era JSON (HTTP %s)", res.status_code)
             if res.status_code == 401:
                 detail = "The bot is not authorized on the API (BOT_API_TOKEN differs between the two .env files)."
             elif res.status_code == 404 and detail in (None, "Not Found"):

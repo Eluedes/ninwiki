@@ -3,9 +3,10 @@ Mensagem "Latest updates": a versao mais recente da API e do site, numa unica me
 Este arquivo NAO importa discord.py: decide SE precisa editar e monta o texto; o main.py fala com o Discord.
 O estado (id da mensagem e ultima versao vista de cada um, com a hora em que o bot a viu) fica em version_state.json: reiniciar o bot nao cria mensagem nova.
 """
-import json
 from datetime import datetime, timezone
 from pathlib import Path
+
+from ninwiki_bot._util import read_json, write_json_atomic
 
 
 class VersionStore:
@@ -17,17 +18,15 @@ class VersionStore:
 
     def load(self) -> dict:
         """Estado salvo ({"message_id": int|None, "api": {...}, "web": {...}}) ou um estado vazio."""
+        raw = read_json(self.path)
         try:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
             return {"message_id": int(raw["message_id"]) if raw.get("message_id") else None, "api": raw.get("api") or {}, "web": raw.get("web") or {}}
-        except (OSError, ValueError, TypeError):
+        except (AttributeError, ValueError, TypeError):  # AttributeError/TypeError: ausente (None) ou formato inesperado
             return {"message_id": None, "api": {}, "web": {}}
 
     def save(self, state: dict) -> None:
         """Grava o estado (escrita atomica; o id da mensagem vai como texto)."""
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps({**state, "message_id": str(state["message_id"]) if state.get("message_id") else None}), encoding="utf-8")
-        tmp.replace(self.path)
+        write_json_atomic(self.path, {**state, "message_id": str(state["message_id"]) if state.get("message_id") else None})
 
 
 def merge(state: dict, api: dict | None, web: dict | None, now: datetime | None = None) -> tuple[dict, bool]:

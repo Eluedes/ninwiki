@@ -12,6 +12,7 @@ Comandos PUBLICOS do bot (qualquer pessoa do servidor pode usar), todos com Comp
 Nada aqui mostra dado interno: so' online/offline e conteudo PUBLICADO do site. Os construtores de tela (build_*) nao falam
 com o Discord, so' montam o LayoutView - assim podem ser testados sem conexao.
 """
+import logging
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 
@@ -22,6 +23,7 @@ from ninwiki_bot.api_client import ApiError, NinWikiApi
 from ninwiki_bot.error_feed import COLORS, ServiceStatus, uptime_pct
 from ninwiki_bot.language import DEFAULT, LANGS, LanguageStore, TEXT
 
+log = logging.getLogger("ninwiki_bot")
 NO_MENTIONS = discord.AllowedMentions.none()
 KIND_ICON = {"item": "🎒", "mob": "👹", "weapon": "⚔️", "guide": "📘", "mission": "📜", "mastery": "✨", "jutsu": "🌀", "post": "📰"}
 KIND_COLOR = 0x38BDF8
@@ -164,8 +166,8 @@ class SearchView(discord.ui.LayoutView):
         if self.message is not None:
             try:
                 await self.message.edit(view=self._again(self.index, interactive=False))
-            except discord.HTTPException:
-                pass
+            except discord.HTTPException as exc:
+                log.debug("Nao consegui tirar o menu no timeout: %s", exc)
 
 
 def _chance(m: dict) -> str:

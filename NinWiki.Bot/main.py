@@ -292,15 +292,15 @@ class NinWikiBot(discord.Client):
             log.warning("Backup falhou: %s", detail)
             try:
                 await channel.send(f"⚠️ **Backup {stamp} UTC failed:** {detail[:300]}", allowed_mentions=discord.AllowedMentions.none())
-            except discord.DiscordException:
-                pass
+            except discord.DiscordException as exc2:
+                log.warning("Aviso de falha do backup tambem nao foi enviado: %s", exc2)
             return
         finally:
             if backup_id:
                 try:
                     await self.api.delete_backup(backup_id)
-                except ApiError:
-                    pass
+                except ApiError as exc3:
+                    log.warning("Nao consegui apagar o backup temporario %s: %s", backup_id, exc3.detail)
         # retencao: apaga as partes dos backups mais antigos (so' as mensagens DO BOT com arquivo de backup)
         found: list[tuple[str, discord.Message]] = []
         async for m in channel.history(limit=400):
