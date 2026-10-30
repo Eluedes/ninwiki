@@ -9,7 +9,7 @@
 // Drops.
 
 import Link from 'next/link';
-import { cn, itemHasStack, shouldShowLevel, levelText, signedValue } from '@/lib/utils';
+import { cn, itemHasStack, shouldShowLevel, levelText, signedValue, formatNumber } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -290,7 +290,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
     detailRows.push({ icon: Gem, label: ce.rarity, value: rarity.label, tone: rarity.color });
     if (shouldShowLevel(entry.category, entry.itemType, entry.level, entry.levelUnknown)) detailRows.push({ icon: Star, label: dict.detail.level, value: levelText(entry), tone: 'text-amber-400' });
     if (itemHasStack(entry.category, entry.itemType) && entry.maxStack != null) {
-      detailRows.push({ icon: Layers, label: dict.detail.maxStack, value: entry.maxStack.toLocaleString(isPt ? 'pt-BR' : 'en-US'), tone: 'text-sky-400' });
+      detailRows.push({ icon: Layers, label: dict.detail.maxStack, value: formatNumber(entry.maxStack, locale), tone: 'text-sky-400' });
     }
     if (entry.itemType === 'cast' && entry.castVillageName) detailRows.push({ icon: MapPin, label: dict.detail.castVillage, value: entry.castVillageName });
   }

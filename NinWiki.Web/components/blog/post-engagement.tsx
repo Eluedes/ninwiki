@@ -14,7 +14,7 @@ import {
   ApiError, addComment, deleteOwnComment, getEngagement, getReaderMe, listComments, readerLoginUrl, readerLogout, setLike,
   type ApiComment, type ApiEngagement, type ApiReader,
 } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 
 const MAX_CHARS = 1000;
 
@@ -182,7 +182,7 @@ export function PostEngagement({ slug }: { slug: string }) {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-semibold text-card-foreground">{c.author.username}</span>
-                  <time dateTime={c.createdAt}>{new Date(c.createdAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}</time>
+                  <time dateTime={c.createdAt}>{formatDateTime(c.createdAt, locale, { utc: true })}</time>
                   {c.mine && (
                     <button type="button" onClick={() => remove(c.id)} className="ml-auto inline-flex items-center gap-1 hover:text-destructive" title={t.deleteComment}>
                       <Trash2 className="h-3 w-3" /> {t.deleteComment}

@@ -4,6 +4,7 @@
 // as receitas de criacao (com busca), as ferramentas e seus precos. Client Component so' pra escolher os NOMES pelo idioma e filtrar as receitas.
 // A busca dos dados fica no Server Component app/(wiki)/(lore)/proficiencies/[id]/page.tsx.
 
+import { formatNumber } from '@/lib/utils';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import type { ApiProfession } from '@/lib/api-client';
@@ -163,7 +164,7 @@ export function ProfessionPageClient({ profession }: { profession: ApiProfession
                     <p className="truncate font-medium text-card-foreground">
                       {tool.slug ? <Link href={`/detail/${tool.slug}`} className="text-primary hover:underline">{localizedName(locale, tool.name, tool.namePt)}</Link> : localizedName(locale, tool.name, tool.namePt)}
                     </p>
-                    {tool.price && <p className="text-xs text-muted-foreground">{t.profPrice}: {tool.price.amount.toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')} {tool.price.currency}</p>}
+                    {tool.price && <p className="text-xs text-muted-foreground">{t.profPrice}: {formatNumber(tool.price.amount, locale)} {tool.price.currency}</p>}
                   </div>
                   {tool.level ? <span className="shrink-0 text-xs text-muted-foreground">{t.professionLevel} {tool.level}</span> : null}
                 </li>

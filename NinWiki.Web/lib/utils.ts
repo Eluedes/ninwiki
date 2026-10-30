@@ -63,3 +63,26 @@ export function signedValue(value: string): string {
   const v = value.trim();
   return /^\d/.test(v) && Number.parseFloat(v) !== 0 ? `+${v}` : v;
 }
+
+// ---- Formatacao de data/numero conforme o idioma do site ----
+// `utc` = true no site publico: fixa o fuso em UTC para servidor e navegador
+// gerarem o mesmo texto (evita erro de hidratacao). Painel admin usa o fuso do navegador.
+type Idioma = 'pt' | 'en';
+const tag = (locale: Idioma) => (locale === 'pt' ? 'pt-BR' : 'en-US');
+
+/** Data e hora completas (ex.: 29/10/2026 14:05:00). */
+export function formatDateTime(iso: string, locale: Idioma, opts?: Intl.DateTimeFormatOptions & { utc?: boolean }): string {
+  const { utc, ...resto } = opts ?? {};
+  return new Date(iso).toLocaleString(tag(locale), { ...resto, ...(utc ? { timeZone: 'UTC' } : {}) });
+}
+
+/** So a data; `opts` define o formato (ex.: { day: 'numeric', month: 'short', year: 'numeric' }). */
+export function formatDate(iso: string, locale: Idioma, opts?: Intl.DateTimeFormatOptions & { utc?: boolean }): string {
+  const { utc, ...resto } = opts ?? {};
+  return new Date(iso).toLocaleDateString(tag(locale), { ...resto, ...(utc ? { timeZone: 'UTC' } : {}) });
+}
+
+/** Numero com separador de milhar do idioma. */
+export function formatNumber(n: number, locale: Idioma): string {
+  return n.toLocaleString(tag(locale));
+}

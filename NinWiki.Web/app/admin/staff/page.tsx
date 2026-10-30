@@ -18,7 +18,7 @@ import {
   ApiError, createStaff, deleteStaff, getRolesOverview, listStaff, setStaffActive, updateStaffName, updateStaffRole,
   type ApiCustomRole, type ApiStaff, type StaffRole,
 } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 
 // Hierarquia so' pra decidir o que MOSTRAR (o backend e' quem manda de verdade).
 const RANK: Record<StaffRole, number> = { creator: 1, admin: 2, super_admin: 3 };
@@ -317,7 +317,7 @@ export default function StaffPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {m.lastLoginAt ? new Date(m.lastLoginAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US') : t.neverLoggedIn}
+                      {m.lastLoginAt ? formatDateTime(m.lastLoginAt, locale) : t.neverLoggedIn}
                     </td>
                     <td className="space-x-2 whitespace-nowrap px-4 py-3 text-right">
                       {canManage && can('staff.delete') && (

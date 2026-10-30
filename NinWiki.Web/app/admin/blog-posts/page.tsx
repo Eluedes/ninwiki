@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { ApiError, deletePost, listPosts, type ApiPostSummary } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 import { SteamImportCard } from '@/components/admin/steam-import-card';
 
 /** Lista de posts no painel. */
@@ -117,7 +117,7 @@ export default function BlogPostsPage() {
                     <p className="font-semibold leading-tight">{p.title}</p>
                     <p className="font-mono text-xs text-muted-foreground">{p.slug}</p>
                     {p.isScheduled && p.publishedAt && (
-                      <p className="text-xs text-sky-400">{new Date(p.publishedAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}</p>
+                      <p className="text-xs text-sky-400">{formatDateTime(p.publishedAt, locale)}</p>
                     )}
                   </td>
                   <td className="px-4 py-3">{p.authorName ?? '—'}</td>
@@ -132,7 +132,7 @@ export default function BlogPostsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {new Date(p.updatedAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}
+                    {formatDateTime(p.updatedAt, locale)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">

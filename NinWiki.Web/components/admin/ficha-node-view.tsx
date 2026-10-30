@@ -11,11 +11,13 @@
 
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
 import { Input } from '@/components/ui/input';
+import { useLanguage } from '@/components/providers/language-provider';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import type { FichaRow } from '@/lib/tiptap-extensions/ficha';
 
 /** Visual editavel do bloco 'Ficha' dentro do editor. */
 export function FichaNodeView({ node, updateAttributes }: NodeViewProps) {
+  const t = useLanguage().dict.admin.richText;
   const title: string = node.attrs.title ?? 'Sheet';
   const rows: FichaRow[] = node.attrs.rows ?? [];
 
@@ -40,7 +42,7 @@ export function FichaNodeView({ node, updateAttributes }: NodeViewProps) {
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Sheet title"
+          placeholder={t.fichaTitle}
           className="h-8 font-semibold"
         />
       </div>
@@ -50,13 +52,13 @@ export function FichaNodeView({ node, updateAttributes }: NodeViewProps) {
             <Input
               value={row.label}
               onChange={(e) => setRow(i, { label: e.target.value })}
-              placeholder="Label"
+              placeholder={t.fichaLabel}
               className="h-8 text-xs"
             />
             <Input
               value={row.value}
               onChange={(e) => setRow(i, { value: e.target.value })}
-              placeholder="Value"
+              placeholder={t.fichaValue}
               className="h-8 text-xs"
             />
             <button

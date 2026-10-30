@@ -4,6 +4,7 @@
 // e os cards de cada proficiencia (coleta e criacao), cada um levando para a sua pagina. A busca dos dados fica no Server Component
 // app/(wiki)/(lore)/proficiencies/page.tsx. Os valores gerais (500, +1% a cada 10 niveis, 128*L-64) sao os registrados pela comunidade.
 
+import { formatNumber } from '@/lib/utils';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { ApiProfession } from '@/lib/api-client';
@@ -66,7 +67,7 @@ function ProfessionCards({ list }: { list: ApiProfession[] }) {
 export function ProficienciesPageClient({ professions }: { professions: ApiProfession[] }) {
   const { locale, dict } = useLanguage();
   const t = dict.lore;
-  const fmt = (n: number) => n.toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US');   // separador de milhar do idioma do site
+  const fmt = (n: number) => formatNumber(n, locale);   // separador de milhar do idioma do site
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState(100);
   const gathering = professions.filter((p) => p.group === 'gathering');

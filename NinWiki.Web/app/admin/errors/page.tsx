@@ -12,7 +12,7 @@ import {
 } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 
 const SOURCE_ICON = { api: Server, web: Globe, deepl: Languages, security: ShieldAlert } as const;
 type Filter = 'open' | 'resolved' | 'all';
@@ -49,7 +49,7 @@ export default function ErrorsPage() {
     }
   }
 
-  const fmt = (iso: string) => new Date(iso).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' });
+  const fmt = (iso: string) => formatDateTime(iso, locale, { dateStyle: 'short', timeStyle: 'short' });
 
   return (
     <div className="space-y-6">

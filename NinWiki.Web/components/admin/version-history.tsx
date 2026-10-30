@@ -4,6 +4,7 @@
 // Restaurar tambem entra no historico, entao da' para desfazer a restauracao. Depois de restaurar a pagina recarrega para
 // mostrar o formulario com os dados voltados.
 
+import { formatDateTime } from '@/lib/utils';
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -61,7 +62,7 @@ export function VersionHistory({ itemId }: { itemId: string }) {
             <li key={v.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
               <span className="min-w-0 truncate">
                 <span className="font-medium">{v.name}</span>
-                <span className="text-muted-foreground"> · {new Date(v.createdAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}{v.savedBy ? ` · ${t.by} ${v.savedBy}` : ''}</span>
+                <span className="text-muted-foreground"> · {formatDateTime(v.createdAt, locale)}{v.savedBy ? ` · ${t.by} ${v.savedBy}` : ''}</span>
               </span>
               <Button type="button" size="sm" variant="outline" disabled={busyId !== null} onClick={() => handleRestore(v)}>
                 {busyId === v.id ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-1.5 h-4 w-4" />}

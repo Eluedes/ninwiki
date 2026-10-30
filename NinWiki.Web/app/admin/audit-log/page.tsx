@@ -15,7 +15,7 @@ import { listAuditLog, ApiError, clearAuditLog, type ApiAuditLogEntry } from '@/
 import { useLanguage } from '@/components/providers/language-provider';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RoleBadge } from '@/components/admin/role-badge';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 import { auditTarget } from '@/lib/audit-target';
 
 const ACTION_STYLE: Record<string, { icon: typeof Plus; className: string }> = {
@@ -186,7 +186,7 @@ export default function AuditLogPage() {
                   </p>
                 </div>
                 <span className="shrink-0 text-xs text-muted-foreground">
-                  {new Date(entry.createdAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US')}
+                  {formatDateTime(entry.createdAt, locale)}
                 </span>
               </div>
             );

@@ -12,7 +12,7 @@ import { DetailSidebar } from '@/components/wiki/detail-sidebar';
 import { CatalogCard } from '@/components/wiki/catalog-card';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import { RichText, extractPlainText } from '@/components/lore/rich-text';
-import { cn, itemHasStack, shouldShowLevel, levelText, signedValue } from '@/lib/utils';
+import { cn, itemHasStack, shouldShowLevel, levelText, signedValue, formatDate, formatNumber } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import { itemTypeLabels } from '@/lib/item-types';
 import { ArrowLeft, Heart, Languages, Layers, Scale, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
@@ -75,7 +75,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
             </span>
           )}
           {entry.updatedAt && (
-            <span className="text-xs text-muted-foreground">{dict.detail.updatedOn} {new Date(entry.updatedAt).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            <span className="text-xs text-muted-foreground">{dict.detail.updatedOn} {formatDate(entry.updatedAt, locale, { day: 'numeric', month: 'short', year: 'numeric', utc: true })}</span>
           )}
           {/* Itens e armas podem ser comparados lado a lado com outro */}
           {(entry.category === 'items' || entry.category === 'weapons') && (
@@ -198,7 +198,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
 
               {itemHasStack(entry.category, entry.itemType) && entry.maxStack != null && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <StatTile icon={Layers} label={dict.detail.maxStack} value={entry.maxStack.toLocaleString(isPt ? 'pt-BR' : 'en-US')} tone="text-sky-400" />
+                  <StatTile icon={Layers} label={dict.detail.maxStack} value={formatNumber(entry.maxStack, locale)} tone="text-sky-400" />
                 </div>
               )}
             </>

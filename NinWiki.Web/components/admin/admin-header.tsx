@@ -59,7 +59,7 @@ export function AdminHeader() {
       </nav>
 
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-        <Link href="/" target="_blank" title={dict.admin.sidebar.viewSite}
+        <Link href="/" target="_blank" rel="noopener noreferrer" title={dict.admin.sidebar.viewSite}
           className="hidden h-9 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-card-foreground md:flex">
           <ExternalLink className="h-3.5 w-3.5" />{dict.admin.sidebar.viewSite}
         </Link>

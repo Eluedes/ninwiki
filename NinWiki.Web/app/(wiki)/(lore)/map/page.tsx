@@ -78,7 +78,7 @@ export default function MapPage() {
           viewBox="0 0 640 411"
           preserveAspectRatio="xMidYMid meet"
           className="absolute inset-0 h-full w-full"
-          aria-label="Mapa vetorial do mundo de Nin"
+          aria-label={t.mapAria}
           role="img"
         >
           <defs>
