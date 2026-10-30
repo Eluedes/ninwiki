@@ -50,7 +50,7 @@ export function WikiButton({ category, locale }: WikiButtonProps) {
       >
         <WikiImage
           src={category.image}
-          alt={`Imagem de ${category.title[locale]}`}
+          alt={category.title[locale]}
           fallback={
             <Icon className="h-8 w-8 text-primary transition-transform group-hover:scale-110" />
           }

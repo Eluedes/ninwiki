@@ -1,0 +1,5587 @@
+{
+ "source": "Nin Online Wiki (Fandom), CC-BY-SA",
+ "missions": [
+  {
+   "id": "a-demon",
+   "name": "A Demon??",
+   "level": 45,
+   "rank": "A",
+   "type": "side",
+   "areas": [],
+   "npc": "Chakra Markings",
+   "location": "Snow Cave",
+   "quote": null,
+   "summary": "A Demon?? is a mission applicable for Level 45+",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "95000",
+    "ryo": null,
+    "extra": "Chakra Pill V\nCharka Pill IV",
+    "list": [
+     "95000 EXP",
+     "Chakra Pill V\nCharka Pill IV"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/A_Demon%3F%3F"
+  },
+  {
+   "id": "a-lord-s-legacy-takumi-arc",
+   "name": "A Lord's Legacy - (Takumi arc)",
+   "level": 10,
+   "rank": "Main",
+   "type": "side",
+   "areas": [
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": null,
+   "objectives": [
+    "Kill Royal Spirit",
+    "Lay his bones to peace in the Royal Lantern"
+   ],
+   "requirements": [
+    "[[Seeker of Truth]]"
+   ],
+   "rewards": {
+    "exp": "4500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "4500 XP",
+     "[[Sealable Scroll I]]"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Starts automatically as you finish Seeker of Truth"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/A_Lord%27s_Legacy_-_%28Takumi_arc%29"
+  },
+  {
+   "id": "academy-scrolls",
+   "name": "Academy Scrolls",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "A simple and easy mission given to Genin by lazy chunins and jonins. The Genin is supposed to make a scroll of the",
+   "description": "In order to train new Genin, the Academy needs Basic Ninjutsu scrolls to distribute to the students. Talk to Sensei at the Academy to find out what scrolls are needed.",
+   "objectives": [
+    "1 [[Body Flicker Technique|Body Flicker]] Manual for Leaf",
+    "1 [[Cloak of Invisibility Technique|Cloak of Invisibility]] Manual for Sand",
+    "1 [[Substitution Technique|Substitution]] Manual for Mist"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "5,820",
+    "ryo": "80",
+    "extra": null,
+    "list": [
+     "5,820 EXP",
+     "80 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Academy_Scrolls"
+  },
+  {
+   "id": "access-granted",
+   "name": "Access Granted",
+   "level": 20,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": "Koki",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: After recovering the train keys from Guraki, you receive your final mission in the first series of",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "3500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "3500 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Access_Granted"
+  },
+  {
+   "id": "among-the-yokai",
+   "name": "Among the Yokai",
+   "level": 60,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Lady Kitsune]]",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]]",
+   "description": null,
+   "objectives": [
+    "Speak with all eight Yokai Village residents (0/8): [[Okuri]], [[Yuki]], [[Bunbuku]], [[Bakan]], [[Hito]], [[Nekomata]], [[Ningyo]], [[Rokuro]]",
+    "Return to [[Lady Kitsune]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "260400",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "260,400 EXP",
+     "Item reward"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Among_the_Yokai"
+  },
+  {
+   "id": "bad-commuters",
+   "name": "Bad Commuters",
+   "level": null,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "[[Land Of Waves]], Train",
+   "quote": "Koji Co. is always in need of help getting rid of the gangsters messing with their train line. Now that the train is fully operational, they've been behaving amuck again!",
+   "summary": "Bad Commuters is a Rank B story mission set on the [[Land Of Waves]] train line, given on behalf of Koji Co. The gangsters the [[Gang War I|Gang War]] chain cleared off the train are back, and the company wants them dealt with again.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "9,600",
+    "ryo": null,
+    "extra": "60 Ryo",
+    "list": [
+     "EXP x9,600",
+     "Ryo x60"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Where It Sits In The Arc",
+     "lines": [
+      "This is an inference from the card's own wording, not a confirmed position. The description says \"now that the train is fully operational\", and the train is only restored once [[Koji Co. Employment Opportunity]] has Mr. Koji resume operations after the [[Gang War VII|Gang War]] chain. That places Bad Commuters after the Gang War chain rather than inside it. Nothing on the card names a preceding or following mission, so the exact slot is open."
+     ]
+    },
+    {
+     "title": "The Exp Is Far Below Every Other B-Rank Mission In This Arc",
+     "lines": [
+      "Bad Commuters - B - 9,600",
+      "[[Gang War VII]] - B - 58,000",
+      "[[Guilty Pleasure]] - B - 46,400",
+      "[[Bounty Hunting]] (tier I) - B - 46,500",
+      "Same letter rank, roughly one fifth to one sixth of the EXP. Rank on its own clearly does not set the payout here. The missing level gate is the most likely explanation — a low-level story mission would pay accordingly — which is exactly why the desk panel matters."
+     ]
+    },
+    {
+     "title": "The Level Gate Is Missing, And Why",
+     "lines": [
+      "The card above is the mission log view of an already-accepted mission. That view carries the rank and the mission type but omits the level range. The mission request panel at the desk shows rank, level range, EXP and Ryo together.",
+      "If you have this mission available and not yet accepted, a capture of the request panel closes the gap. See [[Nin Online Wiki:Contributing]]."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Bad_Commuters"
+  },
+  {
+   "id": "bad-larvae",
+   "name": "Bad Larvae",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "One of the first missions you'll receive as a villager is the Bad Larvae mission. This mission requires you to kill 80 Larvae that are infesting the areas around the village. These [[Larva]] aren't too tough so low level ninja are sent to deal with them.",
+   "description": "You have been tasked with helping the villagers exterminate Larvae in the area surrounding the village.",
+   "objectives": [
+    "Kill 80 Larvae (0/80)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "180",
+    "ryo": "40",
+    "extra": null,
+    "list": [
+     "180 EXP",
+     "40 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Bad_Larva"
+  },
+  {
+   "id": "baiting-basics-i",
+   "name": "Baiting Basics I",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "The local fisherman has a simple request: collect one of each common fish. But as you start handing over your catches, you notice a glint in his eye - the fisherman may be a bit shady, and surprisingly picky about the quality. Only the best of each catch will satisfy him, so inspect every fish before you turn it over!",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Baiting_Basics_I"
+  },
+  {
+   "id": "balanced-waters",
+   "name": "Balanced Waters",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Nekomata]]",
+   "location": "A river in the [[Land of Spirits]] (exact location still being confirmed)",
+   "quote": null,
+   "summary": "A [[Land of Spirits]] mission given by [[Nekomata]], centered on restoring harmony to a river by fishing its two koi.",
+   "description": null,
+   "objectives": [
+    "Fish Black Koi (0/1)",
+    "Fish White Koi (0/1)",
+    "Talk to [[Nekomata]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "Information needed",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "Information needed (rewards were not captured)"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Introduces the Black Koi and White Koi as fishable, one of each required to complete the mission.",
+      "The quest-start step and the exact river location were not captured; the assigning NPC is reported as [[Nekomata]]. If you have the quest card, send it with <code>/submit</code> in the Nin Online Discord #wiki channel.",
+      "Dialogue transcribed by Cynari (cyndecho)."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Balanced_Waters"
+  },
+  {
+   "id": "bandit-hunt-i",
+   "name": "Bandit Hunt I",
+   "level": 44,
+   "rank": "B",
+   "type": "repeatable",
+   "areas": [],
+   "npc": "[[Rizo]]",
+   "location": "Bandit Area (Level 40 arc)",
+   "quote": "The roads are no longer safe. Bandits have been raiding nearby settlements, leaving chaos in their wake. Hunt them down and collect their blood vials as proof of the deed.",
+   "summary": "Bandit Hunt I is a repeatable Rank B mission given by [[Rizo]] in the [[Bandit Questline|Level 40 arc]], available only after the [[Bandit Questline]] has been completed. It is the first of the three repeatables Rizo offers, alongside [[Bandit Hunt II]] and [[The Wolf Pack]].",
+   "description": null,
+   "objectives": [
+    "Kill [[Takeshi]] x1",
+    "Kill [[Kariyuse]] x1",
+    "Kill [[Tause]] x1",
+    "Obtain [[Blood Vial]] x10"
+   ],
+   "requirements": [
+    "This mission does not appear until the [[Bandit Questline]] chain is finished through [[Bandits X]] — the mission in which [[Leyasu / Ieyasu|the bandit leader]] is killed and his sister Nia is escorted to safety. Rizo then offers three repeatables from the [[Locations|War-torn Shack]], and Nia stands beside him there.",
+    "The three were added together in [[Updates 2026|Update v5.13.0]] (22 May 2026), whose patch note reads \"Added 3 new repeatable missions to Rizo available after finishing Bandit Questline (44lvl+)\". The same patch also records \"Rebalanced objectives requirements and XP reward of 40lvl and 50lvl Arc repeatable missions\", so the figures on this page are the post-rebalance values."
+   ],
+   "rewards": {
+    "exp": "74,200",
+    "ryo": null,
+    "extra": "3 × [[Blood Pill]]",
+    "list": [
+     "74,200 EXP",
+     "3 × [[Blood Pill]]"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Three Repeatables",
+     "lines": [
+      "[[Bandit Hunt I]] - B - 74,200 - 3 × [[Blood Pill]]",
+      "[[Bandit Hunt II]] - B - 79,700 - 3 × [[Blood Pill]]",
+      "[[The Wolf Pack]] - C - 78,600 - 3 × [[Chakra Pill]]"
+     ]
+    },
+    {
+     "title": "A Note On The Mission Type",
+     "lines": [
+      "The two views of these missions disagree on what they are called. The Mission Request panel at the point of accepting reads \"Lv. 44+ Repeatable Mission\", while the Mission Log entry for the same mission, once accepted, reads \"Story Mission\". Both labels are reproduced here as the game shows them. The patch note that introduced them calls them repeatable missions, so the Mission Log label appears to be the inaccurate one."
+     ]
+    },
+    {
+     "title": "Notes",
+     "lines": [
+      "Every figure on this page is read from the in-game Mission Request and Mission Log panels captured on 24 August 2026."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Bandit_Hunt_I"
+  },
+  {
+   "id": "bandit-hunt-ii",
+   "name": "Bandit Hunt II",
+   "level": 44,
+   "rank": "B",
+   "type": "repeatable",
+   "areas": [],
+   "npc": "[[Rizo]]",
+   "location": "Bandit Area (Level 40 arc)",
+   "quote": "The bandit threat grows bolder. Their numbers have swelled and their attacks more ruthless. Push deeper into their territory, thin their ranks and bring back the blood vials of those you slay.",
+   "summary": "Bandit Hunt II is a repeatable Rank B mission given by [[Rizo]] in the [[Bandit Questline|Level 40 arc]], available only after the [[Bandit Questline]] has been completed. It is the heavier of the two bandit hunts: four named targets instead of three, and 15 [[Blood Vial|Blood Vials]] instead of 10.",
+   "description": null,
+   "objectives": [
+    "Kill [[Kiemon]] x1",
+    "Kill [[Hasuka]] x1",
+    "Kill [[Nelinel]] x1",
+    "Kill [[Torii]] x1",
+    "Obtain [[Blood Vial]] x15"
+   ],
+   "requirements": [
+    "The level gate is not on the capture. The image on this page is the Mission Log view, which shows rank but omits the level range that the Mission Request panel carries. The gate is given as 44+ here on two independent grounds: the [[Updates 2026|v5.13.0]] patch note gates all three of Rizo's repeatables at \"(44lvl+)\", and the Request panels captured the same day for [[Bandit Hunt I]] and [[The Wolf Pack]] both read \"Lv. 44+ Repeatable Mission\". A capture of this mission's own Request panel would confirm it — [[Nin Online Wiki:Contributing|send one]].",
+    "This mission does not appear until the [[Bandit Questline]] chain is finished through [[Bandits X]] — the mission in which [[Leyasu / Ieyasu|the bandit leader]] is killed and his sister Nia is escorted to safety. Rizo then offers three repeatables from the [[Locations|War-torn Shack]], and Nia stands beside him there.",
+    "The three were added together in [[Updates 2026|Update v5.13.0]] (22 May 2026), whose patch note reads \"Added 3 new repeatable missions to Rizo available after finishing Bandit Questline (44lvl+)\". The same patch also records \"Rebalanced objectives requirements and XP reward of 40lvl and 50lvl Arc repeatable missions\", so the figures on this page are the post-rebalance values."
+   ],
+   "rewards": {
+    "exp": "79,700",
+    "ryo": null,
+    "extra": "3 × [[Blood Pill]]",
+    "list": [
+     "79,700 EXP",
+     "3 × [[Blood Pill]]"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Three Repeatables",
+     "lines": [
+      "[[Bandit Hunt I]] - B - 74,200 - 3 × [[Blood Pill]]",
+      "[[Bandit Hunt II]] - B - 79,700 - 3 × [[Blood Pill]]",
+      "[[The Wolf Pack]] - C - 78,600 - 3 × [[Chakra Pill]]"
+     ]
+    },
+    {
+     "title": "A Note On The Mission Type",
+     "lines": [
+      "The two views of these missions disagree on what they are called. The Mission Request panel at the point of accepting reads \"Lv. 44+ Repeatable Mission\", while the Mission Log entry for the same mission, once accepted, reads \"Story Mission\". Both labels are reproduced here as the game shows them. The patch note that introduced them calls them repeatable missions, so the Mission Log label appears to be the inaccurate one."
+     ]
+    },
+    {
+     "title": "Notes",
+     "lines": [
+      "Every figure on this page is read from the in-game Mission Request and Mission Log panels captured on 24 August 2026."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Bandit_Hunt_II"
+  },
+  {
+   "id": "bandits-defeat-chain",
+   "name": "Bandits Defeat Chain",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [
+    {
+     "title": "Bandits Defeat Chain",
+     "lines": [
+      "[[Bandits I]]",
+      "[[Bandits II]]",
+      "[[Bandits III]]",
+      "[[Bandits IV]]",
+      "[[Bandits V]]",
+      "[[Bandits VI]]",
+      "[[Bandits VII]]",
+      "[[Bandits VIII]]",
+      "[[Bandits IX]]",
+      "[[Bandits X]]"
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Bandits_Defeat_Chain"
+  },
+  {
+   "id": "bat-clearance",
+   "name": "Bat Clearance",
+   "level": 20,
+   "rank": "B",
+   "type": "repeatable",
+   "areas": [],
+   "npc": "[[Warden Haoya]]",
+   "location": "[[Hyoketsu Prison]] — Warden Office",
+   "quote": "Prison Warden Haoya has agreed to lower your sentence if you help to cull the Bat population in the prison. It's a major infestation with no sign of end.",
+   "summary": "Bat Clearance is a repeatable Rank B mission given by [[Warden Haoya]] inside [[Hyoketsu Prison]], gated at Level 20. It is the highest-paying of the three prison missions.",
+   "description": null,
+   "objectives": [
+    "Kill [[Bat]]s x50",
+    "Turn in [[Bat Wing]] x10"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "5,200",
+    "ryo": null,
+    "extra": "Reduces Crimes by 4",
+    "list": [
+     "Reduces Crimes by 4",
+     "EXP — two figures on record, unresolved:",
+     "5,200 - The in-game Mission Request card - 31 Aug 2026",
+     "5,500 - Player recording by Aesiriel - 23 Oct 2025"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Captured in-game by rawxxx on 31 August 2026."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Bat_Clearance"
+  },
+  {
+   "id": "bear-hunt",
+   "name": "Bear Hunt",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "More experienced Ninja will get a [[Missions|mission]] called [[Bear]] Hunt. You will have to head into the Dark Forest maps around the crossroads between the 3 great countries.",
+   "description": "Kill [[Bear|Bears]] within deeper regions of the dark forest.",
+   "objectives": [
+    "Kill 70 Brown Bears (0/70)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "30,000",
+    "ryo": "200",
+    "extra": null,
+    "list": [
+     "30,000 EXP",
+     "200 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Bear_Hunt"
+  },
+  {
+   "id": "benkei-s-tools",
+   "name": "Benkei's Tools",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "[[Benkei]], an old man from the [[Land of Iron]] who now resides in [[Takumi Village]] needs your help. He was chased by thugs near Takumi, quick thinkingly he threw his precious tools into a river hoping to retrieve them later, but they went missing.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "2500",
+    "ryo": "70",
+    "extra": null,
+    "list": [
+     "2500 EXP",
+     "70 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Benkei%27s_Tools"
+  },
+  {
+   "id": "big-ancient-insects",
+   "name": "Big Ancient Insects",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "You have been tasked to find and exterminate [[Big Scarabs]]. Big Scarabs can be found in a cave in the Desert. It is said to have been sealed off decades ago.",
+   "description": null,
+   "objectives": [
+    "Kill 70 Big Scarabs (0/70)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "14600",
+    "ryo": "140",
+    "extra": null,
+    "list": [
+     "14600 EXP",
+     "140 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Big_Ancient_Insects"
+  },
+  {
+   "id": "binding-ofuda",
+   "name": "Binding Ofuda",
+   "level": 60,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Nekomata]] / [[Hito]]",
+   "location": "Spiritcore Crater, [[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]].",
+   "description": null,
+   "objectives": [
+    "Talk to [[Hito]]",
+    "Find the [[Goshinboku Tree]] ([[Spiritcore Crater]] map: up the bridge, then jump to the waterfall on your right)",
+    "Destroy the scattered binding seals",
+    "Report back to [[Hito]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "375,400",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "375,400 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Binding_Ofuda"
+  },
+  {
+   "id": "blocked-entry",
+   "name": "Blocked Entry",
+   "level": 36,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Ku",
+   "location": "Bandit Bridge",
+   "quote": null,
+   "summary": "Blocked Entry is a mission available to take from level 36+",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "265200",
+    "ryo": null,
+    "extra": "80 ryo",
+    "list": [
+     "265200 EXP",
+     "80 ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Blocked_Entry"
+  },
+  {
+   "id": "blood-puppet-retirment",
+   "name": "Blood Puppet Retirment",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [
+    {
+     "title": "To Be Worked On",
+     "lines": [
+      "An incredibly hard task given to highly experienced strong ninja. It's available for all villages but it's not easy but it's highly rewarding. Right now it's considered one of the most challenging hunting missions."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Blood_Puppet_Retirment"
+  },
+  {
+   "id": "botanical-research",
+   "name": "Botanical Research",
+   "level": 12,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": "Tasuke",
+   "location": "[[Leaf Village Hospital]]",
+   "quote": "The village hospital is researching local plants that may be useful in medicines. A medic-nin needs fresh berries and medicinal herbs collected from the village area.",
+   "summary": "Botanical Research is a Rank D story mission open to ninja from Level 12 upward. The village hospital wants plant samples from the surrounding area, and sends you out to collect them.",
+   "description": null,
+   "objectives": [
+    "Collect fresh berries and medicinal herbs from the area around the village",
+    "Return them to Tasuke at the [[Leaf Village Hospital]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "7,500",
+    "ryo": null,
+    "extra": "50 Ryo",
+    "list": [
+     "50 Ryo",
+     "7,500 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Mission Giver Differs By Village",
+     "lines": [
+      "Everything recorded here is the [[Leaf Village]] version, taken at the [[Leaf Village Hospital]] from Tasuke, the medic who runs the hospital front desk. The [[Sand Village]] and [[Mist Village]] versions have not been recorded. If you run this in either, please add that village's giver and dialogue."
+     ]
+    },
+    {
+     "title": "Talking To Tasuke",
+     "lines": [
+      "Tasuke sets it out in three lines:",
+      "Accepting opens the standard Mission Request card, with Accept Mission and Reject buttons.",
+      "<br clear=\"all\">"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Botanical_Research"
+  },
+  {
+   "id": "bounty-hunting",
+   "name": "Bounty Hunting",
+   "level": 21,
+   "rank": "B",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": "Claim ryo by killing enemy ninjas on the Bingo Book B and collecting their reward at the Bounty Station. If you already have outstanding bounty, it counts!",
+   "summary": "Bounty Hunting is a Rank B daily mission in four tiers. You collect Ryo from bounties on Bingo Book \"B\" targets and claim it at the Bounty Station.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "46,500 (I) 81,800 (II) 131,600 (III) 178,400 (IV)",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "46,500 (I) 81,800 (II) 131,600 (III) 178,400 (IV) EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Tiers",
+     "lines": [
+      "I - Lv. 21–30 - 46,500 - Collect 20 Ryo from the Bounty Station - Request card, 17 Aug 2026",
+      "II - Lv. 26–35 - 81,800 - Collect 30 Ryo from the Bounty Station - Request card, 17 Aug 2026",
+      "III - Not recorded - 131,600 - Collect 40 Ryo from the Bounty Station - —",
+      "IV - Not recorded - 178,400 - Collect 50 Ryo from the Bounty Station - —",
+      "Both captured cards matched the EXP figures already recorded here, so the tier-to-EXP mapping above is solid."
+     ]
+    },
+    {
+     "title": "The Gate Pattern, And What It Predicts",
+     "lines": [
+      "Tier I opens at 21 and tier II at 26: a +5 step on both bounds, giving overlapping 10-level windows. If that step continues, tier III would be 31–40 and tier IV 36–45.",
+      "That is a prediction from two datapoints, not a record. It is written down so the next person with a card knows exactly what to check. Neither tier III nor tier IV appears anywhere on this wiki with a gate."
+     ]
+    },
+    {
+     "title": "Bingo Book Tabs",
+     "lines": [
+      "Since Steam Update v6.0.1.5, 16 October 2026, the Bingo Book has Online, All-Time and Crimes tabs. The All-Time tab lists the 50 highest bounties among offline ninja, and a bounty can only be hunted once that ninja is online. See [[Bounty System#Bingo Book tabs|Bounty System]]."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Bounty_Hunting"
+  },
+  {
+   "id": "break-the-chain",
+   "name": "Break the Chain",
+   "level": 60,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Lady Kitsune]]",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]], following [[The Memory Lane]].",
+   "description": null,
+   "objectives": [
+    "Plan the Next Steps",
+    "Eliminate Sound Ninjas (0/4)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "490,400",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "490,400 EXP",
+     "5x red consumable, 5x blue consumable"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Story",
+     "lines": [
+      "The four hidden enemies are the corruptor's lieutenants from [[The Memory Lane]]: his breeze, his melody, his arrow, and his fists. They are fought as the four Sound Bosses of the arc. [[Ongaku]] (whose name means \"music\") is the melody."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Break_the_Chain"
+  },
+  {
+   "id": "build-kawasaki-bridge-crisis",
+   "name": "Build!! Kawasaki Bridge Crisis",
+   "level": 20,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: Koji Co. needs your help sent a message that he needs your help",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "14500",
+    "ryo": null,
+    "extra": "50 Ryo",
+    "list": [
+     "14500 EXP",
+     "50 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Build%21%21_Kawasaki_Bridge_Crisis"
+  },
+  {
+   "id": "cape-of-straw",
+   "name": "Cape of Straw",
+   "level": 53,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Ali Ali",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon meeting [[Ali Ali]] in the [[Land of Iron|Land of iron]], you will receive the difficult task of gathering Leopard tails for reasons unknown. Your hard work will not be in vain, for upon completion of this task will be given a [[Straw Cape]].",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "151500",
+    "ryo": null,
+    "extra": "Straw Cape",
+    "list": [
+     "151500 EXP",
+     "Straw Cape"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cape_of_Straw"
+  },
+  {
+   "id": "cleanse-the-temple-mist-seals-and-temple",
+   "name": "Cleanse The Temple - (Mist Seals and temple)",
+   "level": 20,
+   "rank": "Main",
+   "type": "side",
+   "areas": [
+    "mist"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "You met Ikayasu outside the Furniture Shop in the [[Mist Village]], he enlisted your help to cleanse the sealed temple, you're tasked with removing the seals around the village which releases the barrier in the cave north west from the Mist Village.",
+   "description": null,
+   "objectives": [
+    "Remove 5 seals inside the Mist Village",
+    "Report back to Ikayasu",
+    "Unlock the Ant Tunnel Seal",
+    "Go To Sealed Temple",
+    "Report back to Ikayasu"
+   ],
+   "requirements": [
+    "[[Ikayasu]] in [[Mist Village|Mist Village (Outside Furniture Shop)]]"
+   ],
+   "rewards": {
+    "exp": "30900",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "30900 XP",
+     "[[Barrier Tag]]"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Barrier Tag is required for ant tunnel unlock",
+      "Bonus: Unlocks the Sealed Temple which is needed for later missions"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_The_Temple_-_%28Mist_Seals_and_temple%29"
+  },
+  {
+   "id": "cleanse-the-forest-i",
+   "name": "Cleanse the Forest I",
+   "level": 60,
+   "rank": "B",
+   "type": "story",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Nekomata]]",
+   "location": "[[Spiritevil Falls]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "A B-Rank story mission in the [[Land of Spirits]], given by [[Nekomata]] in Yokai Village. It is the first of Nekomata's forest-cleansing chain and is followed by [[Cleanse the Forest II]].",
+   "description": null,
+   "objectives": [
+    "Talk to [[Nekomata]]",
+    "Head to [[Spiritevil Falls]]",
+    "Kill 5 [[Red Betobeto]]",
+    "Kill 10 [[White Betobeto]]",
+    "Kill 30 [[Brown Betobeto]]",
+    "Report back to [[Nekomata]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "220,600",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "220,600 EXP",
+     "50 Ryo",
+     "5x item (the exact item reward is still being confirmed)"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_I"
+  },
+  {
+   "id": "cleanse-the-forest-ii",
+   "name": "Cleanse the Forest II",
+   "level": 60,
+   "rank": "B",
+   "type": "story",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Nekomata]]",
+   "location": "[[Whispering Grove]] and [[Yokai Riverbend]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "A B-Rank story mission in the [[Land of Spirits]], part of [[Nekomata]]'s forest-cleansing chain, following [[Cleanse the Forest I]] and followed by [[Cleanse the Forest III]].",
+   "description": null,
+   "objectives": [
+    "Talk to [[Nekomata]]",
+    "Head to [[Whispering Grove]]",
+    "Kill 20 [[Bakezori]]",
+    "Head to [[Yokai Riverbend]]",
+    "Kill 40 [[Chochin]]",
+    "Report back to [[Nekomata]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "253,500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "253,500 EXP",
+     "100 Ryo",
+     "5x item (exact item reward still being confirmed)"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_II"
+  },
+  {
+   "id": "cleanse-the-forest-iii",
+   "name": "Cleanse the Forest III",
+   "level": 60,
+   "rank": "B",
+   "type": "story",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Nekomata]]",
+   "location": "[[Spiritwind Ascent]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "A B-Rank story mission in the [[Land of Spirits]], part of [[Nekomata]]'s forest-cleansing chain, following [[Cleanse the Forest II]] and followed by [[Cleanse the Forest IV]].",
+   "description": null,
+   "objectives": [
+    "Talk to [[Nekomata]]",
+    "Head to [[Spiritwind Ascent]]",
+    "Kill 30 [[Karakasa]]",
+    "Kill 50 [[Tsuchigumo]]",
+    "Report back to [[Nekomata]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "278,500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "278,500 EXP",
+     "200 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_III"
+  },
+  {
+   "id": "cleanse-the-forest-iv",
+   "name": "Cleanse the Forest IV",
+   "level": 60,
+   "rank": "B",
+   "type": "story",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Nekomata]]",
+   "location": "[[Grand Spiritfall]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "A B-Rank story mission in the [[Land of Spirits]], part of [[Nekomata]]'s forest-cleansing chain, following [[Cleanse the Forest III]] and followed by [[Cleanse the Forest V]].",
+   "description": null,
+   "objectives": [
+    "Talk to [[Nekomata]]",
+    "Head to [[Grand Spiritfall]]",
+    "Kill 60 [[Kappa]]",
+    "Report back to [[Nekomata]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "292,500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "292,500 EXP",
+     "300 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_IV"
+  },
+  {
+   "id": "cleanse-the-forest-v",
+   "name": "Cleanse the Forest V",
+   "level": 60,
+   "rank": "B",
+   "type": "story",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Nekomata]]",
+   "location": "[[Spiritstone Hollow]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "A B-Rank story mission in the [[Land of Spirits]], the finale of [[Nekomata]]'s forest-cleansing chain, following [[Cleanse the Forest IV]]. It takes place in the oni cave behind the [[Goshinboku Tree]], unsealed by [[The Whispering Well]], and leads into a further mission that is still being documented.",
+   "description": null,
+   "objectives": [
+    "Talk to [[Nekomata]]",
+    "Head to [[Spiritstone Hollow]]",
+    "Kill [[Red Oni]]",
+    "Kill 5 [[Blue Oni]]",
+    "Kill [[Black Oni]]",
+    "Kill 10 [[Green Oni]]",
+    "Kill [[Yellow Oni]]",
+    "Kill [[Purple Oni]]",
+    "Obtain 20 [[Oni Horn]]",
+    "Report back to [[Nekomata]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "316,450",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "316,450 EXP",
+     "500 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_V"
+  },
+  {
+   "id": "cleanse-the-remnants-i",
+   "name": "Cleanse the Remnants I",
+   "level": 60,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Rokuro]]",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Cleanse the Remnants I is an A-Rank mission in the [[Land of Spirits]], given by [[Rokuro]].",
+   "description": null,
+   "objectives": [
+    "Kill 320 [[Bakezori]]",
+    "Kill 240 [[Chochin]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "187,640",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "187,640 EXP",
+     "Item reward"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Remnants_I"
+  },
+  {
+   "id": "cleanse-the-remnants-ii",
+   "name": "Cleanse the Remnants II",
+   "level": 60,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Rokuro]]",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Cleanse the Remnants II is an A-Rank mission in the [[Land of Spirits]], given by [[Rokuro]].",
+   "description": null,
+   "objectives": [
+    "Kill 300 [[Tsuchigumo]]",
+    "Kill 220 [[Karakasa]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "198,410",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "198,410 EXP",
+     "Item reward"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Remnants_II"
+  },
+  {
+   "id": "clear-the-abandoned-lair",
+   "name": "Clear the Abandoned Lair",
+   "level": 25,
+   "rank": "C",
+   "type": "daily",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": "There is an abandoned missing ninja's lair that contains many secrets that the village wants to uncover, but before that, it has to be cleared of the Snakes guarding it.",
+   "summary": "Clear the Abandoned Lair is a C-Rank daily mission gated at Lv. 25 - 35. It sends a ninja into the [[Abandoned Lair]] south of the [[Leaf Village]] to clear out the [[Snakes]] holding it.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "46500",
+    "ryo": "145",
+    "extra": null,
+    "list": [
+     "46,500 EXP",
+     "145 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Tiers",
+     "lines": [
+      "I - C - 25 - 35 - 46,500 - 145 - [[Snakes]]",
+      "II - C - 27 - 38 - 59,040 - 160 - [[Venomous Snake|Venomous Snakes]] — see [[Clear the Abandoned Lair II]]",
+      "The two tiers name different mobs, and those mobs live on different floors: the Lair's entrance and",
+      "first floor hold ordinary [[Snakes]], the second floor holds [[Venomous Snake|Venomous Snakes]], and the",
+      "second floor is behind [[The Venomous Requirement]]. Whether that mission is an actual prerequisite for",
+      "tier II is not recorded — nothing in game or on this wiki states it."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Clear_the_Abandoned_Lair"
+  },
+  {
+   "id": "clear-the-abandoned-lair-ii",
+   "name": "Clear the Abandoned Lair II",
+   "level": 27,
+   "rank": "C",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": "There is an abandoned missing ninja's lair that contains many secrets that the village wants to uncover, but before that, it has to be cleared of the Venomous Snakes guarding it.",
+   "summary": "Clear the Abandoned Lair II is a C-Rank daily mission gated at Lv. 27 - 38, and the second tier of [[Clear the Abandoned Lair]]. Where tier I names ordinary [[Snakes]], this one names the [[Venomous Snake|Venomous Snakes]] of the [[Abandoned Lair]].",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "59040",
+    "ryo": "160",
+    "extra": null,
+    "list": [
+     "59,040 EXP",
+     "160 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Venomous Snakes are on the Lair's second floor, which is opened by [[The Venomous Requirement]].",
+      "See [[Clear the Abandoned Lair]] for the tier table.",
+      "Whether that mission gates this one is not recorded."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Clear_the_Abandoned_Lair_II"
+  },
+  {
+   "id": "cold-blooded-killer",
+   "name": "Cold-Blooded Killer",
+   "level": 61,
+   "rank": "B",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": "You have been tasked with eliminating enemy ninja. They have been causing trouble for the Daimyo and he wants to teach them a lesson.. without raising too much suspicion. Kills only count for ninja 10 levels lower than you or any level above.",
+   "summary": "Cold-Blooded Killer is a repeatable B-Rank daily mission that tasks you with killing enemy ninja. It runs in numbered tiers, each gated behind a higher level and paying out more, and it is one of the main daily EXP sources for high-level players.",
+   "description": "The tier VIII card reads: An earlier record of this mission on the wiki gave the first sentence as \"eliminating Leaf and Sand ninja\" rather than \"enemy ninja\". Both wordings are kept here because it is not yet confirmed whether the text varies by village or simply changed in a patch.",
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "Up to 327,410 (tier VIII)",
+    "ryo": "80 – 150",
+    "extra": null,
+    "list": [
+     "Up to 327,410 (tier VIII) EXP",
+     "80 – 150 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Kill Credit — The 10-Level Rule",
+     "lines": [
+      "A kill counts if the target is at most 10 levels below you, or any level above you",
+      "A kill does not count if the target is more than 10 levels below you",
+      "The card states the rule outright, and it is the reason a high-level player farming low-level targets makes no progress:",
+      "The same 10-level gap governs the [[Crime System]], where landing the death blow on a player more than 10 levels below you in a Danger Zone or War Zone is what generates Crime. The two rules point the same way: the game neither rewards nor tolerates farming players far beneath you."
+     ]
+    },
+    {
+     "title": "Tiers",
+     "lines": [
+      "I - ? - ? - ? - 80",
+      "II - ? - ? - ? - ?",
+      "III - ? - Defeat 8 enemy ninja - 87,750 - ?",
+      "IV - ? - ? - ? - ?",
+      "V - ? - Defeat 12 enemy ninja - 169,800 - 120",
+      "VI - ? - ? - ? - ?",
+      "VII - ? - ? - ? - ?",
+      "VIII - 61+ - ? - 327,410 - 150",
+      "Confirmed values only. A ? is a genuine gap, not a zero.",
+      "<br clear=\"all\" />",
+      "Tier VIII read from an in-game mission card on 14 August 2026 and confirmed against a second card on 15 August 2026 — same level gate, same EXP, same Ryo. Tiers III and V come from the wiki's earlier record of this page and their level requirements were never captured.",
+      "If you can open a tier card this page marks with a ?, a screenshot of it fills the row exactly — the card carries the rank, level requirement, objective count and both rewards in one shot."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Cold-Blooded_Killer"
+  },
+  {
+   "id": "coyote-hunting",
+   "name": "Coyote Hunting",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "sand"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "It's common for inexperienced Sand genins to be tasked with dealing with the [[Desert Coyote|coyotes]] inhabiting the deserts which surround the [[Sand Village]].",
+   "description": "You have been tasked with discovering and killing wild packs of Coyotes, animals which dwell in dried up valleys and wait to pounce on their prey.",
+   "objectives": [
+    "Kill 80 Coyotes (0/80)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "2,020",
+    "ryo": "90",
+    "extra": null,
+    "list": [
+     "2,020 EXP",
+     "90 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Coyote_Hunting"
+  },
+  {
+   "id": "danger-dangos",
+   "name": "Danger Dangos",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": null,
+   "objectives": [
+    "Buy Danger Dango and give it to Itori."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "3200",
+    "ryo": "90",
+    "extra": null,
+    "list": [
+     "3200 EXP",
+     "90 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Danger_Dangos"
+  },
+  {
+   "id": "darker-places-leaf-seals",
+   "name": "Darker Places - (Leaf Seals)",
+   "level": 20,
+   "rank": "Main",
+   "type": "side",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "The Leaf Village Innkeeper has tasked you with removing the seals hidden around the village, can you find them all?",
+   "description": null,
+   "objectives": [
+    "Remove 4 seals",
+    "Go to the Mysterious Apartment",
+    "Go to the Mysterious Basement",
+    "Return to the Innkeeper"
+   ],
+   "requirements": [
+    "[[Innkeeper]] in [[Leaf Village]]"
+   ],
+   "rewards": {
+    "exp": "30900",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "30900 XP",
+     "Unlocks: Sewers"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Bonus: Unlocks the sewers"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Darker_Places_%E2%80%93_Leaf_Seals"
+  },
+  {
+   "id": "spider",
+   "name": "Spider",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "A common task for the new genins of the [[Leaf Village]].",
+   "description": "You have been tasked with helping the villagers exterminate Spiderlings in the area surrounding the village.",
+   "objectives": [
+    "Kill 90 [[Spiderling|Spiderlings]] (0/90)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "260",
+    "ryo": "55",
+    "extra": null,
+    "list": [
+     "260 EXP",
+     "55 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Defeat_Spiders"
+  },
+  {
+   "id": "demon-claws",
+   "name": "Demon Claws",
+   "level": 33,
+   "rank": "C",
+   "type": "story",
+   "areas": [],
+   "npc": "[[Tomia]]",
+   "location": "Bears",
+   "quote": "Tomia needs you to clear the way by defeating her worst nightmare... Bears.",
+   "summary": null,
+   "description": null,
+   "objectives": [
+    "Defeat 40 [[Bear|Bears]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "140200",
+    "ryo": null,
+    "extra": "30 Ryo 5 Blood Pill I",
+    "list": [
+     "EXP x140,200",
+     "Ryo x30",
+     "[[Blood Pill|Blood Pill I]] x5"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Getting There",
+     "lines": [
+      "Travel to the Bears map and find the NPC Tomia."
+     ]
+    },
+    {
+     "title": "A Note On The Page Title",
+     "lines": [
+      "Until 17 August 2026 this page sat at the title \"Demon Claws\", with literal quotation marks, to avoid colliding with the weapon page. That title was not something a reader would ever type or a search would match cleanly. It now lives at Demon Claws (mission) with a hatnote on both pages, and the old title redirects here."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Demon_Claws_%28mission%29"
+  },
+  {
+   "id": "dethrone-the-beast",
+   "name": "Dethrone the Beast",
+   "level": 65,
+   "rank": "S",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": "A self-proclaimed king has risen from the darkness, commanding fear and destruction in equal measure. Eliminate the Dark Monkey King and strip it of the power it was never meant to hold.",
+   "summary": "Dethrone the Beast is an S Rank daily mission gated at Lv. 65+, to hunt down and kill the [[Dark Monkey King]]. At 461,370 EXP it is the largest single daily payout recorded on this wiki, narrowly ahead of [[The Sandstorm Predator]] at 461,210.",
+   "description": null,
+   "objectives": [
+    "Kill [[Dark Monkey King]] (0/1)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "461,370",
+    "ryo": null,
+    "extra": "300 Ryo",
+    "list": [
+     "300 Ryo",
+     "461,370 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Target",
+     "lines": [
+      "The [[Dark Monkey King]] is a unique boss, not one of the ordinary monkeys.",
+      "Note on the image: the surroundings show where it stood when the screenshot was taken. The Land of Iron tower boss maps were reworked in an August 2026 patch, so this is likely its old location and the floor around it may no longer match. A screenshot at its current spawn is wanted.",
+      "<br clear=\"all\">"
+     ]
+    },
+    {
+     "title": "The Two Views Of A Mission Card",
+     "lines": [
+      "Rank - S - S",
+      "Level range - Lv. 65+ - not shown",
+      "Description - yes - yes",
+      "Objectives - not shown - yes, with location marker",
+      "Rewards - 300 Ryo, 461,370 EXP - 300 Ryo, 461,370 EXP",
+      "This mission is the clearest example on the wiki of why the panel you screenshot matters:",
+      "<gallery mode=\"packed\" heights=\"300\">",
+      "Dethrone the Beast Request Card.png|The request panel. The Lv. 65+ line under the rank is the field the tracker omits",
+      "Dethrone the Beast Tracker.png|The tracker view. Everything else is here, but the level gate is gone",
+      "</gallery>",
+      "If you are capturing a mission for the wiki, take the request panel at the desk — it is the only view that carries the gate."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Dethrone_the_Beast"
+  },
+  {
+   "id": "drunk-entry",
+   "name": "Drunk Entry",
+   "level": 15,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Part of the [[Kinsen Mobsters Questline]]",
+   "description": null,
+   "objectives": [
+    "Go To Kinsen Quarters Bar",
+    "Obtain 2 Sake",
+    "Deliver it"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "12600",
+    "ryo": "100",
+    "extra": null,
+    "list": [
+     "12600 XP",
+     "100 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Bonus: Continue [[Mobster Take Out]]"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Drunk_Entry"
+  },
+  {
+   "id": "dull-edges-and-sharp-minds",
+   "name": "Dull Edges and Sharp Minds",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "You receive the mission from the Poster on Event Prizes house in [[Takumi Village]]. You can find him upstairs of where you receive mission in Takumi, note he a boss, if you don't see him you need to wait 30 minutes for him to respawn.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Dull_Edges_and_Sharp_Minds"
+  },
+  {
+   "id": "eastward-shipment",
+   "name": "Eastward Shipment",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [
+    "sand",
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Deliver a shipment of goods from Etsuko in the [[Sand Village]] to [[Gobori]] in [[Takumi Village]].",
+   "description": null,
+   "objectives": [
+    "Find Etsuko to take the shipment, then bring it to Gobori."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "22240",
+    "ryo": "140",
+    "extra": null,
+    "list": [
+     "22240 EXP",
+     "140 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Eastward_Shipment"
+  },
+  {
+   "id": "echos-of-yokai-i",
+   "name": "Echos of Yokai I",
+   "level": 60,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Okuri]]",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]], following [[Binding Ofuda]].",
+   "description": null,
+   "objectives": [
+    "Scout Whispering Grove",
+    "Return to [[Okuri]]",
+    "Research [[Bakezori]]",
+    "Report back to Okuri",
+    "Obtain 10 [[Yokai Heart]]",
+    "Obtain 40 [[Yokai Tongue]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "268,500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "268,500 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_I"
+  },
+  {
+   "id": "echos-of-yokai-ii",
+   "name": "Echos of Yokai II",
+   "level": 60,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Okuri]]",
+   "location": "[[Yokai Riverbend]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]], following [[Echos of Yokai I]] and followed by [[Echos of Yokai III]]. Can be accepted with a team.",
+   "description": null,
+   "objectives": [
+    "Scout [[Yokai Riverbend]] (0/60s)",
+    "Research [[Chochin]] (with the [[Soul Flute]])",
+    "Report back to [[Okuri]]",
+    "Obtain 15 [[Yokai Heart]]",
+    "Obtain 20 [[Chochin Lantern]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "278,600",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "278,600 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_II"
+  },
+  {
+   "id": "echos-of-yokai-iii",
+   "name": "Echos of Yokai III",
+   "level": 60,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Okuri]]",
+   "location": "[[Spiritwind Ascent]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]], following [[Echos of Yokai II]] and followed by [[Echos of Yokai IV]].",
+   "description": null,
+   "objectives": [
+    "Scout [[Spiritwind Ascent]] (0/120s)",
+    "Research [[Karakasa]] (with the [[Soul Flute]])",
+    "Report back to [[Okuri]]",
+    "Obtain 20 [[Yokai Heart]]",
+    "Obtain 40 [[Yokai Eye]]",
+    "Return to [[Okuri]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "282,550",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "282,550 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_III"
+  },
+  {
+   "id": "echos-of-yokai-iv",
+   "name": "Echos of Yokai IV",
+   "level": 60,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Okuri]]",
+   "location": "[[Spiritcore Crater]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]], following [[Echos of Yokai III]] and followed by [[Echos of Yokai V]].",
+   "description": null,
+   "objectives": [
+    "Scout [[Spiritcore Crater]] (0/180s)",
+    "Research [[Tsuchigumo]] (with the [[Soul Flute]])",
+    "Report back to [[Okuri]]",
+    "Obtain 25 [[Yokai Heart]]",
+    "Obtain 30 [[Tsuchigumo Fragment]]",
+    "Obtain 30 [[Spirit Thread]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "291,600",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "291,600 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_IV"
+  },
+  {
+   "id": "echos-of-yokai-v",
+   "name": "Echos of Yokai V",
+   "level": 60,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Okuri]]",
+   "location": "[[Grand Spiritfall]], [[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]], following [[Echos of Yokai IV]]. It concludes [[Okuri]]'s research chain and leads into [[The Whispering Well]].",
+   "description": null,
+   "objectives": [
+    "Scout [[Grand Spiritfall]] (0/240s)",
+    "Research [[Kappa]] (with the [[Soul Flute]])",
+    "Report back to [[Okuri]]",
+    "Obtain 30 [[Yokai Heart]]",
+    "Obtain 40 [[Kappa Fragment]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "306,400",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "306,400 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_V"
+  },
+  {
+   "id": "endanger-tigers",
+   "name": "Endanger Tigers",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": null,
+   "objectives": [
+    "Kill 90 Tigers (0/90)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "3100",
+    "ryo": "100",
+    "extra": null,
+    "list": [
+     "3100 EXP",
+     "100 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Endanger_Tigers"
+  },
+  {
+   "id": "escort-the-foreign-envoy",
+   "name": "Escort the Foreign Envoy",
+   "level": 50,
+   "rank": "S",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": "You have been tasked with escorting a foreign envoy back to their home village, the <village> Village.",
+   "summary": "Escort the Foreign Envoy is a repeatable S-Rank daily mission that sends you out with a foreign envoy and gets you both back to the envoy's home village in one piece.",
+   "description": "Only the destination changes between the three variants. The rest of the card — rank, level, EXP, Ryo — is identical across all three.",
+   "objectives": [
+    "Escort Envoy to <destination> Village (0/1)",
+    ":\"Mission fails if you or your escort faints in battle.\""
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "391,250",
+    "ryo": null,
+    "extra": "150 Ryo",
+    "list": [
+     "391,250 EXP",
+     "150 Ryo",
+     "A second reward row, which on all three cards shows one village emblem followed by two counters reading 2 (a person glyph) and 3"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Destinations",
+     "lines": [
+      "[[Leaf Village]] - S - 50+ - 391,250 - 150",
+      "[[Mist Village]] - S - 50+ - 391,250 - 150",
+      "[[Sand Village]] - S - 50+ - 391,250 - 150",
+      "[[Takumi Village]] - S - Not shown - 391,250 - 150",
+      "Three variants have been captured, one per major village:",
+      "The first three cards read Lv. 50+ Daily Mission and carry the same title, so the destination is rolled when the mission is offered rather than being three separately named missions.",
+      "[[Takumi Village]] was captured on 17 August 2026, closing the gap this page previously declared. It confirms the destination pool reaches beyond the three major villages, and its EXP and Ryo match the other three exactly. The Takumi capture is a tracked view rather than a desk card, so it shows no level range — the Lv. 50+ gate above comes from the three desk cards. No [[Land of Spirits]] destination has been captured."
+     ]
+    },
+    {
+     "title": "There Is A Countdown",
+     "lines": [
+      "The tracked panel shows a stopwatch reading 30:52 beside the title, alongside an Abandon button.",
+      "What the clock measures is not confirmed. It is recorded here as the card draws it. A completion time limit is the natural reading for an escort mission with a fail condition, but it could equally be a tracking or reset timer, and the wiki does not publish the guess as fact. If you have run this and watched the clock hit zero, that settles it — see [[Nin Online Wiki:Contributing]].",
+      "Either way, no other mission card captured for this wiki shows a timer at all, which makes this the first recorded instance of one."
+     ]
+    },
+    {
+     "title": "Notes",
+     "lines": [
+      "Daily missions are capped: a ninja can start up to 4 daily missions per day.",
+      "The Leaf, Mist and Sand desk cards were captured 15 August 2026; the Takumi tracked view 17 August 2026."
+     ]
+    },
+    {
+     "title": "October 2026 Escort Changes",
+     "lines": [
+      "Escorts can no longer be hurt on a No Zone map, and the mission now fails when your escort is killed (Steam Update v6.0.1.0, 10 October 2026).",
+      "Escorts now use A* pathfinding and follow you across bridges, ramps, stairs and layered ground (Rory, Discord #patch-notes, 10 October 2026; Steam Update v6.0.1.2, 13 October 2026).",
+      "See [[Missions#Escort missions|Escort missions]] for the full list."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Escort_the_Foreign_Envoy"
+  },
+  {
+   "id": "fill-the-bucket",
+   "name": "Fill the Bucket",
+   "level": 54,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Pakko",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon speaking to [[Pakko]] at the [[Rebel Encampment]] in the [[Land of Iron]], she asks you to play a game called \"Fill the Bucket\" you must run to each of the three wells located in the Land of iron and bring water from each well until the bucket is full.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "238500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "238500 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Gallery",
+     "lines": [
+      "<gallery mode=\"packed\" heights=\"160\">",
+      "Fill_the_Bucket_3.png|Fill the Bucket: failure message",
+      "Fill_the_Bucket_2.png|Fill the Bucket: the 30 second timer starts",
+      "</gallery>"
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Fill_the_Bucket"
+  },
+  {
+   "id": "gang-war-i",
+   "name": "Gang War I",
+   "level": 20,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: After completing the [[Stolen Train Keys]] mission and gaining access to the train, you are now tasked with a series of missions to help Koji Co. reach the Kawasaki Bridge construction site.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "24000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "24000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_I"
+  },
+  {
+   "id": "gang-war-ii",
+   "name": "Gang War II",
+   "level": 20,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "Land of Waves",
+   "quote": null,
+   "summary": "Overview: Following the successful defeat of the Gang Brawlers, your next task is to assist Koji Co. further by collecting crucial items needed for the mission.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "31850",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "31850 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_II"
+  },
+  {
+   "id": "gang-war-iii",
+   "name": "Gang War III",
+   "level": 20,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "Land of Waves",
+   "quote": null,
+   "summary": "Overview: After collecting the Dismembered Fingers, your mission continues with another important task to support Koji Co.'s efforts.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "31850",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "31850 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_III"
+  },
+  {
+   "id": "gang-war-iv",
+   "name": "Gang War IV",
+   "level": 20,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "[[Land Of Waves]]",
+   "quote": null,
+   "summary": "Overview: After collecting the Avulsed Teeth, your task continues with the next mission to support Koji Co.'s efforts in the [[Land of Waves]].",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "28000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "28000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_IV"
+  },
+  {
+   "id": "gang-war-v",
+   "name": "Gang War V",
+   "level": 20,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "[[Land Of Waves]]",
+   "quote": null,
+   "summary": "Overview: After defeating the Gang Spearmen, you are now tasked with your next important task to support Koji Co.'s efforts.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "40000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "40000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_V"
+  },
+  {
+   "id": "gang-war-vi",
+   "name": "Gang War VI",
+   "level": 20,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "[[Land Of Waves]]",
+   "quote": null,
+   "summary": "Overview: After defeating the Gang Spearmen, you are now tasked with your next important task to support Koji Co.'s efforts.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "45000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "45000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_VI"
+  },
+  {
+   "id": "gang-war-vii",
+   "name": "Gang War VII",
+   "level": 20,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "[[Land Of Waves]]",
+   "quote": null,
+   "summary": "Overview: After defeating Daimaru, you face your final and most formidable challenge in the Gang War mission series.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "58000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "58000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_VII"
+  },
+  {
+   "id": "giant-fire-ant-infestation",
+   "name": "Giant Fire Ant Infestation",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Mission Desk",
+   "location": "[[Mist Village]]",
+   "quote": null,
+   "summary": "You are tasked with slaying 40 [[Giant Fire Ant|Giant Fire Ants]], these ferocious insects reside by the Bloody Pond and also within the Ant Tunnel which are both located west of the Bamboo Forest.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "18000XP",
+    "ryo": null,
+    "extra": "Ryo",
+    "list": [
+     "18000XP EXP",
+     "Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Giant_Fire_Ant_Infestation"
+  },
+  {
+   "id": "glacier-bear-hunt",
+   "name": "Glacier Bear Hunt",
+   "level": null,
+   "rank": "A",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Kill the resting [[Glacier Bear]] before it wakes up from it's hibernation.",
+   "description": null,
+   "objectives": [
+    "Kill 1 the Glacier Bear (0/1)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "41000",
+    "ryo": "350",
+    "extra": null,
+    "list": [
+     "41000 EXP",
+     "350 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Glacier_Bear_Hunt"
+  },
+  {
+   "id": "gobori-s-odd-request",
+   "name": "Gobori's Odd Request",
+   "level": null,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": "Get Gobori's Ingredients.",
+   "summary": "Gobori, a villager in [[Takumi Village]] needs your help with collecting some ingredients... you don't have to ask why, but he will reward you at least.",
+   "description": "Get Gobori's ingredients.",
+   "objectives": [
+    "23 Raccoon Tails",
+    "23 Scorpion Tails",
+    "23 Rat Tails",
+    "Obtain 23 [[Raccoon Tail]] (0/23)",
+    "Obtain 23 [[Scorpion Tail]] (0/23)",
+    "Obtain 23 [[Rat Tail]] (0/23)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "125,000",
+    "ryo": "45",
+    "extra": null,
+    "list": [
+     "45 Ryo",
+     "125,000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Gobori%27s_Odd_Request"
+  },
+  {
+   "id": "guard-the-barricades-i",
+   "name": "Guard The Barricades I",
+   "level": 50,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Guard Mika",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon meeting [[Guard Mika]] again at the [[Rebel Encampment]] in the [[Land of Iron]], she gives you the task of killing 100 [[Emperor Penguin|Emperor Penguins]]. Emperor penguins inhabit the [[Iron Cave]] and [[Iron Forest]] both of which can be found directly north of the Rebel Encampment.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "156500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "156500 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Guard_the_Barricades_I"
+  },
+  {
+   "id": "guard-the-barricades-ii",
+   "name": "Guard the Barricades II",
+   "level": 52,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Tina",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "When you meet [[Guard Tina]] at the [[Rebel Encampment]] she gives you the task of killing 100 [[Snow Leopard|Leopards]]. Leopards inhabit the [[Iron Forest]] in the [[Land of Iron|Land of iron]] that can be found directly north of the Rebel Encampment.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "171500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "171500 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Guard_the_Barricades_II"
+  },
+  {
+   "id": "guilty-pleasure",
+   "name": "Guilty Pleasure",
+   "level": 19,
+   "rank": "B",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": null,
+   "objectives": [
+    "Sneak into the [[Leaf Village Hotsprings]] (0/300)"
+   ],
+   "requirements": [
+    "Lv. 19–50, Daily, read from the request card on 17 August 2026. That is a 31-level window, by some distance the widest recorded on any mission — most dailies run a 10 to 12 level band."
+   ],
+   "rewards": {
+    "exp": "46,400 — see note",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "46,400 — see note EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Exp: The Two Figures Disagree",
+     "lines": [
+      "Request card, 17 August 2026 x46,400",
+      "This page, previously x75,000",
+      "Same rank, same objective, same village score. The card is the newer reading and the more likely current one, but the 75,000 is kept because it may be a real record from an earlier patch rather than an error. Neither is deleted until someone confirms which is live.",
+      "<br clear=\"all\" />",
+      "Mission request card contributed by Romy, captured 17 August 2026."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Guilty_Pleasure"
+  },
+  {
+   "id": "mist-spa",
+   "name": "Mist Spa",
+   "level": null,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "mist"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": "The village has tasked you to rest and recover before the your next serious mission. Tha famous massages of the Mist village Spa will help you with your wounds.",
+   "objectives": [
+    "Sneak into the [[Mist Village Spa]] (0/300)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "75000",
+    "ryo": "0",
+    "extra": null,
+    "list": [
+     "75000 EXP",
+     "0 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Guilty_Pleasure_Mist_Style"
+  },
+  {
+   "id": "haiku-57-5",
+   "name": "Haiku 57-5",
+   "level": 50,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Master Zen",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon talking to [[Master Zen]] at the [[Rebel Encampment]] in the [[Land of Iron]], he tells you to obtain level 57 and then return to him to prove your worth. Upon returning, he asks you to construct a haiku of your own as a sort of final test to earn his favor.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "253100",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "253100 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Haiku_57-5"
+  },
+  {
+   "id": "haji-s-sword",
+   "name": "Haji's Sword",
+   "level": 30,
+   "rank": "C",
+   "type": "story",
+   "areas": [],
+   "npc": "Haji",
+   "location": "Third floor of the [[Abandoned Lair]]",
+   "quote": "Haji lost his sword somewhere in the abandoned lair, find it and return it.",
+   "summary": "Haji's Sword is a Rank C story mission available from level 30 upward. Haji has lost his sword on the third floor of the [[Abandoned Lair]] and wants it brought back.",
+   "description": null,
+   "objectives": [
+    "Not recorded. The Objectives panel on the captured card rendered empty, so no counter or step list is confirmed."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "72,300",
+    "ryo": null,
+    "extra": "60 Ryo 25 Snake Venom",
+    "list": [
+     "EXP - 72,300 — see note above - Yes",
+     "Ryo x60",
+     "[[Snake Venom]] x25"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Where To Find It",
+     "lines": [
+      "Haji is on the third floor of the [[Abandoned Lair]]. The sword itself is in the top-left corner of the third floor.",
+      "This page previously called the location \"Snake Liar\" and the NPC \"KHaji\". Both were typos, corrected 17 August 2026."
+     ]
+    },
+    {
+     "title": "Exp: The Two Figures Disagree",
+     "lines": [
+      "Mission card, 17 August 2026 x72,300",
+      "This page, previously x96,400",
+      "The card is the newer reading and the more likely current one, but the 96,400 is kept rather than deleted because it may be a real record from an earlier patch. Neither is removed until someone confirms which is live."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Haji%27s_Sword"
+  },
+  {
+   "id": "hanji-needs-a-break",
+   "name": "Hanji needs a Break",
+   "level": 20,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": "Hanji",
+   "location": "[[Land Of Waves]]",
+   "quote": null,
+   "summary": "Overview: During your time at the construction site, you find Hanji, an exhausted worker who needs your help.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "27000",
+    "ryo": null,
+    "extra": "150 Ryo, 15 Tags",
+    "list": [
+     "27000 EXP",
+     "150 Ryo, 15 Tags"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Hanji_needs_a_Break"
+  },
+  {
+   "id": "help-sage-find-his-way",
+   "name": "Help Sage find his way...",
+   "level": 40,
+   "rank": "D",
+   "type": "story",
+   "areas": [
+    "takumi"
+   ],
+   "npc": "Sage",
+   "location": "[[Takumi Village]]",
+   "quote": null,
+   "summary": "Help Sage find his way... is a one-time story mission added to [[Takumi Village]] in the 2026-07-09 patch. It is available from level 40+ and can be done by anyone, regardless of village.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "New Title + Furniture (Poster)",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "A new Title",
+     "A new Furniture (Poster)"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Help_Sage_find_his_way..."
+  },
+  {
+   "id": "hidden-seals",
+   "name": "Hidden Seals",
+   "level": null,
+   "rank": null,
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [
+    {
+     "title": "Hidden Seals",
+     "lines": [
+      "Seals can be found within both Sand and Leaf territories. Within both villages there's a mission to find that villages respective seals which upon completion will reward experience. Additionally, finding all seals of that respective village will unlock maps to be explored and, of course, grinded."
+     ]
+    },
+    {
+     "title": "Mission Givers",
+     "lines": [
+      "To accept the mission to obtain seals, you must be at least level 20. However, you can find and collect the seals no matter your level and later return to complete mission when you meet the level requirement."
+     ]
+    },
+    {
+     "title": "Sand Village",
+     "lines": [
+      "When entering the village head east past the Sand Chunin and you will see an abandoned building. Upon entering the house you will see a scroll, interacting with it will give the mission to collect all five seals."
+     ]
+    },
+    {
+     "title": "Leaf Village",
+     "lines": [
+      "When entering the village head to the inn located at the top right-hand side of the map. The mission is given by the Innkeeper, who will give the mission to collect all four seals located inside of the village."
+     ]
+    },
+    {
+     "title": "Mist Village",
+     "lines": [
+      "After entering the village, head right until you see a plaza with a fountain. The mission will be given by Ikayasu, who will task you with finding the 5 seals inside mist village before trying to open the temple."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Hidden_Seals"
+  },
+  {
+   "id": "hidden-tomb-takumi-seals",
+   "name": "Hidden Tomb - (Takumi Seals)",
+   "level": 25,
+   "rank": "Main",
+   "type": "side",
+   "areas": [
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Yuu promised to tell you the secret of Takumi if you helped her remove 7 seals around",
+   "description": null,
+   "objectives": [
+    "Unseal 7 Seals in Takumi Village",
+    "Go To Tomb of Royalty",
+    "Return to Yuu"
+   ],
+   "requirements": [
+    "[[Yuu]], under the great tree outside the hospital in [[Takumi Village]]"
+   ],
+   "rewards": {
+    "exp": "68000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "68000 XP",
+     "Unlocks: Tomb of Royalty Questline"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Bonus: Unlocks the Tomb of Royalty questline"
+     ]
+    },
+    {
+     "title": "Takumi Village: Talking To Yuu",
+     "lines": [
+      "Transcribed from an in-game capture on 18 August 2026. Her stammers, missing apostrophes and",
+      "capitalisation are the game's own and are reproduced exactly.",
+      ";Sure: She continues below and the mission is given.",
+      ";No: Outcome not recorded.",
+      "The mission scroll appears over her at that point and the objective reads Find the 7 seals."
+     ]
+    },
+    {
+     "title": "Seal Map",
+     "lines": [
+      "North edge, centre-right",
+      "North-east, on the high ground east of the arena grounds",
+      "North-west, across the river from the village proper",
+      "East, level with the middle of the village",
+      "Centre-west, south of the main paved road",
+      "South-east",
+      "South-west, by the southern river",
+      "The seven red dots on the map are the seven seals. Read by position on the image, they sit at:",
+      "The map does not number them, so it is not recorded which dot corresponds to which of the written",
+      "locations below. Use the two together: the map to see where to walk, the table to know what to look for",
+      "when you get there. Remember that none of the seven exist in the world until [[Yuu]] gives you the",
+      "mission — walking to a dot beforehand will show nothing."
+     ]
+    },
+    {
+     "title": "Seal Locations",
+     "lines": [
+      "1 - On top of the main wall, north of the scroll shop",
+      "2 - South-east of where Yuu stands, directly under the hospital",
+      "3 - South-east of the hospital, east of the inn",
+      "4 - By the river bank near the clothes shop, south-west side of the village",
+      "5 - North of the clothes shop and the Danger Dango shop, under a building",
+      "6 - Above the western village gate by the river, south-west of [[Benkei's House]]",
+      "7 - Above the Event Prizes store on the ridge — reach the ridge from the west side of the village, by Benkei's House",
+      "The Takumi seals do not exist in the world until the mission is taken. This is the one village where that is true — in [[Leaf Village|Leaf]], [[Sand Village|Sand]] and [[Mist Village|Mist]] a seal released before you hold the mission still counts retroactively, so players routinely route through an enemy village first. In Takumi there is nothing to release until Yuu has given you the mission.",
+      "Speak to [[Yuu]] in front of the Takumi hospital to start it, then release all seven:",
+      "Then head to the Tomb of Royalty on the ridge north of the scroll shop, go inside, and return to [[Yuu]].",
+      "The rest of the chain — the cave, the ghosts and the spirit boss — is written up at [[Yuu Mini Questline]].",
+      "Locations recorded by Arkout (Mentor) on 2 January 2026. Documented by players in the Nin Online Discord <code>#player-guides</code> channel."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Hidden_Tomb_-_%28Takumi_Seals%29"
+  },
+  {
+   "id": "hidden-in-the-desert-sand-seals",
+   "name": "Hidden in the Desert - (Sand Seals)",
+   "level": 20,
+   "rank": "Main",
+   "type": "side",
+   "areas": [
+    "sand"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "The scroll in the abandoned building said something about finding and removing seals hidden in the desert, maybe you should check it out.",
+   "description": null,
+   "objectives": [
+    "Remove 5 seals spread across the deserts",
+    "Return to the Unsealing Scroll"
+   ],
+   "requirements": [
+    "[[Unsealing Scroll]] in [[Abandoned Building]]"
+   ],
+   "rewards": {
+    "exp": "30900",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "30900 XP",
+     "Unlocks: Inner Scarab Caverns"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Bonus: Unlocks inner scarab caverns"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Hidden_in_the_Desert_-_%28Sand_Seals%29"
+  },
+  {
+   "id": "hide-seek",
+   "name": "Hide & Seek",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Mission is accepted by an NPC called Miki located at playground center of the [[Leaf Village|Hidden Leaf village]]. You're tasked with playing Hide & Seek with Miki, [[Kimi (NPC)|Kimi]], and [[Oku]]",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Hide_%26_Seek"
+  },
+  {
+   "id": "honey-hive-hunt",
+   "name": "Honey Hive Hunt",
+   "level": null,
+   "rank": "C",
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Ayako the bee keeper from the [[Kinsen Quarters]] needs your help in producing her next batch of [[honey]]!",
+   "description": "Ayako from Kinsen Quarters in the Land of Fire is a bee keeper. She wants your help to destroy [[Bee Hive|Bee Hives]]! -Level 1 She wants your help to collect [[Honey Comb|honey combs]] to extract honey! -Level 2",
+   "objectives": [
+    "Destroy 15 [[Bee Hive|Bee Hives]] (0/15)",
+    "Bring Ayako 30 Honey Comb"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "22,500 (both levels)",
+    "ryo": "5 Honey (both levels) \n50 Ryo - Level 2",
+    "extra": null,
+    "list": [
+     "22,500 (both levels) EXP",
+     "5 Honey (both levels) \n50 Ryo - Level 2 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Honey_Hive_Hunt"
+  },
+  {
+   "id": "horned-beasts",
+   "name": "Horned Beasts",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [
+    "mist"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "An easy and simple hunting [[Missions|mission]] given to inexperienced genins of the [[Mist Village]].",
+   "description": "You have been tasked with helping the villagers clear the forests of [[Boar|Boars]] so that traders have a safe passage.",
+   "objectives": [
+    "Kill 90 Boars (0/90) Level 1",
+    "Kill 50 Black Boars (0/50) Level 2"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "3,100 (Level 1) \n4,700 (Level 2)",
+    "ryo": "100 (Level 1) \n120 (Level 2)",
+    "extra": null,
+    "list": [
+     "3,100 (Level 1) \n4,700 (Level 2) EXP",
+     "100 (Level 1) \n120 (Level 2) Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Naming",
+     "lines": [
+      "This mission was called Horny Beasts until 25 May 2023, when the patch notes recorded \"Fixed name of Horny Beasts missions - renamed to Horned Beasts\" ([[Updates 2023]]). The wiki carried the old title until 24 August 2026. [[Horny Beasts]] still redirects here."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Horned_Beasts"
+  },
+  {
+   "id": "hornet-infestation",
+   "name": "Hornet Infestation",
+   "level": 25,
+   "rank": "C",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": "[[Kinsen Quarters]] and [[Takumi Village]]",
+   "quote": "You have been tasked to help clear the infestation of Hornets in the areas surrounding neighboring villages Kinsen Quarters and Takumi Village",
+   "summary": "Hornet Infestation is a repeatable daily mission of Rank C, available to ninja between Level 25 and 33.",
+   "description": null,
+   "objectives": [
+    "Kill [[Hornet|Hornets]] in the areas around [[Kinsen Quarters]] and [[Takumi Village]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "69,750",
+    "ryo": null,
+    "extra": "105 Ryo",
+    "list": [
+     "105 Ryo",
+     "69,750 EXP",
+     "0 village contribution — unusually for a daily, this one adds nothing to your village's score"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Hornet_Infestation"
+  },
+  {
+   "id": "how-to-build-a-bridge",
+   "name": "How-To Build a Bridge",
+   "level": 20,
+   "rank": "C",
+   "type": "story",
+   "areas": [],
+   "npc": "Kota",
+   "location": "[[Land Of Waves]]",
+   "quote": null,
+   "summary": "Overview: After getting to the [[:File:Kawasaki Bridge construction site.PNG|construction site]], you now meet Kota, a worker who has misplaced an important blueprint and needs your assistance.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "42500",
+    "ryo": null,
+    "extra": "550 Ryo",
+    "list": [
+     "42500 EXP",
+     "550 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/How-To_Build_a_Bridge"
+  },
+  {
+   "id": "kairi-s-parcel-asoki",
+   "name": "Kairi's Parcel (Asoki)",
+   "level": 22,
+   "rank": "Main",
+   "type": "side",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Kairi has a parcel that she needs collected for Ritsuko in [[Kinsen Quarters]], the home of the Fire Daimyo in the Land of Fire, west of the [[Leaf Village]].",
+   "description": null,
+   "objectives": [
+    "Go To Kinsen Quarters",
+    "Get Parcel from Ritsuko",
+    "Return to Kairi"
+   ],
+   "requirements": [
+    "[[Kairi]], in the port village of Asoki"
+   ],
+   "rewards": {
+    "exp": "18200",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "18200 XP",
+     "[[Blood Pill|X3 Blood Pill I]]"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Kairi%27s_Parcel"
+  },
+  {
+   "id": "mobster-take-out",
+   "name": "Mobster Take Out",
+   "level": 15,
+   "rank": "B",
+   "type": "side",
+   "areas": [],
+   "npc": "Takabe",
+   "location": "Kinsen Slots (77)",
+   "quote": null,
+   "summary": "This is the first part of a series of missions related to Kinsen mobsters, that is available at level 15 (part 1) and level 24 (part 2).",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "23600",
+    "ryo": null,
+    "extra": "250 Ryo",
+    "list": [
+     "23600 EXP",
+     "250 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Mobster Take Out",
+     "lines": [
+      "\"A debt-evading mobster gang is hiding in Kinsen. Find them and take out the gang underlings to weaken their hold.\"",
+      "In this mission you are tasked with finding the mobster hideout and defeating 50 mobsters. But first, you need to find a way into the hideout itself. By talking to one of the guards in front of it, you will be asked for a special bribe in order to be able to enter, leading to the next mission."
+     ]
+    },
+    {
+     "title": "Drunk Entry",
+     "lines": [
+      "\"Acquire a bottle of premium sake and deliver it to the mobster guarding the club entrance.\"",
+      "The mobsters will ask for 2 sake bottles from you to allow entrance into their hideout, but luckly for you, the Kinsen bar is close by, with each bottle being 30 Ryo. Giving Pedro the bottles alows you to progress on the mission to defeat mobster, but be careful since they are faster than most enemies you find on your journey. After defeating them, you are automatically tasked with the next step of the mission."
+     ]
+    },
+    {
+     "title": "The Mob Boss",
+     "lines": [
+      "translate=no|title1=Drunk Entry|mission_rank=D|reward=12600|image1=|caption1=They want something from you...|additional_reward=100 Ryo|mission_location=Kinsen|npc=Pedro|level_range=15}}",
+      "\"With his crew wiped out, the mob boss [[Shizu]] is vulnerable. Track him down, eliminate him and let Takabe know that the job is done.\"",
+      "Going to the upper floor of the mobster hideout, you can find Shizu in his office, and he not only has also found you but is ready to give you a beat down for the trouble you caused him. Make sure to time your jutsus and movement so you can avoid his water prison as well as keep your distance to avoid his taijutsu attacks. After defeating him, you can return to Takabe and finish this series of missions.",
+      "{{MissionBox"
+     ]
+    },
+    {
+     "title": "Part 2 (Level 24+)",
+     "lines": [
+      "translate=no|title1=The Mob Boss|mission_rank=A|reward=47800|image1=|caption1=He wants to beat you down...|additional_reward=500 Ryo|mission_location=Mobster Hideout (second floor)|npc=|level_range=15}}",
+      "{{MissionBox"
+     ]
+    },
+    {
+     "title": "Trader Favor",
+     "lines": [
+      "\"Local black market trader has been feeling the head from a powerful mobster muscling in on the market. Rumors of smuggling, extortion and backdoor deals swirl through the streets of Kinsen. The trader has asked for a quiet favor - dig up solid information on the mobsters illegal operations.\"",
+      "After noticing the dominance the mobsters are currently having over the black market, Kuwabara tasks you with finding information about it. Luckly, a bystander kid named Haruka has overheard Sora's weakness: cigarette packs. After interacting with Haruka, try bribing Sora with 2 packs to see what information he has."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Kinsen_Mobsters_Questline"
+  },
+  {
+   "id": "koji-co-employment-opportunity",
+   "name": "Koji Co. Employment Opportunity",
+   "level": 20,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "[[Land Of Waves]]",
+   "quote": null,
+   "summary": "Overview: With the Gang War series behind you, it's time to report back to Mr. Koji, the president of Koji Co., and inform him that the mission is complete.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "4000",
+    "ryo": null,
+    "extra": "15 Tags",
+    "list": [
+     "4000 EXP",
+     "15 Tags"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Koji_Co._Employment_Opportunity"
+  },
+  {
+   "id": "land-of-toads-i",
+   "name": "Land Of Toads I",
+   "level": 30,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Hitsutomo",
+   "location": null,
+   "quote": null,
+   "summary": "Land of Toads introduction missions",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "90000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "90000 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Land Of Toads I",
+     "lines": [
+      "First you need to bring him Leaf from Elder Tree.You can find leaf at Dark forest."
+     ]
+    },
+    {
+     "title": "Land Of Toads Ii",
+     "lines": [
+      "translate=no|title1 = Land Of Toads II|image1 = Land of Toads II.png|npc = Hitsutomo|mission_rank = B|level_range = 30+|reward = 186500}}After completing previous mission Toad hermit will want 20 DNA.",
+      "{{MissionBox",
+      "You can get [[DNA Sample|DNA]] by killing [[Cursed Host|Cursed Hosts]].",
+      "After Completion of both missions you will be grant access to [[Land of Toads|Land Of Toads]](You can teleport by talking with Toad at your village for 50 Ryo)"
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Land_Of_Toads-Mission"
+  },
+  {
+   "id": "land-of-spirits",
+   "name": "Land of Spirits",
+   "level": 60,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "Lv.60 Arc NPC",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]]",
+   "description": null,
+   "objectives": [
+    "Head to Yokai Village",
+    "Talk to [[Lady Kitsune]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "240850",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "240,850 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "How To Start",
+     "lines": [
+      "Speak to the Lv.60 Arc NPC (found with the other Arc NPCs, near [[Guren]]) and pay 100 Ryo to travel to the Land of Spirits. You arrive at the Farewell Boat landing."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Land_of_Spirits_%28Mission%29"
+  },
+  {
+   "id": "obtain-talons",
+   "name": "Obtain Talons",
+   "level": 30,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Hoshitomo",
+   "location": "Land of Toads",
+   "quote": null,
+   "summary": "To start those missions you need to talk with Hoshitomo.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "81800",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "81800 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Obtain Talons",
+     "lines": [
+      "First mission you get from Hoshitomo is obtaining 30 talons.",
+      "You can obtain them by killing [[Hawk]]s,you can find them at west and east side of mountain."
+     ]
+    },
+    {
+     "title": "Obtain Feathers",
+     "lines": [
+      "translate=no|title1 = Obtain Feathers|image1 = Obtain Feathers.png|mission_location = Land of Toads|npc = Hoshitomo|mission_rank = C|level_range = 30+|reward = 81800}}Second mission you get from Hoshitomo is obtaining 10 feathers.",
+      "{{MissionBox",
+      "You can obtain them by killing [[Hawk]]s,you can find them at west and east side of mountain."
+     ]
+    },
+    {
+     "title": "Obtain Raccoon Tails",
+     "lines": [
+      "translate=no|title1 = Obtain Raccoon Tails|image1 = Obtain Raccoon Tails.png|mission_location = Land of Toads|npc = Hoshitomo|mission_rank = C|level_range = 30+|reward = 81800}}Third and last mission you get from Hoshitomo is obtaining 15 raccoon tails.",
+      "{{MissionBox",
+      "You can obtain them by killing [[Raccoon Bandit]]s at west side of mountain."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Collecting_mission_chain"
+  },
+  {
+   "id": "natural-enemies-i",
+   "name": "Natural Enemies I",
+   "level": 30,
+   "rank": "B",
+   "type": "side",
+   "areas": [],
+   "npc": "Momotomo",
+   "location": "Land of Toads",
+   "quote": null,
+   "summary": "To start those missions you need to talk with Momotomo.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "20400",
+    "ryo": null,
+    "extra": "4 toad oils",
+    "list": [
+     "20400 EXP",
+     "4 toad oils"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Natural Enemies Ii",
+     "lines": [
+      "translate=no|title1 = Natural Enemies II|image1 = Natural Enemies II.png|mission_location = Land of Toads|npc = Momotomo|mission_rank = B|level_range = 30+|reward = 40800|additional_reward = 8 Toad oils}}Second mission you get from Momotomo is killing 20 [[Racoon Bandit]]s,you can find them at west side of mountain.",
+      "{{MissionBox"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Killing_mission_chain"
+  },
+  {
+   "id": "resolving-an-argument",
+   "name": "Resolving an Argument",
+   "level": 30,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": "Satomo",
+   "location": "Land of Toads",
+   "quote": null,
+   "summary": "Satomo had an argument with Yoshitomo,help Satomo to uncover the truth.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "163600",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "163600 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Resolving_an_Argument"
+  },
+  {
+   "id": "leaf-village-assault",
+   "name": "Leaf Village Assault",
+   "level": 59,
+   "rank": "S",
+   "type": "daily",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": "Enemy territory (Leaf Village)",
+   "quote": null,
+   "summary": "[[Leaf Village]] Assault is a repeatable S-Rank daily mission in which ninja from rival villages strike at the Leaf Village's elite.",
+   "description": null,
+   "objectives": [
+    "Eliminate Leaf Village Jonin"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "310,200",
+    "ryo": null,
+    "extra": "200 Ryo",
+    "list": [
+     "310,200 EXP",
+     "200 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Assault Missions",
+     "lines": [
+      "[[Leaf Village Assault]] - Leaf Jonin - S - 59+ - 310,200 - 200",
+      "[[Mist Village Assault]] - Mist Jonin - S - 59+ - 310,200 - 200",
+      "A Sand-facing variant has not been captured."
+     ]
+    },
+    {
+     "title": "Notes",
+     "lines": [
+      "Daily missions are capped: a ninja can start up to 4 daily missions per day.",
+      "Village Assault missions received fixes in the July 5, 2026 update."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Leaf_Village_Assault"
+  },
+  {
+   "id": "light-work",
+   "name": "Light Work",
+   "level": 43,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Kodaku",
+   "location": "Bandit Bridge",
+   "quote": null,
+   "summary": "Light Work is a mission available to take from level 43+",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "75400",
+    "ryo": null,
+    "extra": "200 ryo",
+    "list": [
+     "75400 EXP",
+     "200 ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Light_Work"
+  },
+  {
+   "id": "find-giba",
+   "name": "Find Giba",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "This is a D Rank mission requiring travel across the sea.",
+   "description": "A villager named Norito, who lives in a wooden house with a bright yellow roof near the Middle of the Mist village, has asked for a ninja's help to track down his missing puppy named \"Giba\".",
+   "objectives": [
+    "Ask Norito about his missing puppy",
+    "Follow his tip to find \"Giba\""
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "3240",
+    "ryo": "120",
+    "extra": null,
+    "list": [
+     "3240 EXP",
+     "120 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Lost_Puppy_%22Giba%22"
+  },
+  {
+   "id": "lover-s-quarrel",
+   "name": "Lover's Quarrel",
+   "level": null,
+   "rank": "S",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "An interesting story focusing on the couple Renma and Nori who happen to be in a heated quarrel. Can you help them solved it? You can pick up this mission at the Asoki port village.",
+   "description": null,
+   "objectives": [
+    "Help Nori and Renma solve a lover's quarrel.",
+    "Option 1: If you tell Nori that Renma has appologized about calling her a hoe, Nori will accept it but it's not enough.",
+    "Option 3: If you tell Renma that Nori called him a womanizer it will not progress the mission, but at least you can make him quit drinking, I hope..."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "51,000 \nGives 61,000 after giving Nori the flower",
+    "ryo": "50",
+    "extra": null,
+    "list": [
+     "51,000 \nGives 61,000 after giving Nori the flower EXP",
+     "50 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Descritpion",
+     "lines": [
+      "How does a ninja navigated the complexities of love?"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Lover%27s_Quarrel"
+  },
+  {
+   "id": "lucky-coin",
+   "name": "Lucky Coin",
+   "level": 64,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "Spirit Board",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]] (side mission).",
+   "description": null,
+   "objectives": [
+    "Obtain 1 [[Yokai Coin]] (0/1)",
+    "Toss a coin into the Fountain (choose your wish)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "395,400",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "395,400 EXP",
+     "Title: Lucky One"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "The wish is a branching multiple-choice: Wealth, Strength, Guidance, Purpose, or Revenge, some with follow-up choices. The fountain rewards you based on your answers. Backing out and interacting with the fountain again lets you choose a different wish."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Lucky_Coin"
+  },
+  {
+   "id": "medicine-supplies",
+   "name": "Medicine Supplies",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Providing medical supplies has to be one of the most tedious task for any villager. You will have to provide your medical shop with all kinds of resources, from cocoons to DNA.",
+   "description": "The Village medicine shop is low on medicine and it's owner needs certain supplies to make more medicine. Visit the medicine shop and talk to the NPC, find out what he needs and bring it to him.",
+   "objectives": [
+    "Help Medicine Shop restock medicinal ingredients."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "Tier I - 9,100 \nTier II - 78,100 \nTier III - 223,300 \nMissing - 51,000",
+    "ryo": "Tier I - 100 \nTier II - 175 \nTier III - 270",
+    "extra": null,
+    "list": [
+     "Tier I - 9,100 \nTier II - 78,100 \nTier III - 223,300 \nMissing - 51,000 EXP",
+     "Tier I - 100 \nTier II - 175 \nTier III - 270 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Medical Supplies I",
+     "lines": [
+      "Leaf: 30 Spider eggs & 40 Cocoons",
+      "Sand: 30 Scorpion tails & 40 Cocoons",
+      "Mist: 30 Dragonfly wings & 40 Cocoons"
+     ]
+    },
+    {
+     "title": "Medical Supplies Ii",
+     "lines": [
+      "Leaf: 30 Scorpion tails & 25 Snake venom",
+      "Sand: 30 Spider eggs & 25 Snake venom",
+      "Mist: 25 Spider eggs & 30 Snake venom"
+     ]
+    },
+    {
+     "title": "Medical Supplies Iii",
+     "lines": [
+      "Leaf: 20 Big scarab shells, 10 DNA & 10 Bear paws",
+      "Sand: 15 Rat tails, 10 DNA & 10 Bear Paws",
+      "Mist: 20 Big Scarab Shells, 10 DNA & 10 Bear paws"
+     ]
+    },
+    {
+     "title": "Medicine Supplies Iv",
+     "lines": [
+      "Leaf: 20 Snow Wolf Furs, 10 [[Moth Wings]] & 15 Shark Teeth",
+      "Sand: not recorded",
+      "Mist: not recorded",
+      "Recorded in game on 16 August 2026. Himura sends you to the moths near [[Takumi Village]], sharks in the waters near the [[Mist Village]], and snow wolves deep in the forest cave. Full dialogue and reward detail on [[Medicine Supplies IV]]."
+     ]
+    },
+    {
+     "title": "Medical Supplies For Missing Ninja",
+     "lines": [
+      "You are asked by the daimyo to collect 2 [[Blood Pill|Blood Pills]]."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Medical_Supplies"
+  },
+  {
+   "id": "medicine-supplies-i",
+   "name": "Medicine Supplies I",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Leaf: 30 [[Larva|Cocoon]] and 30 [[Spiderling|Spider Eggs]]",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_I"
+  },
+  {
+   "id": "medicine-supplies-ii",
+   "name": "Medicine Supplies II",
+   "level": 21,
+   "rank": "B",
+   "type": "daily",
+   "areas": [],
+   "npc": "[[Masumi]]",
+   "location": "[[Sand Village]]",
+   "quote": "The Sand Village Herbalist is low on parts which contain medicinal properties that it uses to make medicine. Visit the Herbalist, find out what they needs and bring it to them, then report back.",
+   "summary": "Medicine Supplies II is a repeatable daily mission of Rank B, available to ninja between Level 21 and 35. It is the second tier of the Medicine Supplies chain, which runs from [[Medicine Supplies I]] up to [[Medicine Supplies IV]].",
+   "description": null,
+   "objectives": [
+    "Speak to the village Herbalist. In the [[Sand Village]] this is [[Masumi]].",
+    "Gather the ingredients she asks for and report back."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "78,100",
+    "ryo": null,
+    "extra": "175 Ryo + 4 consumable items",
+    "list": [
+     "175 Ryo",
+     "78,100 EXP",
+     "Four consumable items",
+     "+1 village contribution"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Mission Giver Differs By Village",
+     "lines": [
+      "[[Sand Village]] - [[Masumi]] - Dialogue and ingredients below",
+      "[[Leaf Village]] - [[Himura]], at the [[Leaf Medicine Shop]] - His dialogue is now transcribed at tier IV on [[Medicine Supplies IV]]; his tier II lines are still unrecorded",
+      "[[Mist Village]] - not recorded - —",
+      "The Medicine Supplies chain runs in more than one village, and the herbalist you are sent to, the dialogue and the ingredient list all change with it. Everything transcribed below is the [[Sand Village]] version, captured on a Sand character.",
+      "If you run this in the Leaf or the Mist, please add that village's dialogue and ingredient list."
+     ]
+    },
+    {
+     "title": "Sand Village: Talking To Masumi",
+     "lines": [
+      "When you reach her, [[Masumi]] opens with:",
+      "You can answer with Why the confrontational tone?, What do you need?, Shop or Leave. Asking about her tone gets the reason:",
+      "Then she gives you the list."
+     ]
+    },
+    {
+     "title": "Sand Village: Ingredients",
+     "lines": [
+      "Masumi asks for 25 [[Spider Eggs]] and 30 Snake Venom, and tells you where to look:",
+      "Both sources sit outside Sand territory, so expect to travel for this one.",
+      "The requested ingredients differ by village and by tier. [[Medicine Supplies I]] in the [[Leaf Village]] asks for 30 Cocoon and 30 Spider Eggs instead, from a different herbalist."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_II"
+  },
+  {
+   "id": "medicine-supplies-iv",
+   "name": "Medicine Supplies IV",
+   "level": 58,
+   "rank": "A",
+   "type": "daily",
+   "areas": [
+    "leaf"
+   ],
+   "npc": "[[Himura]]",
+   "location": "[[Leaf Medicine Shop]], [[Leaf Village]]",
+   "quote": "The Leaf Village medicine shop is low on medicine and it's owner needs certain supplies to make more medicine. Visit the medicine shop and talk to Himura, find out what he needs and bring it for him.",
+   "summary": "Medicine Supplies IV is a repeatable A-Rank daily mission for ninja between Level 58 and 70. It is the fourth and highest tier of the Medicine Supplies chain, which runs from [[Medicine Supplies I]] through [[Medicine Supplies II]] and Medicine Supplies III up to this one.",
+   "description": null,
+   "objectives": [
+    "Help Medicine Shop restock medicinal ingredients"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "342,640",
+    "ryo": null,
+    "extra": "200-300 Ryo + 4 consumables",
+    "list": [
+     "342,640 EXP",
+     "Ryo — see the note below",
+     "Four consumables: two red and two blue, matching the [[Blood Pill]] and [[Chakra Pill]] icons Himura sells. The tier of each is not legible on the card."
+    ]
+   },
+   "sections": [
+    {
+     "title": "Ingredients",
+     "lines": [
+      "Snow Wolf Fur x20",
+      "[[Moth Wings]] x10",
+      "[[Sharks Tooth]] x15",
+      "Recorded in the [[Leaf Village]] on 16 August 2026. Himura asks for three items and tells you where each one comes from:",
+      "Two of the three now have pages, created 16 August 2026 from item cards: [[Sharks Tooth]] and [[Moth Wings]]. Snow Wolf Fur does not, and neither does any shark or snow wolf mob. The remaining gap is the Snow Wolf Fur card and a mob page for whatever drops it — see [[Nin Online Wiki:Contributing]]."
+     ]
+    },
+    {
+     "title": "Ryo Discrepancy, Unresolved",
+     "lines": [
+      "6 July 2026 - Mission Request card at the desk - 300 - 342,640",
+      "16 August 2026 - Mission tracker, mission already accepted - 200 - 342,640",
+      "The two captures of this mission disagree on the Ryo, and only on the Ryo:",
+      "Same EXP, same rank, same description, different Ryo. That points to a reward change between those dates rather than a second variant, but nothing in the patch archives records one, so both figures are kept here until someone reads the Ryo off the request panel at the desk today. The tracker also omits the level range entirely, which is why the Lv. 58-70 figure still comes from the July card.",
+      "<br clear=\"all\" />"
+     ]
+    },
+    {
+     "title": "The Mission Giver Differs By Village",
+     "lines": [
+      "[[Leaf Village]] - [[Himura]], at the [[Leaf Medicine Shop]] - Dialogue and ingredients above",
+      "[[Sand Village]] - [[Masumi]] - Recorded at tier II on [[Medicine Supplies II]]; tier IV not captured",
+      "[[Mist Village]] - not recorded - —"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_IV"
+  },
+  {
+   "id": "deliver-the-scroll",
+   "name": "Deliver the Scroll",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "A C-rank mission that requires you to deliver a message to the Fire Daimyo in Tanzaku town. This mission is dangerous as you have to cross tigers and missing ninja to deliver the message. Tanzaku is a hot spot for Rogue ninja and some of the monsters south of the town are deadly as well.",
+   "description": "Collect the message scroll from the Hokage's desk and deliver it to the Land of Fire Daimyo. She can be found in the castle of [[Kinsen Quarters]]. The scroll is dropped upon fainting.",
+   "objectives": [
+    "Collect and Deliver the message scroll"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "4250",
+    "ryo": "90",
+    "extra": null,
+    "list": [
+     "4250 EXP",
+     "90 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Messenger_Ninja"
+  },
+  {
+   "id": "rat",
+   "name": "Rat",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": "You have been tasked to investigate the [[Leaf Village]]'s sewers and deal with a Rat problem. Rumor has it, the rats have become overgrown due to unethical experiments.",
+   "objectives": [
+    "Kill 70 [[Mutant Rat|Mutant Rats]] (0/70)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "8600",
+    "ryo": "140",
+    "extra": null,
+    "list": [
+     "8600 EXP",
+     "140 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Additional Information",
+     "lines": [
+      "You need to complete Leaf [[Hidden Seals]] mission in order to unlock sewers (level 10+)"
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Mission%3A_Mutant_Rats"
+  },
+  {
+   "id": "mist-village-assault",
+   "name": "Mist Village Assault",
+   "level": 59,
+   "rank": "S",
+   "type": "daily",
+   "areas": [
+    "leaf",
+    "mist"
+   ],
+   "npc": null,
+   "location": "Enemy territory ([[Mist Village]])",
+   "quote": "Authorities have flagged a unit of Mist Jonin known for their brutal silent killing techniques as an immediate threat. Hunt them down and carry out the mission without hesitation.",
+   "summary": "[[Mist Village]] Assault is a repeatable S-Rank daily mission in which ninja from rival villages hunt the Mist Village's elite. It is the Mist-facing counterpart of [[Leaf Village Assault]], and the two cards match on rank, level and both rewards.",
+   "description": null,
+   "objectives": [
+    "Eliminate Mist Village Jonin"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "310,200",
+    "ryo": null,
+    "extra": "200 Ryo",
+    "list": [
+     "310,200 EXP",
+     "200 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Assault Missions",
+     "lines": [
+      "[[Leaf Village Assault]] - Leaf Jonin - S - 59+ - 310,200 - 200",
+      "[[Mist Village Assault]] - Mist Jonin - S - 59+ - 310,200 - 200",
+      "A Sand-facing variant has not been captured. If it follows the pattern it exists at the same rank, level and rewards, but that is not documented and is not asserted here."
+     ]
+    },
+    {
+     "title": "Notes",
+     "lines": [
+      "Daily missions are capped: a ninja can start up to 4 daily missions per day.",
+      "Village Assault missions received fixes in the July 5, 2026 update."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Mist_Village_Assault"
+  },
+  {
+   "id": "mobster-take-out-kinsen-arc",
+   "name": "Mobster Take Out - (Kinsen arc)",
+   "level": 15,
+   "rank": "B",
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Part of the [[Kinsen Mobsters Questline]]",
+   "description": null,
+   "objectives": [
+    "Find a way into Mobster Hideout (Complete [[Drunk Entry]])",
+    "Kill 50 Mobsters"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "23600",
+    "ryo": "250",
+    "extra": null,
+    "list": [
+     "23600 XP",
+     "250 Ryo",
+     "Unlocks: Mobster Hideout",
+     "Unlocks: [[The Mob Boss]]"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Bonus: Unlocks Mobster Hideout, starts The Mob Boss, Required for later missions"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Mobster_Take_Out"
+  },
+  {
+   "id": "moist-sand-beasts",
+   "name": "Moist Sand Beasts",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [
+    "sand"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": null,
+   "description": null,
+   "objectives": [
+    "Kill 35 Tunneller (0/35)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "4,700",
+    "ryo": "100",
+    "extra": null,
+    "list": [
+     "90 Ryo",
+     "14,175 EXP",
+     "+1 village contribution"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Moist_Sand_Beasts"
+  },
+  {
+   "id": "ninja-evergarden",
+   "name": "Ninja Evergarden",
+   "level": 55,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Hideyoshi",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon meeting [[Hideyoshi|Old Man Hideyoshi]] at the [[Rebel Encampment]] in the [[Land of Iron]], he expresses his longing for his grandson [[Saburo]] and his wish to see him again.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "242900",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "242900 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Ninja_Evergarden"
+  },
+  {
+   "id": "okada-s-debt",
+   "name": "Okada's Debt",
+   "level": null,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "An exciting and fun gambling challenge!",
+   "description": "Help Okada settle his debt with the mob boss by turning 200 Ryo into 1000 Ryo by gambling money.",
+   "objectives": [
+    "Gamble in [[Kinsen Quarters]] and earn 1000 Ryo. (200/1000)",
+    "You can do only 1 gambling mission at a time, to do the other gambling mission you need to COMPLETE the 1st one you picked."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "177,777",
+    "ryo": "0",
+    "extra": null,
+    "list": [
+     "177,777 EXP",
+     "0 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Okada%27s_Debt"
+  },
+  {
+   "id": "old-blood-puppet-retirement",
+   "name": "Old Blood Puppet Retirement",
+   "level": null,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "sand"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "An puppeteer ninja once used his own blood to transfer chakra into puppets that now inhabit an abandoned workshop North-West of the [[Sand Village]]",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Old_Blood_Puppet_Retirement"
+  },
+  {
+   "id": "open-for-business",
+   "name": "Open for Business",
+   "level": 25,
+   "rank": "A",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": "You have been tasked with escorting a merchant to Kinsen Quarters.",
+   "summary": "Open for Business is an A-Rank daily mission gated at Lv. 25 - 30. It is an escort job, taking a merchant to [[Kinsen Quarters]].",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "69750",
+    "ryo": "30",
+    "extra": null,
+    "list": [
+     "69,750 EXP",
+     "30 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "It is the lowest-gated A-Rank daily recorded on this wiki, and it pays 30 Ryo — less than the",
+      "C-Rank [[Clear the Abandoned Lair]] pays at a similar level. Rank does not track level or payout;",
+      "see [[Missions#By level|the daily mission table]]."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Open_for_Business"
+  },
+  {
+   "id": "panda-food-is-penguin-beaks",
+   "name": "Panda Food is Penguin beaks!?",
+   "level": 51,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Yozune",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon meeting [[Yozune]] at the [[Rebel Encampment|Rebel Encampment]] in the [[Land of Iron]], he gives you the task of collecting penguin beaks to feed his adorable pet panda. Penguin beaks are obtainable from [[Emperor Penguin|Emperor Penguins]] that inhabit Both the [[Iron Cave]] and [[Iron Forest]].",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "168700",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "168700 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Panda_Food_is_Penguin_Beaks%21%3F"
+  },
+  {
+   "id": "poisonous-hunger",
+   "name": "Poisonous Hunger",
+   "level": null,
+   "rank": "C",
+   "type": "story",
+   "areas": [],
+   "npc": "[[Zabuto]]",
+   "location": null,
+   "quote": "Zabuto agreed to share his crafting recipe but only after you fetch him some prawn sushi and a little ryo. No, he's not dying... he's just really hungry. A small price to pay for such deadly knowledge, don't you think?",
+   "summary": "Poisonous Hunger is a C Rank story mission. [[Zabuto]] will hand over a crafting recipe, but he wants feeding first.",
+   "description": null,
+   "objectives": [
+    "Collect 500 Ryo",
+    "Obtain 5 [[Prawn Sushi]] (0/5)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "21,400",
+    "ryo": null,
+    "extra": "A crafting recipe from Zabuto",
+    "list": [
+     "A crafting recipe from [[Zabuto]]",
+     "21,400 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Poisonous_Hunger"
+  },
+  {
+   "id": "prison-work",
+   "name": "Prison Work",
+   "level": 10,
+   "rank": "B",
+   "type": "repeatable",
+   "areas": [],
+   "npc": "[[Warden Haoya]]",
+   "location": "[[Hyoketsu Prison]] — Warden Office",
+   "quote": "Prison Warden Haoya has agreed to lower your sentence if you help with a bunch of odd jobs around the prison.",
+   "summary": "Prison Work is a repeatable Rank B mission given by [[Warden Haoya]] inside [[Hyoketsu Prison]], gated at Level 10.",
+   "description": null,
+   "objectives": [
+    "[[Copper Ore]] x20",
+    "[[Coal Ore]] x10",
+    "[[Iridescent Weeds]] x10"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "520",
+    "ryo": null,
+    "extra": "Reduces Crimes by 4",
+    "list": [
+     "520 EXP — from the mission card of 31 August 2026. The 2025 recording listed no EXP for this mission.",
+     "Reduces Crimes by 4"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Captured in-game by rawxxx on 31 August 2026."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Prison_Work"
+  },
+  {
+   "id": "puppet-retirement",
+   "name": "Puppet Retirement",
+   "level": null,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "sand"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "A puppeteer ninja once used his own blood to transfer chakra into puppets that now inhabit an abandoned workshop North-west of the [[Sand Village]]",
+   "description": null,
+   "objectives": [
+    "Kill 40 Blood Puppets (0/40)",
+    "Kill 20 Old Blood Puppets (0/20)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "B. Puppet Retirement - 166820 \nOld Blood Puppet - 217935",
+    "ryo": "185 \n190",
+    "extra": null,
+    "list": [
+     "B. Puppet Retirement - 166820 \nOld Blood Puppet - 217935 EXP",
+     "185 \n190 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Puppet_Retirement"
+  },
+  {
+   "id": "remnants-of-the-wicked-i",
+   "name": "Remnants of the Wicked I",
+   "level": 60,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Rokuro]]",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Remnants of the Wicked I is an A-Rank mission in the [[Land of Spirits]], given by [[Rokuro]].",
+   "description": null,
+   "objectives": [
+    "Obtain 120 [[Yokai Heart]]",
+    "Obtain 80 [[Yokai Eye]]",
+    "Obtain 70 [[Yokai Tongue]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "178,610",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "178,610 EXP",
+     "Item reward"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Remnants_of_the_Wicked_I"
+  },
+  {
+   "id": "rescue-grandpa-iroh",
+   "name": "Rescue grandpa Iroh",
+   "level": 56,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Suki",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon talking to [[Suki]] at the [[Rebel Encampment]] in the [[Land of Iron]], she pleads with you to rescue her Grandfather [[Iroh]], a retired General of the land of Iron. Iroh is currently imprisoned in [[Iron City]] and is overseen by [[Samurai]], to free him you must obtain an Iron Key from a [[Horned Samurai]].",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "277700",
+    "ryo": null,
+    "extra": "Ryo",
+    "list": [
+     "277700 EXP",
+     "Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Rescue_grandpa_Iroh"
+  },
+  {
+   "id": "retrieve-compromised-documents",
+   "name": "Retrieve Compromised Documents",
+   "level": null,
+   "rank": "A",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": "The Spy department of the Sand Special Division have received intel about compromised Sand village documents. Intelligence has pin pointed it to the Hokami's office archives. Fainting in combat will cause you to drop the documents.",
+   "summary": null,
+   "description": "The Spy department of the ANBU that compromised Village documents. Intelligence has pin pointed it to the Kage's office archives. Fainting in combat will cause you to drop the documents.",
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "149,985",
+    "ryo": "200",
+    "extra": null,
+    "list": [
+     "149,985 EXP",
+     "200 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Misstion Objectives",
+     "lines": [
+      "Retrieve stolen documents from the Village's office",
+      "can be given for any village except Takumi"
+     ]
+    },
+    {
+     "title": "Village Variants",
+     "lines": [
+      "The mission is written generically on this page. In game it appears with the target village named in the title, and the description filled in with that village's specifics."
+     ]
+    },
+    {
+     "title": "Compromised Documents (Leaf)",
+     "lines": [
+      "Run by a [[Sand Village]] ninja against the [[Leaf Village]]. Rank A, daily.",
+      "Objective: Obtain 1 Compromised Documents (0/1). The tracker adds the warning \"Be careful as it drops on death\".",
+      "Rewards: 200 Ryo, 127,490 EXP, and the village score entries shown on the card: +1 to your own village and −1 to the village you steal from, matching the Intelligence score this mission feeds.",
+      "The EXP figure differs from the 149,985 recorded at the top of this page, so the payout likely scales with level or with the village pairing. Both figures are left here rather than one being overwritten.",
+      "<br clear=\"all\">",
+      "If you run the Sand-targeting or Mist-targeting version, please add its wording and figures here."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Retrieve_Compromised_Documents"
+  },
+  {
+   "id": "revenge-on-kuraken",
+   "name": "Revenge On Kuraken",
+   "level": 38,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "mist"
+   ],
+   "npc": "Oson",
+   "location": "South-Eastern Sea IV",
+   "quote": null,
+   "summary": "Note: Before you are able to take this quest, you need to enter the [[Mist Village]] map & donate at least 10 Ryo to [[Kampo (The Beggar)|Kampo]], who is located close to the West entrance, down the closest waterfall and to the right.",
+   "description": "Oson of the Angsan Clan, located on an island in the middle of the sea, asked for my help to take revenge on the sea beast, Kuraken",
+   "objectives": [
+    "Defeat 8 of the [[Kuraken|Kuraken Tentacles]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "258000 XP",
+    "ryo": null,
+    "extra": "Beast Slayer title \n100 Ryo",
+    "list": [
+     "258000 XP EXP",
+     "Beast Slayer title \n100 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Revenge_on_Kuraken"
+  },
+  {
+   "id": "riddle-of-the-blood-and-riddle-of-the-blood-2",
+   "name": "Riddle of the Blood, and Riddle of the Blood 2",
+   "level": null,
+   "rank": null,
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Deprecated on 15 September 2026. [[Updates 2026#Update v5.13.6.9|Update v5.13.6.9]] removed the Rite of Passage and Riddle of the Blood missions and replaced them with a new level 45 questline: head to Asoki and help Denkai find his missing shipment.",
+   "description": "After asking Denki (The Tools Merchant near the Mainland port to mist) about the heavily damaged scroll he'll give you 2 riddles to figure out. (lucky for you I found them out.)",
+   "objectives": [
+    "For the First Riddle: Go behind the ghost house (where tanuki spawns there should be another map behind it) You'll see 2 sets of 5 bamboo's walk around the bottom left part of the bamboo it should spawn a rock (unseal the rock) -Go inside the ghost house there should be a 2nd floor you'll see the Sun Pill, and the Moon Pill (What i did was use the sun pill first (the right pill) and go the the left one next). Afterwards go back to Denki, and he'll give you your 2nd riddle.",
+    "For the Second Riddle: Denki will give another riddle, but basically find these 3 scriptures. (First scripture is near sansan (red haired girl near the mist village port), 2nd scripture is where you saw the 2 rows of bamboo (at the top of the map), and the Last scripture is at mist gd around the top the of map.) (WARNING: It's makes you so that you can't do anything you have to close the game completely. EXCEPT FOR THE LAST SCRIPTURE. YOU CAN INTERACT WITH THEM IN ANY ORDER DOESN'T MATTER.)",
+    "After that it'll lead you to where the mist gd scripture was at, just go up the waterfall and you'll fight another evil sprit (Fair warning there will be spirits near the actual spirit you'll fight, and the map is mostly water there are lilypads you can stand on to charge chakra). After defeating it you'll go back to Denki. (He gives pretty good pills decent exp and money if you're a completionist)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Riddle_of_the_Blood%2C_and_Riddle_of_the_Blood_2"
+  },
+  {
+   "id": "sand-style-relaxation",
+   "name": "Sand Style Relaxation",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "sand"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": "The Kazekami office has noticed your tireless work and tasked you with the important mission of. taking the day off and visit the Sand Village Spa.",
+   "summary": null,
+   "description": null,
+   "objectives": [
+    "Relax at the Sand Village Spa (0/900)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "Level 1 - ???\nLevel 2 - 19200",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "Level 1 - ???\nLevel 2 - 19200 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Tiers",
+     "lines": [
+      "I - D - — - ??? - —",
+      "II - D - — - 19,200 - —",
+      "III - D - 26 - 36 - 52,520 - +1",
+      "The mission repeats at higher tiers as you level. Each tier is still Rank D and still just asks you to sit in the spa.",
+      "Tier III was read from the in-game Mission Request card on 15 August 2026. The level ranges for tiers I and II are not yet recorded."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Sand_Style_Relaxation"
+  },
+  {
+   "id": "sansan-s-gold",
+   "name": "Sansan's Gold",
+   "level": 4,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "mist"
+   ],
+   "npc": "Sansan",
+   "location": "Totori Village",
+   "quote": null,
+   "summary": "Mission is accepted by an NPC called Sansan located in [[Totori Village]] west of the [[Mist Village|Hidden Mist village]]. You're tasked with finding 3 gold bars thrown in bodies of water around the mist village. After recovering the 3 bars of gold you must then bring them back to Sansan.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "300",
+    "ryo": null,
+    "extra": "Cloak of Invisibility Manual",
+    "list": [
+     "300 EXP",
+     "Cloak of Invisibility Manual"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Sansan%27s_Gold"
+  },
+  {
+   "id": "scattered-report",
+   "name": "Scattered Report",
+   "level": 10,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": "Jonin, by the Notice Board",
+   "location": "Outside the village (all three villages)",
+   "quote": "A Jonin's mission report was scattered by a sudden gust of wind. Search the area outside the village and recover the missing pages before they are lost for good.",
+   "summary": "Scattered Report is a Level 10+ D-rank story mission available in all three villages. It appears in the [[Updates 2026#Update v5.13.5|Update v5.13.5]] patch notes of 2 August 2026, listed as \"a new Level 10+ story mission to each village\". Players were already completing it in-game by 15 July 2026.",
+   "description": null,
+   "objectives": [
+    "Find the missing pages (0/4)",
+    "Return to the Jonin"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "7,000",
+    "ryo": null,
+    "extra": "100 Ryo",
+    "list": [
+     "7,000 EXP",
+     "100 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Sand",
+     "lines": [
+      "1 - Sand Hive Grounds - the Stinger map",
+      "2 - Eastern Desert Valley - north of the Scorpion map, near the stairway",
+      "3 - Dry Sand Grounds - south of the village, on the Larva map",
+      "4 - Howling Canyon II - south of the village, on the Coyote map",
+      "All four maps are labelled in the image in the infobox."
+     ]
+    },
+    {
+     "title": "Leaf",
+     "lines": [
+      "1 - \"the left map to GD (sewer entrance), on the far left side on the map\"",
+      "2 - \"the wolf map under Training Grounds, on the small island to the right (Outskirts Deadend)\"",
+      "3 - \"the spiders map, next to the Lake Bell mapswitch (Moist Plains)\"",
+      "4 - \"on the northern side, on the map next to 12F Temple, on the cliff under the mapswitch (Mountain Side)\"",
+      "Reported by a player in the Nin Online Discord on 15 July 2026, quoted here as written. The abbreviation \"GD\" is the contributor's own and has not been expanded."
+     ]
+    },
+    {
+     "title": "Mist",
+     "lines": [
+      "1 - Village Southern Limits - Danger Zone - tracker at 1/4 on arrival; named by the runner in chat",
+      "2 - Windy Pond - Safe Zone - tracker at 1/4 on arrival, 2/4 by the next map; named by the runner in chat",
+      "3 - 3 Way Road Split - Safe Zone - page visible on the ground with the Z or E to Interact prompt, tracker at 2/4",
+      "4 - Big Slope - Danger Zone - page visible on the ground with the Z or E to Interact prompt, tracker at 3/4",
+      "Read off a full Mist run posted to the Nin Online Discord on 26 July 2026. The screenshots below are that run in order, and the objective tracker in each one counts up as the pages are collected.",
+      "The exact tile is visible in the shots for 3 Way Road Split and Big Slope. For Village Southern Limits and Windy Pond the map is confirmed but the pickup itself is not in frame.",
+      "<gallery widths=\"320\" position=\"center\" captionalign=\"center\">",
+      "Scattered Report Mist Village Southern Limits.png|Village Southern Limits, tracker at 1/4",
+      "Scattered Report Mist Windy Pond.png|Windy Pond, the second page map",
+      "Scattered Report Mist 3 Way Road Split.png|3 Way Road Split, page on the ground at 2/4",
+      "Scattered Report Mist Big Slope.png|Big Slope, the final page at 3/4",
+      "</gallery>"
+     ]
+    },
+    {
+     "title": "Related Missions",
+     "lines": [
+      "The same patch added two Level 12+ story missions to each village, Botanical Research and Wildlife Samples. Neither is documented on the wiki yet."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Scattered_Report"
+  },
+  {
+   "id": "something-shiny-something-old",
+   "name": "Something Shiny, Something Old",
+   "level": null,
+   "rank": "C",
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Deprecated on 15 September 2026. [[Updates 2026#Update v5.13.6.9|Update v5.13.6.9]] removed the Rite of Passage and Riddle of the Blood missions and replaced them with a new level 45 questline: head to Asoki and help Denkai find his missing shipment.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "101125",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "101125 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Something Shining, Something Old",
+     "lines": [
+      "After you reach level 45, the next time you enter the South Eastern Sea, a small earthquake cutscene will play, showing that you have unlocked the cave in the island present in this map to start the level 45 mini questlines. Once you enter it, look for a heavily damaged scroll hidden inside there. You'll have the option to bring it to Oson or to Denkai First, but in the end you'll be able to do both mission paths."
+     ]
+    },
+    {
+     "title": "Oson'S Path",
+     "lines": [
+      "translate=no|title1=Final Resting Place|npc=Oson|mission_rank=B|reward=151125|additional_reward=5 Blood Pills IV & 5 Chakra Pills IV}}",
+      "{{MissionBox"
+     ]
+    },
+    {
+     "title": "Final Resting Place",
+     "lines": [
+      "translate=no|title1=Rite of Passage|npc=Oson|mission_rank=C|reward=101125|additional_reward=350 ryo, 5 Blood Pills V & 5 Chakra Pills V, 1 Blank Scroll and 1 \"Content\" Coupon}}",
+      "{{MissionBox",
+      "If you bring the scroll back to Oson in the South Eastern Sea III, she will ask you about where you found it, and reminisce of her ancient bloodline. Then, she will task you with investigating into into the cave where the scroll was and purging 120 rotten spirits so her ancestors will be able to rest."
+     ]
+    },
+    {
+     "title": "Rite Of Passage",
+     "lines": [
+      "After purging the spirits, you can return to Oson and she will ask you to put a special seal of hers in the deepest end of the cave as her last request, Come back to her after doing it to finish her path."
+     ]
+    },
+    {
+     "title": "Secret Blank Scroll",
+     "lines": [
+      "Inside the cave, there are some stone morgue beds, and crawling up after lying in one of them leads to a secret room where you will find a hidden blank scroll and also be able to take a breather before going back to defeating the spirits."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Sea_Mini_Questlines"
+  },
+  {
+   "id": "seeker-of-truth-takumi-arc",
+   "name": "Seeker of Truth - (Takumi arc)",
+   "level": 10,
+   "rank": "Main",
+   "type": "side",
+   "areas": [
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "After unveiling the hidden cave, you found a broken seal with a riddle carved on the wall beside the gate, 'Seek the 7 truths and lay in death's own view'",
+   "description": null,
+   "objectives": [
+    "Kill 7 Guardian Spirits",
+    "Find a way to enter the Tomb",
+    "Go To the Royal Tomb"
+   ],
+   "requirements": [
+    "[[Hidden Tomb - (Takumi Seals)|Hidden Tomb (Level 25)]]"
+   ],
+   "rewards": {
+    "exp": "2500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "2500 XP",
+     "[[Blank Scroll]]"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Bonus: Starts A Lord's Legacy"
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Seeker_of_Truth_-_%28Takumi_arc%29"
+  },
+  {
+   "id": "shark-attack",
+   "name": "Shark Attack",
+   "level": 46,
+   "rank": "C",
+   "type": "side",
+   "areas": [
+    "mist"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Shark Attack is a Rank C quest available between level 46 - 53, available at any of the village mission desks. This quest takes place on the map South Eastern Sea V, which can be found one map up & to the right of the Kraken, between Asoki Port & the [[Mist Village]]",
+   "description": "Great White Sharks are posing a danger to traders hoping to sail across the South Eastern Sea. The village has tasked you with clearing it of threats to these sailors.",
+   "objectives": [
+    "Kill 25 Great White Sharks (0/25)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "228390~",
+    "ryo": "160",
+    "extra": null,
+    "list": [
+     "228390~ EXP",
+     "160 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Great Blood Shark",
+     "lines": [
+      "On 29 July 2026 Luu added the Great Blood Shark, an enraged version of the shark, to South Eastern Sea V, the map this mission sends you to. Its stats and drops have not been recorded, and whether it counts toward the 25 Great White Sharks is unconfirmed."
+     ]
+    },
+    {
+     "title": "Bestiary",
+     "lines": [
+      "49 x23",
+      "54 x30",
+      "Over 10% - [[Sharks Fin]], [[Sharks Tooth]]",
+      "Over 1% - [[Tanned Leather]]",
+      "Below 1% - [[Blank Scroll]], [[Hokuto Sphere III]], [[Shark Tooth Ring]] (any rarity), [[White Masked Top]]",
+      "Over 25% - [[Sharks Fin]] ×2, [[Sharks Tooth]] ×3",
+      "Over 1% - [[Blank Scroll]], [[Tanned Leather]]",
+      "Below 1% - [[Hokuto Spheres|Hokuto Sphere IV]], [[Masked Top|Red Masked Top]], [[Shark Tooth Ring]] (any rarity)",
+      "The game's bestiary values for Shark Attack, the same ones its in-game card shows.",
+      "Great White Shark, level 49: Found in: [[South Eastern Sea V]]",
+      "Drops (7), by chance tier:",
+      "Great Blood Shark, level 54: Found in: [[South Eastern Sea V]]"
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Shark_Attack"
+  },
+  {
+   "id": "silent-shipment",
+   "name": "Silent Shipment",
+   "level": 51,
+   "rank": "S",
+   "type": "daily",
+   "areas": [
+    "leaf",
+    "sand",
+    "mist"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": "A confidential shipment has been delivered to a random village within designated drop zone. Travel to the market location, locate the storage crate, and retrive the supply package.",
+   "summary": "Silent Shipment is an S-Rank repeatable daily mission that sends you into another village's market to lift a supply package out of a storage crate. The mission name carries the target village in brackets, so Silent Shipment (Leaf) is the Leaf-targeting version.",
+   "description": "The misspelling of \"retrieve\" is the game's own and is reproduced here as written. The drop location is randomised each time. The card says the shipment goes to \"a random village within designated drop zone\", so the market you need is not fixed between runs.",
+   "objectives": [
+    "Obtain 1 Supply Package — counter reads (0/1), so one package completes the mission."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "264,730",
+    "ryo": "200",
+    "extra": null,
+    "list": [
+     "264,730 EXP",
+     "200 Ryo",
+     "Four village-standing entries, shown as village emblems on the mission card",
+     "[[Leaf Village|Leaf]] - green, leaf swirl - −1",
+     "[[Sand Village|Sand]] - tan, hourglass - −1",
+     "[[Mist Village|Mist]] - blue, wavy lines - −1",
+     "[[Takumi Village|Takumi]] - grey - +1"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Requirements",
+     "lines": [
+      "Rank: S",
+      "Level: 51+",
+      "Type: Daily Mission"
+     ]
+    },
+    {
+     "title": "Variants",
+     "lines": [
+      "Silent Shipment (Leaf) - S - 51+ - 264,730 - 200 - −1 / −1 / −1 / +1",
+      "Silent Shipment (Mist) - S - 51+ - 264,730 - 200 - −1 / −1 / −1 / +1"
+     ]
+    },
+    {
+     "title": "Origin",
+     "lines": [
+      "This mission is most likely one of the \"Steal Supply Crate Missions\" listed in the [[Updates 2026#Update v5.13.5|Update v5.13.5]] patch notes of 2 August 2026. The patch line names the mission type but not the individual missions, so the connection is inferred from the objective rather than stated by the notes."
+     ]
+    },
+    {
+     "title": "Not Yet Captured",
+     "lines": [
+      "Whether a Sand variant exists, and whether a Takumi one does",
+      "Whether the mission is offered by the Daimyo in [[Takumi Village]] or from a village mission desk",
+      "The exact name of the standing stat",
+      "A screenshot of the mission card for any other variant fills most of these rows at once."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Silent_Shipment"
+  },
+  {
+   "id": "speak-to-contruction-site-manager-png",
+   "name": "Speak to Contruction Site Manager.png",
+   "level": 20,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": "Koji Co.",
+   "location": "[[Land Of Waves]]",
+   "quote": null,
+   "summary": "Overview: With the train operations resumed, your next task is to travel to the [[:File:Kawasaki Bridge construction site.PNG|Kawasaki Bridge construction site]] to speak with Manager Ru, the site manager, and deliver the good news.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "24000",
+    "ryo": null,
+    "extra": "150 Ryo",
+    "list": [
+     "24000 EXP",
+     "150 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Speak_to_Construction_Site_Manager"
+  },
+  {
+   "id": "speak-to-riku",
+   "name": "Speak to Riku",
+   "level": 20,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": "Riku",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: This is the second mission of the first series of missions in the [[Land of Waves]], following the",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "2000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "2000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Speak_to_Riku"
+  },
+  {
+   "id": "speak-to-riku-again",
+   "name": "Speak to Riku Again",
+   "level": 20,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": "Riku",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: This is the fourth mission in the first series of missions in the [[Land of Waves]], following the \"Very",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "2500",
+    "ryo": null,
+    "extra": "100 Ryo",
+    "list": [
+     "2500 EXP",
+     "100 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Speak_to_Riku_Again"
+  },
+  {
+   "id": "spy-on-kage-office",
+   "name": "Spy on Kage Office",
+   "level": 30,
+   "rank": "A",
+   "type": "daily",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": "Infiltrate the Leaf Village and enter the office of the Hokami, the leader of Village, as a threat and return.",
+   "summary": "Spy on the Kage's Office is a Rank A daily mission for Lv. 30–40. You infiltrate a rival village, reach its leader's office, hold position, and get out.",
+   "description": null,
+   "objectives": [
+    "Infiltrate the opposing village's office for 2 minutes without fainting (0/120)"
+   ],
+   "requirements": [
+    "Lv. 30–40, Daily, read from the request card on 17 August 2026. This page previously recorded no level gate at all, and the [[Missions]] hub listed it among the missions with none."
+   ],
+   "rewards": {
+    "exp": "107,362 (Leaf target) — see note",
+    "ryo": "265 (Leaf target) — see note",
+    "extra": null,
+    "list": [
+     "EXP x107,362",
+     "Ryo x265",
+     "Village score - Intel, and see below - Intel"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Game Calls The Leaf Leader The Hokami, Not The Hokage",
+     "lines": [
+      "The card titles this variant Spy on Hokami Office and names the target the Hokami. This wiki says Hokage throughout — on [[Kage]], [[Leaf Village]], and in this page's own title.",
+      "Nothing has been renamed. One card is not enough to justify sweeping a term across the whole wiki, and a half-finished rename is worse than a consistent old one. What has been done is a redirect from Spy on Hokami Office to this page, so a player searching the in-game name lands here.",
+      "If you can confirm what the game currently calls the Leaf leader in other menus and dialogue, that settles whether the wiki needs a term-wide pass. See [[Nin Online Wiki:Contributing]]."
+     ]
+    },
+    {
+     "title": "The Card Shows A Negative Village Score",
+     "lines": [
+      "The reward row carries the Leaf village emblem at −1. Read plainly, spying on Leaf costs you 1 Leaf village score, alongside a second icon at +1.",
+      "This is an inference from the minus sign; the game does not spell it out in words. It is recorded because a negative village score is not documented anywhere else on this wiki, and it fits a mission that has you infiltrating a village as a threat."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Spy_on_Hokage/Kazekage/Mizukage_Office"
+  },
+  {
+   "id": "stolen-train-keys",
+   "name": "Stolen Train Keys",
+   "level": 20,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Koki",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: After completing \"The Hijacked Train\" mission, you are tasked with the seventh mission in the first",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "15000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "15000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Stolen_Train_Keys"
+  },
+  {
+   "id": "stronger-than-the-samurai",
+   "name": "Stronger than the Samurai",
+   "level": 56,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Yin",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon speaking to [[Yin]] at the [[Rebel Encampment]] in the [[Land of Iron]] when you arrive, he gives you a quest to prove your strength. You must Kill 200 [[Samurai]] and collect 80 iron pieces. Iron pieces are obtained from Samurai and [[Horned Samurai|Honed samurai]] that inhabit [[Iron City]].",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "247700",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "247700 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Stronger_than_the_Samurai_I"
+  },
+  {
+   "id": "stronger-than-the-samurai-ii",
+   "name": "Stronger than the Samurai II",
+   "level": 57,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Yang",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon speaking to [[Yang]] at the [[Rebel Encampment]] in the [[Land of Iron]], she gives you a quest to prove your strength. You must Kill 180 [[Horned Samurai|Horned Samura]]i and collect 80 iron pieces. Iron pieces are obtained from [[Samurai]] and Honed samurai that inhabit [[Iron City]].",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "263100",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "263100 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Stronger_than_the_Samurai_II"
+  },
+  {
+   "id": "survey-village-entrance",
+   "name": "Survey Village Entrance",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [
+    "leaf",
+    "sand",
+    "mist"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Survey the bridge entrance to the opposing village for enemy ninjas heading towards your village and report back.",
+   "description": null,
+   "objectives": [
+    "Survey the opposing village entrance for 2 minutes without fainting (0/120)."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "93040 (A-Rank)\n59040 (B-Rank)",
+    "ryo": "180 (A-Rank)\n240 (B-Rank)",
+    "extra": null,
+    "list": [
+     "93040 (A-Rank)\n59040 (B-Rank) EXP",
+     "180 (A-Rank)\n240 (B-Rank) Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Tiers",
+     "lines": [
+      "A - 25 - 40 - 93,000 - 180 - +1 to your village, −1 to the village you survey",
+      "B - — - 59,040 - 240 - +1",
+      "The mission runs at more than one rank. Both feed the Intel village score.",
+      "The A-Rank figures were read from the in-game Mission Request card for Survey the Mist Village Entrance on 15 August 2026. Note that the A-Rank version pays less Ryo than the B-Rank one on record, so one of the two may have changed in a patch."
+     ]
+    },
+    {
+     "title": "Taking A Point Off The Other Village",
+     "lines": [
+      "This is the only mission family documented so far that subtracts from another village's score. The A-Rank card shows two entries side by side: your own village crest with Intel +1, and the surveyed village's crest with Intel −1. Surveying is therefore worth two points of swing in the standings, not one.",
+      "See [[Daily Updates]] for where the three village scores are displayed."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Survey_Leaf/Sand/Mist_Village_Entrance"
+  },
+  {
+   "id": "trash-bag",
+   "name": "Trash Bag",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "One of the first missions you'll receive at the mission assignment desk. You need to destroy the black trash bags, that are randomly spawned around in the village.",
+   "description": "You have been tasked with cleaning up trash around the village. Find trash bags from around the village and remove them.",
+   "objectives": [
+    "Remove 7 Trash Bags (0/7) (Take out the Trash I)",
+    "Remove 10 Trash Bags (0/10) (Take out the Trash II)",
+    "Remove 15 Trash Bags (0/15) (Take out the Trash III)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "150 (level 1) \n320 (level 2) \n3800 (level 3)",
+    "ryo": "50 (level 1) \n100 (level 2) \n150 (level 3)",
+    "extra": null,
+    "list": [
+     "150 (level 1) \n320 (level 2) \n3800 (level 3) EXP",
+     "50 (level 1) \n100 (level 2) \n150 (level 3) Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Take_out_the_Trash"
+  },
+  {
+   "id": "takumi-watch",
+   "name": "Takumi Watch",
+   "level": 57,
+   "rank": "S",
+   "type": "daily",
+   "areas": [
+    "takumi"
+   ],
+   "npc": null,
+   "location": "[[Takumi Village]]",
+   "quote": null,
+   "summary": "Takumi Watch is a repeatable daily mission for high-level ninja (Lv. 57-70).",
+   "description": null,
+   "objectives": [
+    "Survey Takumi Village for enemy ninja activity",
+    "Eliminate hostile threats and report back"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "250 Ryo + 318,400",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "250 Ryo",
+     "318,400 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Takumi_Watch"
+  },
+  {
+   "id": "talk-to-the-rebel-leader",
+   "name": "Talk to the Rebel Leader",
+   "level": 50,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Guard Mika",
+   "location": "Mission Desk",
+   "quote": null,
+   "summary": "Upon talking to [[Guard Mika]] at your village mission desk, she gives you the task of speaking to [[Chief Uzan]], who is at the [[Rebel Encampment]] located in the [[Land of Iron]]. The Land of iron is accessible through the [[Summoning Toad]] in your Village.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "10000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "10000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Talk_to_the_Rebel_Leader"
+  },
+  {
+   "id": "the-exorcist",
+   "name": "The Exorcist",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "First you would need to unlock the Haunted Temple using the secret tag. Find how in [[Hidden Seals]].",
+   "description": "You have been tasked to investigate the haunted temple north of the [[Mist Village]] and deal with the problem.",
+   "objectives": [
+    "Exorcies 70 [[Evil Spirit|Spirits]] (0/70)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "14600",
+    "ryo": "140",
+    "extra": null,
+    "list": [
+     "14600 EXP",
+     "140 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Exorcist"
+  },
+  {
+   "id": "the-fur-maniac",
+   "name": "The Fur maniac",
+   "level": 51,
+   "rank": "B",
+   "type": "side",
+   "areas": [
+    "land-of-iron",
+    "mist"
+   ],
+   "npc": "Daiken",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "Upon speaking to [[Daiken]], who is at [[Rebel Encampment]] in the [[Land of Iron]], he Gives the task of Gathering 50 of each type of fur. Wolf fur drops from [[Alpha Wolf|Alpha wolves]] found at Chilly Pass.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "148700",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "148700 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Fur_maniac"
+  },
+  {
+   "id": "the-hijacked-train",
+   "name": "The Hijacked Train",
+   "level": 20,
+   "rank": "D",
+   "type": "side",
+   "areas": [],
+   "npc": "Riku",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: This is the sixth mission in the first series of missions in the [[Land of Waves]], following the \"Very",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "3000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "3000 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Hijacked_Train"
+  },
+  {
+   "id": "the-iron-tower",
+   "name": "The Iron Tower",
+   "level": 57,
+   "rank": "S",
+   "type": "side",
+   "areas": [
+    "land-of-iron"
+   ],
+   "npc": "Chief Uzan",
+   "location": "Land of Iron",
+   "quote": null,
+   "summary": "After completing the [[Land of Iron#Rebel%20Camp%20Storyline|Rebel Camp Storyline]], after speaking to [[Chief Uzan]], you will be tasked with Infiltrating [[Iron Tower]] located in [[Iron City]] and defeating the leader of the [[Samurai]], which has become Corrupted.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "273100",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "273100 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Iron_Tower"
+  },
+  {
+   "id": "the-memory-lane",
+   "name": "The Memory Lane",
+   "level": 60,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "[[Lady Kitsune]]",
+   "location": "[[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]].",
+   "description": null,
+   "objectives": [
+    "Witness the Memory",
+    "Confront the presence within it",
+    "Eliminate the Threat (0/20)",
+    "Report back to [[Lady Kitsune]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "800 Ryo + 303,000",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "800 Ryo",
+     "303,000 EXP"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Story",
+     "lines": [
+      "Inside the memory the player meets the corruptor for the first time, who reveals that four lieutenants serve him: \"my breeze, my melody, my arrow, and my fists.\" These are the four Sound Bosses hunted in [[Break the Chain]].",
+      "Lady Kitsune (giving the fragment)",
+      "I said I may have something.",
+      "This is a fragment of memory…",
+      "Not mine, but the land's. It has been surfacing near the village for years now, as if something buried is trying to be remembered.",
+      "I cannot see what is inside it. But you are an outsider, and sometimes the land shows strangers what it will not show those who live within it.",
+      "When you are ready… look into it.",
+      "The Memory Fragment",
+      "The fragment hovers before you, pulsing faintly, warm, almost breathing. Images flicker at the edges of your vision, half-formed, pulling at you.",
+      "What do you do?",
+      "??? (the corruptor)",
+      "An outsider. Inside a memory that was not meant to be found."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Memory_Lane"
+  },
+  {
+   "id": "the-mob-boss-kinsen-arc",
+   "name": "The Mob Boss - (Kinsen Arc)",
+   "level": 15,
+   "rank": "Main",
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Part of the [[Kinsen Mobsters Questline]]",
+   "description": null,
+   "objectives": [
+    "Kill Shizu"
+   ],
+   "requirements": [
+    "[[Takabe]]"
+   ],
+   "rewards": {
+    "exp": "47800",
+    "ryo": "500",
+    "extra": null,
+    "list": [
+     "47800 XP",
+     "500 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Mob_Boss"
+  },
+  {
+   "id": "the-sandstorm-predator",
+   "name": "The Sandstorm Predator",
+   "level": 65,
+   "rank": "S",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": "The desert ([[Sand Village]] region)",
+   "quote": "Something ancient stalks the desert, picking off anyone foolish enough to wander too deep into the sands. The Dark Weasel moves like the wind, unseen until it's already too late.",
+   "summary": "The Sandstorm Predator is a repeatable S-Rank daily mission hunting the Dark Weasel, a creature stalking the deep desert. At Lv. 65+ it is the highest level gate on any daily mission documented on this wiki, and at 461,210 EXP and 300 Ryo it is also the largest single daily payout recorded.",
+   "description": null,
+   "objectives": [
+    "Hunt the [[Dark Weasel]]"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "461,210",
+    "ryo": null,
+    "extra": "300 Ryo",
+    "list": [
+     "461,210 EXP",
+     "300 Ryo"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Dark Weasel",
+     "lines": [
+      "The mission text places it deep in the desert and describes it as fast and hard to see coming. Its level, drops and respawn from the game data are on the [[Dark Weasel]] page, which places it in [[North Desert Valley]]. If you have fought it, [[Nin Online Wiki:Contributing|send what you saw]]."
+     ]
+    },
+    {
+     "title": "Notes",
+     "lines": [
+      "Daily missions are capped: a ninja can start up to 4 daily missions per day.",
+      "Card captured 15 August 2026."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Sandstorm_Predator"
+  },
+  {
+   "id": "the-venomous-requirement-mission",
+   "name": "The Venomous Requirement Mission",
+   "level": 25,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Ko",
+   "location": "Snake Lair",
+   "quote": null,
+   "summary": "The Venomous Requirement is a mission available to take from level 25+",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "77 100",
+    "ryo": null,
+    "extra": "Unlocks Venomous Snake floor.",
+    "list": [
+     "77 100 EXP",
+     "Unlocks Venomous Snake floor."
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/The_Venomous_Requirement"
+  },
+  {
+   "id": "the-well",
+   "name": "The Well",
+   "level": null,
+   "rank": null,
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "The Well is a seal-and-puzzle mission. It tasks the player with finding four seals scattered across the world, then solving a well puzzle. (Not yet confirmed as a full arc; page name may change.)",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [
+    {
+     "title": "Seal Locations",
+     "lines": [
+      "Seal 1 - Leaf Guard Duty map — on the left, next to the abandoned building (near Sewer Entrance 2).",
+      "Seal 2 - Sand Coyote Pond map.",
+      "Seal 3 - Bandit Bridge map.",
+      "Seal 4 - Next to Mist Port, at Totori Village, on the Raid Capture.",
+      "Find all four seals:"
+     ]
+    },
+    {
+     "title": "The Seal Puzzle",
+     "lines": [
+      "There are 4 pathways and combinations. Start on one of the wells with a block and step through until it says \"Correct\", then follow that path.",
+      "The four solution paths (each a colour on the diagram):",
+      "Guide by Luu."
+     ]
+    }
+   ],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/The_Well"
+  },
+  {
+   "id": "the-whispering-well",
+   "name": "The Whispering Well",
+   "level": 60,
+   "rank": "A",
+   "type": "side",
+   "areas": [
+    "land-of-spirits"
+   ],
+   "npc": "The Whispering Well",
+   "location": "Yokai Village, [[Land of Spirits]]",
+   "quote": null,
+   "summary": "Part of the [[Land of Spirits#Storyline|Land of Spirits Storyline]], following [[Echos of Yokai V]]. The talking well in the middle of Yokai Village holds the power to break the seal that [[Okuri]]'s research uncovered. A further mission follows it and is still being documented.",
+   "description": null,
+   "objectives": [
+    "Collect 80 [[Spirit Orb]]s",
+    "Bring the Orbs to the Well"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "400,500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "400,500 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Whispering_Well"
+  },
+  {
+   "id": "the-wolf-pack",
+   "name": "The Wolf Pack",
+   "level": 44,
+   "rank": "C",
+   "type": "repeatable",
+   "areas": [],
+   "npc": "[[Rizo]]",
+   "location": "Bandit Area (Level 40 arc)",
+   "quote": "A pack of snow wolves has been terrorizing nearby travelers, picking off the unprepared one by one. Track them down, eliminate the pack, and return with their fur as a trophy of the hunt.",
+   "summary": "The Wolf Pack is a repeatable Rank C mission given by [[Rizo]] in the [[Bandit Questline|Level 40 arc]], available only after the [[Bandit Questline]] has been completed.",
+   "description": null,
+   "objectives": [
+    "Kill [[Snow Wolf]] x60",
+    "Kill [[Alpha Wolf]] x10",
+    "Obtain Wolf Fur x10"
+   ],
+   "requirements": [
+    "The Request panel reads \"Lv. 44+ Repeatable Mission\", matching the [[Updates 2026|v5.13.0]] patch note.",
+    "This mission does not appear until the [[Bandit Questline]] chain is finished through [[Bandits X]] — the mission in which [[Leyasu / Ieyasu|the bandit leader]] is killed and his sister Nia is escorted to safety. Rizo then offers three repeatables from the [[Locations|War-torn Shack]], and Nia stands beside him there.",
+    "The three were added together in [[Updates 2026|Update v5.13.0]] (22 May 2026), whose patch note reads \"Added 3 new repeatable missions to Rizo available after finishing Bandit Questline (44lvl+)\". The same patch also records \"Rebalanced objectives requirements and XP reward of 40lvl and 50lvl Arc repeatable missions\", so the figures on this page are the post-rebalance values."
+   ],
+   "rewards": {
+    "exp": "78,600",
+    "ryo": null,
+    "extra": "3 × [[Chakra Pill]]",
+    "list": [
+     "78,600 EXP",
+     "3 × [[Chakra Pill]]"
+    ]
+   },
+   "sections": [
+    {
+     "title": "The Three Repeatables",
+     "lines": [
+      "[[Bandit Hunt I]] - B - 74,200 - 3 × [[Blood Pill]]",
+      "[[Bandit Hunt II]] - B - 79,700 - 3 × [[Blood Pill]]",
+      "[[The Wolf Pack]] - C - 78,600 - 3 × [[Chakra Pill]]"
+     ]
+    },
+    {
+     "title": "A Note On The Mission Type",
+     "lines": [
+      "The two views of these missions disagree on what they are called. The Mission Request panel at the point of accepting reads \"Lv. 44+ Repeatable Mission\", while the Mission Log entry for the same mission, once accepted, reads \"Story Mission\". Both labels are reproduced here as the game shows them. The patch note that introduced them calls them repeatable missions, so the Mission Log label appears to be the inaccurate one."
+     ]
+    },
+    {
+     "title": "Notes",
+     "lines": [
+      "Every figure on this page is read from the in-game Mission Request and Mission Log panels captured on 24 August 2026."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/The_Wolf_Pack"
+  },
+  {
+   "id": "time-off",
+   "name": "Time Off",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "The Hokage office has noticed your tireless work and tasked you with the important mission of.. taking the day off and visit the [[Leaf Village Hotsprings]].",
+   "description": null,
+   "objectives": [
+    "Time Off! - Relax at the [[Leaf Village]] Hotsprings (0/900)",
+    "Time Off! II - Relax at the Leaf Village Hotsprings (0/900)",
+    "Time Off! III - Relax at the Leaf Village Hotsprings (0/900)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "Level 1 - 3500 \nLevel 2 - 27000 \nLevel 3 - 46500",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "Level 1 - 3500 \nLevel 2 - 27000 \nLevel 3 - 46500 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Time_Off"
+  },
+  {
+   "id": "twin-sister-delivery",
+   "name": "Twin Sister Delivery",
+   "level": null,
+   "rank": "C",
+   "type": "side",
+   "areas": [
+    "mist",
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Deliver a parcel from [[Sayaki]] in the [[Mist Village]] to her twin sister Himiki in [[Takumi Village]]. The parcel drops when you faint.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "17400",
+    "ryo": "140",
+    "extra": null,
+    "list": [
+     "17400 EXP",
+     "140 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Twin_Sister_Delivery"
+  },
+  {
+   "id": "very-weird-frog-eggs",
+   "name": "Very Weird Frog Eggs",
+   "level": 20,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Riku",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: This is the fifth mission in the first series of missions in the [[Land of Waves]], following the \"[[Speak to Riku]] Again\" mission.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "16000",
+    "ryo": null,
+    "extra": "120 Ryo",
+    "list": [
+     "16000 EXP",
+     "120 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Very_Weird_Frog_Eggs"
+  },
+  {
+   "id": "very-weird-frogs",
+   "name": "Very Weird Frogs",
+   "level": 20,
+   "rank": "C",
+   "type": "side",
+   "areas": [],
+   "npc": "Riku",
+   "location": "Land Of Waves",
+   "quote": null,
+   "summary": "Overview: This is the third mission in the first series of missions in the [[Land of Waves]], following speak with",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": "14600",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "14600 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Very_Weird_Frogs"
+  },
+  {
+   "id": "village-entrance-guard-duty",
+   "name": "Village Entrance Guard Duty",
+   "level": null,
+   "rank": "B",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "A very simple yet dangerous and time consuming mission. It's assigned to shinobi from across all villages. A shinobi is tasked to watch over their village's entrance and not let any enemies enter or spy. The task can be interrupted if an enemy shinobi is doing the surveillance mission on the same map.",
+   "description": "Protect the village from enemy ninjas from the map \"Specific Village Entrance Map\". If an enemy ninja is spying on this map, you will not progress this mission.",
+   "objectives": [
+    "Stand Guard at the Village Entrance without fainting (0/600) (10 minutes)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "46,500",
+    "ryo": "300",
+    "extra": null,
+    "list": [
+     "46,500 EXP",
+     "300 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Village_Entrance_Guard_Duty"
+  },
+  {
+   "id": "village-s-most-wanted",
+   "name": "Village's Most Wanted",
+   "level": null,
+   "rank": "S",
+   "type": "side",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "Only the strongest and most experienced ninja are tasked with these [[missions]]. The task is to claim the bounty from the heads of the most dangerous ninja from the bingo book.",
+   "description": "Claim ryo by killing enemy ninjas on the Bingo Book \"B\" and collecting their reward at the Bounty Station. If you already outstanding bounty, it counts!",
+   "objectives": [
+    "Collect 75 Ryo from the Bounty Station (Level 1)",
+    "Collect 100 Ryo from the Bounty Station (LeveL 2)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "200,000 (Lvl 1)\n254,000 (Lvl 2)",
+    "ryo": "-",
+    "extra": null,
+    "list": [
+     "200,000 (Lvl 1)\n254,000 (Lvl 2) EXP",
+     "- Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Village%27s_Most_Wanted"
+  },
+  {
+   "id": "village-s-most-wanted-iii",
+   "name": "Village's Most Wanted III",
+   "level": 57,
+   "rank": "S",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": "Bounty Station",
+   "quote": null,
+   "summary": "[[Village's Most Wanted]] III is a repeatable daily mission for high-level ninja (Lv. 57-70).",
+   "description": null,
+   "objectives": [
+    "Kill enemy ninjas listed in Bingo Book \"B\"",
+    "Collect their reward at the Bounty Station (outstanding bounty counts)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "343,600",
+    "ryo": null,
+    "extra": null,
+    "list": [
+     "343,600 EXP"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Village%27s_Most_Wanted_III"
+  },
+  {
+   "id": "waging-war",
+   "name": "Waging War",
+   "level": 21,
+   "rank": "B",
+   "type": "daily",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "You have been tasked with finding and defeating enemies of the village that come too close to our borders or enter their borders and attack them.",
+   "description": null,
+   "objectives": [
+    "Waging War I - Defeat 1 enemy ninjas (0/1)",
+    "Waging War II - Defeat 1 enemy ninjas (0/1)",
+    "Waging War III - Defeat 2 enemy ninjas (0/2)",
+    "Waging War IV - Defeat 2 enemy ninjas (0/2)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "Waging War I - 40900 \nWaging War II - 65810 \nWaging War III - 99150 \nWaging War IV - 151125",
+    "ryo": "Waging War I - 30 \nWaging War II - 35 \nWaging War III - 55 \nWaging War IV - 105",
+    "extra": null,
+    "list": [
+     "Waging War I - 40900 \nWaging War II - 65810 \nWaging War III - 99150 \nWaging War IV - 151125 EXP",
+     "Waging War I - 30 \nWaging War II - 35 \nWaging War III - 55 \nWaging War IV - 105 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Waging_War"
+  },
+  {
+   "id": "wolf-hunting",
+   "name": "Wolf Hunting",
+   "level": null,
+   "rank": "D",
+   "type": "side",
+   "areas": [
+    "leaf"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "You have been tasked with discovering and killing wild packs of Wolves, found deeper into the forests surrounding the [[Leaf Village]].",
+   "description": null,
+   "objectives": [
+    "Kill 80 Wolves (0/80)"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "2020",
+    "ryo": "90",
+    "extra": null,
+    "list": [
+     "2020 EXP",
+     "90 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Wolf_Hunting"
+  },
+  {
+   "id": "your-best-behavior",
+   "name": "Your Best Behavior",
+   "level": 1,
+   "rank": "B",
+   "type": "repeatable",
+   "areas": [],
+   "npc": "[[Warden Haoya]]",
+   "location": "[[Hyoketsu Prison]] — Warden Office",
+   "quote": null,
+   "summary": "Your Best Behavior is a repeatable Rank B mission given by [[Warden Haoya]] inside [[Hyoketsu Prison]]. It is the lowest gate of the three prison missions, open from Level 1, and the standard way an inmate with no equipment and no level burns off [[Crime System|Crime]].",
+   "description": null,
+   "objectives": [
+    "Reflect on your crimes - Serve 600 seconds inside the Main Prison or the Infirmary",
+    "Return to [[Warden Haoya]] - Hand in at the Warden Office"
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "33",
+    "ryo": null,
+    "extra": "Reduces Crimes by 2",
+    "list": [
+     "33 EXP",
+     "Reduces Crimes by 2"
+    ]
+   },
+   "sections": [
+    {
+     "title": "Notes",
+     "lines": [
+      "Captured in-game by rawxxx on 31 August 2026."
+     ]
+    }
+   ],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Your_Best_Behavior"
+  },
+  {
+   "id": "yozo-the-bozo",
+   "name": "Yozo the Bozo",
+   "level": null,
+   "rank": "D",
+   "type": "story",
+   "areas": [],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "A challenge to some of the most dedicated gamblers in [[Kinsen Quarters|Kinsen]]. You're tasked with helping the broke boy Yozo who was looking to feed his family but lost his money in gambling. You're his only hope, go and win his money back!",
+   "description": "Help Yozo turn his luck around. Turn this 200 Ryo into 300 Ryo by gambling!!",
+   "objectives": [
+    "Gamble in Kinsen Quarters and earn 300 Ryo. (200/300)",
+    "You can do only 1 gambling mission at a time, to do the other gambling mission you need to COMPLETE the 1st one you picked."
+   ],
+   "requirements": [],
+   "rewards": {
+    "exp": "37,777",
+    "ryo": "0",
+    "extra": null,
+    "list": [
+     "37,777 EXP",
+     "0 Ryo"
+    ]
+   },
+   "sections": [],
+   "inClient": true,
+   "source": "https://ninonline.fandom.com/wiki/Yozo_the_Bozo"
+  },
+  {
+   "id": "yuu-mini-questline",
+   "name": "Yuu Mini Questline",
+   "level": null,
+   "rank": null,
+   "type": "side",
+   "areas": [
+    "takumi"
+   ],
+   "npc": null,
+   "location": null,
+   "quote": null,
+   "summary": "This is a walkthrough of the chain [[Yuu]] starts in [[Takumi Village]], in the Land of Rivers. The mission itself, its rewards and the seven seal locations are on [[Hidden Tomb - (Takumi Seals)]]; this page carries the rest of it.",
+   "description": null,
+   "objectives": [],
+   "requirements": [],
+   "rewards": {
+    "exp": null,
+    "ryo": null,
+    "extra": null,
+    "list": []
+   },
+   "sections": [],
+   "inClient": false,
+   "source": "https://ninonline.fandom.com/wiki/Yuu_Mini_Questline"
+  }
+ ]
+}

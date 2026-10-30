@@ -31,7 +31,7 @@ export function JutsuPageClient({
   const t = dict.jutsuDetail;
   const isPt = locale === 'pt';
   const name = isPt ? (jutsu.namePt ?? jutsu.name) : jutsu.name;
-  const altName = isPt ? jutsu.name : jutsu.namePt;
+  const altName = isPt ? jutsu.name : null;   // em EN nao mostra o nome em portugues
   // Fallback nos DOIS sentidos - mesmo motivo de mastery-page-client.tsx
   // (o texto ja existente e' portugues de verdade ate' alguem rodar
   // uma traducao ou editar a mao).

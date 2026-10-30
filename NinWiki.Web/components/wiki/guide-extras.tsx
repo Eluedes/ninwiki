@@ -47,7 +47,7 @@ export function GuideExtras({ attributes, storyArcs, summons }: GuideExtrasProps
                 <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <div>
                   <p className="text-sm font-semibold text-card-foreground">
-                    {attr.name} {attr.namePt && <span className="font-normal text-muted-foreground">({attr.namePt})</span>}
+                    {attr.name} {locale === 'pt' && attr.namePt && <span className="font-normal text-muted-foreground">({attr.namePt})</span>}
                   </p>
                   <p className="text-xs text-muted-foreground">{localizedText(locale, attr.description, attr.descriptionPt)}</p>
                 </div>

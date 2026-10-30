@@ -9,7 +9,10 @@
 
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import { KINDS, type LoreDict } from './atlas-data';
+import { acharNoWiki } from './wiki-index';
+import { Miniatura, useIndiceWiki } from './wiki-link';
 
 type Pinos = {
   npcs: [string, string, number, number][]; res: [string, string][];
@@ -36,6 +39,7 @@ export function AreaPins({ id, width, height, zoom, alt, t, pt, nomeDaArea, pode
   nomeDaArea: (id: number) => string; podeIr: (id: number) => boolean; onGo: (id: number) => void;
 }) {
   const [pinos, setPinos] = useState<Pinos | null>(null);
+  const ind = useIndiceWiki();
   const [ligadas, setLigadas] = useState<Set<Camada>>(() => new Set<Camada>(['places', 'rooms', 'doors', 'mobs', 'npcs']));
   useEffect(() => {
     let vivo = true;
@@ -51,9 +55,17 @@ export function AreaPins({ id, width, height, zoom, alt, t, pt, nomeDaArea, pode
   const nome = (par: [string, string]) => (pt ? par[1] : par[0]);
 
   /** Um pino: circulo pequeno na posicao do bloco; `titulo` aparece ao passar o mouse e vai para leitores de tela. */
-  const pino = (key: string, cam: Camada, x: number, y: number, titulo: string, cor: string, glifo: string, ir?: number) => {
+  const pino = (key: string, cam: Camada, x: number, y: number, titulo: string, cor: string, glifo: string, ir?: number, wiki?: ReturnType<typeof acharNoWiki>) => {
     const estilo = { left: px(x), top: px(y), borderColor: cor, color: cor };
     const cls = 'absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 bg-[#0e1216]/90 text-xs font-bold shadow';
+    // Mob/recurso com pagina publicada no wiki: o pino vira link e mostra a miniatura no lugar do simbolo.
+    if (wiki) {
+      return (
+        <Link key={key} href={`/detail/${wiki.slug}`} title={titulo} aria-label={titulo} style={estilo} className={cn(cls, 'overflow-hidden hover:scale-125')} data-camada={cam}>
+          {wiki.image ? <Miniatura entry={wiki} tam={18} /> : glifo}
+        </Link>
+      );
+    }
     return ir != null && podeIr(ir) ? (
       <button key={key} title={titulo} aria-label={titulo} onClick={() => onGo(ir)} style={estilo} className={cn(cls, 'hover:scale-125')} data-camada={cam}>{glifo}</button>
     ) : (
@@ -85,9 +97,9 @@ export function AreaPins({ id, width, height, zoom, alt, t, pt, nomeDaArea, pode
             {ligadas.has('places') && a.p.map((p, i) => pino(`p${i}`, 'places', p[3], p[4], `${pt ? p[2] : p[1]} · ${KINDS[p[0]] ? (t[KINDS[p[0]].label] as string) : p[0]}`, KINDS[p[0]]?.color ?? '#fff', KINDS[p[0]]?.glyph ?? '•'))}
             {ligadas.has('rooms') && a.r.map((r, i) => pino(`r${i}`, 'rooms', r[2], r[3], nome([r[0], r[1]]), CAMADAS.rooms.color, CAMADAS.rooms.glyph))}
             {ligadas.has('doors') && a.d.map((d, i) => pino(`d${i}`, 'doors', d[0], d[1], `${t.mapGoTo} ${nomeDaArea(d[2])}`, CAMADAS.doors.color, CAMADAS.doors.glyph, d[2]))}
-            {ligadas.has('mobs') && a.m.map((m, i) => { const n = pinos.npcs[m[2]]; return pino(`m${i}`, 'mobs', m[0], m[1], `${nome([n[0], n[1]])} · ${t.mapLevelRange.replace('{lv}', String(n[2]))}${n[3] ? ` · ${t.mapChief}` : ''}`, CAMADAS.mobs.color, CAMADAS.mobs.glyph); })}
+            {ligadas.has('mobs') && a.m.map((m, i) => { const n = pinos.npcs[m[2]]; return pino(`m${i}`, 'mobs', m[0], m[1], `${nome([n[0], n[1]])} · ${t.mapLevelRange.replace('{lv}', String(n[2]))}${n[3] ? ` · ${t.mapChief}` : ''}`, CAMADAS.mobs.color, CAMADAS.mobs.glyph, undefined, acharNoWiki(ind, 'mob', n[0], n[1])); })}
             {ligadas.has('npcs') && a.n.map((m, i) => { const n = pinos.npcs[m[2]]; return pino(`n${i}`, 'npcs', m[0], m[1], nome([n[0], n[1]]), CAMADAS.npcs.color, CAMADAS.npcs.glyph); })}
-            {ligadas.has('res') && a.c.map((c, i) => pino(`c${i}`, 'res', c[0], c[1], `${nome(pinos.res[c[2]] as [string, string])} ×${c[3]}`, CAMADAS.res.color, CAMADAS.res.glyph))}
+            {ligadas.has('res') && a.c.map((c, i) => pino(`c${i}`, 'res', c[0], c[1], `${nome(pinos.res[c[2]] as [string, string])} ×${c[3]}`, CAMADAS.res.color, CAMADAS.res.glyph, undefined, acharNoWiki(ind, 'item', pinos.res[c[2]][0], pinos.res[c[2]][1])))}
           </>
         )}
       </div>

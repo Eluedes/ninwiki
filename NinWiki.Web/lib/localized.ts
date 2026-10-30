@@ -11,7 +11,8 @@ export function localizedName(locale: Locale, name: string, namePt: string | nul
 // O "outro" idioma, pra usar de subtitulo (ex: "Leaf Village" com "Vila da Folha"
 // embaixo). Devolve null quando nao ha traducao ou quando ela e' igual ao nome.
 export function alternateName(locale: Locale, name: string, namePt: string | null | undefined): string | null {
-  const other = locale === 'pt' ? name : namePt;
+  if (locale !== 'pt') return null;   // em ingles nunca mostra o nome em portugues como subtitulo
+  const other = name;
   const main = localizedName(locale, name, namePt);
   return other && other !== main ? other : null;
 }

@@ -33,7 +33,7 @@ export function MasteryPageClient({
   const t = dict.masteryDetail;
   const isPt = locale === 'pt';
   const name = isPt ? (mastery.namePt ?? mastery.name) : mastery.name;
-  const altName = isPt ? mastery.name : mastery.namePt;
+  const altName = isPt ? mastery.name : null;   // em EN nao mostra o nome em portugues
   // Fallback nos DOIS sentidos - ver mesmo comentario em mastery-card.tsx
   // (o texto ja existente e' portugues de verdade, so' vira ingles
   // depois do backfill ou de alguem escrever a mao).
@@ -65,7 +65,7 @@ export function MasteryPageClient({
           <MasteryVisual
             image={mastery.image}
             icon={mastery.icon}
-            alt={`Imagem da mastery ${name}`}
+            alt={name}
             className="h-12 w-12 rounded-lg"
           />
         }
@@ -161,7 +161,7 @@ export function MasteryPageClient({
               <MasteryVisual
                 image={mastery.image}
                 icon={mastery.icon}
-                alt={`Imagem da mastery ${name}`}
+                alt={name}
                 className="h-7 w-7 rounded"
               />
             }

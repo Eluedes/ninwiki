@@ -100,14 +100,14 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
                     <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.levelReq} {levelText(entry)}</span>
                   )}
                   {entry.weaponType && <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold uppercase text-card-foreground">{entry.weaponType}</span>}
-                  <span className={cn('text-xs font-semibold', rarityConfig[entry.rarity].color)}>{rarityConfig[entry.rarity].label}</span>
+                  <span className={cn('text-xs font-semibold', rarityConfig[entry.rarity].color)}>{dict.detail.rarities[entry.rarity]}</span>
                 </div>
               </div>
 
               <div className="flex justify-center rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_45%,hsl(var(--primary)/0.2),transparent_65%)] bg-secondary/30 py-14">
                 <WikiImage
                   src={entry.image}
-                  alt={`Imagem de ${name}`}
+                  alt={name}
                   fallback={entry.icon}
                   className="h-44 w-44 rounded-xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
                 />
@@ -151,7 +151,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
               <div className="flex justify-center rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_45%,hsl(var(--primary)/0.2),transparent_65%)] bg-secondary/30 py-14">
                 <WikiImage
                   src={entry.image}
-                  alt={`Imagem de ${name}`}
+                  alt={name}
                   fallback={entry.icon}
                   className="h-44 w-44 rounded-xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]"
                 />
@@ -175,7 +175,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
                     <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold uppercase text-card-foreground">{itemTypeLabel(entry.itemType)}</span>
                   )}
                   {entry.category === 'items' && (
-                    <span className={cn('rounded-md border px-2 py-0.5 text-xs font-bold uppercase', rarityConfig[entry.rarity].chip)}>{rarityConfig[entry.rarity].label}</span>
+                    <span className={cn('rounded-md border px-2 py-0.5 text-xs font-bold uppercase', rarityConfig[entry.rarity].chip)}>{dict.detail.rarities[entry.rarity]}</span>
                   )}
                   {shouldShowLevel(entry.category, entry.itemType, entry.level, entry.levelUnknown) && (
                     <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{dict.detail.level} {levelText(entry)}</span>
@@ -190,7 +190,7 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
                 <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(hsl(var(--foreground))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px)] [background-size:24px_24px]" aria-hidden="true" />
                 <WikiImage
                   src={entry.image}
-                  alt={`Imagem de ${name}`}
+                  alt={name}
                   fallback={<span className="text-7xl">{entry.icon}</span>}
                   className="relative h-44 w-44 rounded-xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.55)]"
                 />

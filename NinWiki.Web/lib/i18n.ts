@@ -66,7 +66,7 @@ export interface Dictionary {
     back: string; pageNotFound: string; backHome: string;
     aboutVillage: string; clans: string; organizations: string; villageSheet: string; otherVillages: string;
     fName: string; fEnglish: string; fPortuguese: string; fElement: string; fMotto: string; fClimate: string; fLeader: string;
-    emblemAlt: string; mapAria: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapHint: string; mapWorld: string; mapAreas: string; mapSearch: string; mapCount: string; mapZoomIn: string; mapZoomOut: string; mapSource: string;
+    emblemAlt: string; mapAria: string; mapTitle: string; mapSubtitle: string; mapCrumb: string; mapHint: string; mapDrops: string; mapZoomIn: string; mapZoomOut: string; mapSource: string;
     mapFind: string; mapNoResult: string; mapLegend: string; mapTerritories: string; mapFullscreen: string; mapExitFullscreen: string; mapFit: string; mapPlace: string; mapArea: string; mapKindShop: string; mapKindDungeon: string; mapKindMailbox: string; mapKindNotice: string; mapKindWedding: string;
     mapScroll: string; mapRender: string; mapInfoTitle: string; mapInfoLoading: string; mapZone: string; mapZoneSafe: string; mapZoneDanger: string; mapZoneWar: string; mapZoneNone: string; mapVillage: string; mapHouses: string; mapPlaces: string; mapExits: string; mapNpcs: string; mapMobs: string; mapResources: string; mapRooms: string; mapViewImage: string; mapClose: string; mapLevelShort: string; mapDirNorth: string; mapDirSouth: string; mapDirEast: string; mapDirWest: string; mapDirOther: string;
     mapKindHospital: string; mapKindBounty: string; mapKindMissions: string; mapKindBoss: string; mapKindTravel: string; mapKindBarber: string; mapKindHeadbands: string; mapKindPolling: string; mapKindLeaderboards: string; mapKindCheckpoint: string; mapKindCapture: string; mapLevels: string; mapKey: string; mapShowAll: string; mapHousesN: string; mapLevelRange: string; mapCopyLink: string; mapLinkCopied: string; mapDoors: string; mapPinsTitle: string; mapGoTo: string; mapStatShops: string; mapTravelRoutes: string; mapCollapse: string; mapChief: string; mapInsideOf: string; mapShowMarkers: string; mapMyHint: string;
@@ -78,7 +78,9 @@ export interface Dictionary {
     profRecipesCount: string; profResourcesCount: string; profToolsCount: string; profSearch: string; profNoMatch: string; profPrice: string; profSources: string; profTipsTitle: string; 
     guideSections: { 'new-player': string; combat: string; progression: string; interface: string; economy: string; systems: string };
     guideBackToGuide: string; guideSystemsMissions: string; guideSystemsProficiencies: string; 
-    professionBack: string; professionResources: string; professionRecipes: string; professionTools: string; professionLevel: string; professionWorkbench: string; professionLearnedFrom: string; professionNeeds: string; professionNoDetails: string; professionOpen: string;
+    missionsx: Record<'title' | 'subtitle' | 'searchPlaceholder' | 'results' | 'noResults' | 'clear' | 'filterArea' | 'filterType' | 'filterRank' | 'filterLevel' | 'filterAll' | 'repeatableOnly' | 'levelFmt' | 'levelUnknown' | 'rankFmt' | 'giver' | 'location' | 'requirements' | 'objectives' | 'rewards' | 'rewardExp' | 'rewardRyo' | 'about' | 'request' | 'notes' | 'source' | 'notice' | 'inClient' | 'back' | 'howTitle' | 'howDeskGuide' | 'howLogGuide' | 'partial' | 'sortLevel' | 'crumb' | 'relatedGuides' | 'exp' | 'ryo', string> & { types: Record<'daily' | 'repeatable' | 'story' | 'side', string>; areas: Record<'leaf' | 'sand' | 'mist' | 'takumi' | 'land-of-spirits' | 'land-of-iron', string> };
+    guidex: Record<'searchPlaceholder' | 'noResults' | 'startHere' | 'startHereDesc' | 'step' | 'browse' | 'guidesCount' | 'onThisPage' | 'readMin' | 'previous' | 'next' | 'related' | 'topicCount' | 'allTopics' | 'results' | 'topics' | 'beginner' | 'openSection', string> & { sectionDesc: Record<'new-player' | 'combat' | 'progression' | 'interface' | 'economy', string> };
+    professionBack: string; professionResources: string; professionRecipes: string; professionTools: string; professionLevel: string; professionWorkbench: string; professionLearnedFrom: string; professionNeeds: string; professionNoDetails: string; professionOpen: string; profTabOverview: string; profTabResources: string; profTabRecipes: string; profTabTools: string; profLevelAll: string; profLevelRange: string; profBenchAll: string; profBenchYes: string; profBenchNo: string; profLearnAll: string; profLearnKnown: string; profLearnItem: string; profShowing: string; profClear: string; profWhere: string; profWhereNone: string; profOnMap: string; profDrops: string; profNoRecipesYet: string; profLevelLabel: string; profIngredients: string; profSortLevel: string;
   };
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
@@ -87,7 +89,7 @@ export interface Dictionary {
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
   report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
-  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; zones: Record<string, string>; soldAt: string; forQty: string; free: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string };
+  detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; zones: Record<string, string>; soldAt: string; forQty: string; free: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string; rarities: Record<string, string> };
   masteryDetail: {
     notFound: string; elemental: string; nonElemental: string;
     aboutMastery: string; masteryPaths: string; noJutsusInPath: string; jutsusOfMastery: string;
@@ -102,7 +104,7 @@ export interface Dictionary {
     tier1: string; tier2: string; tier3: string; tier4: string; tier5: string;
   };
   footer: { disclaimer: string; madeWith: string };
-  invite: { title: string; subtitle: string; button: string; buttonShort: string; perms: string };
+  invite: { title: string; subtitle: string; button: string; buttonShort: string; perms: string; badge: string; examplesTitle: string; examples: { cmd: string; text: string }[]; stepsTitle: string; steps: { title: string; text: string }[]; note: string };
   announcement: { dismiss: string; learnMore: string };
   admin: {
     login: { welcome: string; subtitle: string; button: string };
@@ -177,7 +179,7 @@ export interface Dictionary {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
       occurrences: string; firstSeen: string; lastSeen: string; where: string; route: string; status: string; resolve: string; reopen: string; delete: string;
       confirmDelete: string; trace: string; noTrace: string; resolvedBy: string; ip: string; refresh: string; sources: Record<string, string>;
-      howTo: string;
+      howTo: string; hintTitle: string;
     };
     noticeBoard: { title: string; subtitle: string; empty: string; newNotice: string; titleLabel: string; bodyLabel: string; pin: string; pinned: string; save: string; saving: string; cancel: string; edit: string; delete: string; confirmDelete: string; attachFiles: string; files: string; removeFile: string; uploading: string; by: string; loadError: string; saveError: string; uploadError: string; maxInfo: string; fileTooBig: string };
     rolesPage: { preview: string; customTitle: string; customSubtitle: string; newRole: string; editRole: string; roleName: string; roleColor: string; roleDescription: string; createRole: string; saveRole: string; deleteRole: string; confirmDeleteRole: string; membersCount: string; noCustomRoles: string; presetHint: string; selectAll: string; clearAll: string; nameRequired: string; baseNote: string; title: string; subtitle: string; permission: string; locked: string; lockedHint: string; save: string; saving: string; saved: string; reset: string; confirmReset: string; loadError: string; saveError: string; unsavedChanges: string; alwaysAll: string; groups: Record<string, string>; names: Record<string, string> };
@@ -347,7 +349,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       aboutVillage: 'Sobre a Vila', clans: 'Clãs', organizations: 'Organizações', villageSheet: 'Ficha da Vila', otherVillages: 'Outras Vilas',
       fName: 'Nome', fEnglish: 'Inglês', fPortuguese: 'Português', fElement: 'Elemento', fMotto: 'Lema', fClimate: 'Clima', fLeader: 'Líder',
       emblemAlt: 'Emblema da {name}', mapAria: 'Mapa do mundo de Nin', mapTitle: 'Mapa do Mundo', mapSubtitle: 'O mapa-múndi e as áreas do jogo.', mapCrumb: 'Mapa',
-      mapHint: 'Arraste para mover, use a roda do mouse para dar zoom, busque um lugar ou clique numa área para ver o mapa dela.', mapWorld: 'Mundo', mapAreas: 'Áreas', mapSearch: 'Buscar área...', mapCount: '{n} áreas', mapZoomIn: 'Aumentar zoom', mapZoomOut: 'Diminuir zoom', mapSource: 'Imagens extraídas do cliente do jogo.',
+      mapHint: 'Arraste para mover, use a roda do mouse para dar zoom, busque um lugar ou clique numa área para ver o mapa dela.', mapDrops: 'Drops', mapZoomIn: 'Aumentar zoom', mapZoomOut: 'Diminuir zoom', mapSource: 'Imagens extraídas do cliente do jogo.',
       mapFind: 'Buscar lugar ou área...', mapNoResult: 'Nada encontrado.', mapLegend: 'Legenda', mapTerritories: 'Territórios das vilas', mapFullscreen: 'Tela cheia', mapExitFullscreen: 'Sair da tela cheia', mapFit: 'Ver o mundo inteiro', mapPlace: 'Lugar', mapArea: 'Área', mapKindShop: 'Lojas', mapKindDungeon: 'Calabouços', mapKindMailbox: 'Caixas de correio', mapKindNotice: 'Murais', mapKindWedding: 'Casamento',
       mapScroll: 'Pergaminho', mapRender: 'Render', mapInfoTitle: 'Informações da área', mapInfoLoading: 'Carregando...', mapZone: 'Zona', mapZoneSafe: 'Zona segura', mapZoneDanger: 'Zona de perigo', mapZoneWar: 'Zona de guerra', mapZoneNone: 'Sem zona', mapVillage: 'Vila', mapHouses: 'Casas', mapPlaces: 'Lugares', mapExits: 'Saídas', mapNpcs: 'NPCs', mapMobs: 'Monstros', mapResources: 'Recursos', mapRooms: 'Prédios', mapViewImage: 'Ver mapa da área', mapClose: 'Fechar', mapLevelShort: 'Nv.', mapDirNorth: 'Norte', mapDirSouth: 'Sul', mapDirEast: 'Leste', mapDirWest: 'Oeste', mapDirOther: 'Outra',
       mapKindHospital: 'Hospitais', mapKindBounty: 'Posto de recompensas', mapKindMissions: 'Missões', mapKindBoss: 'Chefes', mapKindTravel: 'Viagem', mapKindBarber: 'Barbeiro', mapKindHeadbands: 'Bandanas', mapKindPolling: 'Urna de votação', mapKindLeaderboards: 'Rankings', mapKindCheckpoint: 'Ponto de retorno', mapKindCapture: 'Ponto de captura', mapLevels: 'Níveis dos mobs', mapKey: 'Legenda do mapa', mapShowAll: 'Mostrar tudo', mapHousesN: '{n} casas', mapLevelRange: 'Nv {lv}', mapCopyLink: 'Copiar link', mapLinkCopied: 'Link copiado', mapDoors: 'Portas para outras áreas', mapPinsTitle: 'Mostrar na área', mapGoTo: 'Ir para', mapStatShops: 'Lojas', mapTravelRoutes: 'Rotas de viagem', mapCollapse: 'Recolher painel', mapChief: 'Chefe', mapInsideOf: 'Dentro de {name}', mapShowMarkers: 'Mostrar ou ocultar marcadores', mapMyHint: 'Arraste para mover, use a roda ou pinça para dar zoom e clique numa área para ver o que há dentro.',
@@ -362,7 +364,24 @@ export const dictionaries: Record<Locale, Dictionary> = {
       profRecipesCount: '{n} receitas', profResourcesCount: '{n} recursos', profToolsCount: '{n} ferramentas', profSearch: 'Buscar receita...', profNoMatch: 'Nada encontrado.', profPrice: 'Preço', profSources: 'Valores registrados pela comunidade (Nin Online Wiki, no Fandom) e pelo Nin Atlas; o jogo pode mudá-los.', profTipsTitle: 'Dicas', 
       guideSections: { 'new-player': 'Comece por aqui', combat: 'Combate e PvP', progression: 'Progressão', interface: 'Controles e interface', economy: 'Dinheiro', systems: 'Sistemas do jogo' },
       guideBackToGuide: 'Voltar ao Guia', guideSystemsMissions: 'Lista de missões, recompensas e passos para concluir.', guideSystemsProficiencies: 'Coleta e criação: níveis, bônus, XP e todas as receitas.', 
-      professionBack: 'Voltar às Proficiências', professionResources: 'O que se coleta', professionRecipes: 'Receitas', professionTools: 'Ferramentas', professionLevel: 'Nível', professionWorkbench: 'Bancada', professionLearnedFrom: 'Aprendida com', professionNeeds: 'Ingredientes', professionNoDetails: 'Ainda não há mais informações sobre esta profissão.', professionOpen: 'Ver detalhes',
+      missionsx: {
+        title: 'Missões', subtitle: 'Todas as missões documentadas do Nin Online: nível, rank, quem dá, objetivos e recompensas.', searchPlaceholder: 'Buscar missão ou NPC...',
+        results: '{n} missões', noResults: 'Nenhuma missão encontrada com esses filtros.', clear: 'Limpar filtros', filterArea: 'Região', filterType: 'Tipo', filterRank: 'Rank', filterLevel: 'Nível',
+        filterAll: 'Todas', repeatableOnly: 'Só repetíveis', levelFmt: 'Nível {n}+', levelUnknown: 'Nível ?', rankFmt: 'Rank {r}', giver: 'Quem dá a missão', location: 'Local',
+        requirements: 'Requisitos', objectives: 'Objetivos', rewards: 'Recompensas', rewardExp: 'EXP', rewardRyo: 'Ryo', about: 'Sobre a missão', request: 'Pedido (texto do jogo)', notes: 'Observações',
+        source: 'Fonte: Nin Online Wiki (Fandom), licença CC-BY-SA.', notice: 'Dados da comunidade, ainda em revisão: valores podem mudar a cada atualização do jogo.',
+        inClient: 'Nome confirmado nos arquivos do jogo', back: 'Voltar às missões', howTitle: 'Como as missões funcionam', howDeskGuide: 'Mesa de designação de missões', howLogGuide: 'Diário de missões e rastreador',
+        partial: 'Ficha parcial: objetivos ou recompensas ainda não registrados.', sortLevel: 'Ordenado por nível', crumb: 'Missões', relatedGuides: 'Guias relacionados', exp: 'EXP', ryo: 'Ryo',
+        types: { daily: 'Diária', repeatable: 'Repetível', story: 'História', side: 'Secundária' },
+        areas: { leaf: 'Folha', sand: 'Areia', mist: 'Névoa', takumi: 'Takumi', 'land-of-spirits': 'Terra dos Espíritos', 'land-of-iron': 'Terra do Ferro' },
+      },
+      guidex: {
+        searchPlaceholder: 'Buscar no Guia...', noResults: 'Nenhum guia encontrado.', startHere: 'Comece por aqui', startHereDesc: 'Leia nesta ordem se você acabou de chegar ao Nin Online.', step: 'Passo {n}',
+        browse: 'Explorar por assunto', guidesCount: '{n} guias', onThisPage: 'Nesta página', readMin: '{n} min de leitura', previous: 'Anterior', next: 'Próximo', related: 'Guias relacionados',
+        topicCount: '{n} guias', allTopics: 'Todos os assuntos', results: '{n} resultados', topics: 'Assuntos', beginner: 'Para iniciantes', openSection: 'Ver assunto',
+        sectionDesc: { 'new-player': 'O que saber nos primeiros dias: academia, vila, missões e regras que pegam novatos de surpresa.', combat: 'PvP, zonas, recompensas, crimes e como se recuperar de uma derrota.', progression: 'Níveis, atributos, maestrias, cargos e tudo que faz seu ninja crescer.', interface: 'Teclas, comandos de chat, amigos e o painel do jogo.', economy: 'Como ganhar Ryo, cupons de evento e o que o Gold Ninja oferece.' },
+      },
+      professionBack: 'Voltar às Proficiências', professionResources: 'O que se coleta', professionRecipes: 'Receitas', professionTools: 'Ferramentas', professionLevel: 'Nível', professionWorkbench: 'Bancada', professionLearnedFrom: 'Aprendida com', professionNeeds: 'Ingredientes', professionNoDetails: 'Ainda não há mais informações sobre esta profissão.', professionOpen: 'Ver detalhes', profTabOverview: 'Visão geral', profTabResources: 'Recursos', profTabRecipes: 'Receitas', profTabTools: 'Ferramentas', profLevelAll: 'Todos os níveis', profLevelRange: 'Níveis {a}–{b}', profBenchAll: 'Qualquer estação', profBenchYes: 'Precisa de Bancada', profBenchNo: 'Sem Bancada', profLearnAll: 'Qualquer origem', profLearnKnown: 'Conhecida de início', profLearnItem: 'Aprendida com um item', profShowing: 'Mostrando {n} de {m}', profClear: 'Limpar filtros', profWhere: 'Onde coletar', profWhereNone: 'Local ainda desconhecido.', profOnMap: 'Abrir no mapa', profDrops: 'Rende', profNoRecipesYet: 'Nenhuma receita registrada ainda.', profLevelLabel: 'Nível', profIngredients: 'Ingredientes', profSortLevel: 'Ordenado por nível',
     },
     siteError: { title: 'Algo deu errado', text: 'A equipe já foi avisada. Tente de novo em instantes.', retry: 'Tentar de novo', home: 'Voltar ao início' },
     blog: {
@@ -428,6 +447,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       specialAbility: 'Habilidade Especial',
       attackSpeed: 'Velocidade de Ataque',
       statBonus: 'Bônus de Atributo',
+      rarities: { common: 'Comum', uncommon: 'Incomum', rare: 'Raro', epic: 'Épico', legendary: 'Lendário', event: 'Evento', unique: 'Único', enchanted: 'Encantado', premium: 'Premium', organization: 'Organização' },
       knockbackDistance: 'Distância de Knockback',
       mobHealth: 'Vida', mobDamage: 'Dano', mobExperience: 'Experiência', mobRange: 'Alcance', mobRespawn: 'Reaparecimento', combatStats: 'Combate',
     },
@@ -469,8 +489,22 @@ export const dictionaries: Record<Locale, Dictionary> = {
       madeWith: 'Feito pela comunidade',
     },
     invite: {
-      title: 'Leve o NinWiki para o seu servidor', subtitle: 'O bot do Wiki busca itens, mobs, armas e jutsus direto no Discord (/search) e mostra se o site está no ar (/status).',
-      button: 'Convidar o bot para o seu servidor', buttonShort: 'Convidar o bot', perms: 'Pede só o essencial: ver canais, enviar mensagens, links incorporados e histórico.',
+      title: 'Leve o NinWiki para o seu servidor', subtitle: 'Consulte itens, mobs, armas, jutsus e o mapa sem sair do Discord. Rápido, gratuito e no idioma do seu servidor.',
+      button: 'Convidar o bot para o seu servidor', buttonShort: 'Convidar o bot', perms: 'Pede só o essencial: ver canais, enviar mensagens, links incorporados, anexar arquivos e ler o histórico. Nunca pede administrador.',
+      badge: 'Bot do Discord', examplesTitle: 'O que ele faz',
+      examples: [
+        { cmd: '/search', text: 'Procura qualquer coisa no wiki' },
+        { cmd: '/drop', text: 'Quem dropa o item e com que chance' },
+        { cmd: '/compare', text: 'Dois itens lado a lado' },
+        { cmd: '/map', text: 'Zona, mobs e saídas de uma área' },
+      ],
+      stepsTitle: 'Como começar',
+      steps: [
+        { title: 'Convidar', text: 'Clique no botão e escolha o servidor.' },
+        { title: 'Autorizar', text: 'Confirme as permissões na tela do Discord.' },
+        { title: 'Digitar /help', text: 'Veja a lista de comandos no seu servidor.' },
+      ],
+      note: 'Você precisa da permissão Gerenciar servidor para adicionar bots.',
     },
     announcement: { dismiss: 'Fechar anúncio', learnMore: 'Saiba mais' },
     blogx: {
@@ -744,7 +778,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         resolve: 'Marcar como resolvido', reopen: 'Reabrir', delete: 'Apagar', confirmDelete: 'Apagar este registro de erro?',
         trace: 'Traceback (mascarado)', noTrace: 'Sem traceback para este tipo de problema.', resolvedBy: 'Resolvido por', ip: 'IP da última ocorrência', refresh: 'Atualizar',
         sources: { api: 'API', web: 'Site', deepl: 'DeepL', security: 'Segurança' },
-        howTo: 'Se voltar a acontecer, o problema reabre sozinho e o bot avisa de novo.',
+        howTo: 'Se voltar a acontecer, o problema reabre sozinho e o bot avisa de novo.', hintTitle: 'O que pode estar acontecendo',
       },
       noticeBoard: {
         title: 'Quadro de avisos', subtitle: 'Recados e arquivos para a equipe.', empty: 'Nenhum aviso por enquanto.',
@@ -1113,7 +1147,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       aboutVillage: 'About the Village', clans: 'Clans', organizations: 'Organizations', villageSheet: 'Village Sheet', otherVillages: 'Other Villages',
       fName: 'Name', fEnglish: 'English', fPortuguese: 'Portuguese', fElement: 'Element', fMotto: 'Motto', fClimate: 'Climate', fLeader: 'Leader',
       emblemAlt: 'Emblem of {name}', mapAria: 'Map of the Nin world', mapTitle: 'World Map', mapSubtitle: 'The world map and the game areas.', mapCrumb: 'Map',
-      mapHint: 'Drag to move, use the mouse wheel to zoom, search for a place or click an area to see its map.', mapWorld: 'World', mapAreas: 'Areas', mapSearch: 'Search area...', mapCount: '{n} areas', mapZoomIn: 'Zoom in', mapZoomOut: 'Zoom out', mapSource: 'Images extracted from the game client.',
+      mapHint: 'Drag to move, use the mouse wheel to zoom, search for a place or click an area to see its map.', mapDrops: 'Drops', mapZoomIn: 'Zoom in', mapZoomOut: 'Zoom out', mapSource: 'Images extracted from the game client.',
       mapFind: 'Search place or area...', mapNoResult: 'Nothing found.', mapLegend: 'Legend', mapTerritories: 'Village territories', mapFullscreen: 'Full screen', mapExitFullscreen: 'Exit full screen', mapFit: 'Show the whole world', mapPlace: 'Place', mapArea: 'Area', mapKindShop: 'Shops', mapKindDungeon: 'Dungeons', mapKindMailbox: 'Mailboxes', mapKindNotice: 'Notice boards', mapKindWedding: 'Wedding',
       mapScroll: 'Scroll', mapRender: 'Render', mapInfoTitle: 'Area info', mapInfoLoading: 'Loading...', mapZone: 'Zone', mapZoneSafe: 'Safe zone', mapZoneDanger: 'Danger zone', mapZoneWar: 'War zone', mapZoneNone: 'No zone', mapVillage: 'Village', mapHouses: 'Houses', mapPlaces: 'Places', mapExits: 'Exits', mapNpcs: 'NPCs', mapMobs: 'Mobs', mapResources: 'Resources', mapRooms: 'Buildings', mapViewImage: 'View area map', mapClose: 'Close', mapLevelShort: 'Lv.', mapDirNorth: 'North', mapDirSouth: 'South', mapDirEast: 'East', mapDirWest: 'West', mapDirOther: 'Other',
       mapKindHospital: 'Hospitals', mapKindBounty: 'Bounty stations', mapKindMissions: 'Missions', mapKindBoss: 'Bosses', mapKindTravel: 'Travel', mapKindBarber: 'Barber', mapKindHeadbands: 'Headbands', mapKindPolling: 'Polling station', mapKindLeaderboards: 'Leaderboards', mapKindCheckpoint: 'Checkpoints', mapKindCapture: 'Capture points', mapLevels: 'Mob levels', mapKey: 'Map key', mapShowAll: 'Show all', mapHousesN: '{n} houses', mapLevelRange: 'Lv {lv}', mapCopyLink: 'Copy link', mapLinkCopied: 'Link copied', mapDoors: 'Doors to other areas', mapPinsTitle: 'Show on the area', mapGoTo: 'Go to', mapStatShops: 'Shops', mapTravelRoutes: 'Travel routes', mapCollapse: 'Collapse panel', mapChief: 'Boss', mapInsideOf: 'Inside {name}', mapShowMarkers: 'Show or hide markers', mapMyHint: 'Drag to move, scroll or pinch to zoom, click any area to see what is inside.',
@@ -1128,7 +1162,24 @@ export const dictionaries: Record<Locale, Dictionary> = {
       profRecipesCount: '{n} recipes', profResourcesCount: '{n} resources', profToolsCount: '{n} tools', profSearch: 'Search recipe...', profNoMatch: 'Nothing found.', profPrice: 'Price', profSources: 'Values recorded by the community (Nin Online Wiki on Fandom) and the Nin Atlas; the game may change them.', profTipsTitle: 'Tips', 
       guideSections: { 'new-player': 'Start here', combat: 'Combat & PvP', progression: 'Progression', interface: 'Controls & interface', economy: 'Money', systems: 'Gameplay systems' },
       guideBackToGuide: 'Back to the Guide', guideSystemsMissions: 'Mission list, rewards and steps to complete them.', guideSystemsProficiencies: 'Gathering and crafting: levels, bonuses, XP and every recipe.', 
-      professionBack: 'Back to Proficiencies', professionResources: 'What you gather', professionRecipes: 'Recipes', professionTools: 'Tools', professionLevel: 'Level', professionWorkbench: 'Workbench', professionLearnedFrom: 'Learned from', professionNeeds: 'Ingredients', professionNoDetails: 'There is no more information about this profession yet.', professionOpen: 'View details',
+      missionsx: {
+        title: 'Missions', subtitle: 'Every documented Nin Online mission: level, rank, who gives it, objectives and rewards.', searchPlaceholder: 'Search mission or NPC...',
+        results: '{n} missions', noResults: 'No mission matches these filters.', clear: 'Clear filters', filterArea: 'Region', filterType: 'Type', filterRank: 'Rank', filterLevel: 'Level',
+        filterAll: 'All', repeatableOnly: 'Repeatable only', levelFmt: 'Level {n}+', levelUnknown: 'Level ?', rankFmt: 'Rank {r}', giver: 'Given by', location: 'Location',
+        requirements: 'Requirements', objectives: 'Objectives', rewards: 'Rewards', rewardExp: 'EXP', rewardRyo: 'Ryo', about: 'About this mission', request: 'Mission text (in game)', notes: 'Notes',
+        source: 'Source: Nin Online Wiki (Fandom), CC-BY-SA license.', notice: 'Community data, still being reviewed: values may change with game updates.',
+        inClient: 'Name confirmed in the game files', back: 'Back to missions', howTitle: 'How missions work', howDeskGuide: 'Mission Assignment Desk', howLogGuide: 'Mission Log and tracker',
+        partial: 'Partial sheet: objectives or rewards not recorded yet.', sortLevel: 'Sorted by level', crumb: 'Missions', relatedGuides: 'Related guides', exp: 'EXP', ryo: 'Ryo',
+        types: { daily: 'Daily', repeatable: 'Repeatable', story: 'Story', side: 'Side' },
+        areas: { leaf: 'Leaf', sand: 'Sand', mist: 'Mist', takumi: 'Takumi', 'land-of-spirits': 'Land of Spirits', 'land-of-iron': 'Land of Iron' },
+      },
+      guidex: {
+        searchPlaceholder: 'Search the Guide...', noResults: 'No guide found.', startHere: 'Start here', startHereDesc: 'Read these in order if you just arrived in Nin Online.', step: 'Step {n}',
+        browse: 'Browse by topic', guidesCount: '{n} guides', onThisPage: 'On this page', readMin: '{n} min read', previous: 'Previous', next: 'Next', related: 'Related guides',
+        topicCount: '{n} guides', allTopics: 'All topics', results: '{n} results', topics: 'Topics', beginner: 'For beginners', openSection: 'Open topic',
+        sectionDesc: { 'new-player': 'What to know in the first days: academy, village, missions and the rules that catch newcomers out.', combat: 'PvP, zones, bounties, crimes and how to recover from a defeat.', progression: 'Levels, stats, masteries, ranks and everything that makes your ninja grow.', interface: 'Keys, chat commands, friends and the in-game panels.', economy: 'How to earn Ryo, event coupons and what Gold Ninja offers.' },
+      },
+      professionBack: 'Back to Proficiencies', professionResources: 'What you gather', professionRecipes: 'Recipes', professionTools: 'Tools', professionLevel: 'Level', professionWorkbench: 'Workbench', professionLearnedFrom: 'Learned from', professionNeeds: 'Ingredients', professionNoDetails: 'There is no more information about this profession yet.', professionOpen: 'View details', profTabOverview: 'Overview', profTabResources: 'Resources', profTabRecipes: 'Recipes', profTabTools: 'Tools', profLevelAll: 'All levels', profLevelRange: 'Levels {a}–{b}', profBenchAll: 'Any station', profBenchYes: 'Needs Workbench', profBenchNo: 'No Workbench', profLearnAll: 'Any source', profLearnKnown: 'Known by default', profLearnItem: 'Learned from an item', profShowing: 'Showing {n} of {m}', profClear: 'Clear filters', profWhere: 'Where to gather', profWhereNone: 'No known location yet.', profOnMap: 'Open on the map', profDrops: 'Drops', profNoRecipesYet: 'No recipes recorded yet.', profLevelLabel: 'Level', profIngredients: 'Ingredients', profSortLevel: 'Sorted by level',
     },
     siteError: { title: 'Something went wrong', text: 'The team has been notified. Please try again in a moment.', retry: 'Try again', home: 'Back to home' },
     blog: {
@@ -1194,6 +1245,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       specialAbility: 'Special Ability',
       attackSpeed: 'Attack Speed',
       statBonus: 'Stat Bonus',
+      rarities: { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary', event: 'Event', unique: 'Unique', enchanted: 'Enchanted', premium: 'Premium', organization: 'Organization' },
       knockbackDistance: 'Knockback Distance',
       mobHealth: 'Health', mobDamage: 'Damage', mobExperience: 'Experience', mobRange: 'Range', mobRespawn: 'Respawn', combatStats: 'Combat',
     },
@@ -1235,8 +1287,22 @@ export const dictionaries: Record<Locale, Dictionary> = {
       madeWith: 'Made by the community',
     },
     invite: {
-      title: 'Bring NinWiki to your server', subtitle: 'The wiki bot looks up items, mobs, weapons and jutsus right inside Discord (/search) and shows whether the site is up (/status).',
-      button: 'Invite the bot to your server', buttonShort: 'Invite the bot', perms: 'It only asks for the essentials: view channels, send messages, embed links and read history.',
+      title: 'Bring NinWiki to your server', subtitle: 'Look up items, mobs, weapons, jutsus and the map without leaving Discord. Fast, free and in your server\'s language.',
+      button: 'Invite the bot to your server', buttonShort: 'Invite the bot', perms: 'It only asks for the essentials: view channels, send messages, embed links, attach files and read history. Never administrator.',
+      badge: 'Discord bot', examplesTitle: 'What it does',
+      examples: [
+        { cmd: '/search', text: 'Find anything on the wiki' },
+        { cmd: '/drop', text: 'Who drops an item, and how likely' },
+        { cmd: '/compare', text: 'Two items side by side' },
+        { cmd: '/map', text: 'Zone, mobs and exits of an area' },
+      ],
+      stepsTitle: 'Get started',
+      steps: [
+        { title: 'Invite', text: 'Click the button and pick your server.' },
+        { title: 'Authorize', text: 'Confirm the permissions on Discord\'s screen.' },
+        { title: 'Type /help', text: 'See the command list in your server.' },
+      ],
+      note: 'You need the Manage Server permission to add bots.',
     },
     announcement: { dismiss: 'Dismiss announcement', learnMore: 'Learn more' },
     blogx: {
@@ -1510,7 +1576,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         resolve: 'Mark as resolved', reopen: 'Reopen', delete: 'Delete', confirmDelete: 'Delete this error record?',
         trace: 'Traceback (masked)', noTrace: 'No traceback for this kind of problem.', resolvedBy: 'Resolved by', ip: 'IP of the last occurrence', refresh: 'Refresh',
         sources: { api: 'API', web: 'Website', deepl: 'DeepL', security: 'Security' },
-        howTo: 'If it happens again the problem reopens by itself and the bot alerts again.',
+        howTo: 'If it happens again the problem reopens by itself and the bot alerts again.', hintTitle: 'What may be happening',
       },
       noticeBoard: {
         title: 'Notice board', subtitle: 'Announcements and files for the team.', empty: 'No notices yet.',

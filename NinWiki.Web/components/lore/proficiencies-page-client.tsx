@@ -45,6 +45,10 @@ function ProfessionCards({ list }: { list: ApiProfession[] }) {
           d.resources?.length ? withCount(t.profResourcesCount, d.resources.length) : null,
           d.tools?.length ? withCount(t.profToolsCount, d.tools.length) : null,
         ].filter(Boolean);
+        const lvls = (d.recipes ?? []).map((r) => r.level);   // faixa de nivel das receitas (barra de progresso do cartao)
+        const lo = lvls.length ? Math.min(...lvls) : 0;
+        const hi = lvls.length ? Math.max(...lvls) : 0;
+        const range = t.profLevelRange.replace('{a}', String(lo)).replace('{b}', String(hi));
         return (
           <Link key={p.id} href={`/proficiencies/${p.id}`} className="group dossier-panel flex flex-col gap-2 p-4 transition-colors hover:border-primary/50">
             <div className="flex items-center gap-3">
@@ -55,6 +59,14 @@ function ProfessionCards({ list }: { list: ApiProfession[] }) {
               </div>
             </div>
             <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">{localizedText(locale, p.description, p.descriptionPt)}</p>
+            {lvls.length > 0 && (
+              <div className="mt-1" title={range}>
+                <div className="relative h-1.5 overflow-hidden rounded-full bg-secondary">
+                  <div className="absolute inset-y-0 rounded-full bg-primary/70" style={{ left: `${(lo / MAX_LEVEL) * 100}%`, width: `${Math.max(2, ((hi - lo) / MAX_LEVEL) * 100)}%` }} />
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">{range}</p>
+              </div>
+            )}
             <p className="mt-auto text-xs font-medium text-primary">{t.professionOpen} →</p>
           </Link>
         );

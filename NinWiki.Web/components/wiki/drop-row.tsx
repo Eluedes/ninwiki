@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
+import { useLanguage } from '@/components/providers/language-provider';
 import type { ApiDropEntry } from '@/lib/api-client';
 
 interface DropRowProps {
@@ -14,6 +15,7 @@ interface DropRowProps {
 
 /** Linha de um drop: item, quantidade e chance (vira link se o item estiver publicado). */
 export function DropRow({ drop }: DropRowProps) {
+  const { dict } = useLanguage();
   const rarity = rarityConfig[drop.rarity];
 
   // Monta o texto de quantidade (" ×1" ou " ×1-3"), so' se min/max
@@ -46,7 +48,7 @@ export function DropRow({ drop }: DropRowProps) {
         {/* Raridade = a do ITEM ligado (nao e' mais escolhida no drop). Drop so' com texto nao tem raridade para mostrar. */}
         {drop.droppedItemId && (
           <span className={cn('shrink-0 text-xs font-semibold', rarity.color)}>
-            {rarity.label}
+            {dict.detail.rarities[drop.rarity]}
           </span>
         )}
       </div>

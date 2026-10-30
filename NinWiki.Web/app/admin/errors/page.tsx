@@ -113,7 +113,7 @@ export default function ErrorsPage() {
                   <div className="space-y-3 border-t border-border p-4 text-sm">
                     {e.hintPt && (
                       <div className="rounded-lg border border-amber-500/30 bg-amber-900/10 p-3">
-                        <p className="mb-1 text-xs font-semibold text-amber-400">💡 O que pode estar acontecendo</p>
+                        <p className="mb-1 text-xs font-semibold text-amber-400">💡 {t.hintTitle}</p>
                         <p className="text-sm leading-relaxed">{e.hintPt}</p>
                       </div>
                     )}

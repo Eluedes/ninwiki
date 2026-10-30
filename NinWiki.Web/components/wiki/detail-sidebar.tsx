@@ -138,7 +138,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
     return (
       <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="flex justify-center border-b border-border bg-[radial-gradient(circle_at_50%_45%,hsl(var(--primary)/0.18),transparent_70%)] bg-muted/20 py-6">
-          <WikiImage src={entry.image} alt={`Imagem de ${name}`} fallback={entry.icon} className="h-28 w-28 rounded-lg" />
+          <WikiImage src={entry.image} alt={name} fallback={entry.icon} className="h-28 w-28 rounded-lg" />
         </div>
 
         {sections.map((section) => (
@@ -208,7 +208,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
     return (
       <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="flex justify-center border-b border-border bg-[radial-gradient(circle_at_50%_45%,hsl(var(--primary)/0.18),transparent_70%)] bg-muted/20 py-6">
-          <WikiImage src={entry.image} alt={`Imagem de ${name}`} fallback={entry.icon} className="h-28 w-28 rounded-lg" />
+          <WikiImage src={entry.image} alt={name} fallback={entry.icon} className="h-28 w-28 rounded-lg" />
         </div>
 
         {mobRows.length > 0 && (
@@ -287,7 +287,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   const detailRows: { icon: LucideIcon; label: string; value: string; tone?: string }[] = [];
   if (entry.category === 'items') {
     if (entry.itemType) detailRows.push({ icon: Tag, label: dict.detail.itemType, value: typeLabels[entry.itemType] ?? entry.itemType });
-    detailRows.push({ icon: Gem, label: ce.rarity, value: rarity.label, tone: rarity.color });
+    detailRows.push({ icon: Gem, label: ce.rarity, value: dict.detail.rarities[entry.rarity], tone: rarity.color });
     if (shouldShowLevel(entry.category, entry.itemType, entry.level, entry.levelUnknown)) detailRows.push({ icon: Star, label: dict.detail.level, value: levelText(entry), tone: 'text-amber-400' });
     if (itemHasStack(entry.category, entry.itemType) && entry.maxStack != null) {
       detailRows.push({ icon: Layers, label: dict.detail.maxStack, value: formatNumber(entry.maxStack, locale), tone: 'text-sky-400' });

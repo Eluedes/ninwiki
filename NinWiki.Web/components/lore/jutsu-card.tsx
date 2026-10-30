@@ -36,7 +36,7 @@ export function JutsuCard({ jutsu, mastery }: { jutsu: ApiJutsu; mastery?: ApiMa
   // nao passou pela traducao automatica (ou pelo backfill, pra' as
   // que ja existiam antes - ver scripts/backfill_mastery_jutsu_english.py),
   // component decide la' embaixo se mostra ou nao.
-  const altName = isPt ? jutsu.name : jutsu.namePt;
+  const altName = isPt ? jutsu.name : null;   // em EN nao mostra o nome em portugues
   const description = isPt ? (jutsu.descriptionPt || jutsu.description) : (jutsu.description || jutsu.descriptionPt);
 
   return (

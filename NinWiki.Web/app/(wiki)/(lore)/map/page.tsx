@@ -3,13 +3,12 @@
 /**
  * Summary: mapas do jogo, com as imagens do proprio cliente.
  *
- * Duas abas: o mapa-mundi (canvas no estilo do Nin Atlas: `components/map/world-atlas.tsx`) e o atlas de areas (a imagem pronta de cada mapa,
- * com busca, zoom e pinos por cima). As imagens e os dados (`maps.json`, `world.json`, `world-atlas.json`, `area-pins.json`, `areas-info.json`)
+ * O mapa-mundi (canvas no estilo do Nin Atlas: `components/map/world-atlas.tsx`); a imagem pronta de cada area (com zoom e pinos por cima) abre num dialogo. As imagens e os dados (`maps.json`, `world.json`, `world-atlas.json`, `area-pins.json`, `areas-info.json`)
  * sao gerados por `NinWiki.Api/scripts/extrair_mapas_do_jogo.py` e ficam em `public/game-maps`.
  */
 
-import { useMemo, useState } from 'react';
-import { MapPin, Minus, Plus, Search } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, Minus, Plus } from 'lucide-react';
 import { PageHeader } from '@/components/lore/page-header';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -86,19 +85,11 @@ function AreaConteudo({ area, t, pt, onGo }: { area: Area; t: LoreDict; pt: bool
   );
 }
 
-/** Pagina do mapa: mundo + atlas de areas. */
+/** Pagina do mapa: so' o mapa-mundi; as areas abrem pelo mapa, pela busca e pelo painel (hash `#map/<id>` no world-atlas). */
 export default function MapPage() {
   const { locale, dict } = useLanguage();
   const t = dict.lore;
-  const [tab, setTab] = useState<'world' | 'areas'>('world');
-  const [busca, setBusca] = useState('');
   const [aberta, setAberta] = useState<Area | null>(null);
-
-  const nomeDe = (a: Area) => (locale === 'pt' ? a.namePt : a.name);
-  const filtradas = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    return q ? areas.filter((a) => a.name.toLowerCase().includes(q) || a.namePt.toLowerCase().includes(q)) : areas;
-  }, [busca]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 animate-fade-in">
@@ -109,63 +100,7 @@ export default function MapPage() {
         icon={<MapPin className="h-7 w-7" />}
       />
 
-      <div role="tablist" className="mb-4 flex gap-2">
-        {(['world', 'areas'] as const).map((id) => (
-          <button
-            key={id}
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => setTab(id)}
-            className={cn(
-              'rounded-md border px-4 py-2 text-sm font-semibold transition-colors',
-              tab === id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:bg-muted',
-            )}
-          >
-            {id === 'world' ? t.mapWorld : `${t.mapAreas} (${areas.length})`}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'world' ? (
-        <WorldAtlas onOpenArea={(id) => { const a = areaPorId.get(id); if (a) setAberta(a); }} />
-      ) : (
-        <>
-          <label className="relative mb-4 block max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder={t.mapSearch}
-              aria-label={t.mapSearch}
-              className="w-full rounded-md border border-border bg-card py-2 pl-9 pr-3 text-sm"
-            />
-          </label>
-          <p className="mb-3 text-sm text-muted-foreground">{t.mapCount.replace('{n}', String(filtradas.length))}</p>
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {filtradas.map((a) => (
-              <li key={a.id}>
-                <button
-                  onClick={() => setAberta(a)}
-                  className="dossier-panel group w-full overflow-hidden text-left transition-transform hover:-translate-y-0.5"
-                >
-                  <div className="flex aspect-[4/3] items-center justify-center bg-muted/40 p-1">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- miniatura estatica carregada sob demanda */}
-                    <img
-                      src={`/game-maps/${a.id}.webp`}
-                      alt=""
-                      loading="lazy"
-                      width={a.width}
-                      height={a.height}
-                      className="max-h-full max-w-full object-contain [image-rendering:pixelated]"
-                    />
-                  </div>
-                  <p className="truncate px-2 py-1.5 text-sm font-semibold">{nomeDe(a)}</p>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      <WorldAtlas onOpenArea={(id) => { const a = areaPorId.get(id); if (a) setAberta(a); }} />
 
       <p className="mt-6 text-xs text-muted-foreground">{t.mapSource}</p>
 
