@@ -1,8 +1,17 @@
-# Contexto do projeto NinWiki — para qualquer IA (LEIA ANTES DE MEXER)
+# Contexto do projeto Nin Codex (pastas `NinWiki.*`) — para qualquer IA (LEIA ANTES DE MEXER)
 
 Cole/anexe este arquivo no começo de qualquer conversa com uma IA (Gemini, ChatGPT,
 Claude...) que vá alterar o projeto. Vários bugs já foram causados por uma IA que
 não sabia o que já estava pronto.
+
+## Nome e hospedagem (atualizado em 31/10/2026)
+- O projeto se chama **Nin Codex** (antes Nin Online Wiki / NinWiki). O **jogo** continua **Nin Online**. Pastas, pacotes,
+  workflows e identificadores técnicos `NinWiki.*` **não mudam** — não renomeie pasta nem import.
+- A hospedagem **ativa é a SquareCloud** (README, seção 3; entrada do Nin Codex em produção: seção 3.13). O **Azure** (1 VM + Docker Compose + Caddy +
+  Cloudflare Tunnel; pasta `Azure/`, README 3A) é só o **plano B**, pronto e **não usado agora**: não o trate como destino. Endereços: site
+  `https://nincodex.guima.net` (antigo `ninwiki.guima.net`, redireciona 308), API `https://api.guima.net`. Não invente passos de deploy: leia o README.
+- O banco **local** é a base da produção (`NinWiki.Api/scripts/mesclar_producao.py` junta com os dados vivos). A produção **já
+  está na head** do Alembic: **não crie migração sem o dono pedir** (e nunca edite uma já aplicada).
 
 ## Estrutura
 - `NinWiki.Api` — FastAPI + SQLAlchemy (async) + Alembic + PostgreSQL.
@@ -39,7 +48,8 @@ não sabia o que já estava pronto.
 5. **Padrão de idioma dos dados:** o campo sem sufixo é o inglês (principal) e `_pt` é a
    tradução: `name`/`name_pt`, `description`/`description_pt`. Vale para Content,
    Mastery, Jutsu, Attribute, Village, Profession, NinjaRank e Summon. (Clan, Organization e
-   StoryArc têm só `name`, sem tradução.) Nunca volte a usar `english_name`.
+   StoryArc têm só `name`, sem tradução.) Nunca volte a usar `english_name`. Dados em português dentro do campo inglês são erro:
+   `scripts/corrigir_idioma_dados.py` mostra/corrige.
 
 6. **Textos das telas** vêm do dicionário `lib/i18n.ts` (pt e en). Nunca escreva texto
    fixo em português ou inglês direto no componente.
@@ -75,6 +85,15 @@ não sabia o que já estava pronto.
 11. **Vilas, Clãs, Organizações, Blog:** vila e organização usam as permissões de Lore (`lore.edit`/`lore.delete`);
     posts têm `posts.*` (Creator só rascunho). Rota nova precisa de `require_permission` e de teste em
     `scripts/testar_permissoes.py`.
+
+12. **Scripts de importação/correção em `NinWiki.Api/scripts/`** (Atlas, Fandom, cliente do jogo): todos fazem **simulação por
+    padrão** e só gravam com `--aplicar`; só rodam em banco **local** (`--permitir-remoto` existe só em alguns, com backup). Só
+    preenchem campo **vazio** e criam **rascunho**. Use o que já existe (lista e ordem segura no README, seção 3A.5) em vez de
+    criar um importador novo.
+13. **Código antigo removido:** o fluxo de seed (`export-seed-data.ts`, `app/seed.py`, `lib/*-data.ts`) e os guias `GUIA_DE_EDICAO.md`/`MAESTRIAS.md` foram apagados; o conteúdo mora no banco.
+    Os comandos `/team` do bot foram removidos (equipe só pelo painel).
+14. **Documentos de controle:** `ROADMAP.md` (estado real + próximas fases), `README.md` (como rodar/hospedar; mantido em dia por
+    `scripts/verificar_readme.py`), `FASE2_LOCAL.md` (login/cargos local). Atualize-os na mesma entrega.
 
 ## Depois de QUALQUER alteração, rode e confira que está tudo verde
 ```

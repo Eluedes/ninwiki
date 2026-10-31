@@ -1,5 +1,5 @@
 """
-Ponto de entrada da API do NinWiki.
+Ponto de entrada da API do Nin Codex.
 
 Este e' o arquivo que o Uvicorn carrega quando voce roda:
     python -m uvicorn app.main:app --reload
@@ -106,7 +106,7 @@ async def lifespan(_app: FastAPI):
 # Instância principal do FastAPI. Em desenvolvimento, title/version aparecem
 # automaticamente na documentação interativa gerada em /docs.
 app = FastAPI(
-    title="NinWiki API",
+    title="Nin Codex API",
     version="0.1.0",
     docs_url=docs_url,
     redoc_url=redoc_url,
@@ -131,7 +131,7 @@ app.add_middleware(
     CORSMiddleware,
     # so' aceita requisicoes vindas exatamente desta origem (nunca "*"
     # em conjunto com allow_credentials=True - o navegador nem deixaria).
-    allow_origins=[settings.frontend_origin],
+    allow_origins=settings.allowed_origins,
     # permite enviar cookies/credenciais (necessario para o fluxo de
     # login com cookie httpOnly que a Fase 2 vai implementar).
     allow_credentials=True,

@@ -564,10 +564,10 @@ async def testar() -> None:
                   "Katana" in txt and "A blade used in the test" in txt and "• Dropped by bandits" in txt and any(getattr(x, "label", None) == "Open the full page" for c in v.children[0].children for x in getattr(c, "children", []))
                   and any(type(c).__name__ == "Section" and type(c.accessory).__name__ == "Thumbnail" for c in v.children[0].children))
             check("/search: rodape com quem pesquisou e a marca da equipe (com o logo do site)",
-                  "Searched by Rafael" in txt and "Nin Online Wiki Team" in txt and "/images/logo/" in str(v.children[0].children[-1].accessory.media.url if hasattr(v.children[0].children[-1], "accessory") else ""))
+                  "Searched by Rafael" in txt and "Nin Codex Team" in txt and "/images/logo/" in str(v.children[0].children[-1].accessory.media.url if hasattr(v.children[0].children[-1], "accessory") else ""))
             vp = build_search_view(termo, achados_pt, "https://wiki.exemplo.com/", lang="pt", owner_name="Rafael")
             txp = componentes(vp)
-            check("/search em portugues: textos, botao e rodape em portugues", "Pesquisado por Rafael" in txp and "Equipe Nin Online Wiki" in txp and "Abrir a página completa" in txp and "Lamina" in txp, txp[:300])
+            check("/search em portugues: textos, botao e rodape em portugues", "Pesquisado por Rafael" in txp and "Equipe Nin Codex" in txp and "Abrir a página completa" in txp and "Lamina" in txp, txp[:300])
             outro = [{**achados[0], "title": "Segundo"}, *achados]
             v2 = build_search_view(termo, outro, "https://wiki.exemplo.com", owner_id=7)
             check("/search: com varios resultados aparece o menu para trocar", any(type(c).__name__ == "ActionRow" and any(type(x).__name__ == "Select" for x in c.children) for c in v2.children[0].children))
@@ -652,7 +652,7 @@ async def testar() -> None:
             check("/random responde com um cartao", isinstance(iran.followup.send.call_args.kwargs.get("view"), discord.ui.LayoutView))
             ihelp = interacao(IDS["creator"], guild_id=42)
             await arvore.get_command("help").callback(ihelp)
-            check("/help em portugues, so' para quem pediu, lista os comandos", ihelp.response.send_message.call_args.kwargs["ephemeral"] is True and "/compare" in str(ihelp.response.send_message.call_args.kwargs["embed"].to_dict()) and "Bot do NinWiki" in ihelp.response.send_message.call_args.kwargs["embed"].title)
+            check("/help em portugues, so' para quem pediu, lista os comandos", ihelp.response.send_message.call_args.kwargs["ephemeral"] is True and "/compare" in str(ihelp.response.send_message.call_args.kwargs["embed"].to_dict()) and "Bot do Nin Codex" in ihelp.response.send_message.call_args.kwargs["embed"].title)
             # /map com dados de mentira (o bot le' o areas-info.json do SITE; aqui nao ha' site)
             from ninwiki_bot.wiki_commands import build_area_embed, find_area
             fake_info = {"names": {"1": ["Leaf Village", "Vila da Folha"], "2": ["Dark Forest", "Floresta Sombria"]},

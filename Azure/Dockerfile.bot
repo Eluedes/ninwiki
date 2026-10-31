@@ -1,0 +1,17 @@
+# Imagem do bot de Discord. Build: docker build -f Azure/Dockerfile.bot NinWiki.Bot
+FROM python:3.13-slim AS builder
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN python -m venv /opt/venv
+COPY requirements.txt .
+RUN /opt/venv/bin/pip install -r requirements.txt
+
+FROM python:3.13-slim
+# BOT_STATE_DIR=/data: os *_state.json ficam num volume (o resto do container e' somente-leitura).
+ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 BOT_STATE_DIR=/data
+RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin ninwiki \
+ && mkdir -p /app /data && chown 10001:10001 /data
+WORKDIR /app
+COPY --from=builder /opt/venv /opt/venv
+COPY --chown=10001:10001 . /app
+USER 10001
+CMD ["python", "main.py"]

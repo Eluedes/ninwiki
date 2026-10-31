@@ -265,46 +265,6 @@
 }
 
 /* ============================================================================
-   LOGO TEMATICO (components/icons/nin-logo.tsx)
-   ============================================================================
-   4 imagens (uma por tema de cor) empilhadas no mesmo lugar via
-   position:absolute, com so' a do tema ATIVO visivel - a troca usa o
-   mesmo atributo data-color-theme que controla o resto do site (ver
-   components/providers/color-theme-provider.tsx). O padrao e' "laranja" (o logo
-   original do jogo); sem atributo mostra a imagem vermelha ("blood").
-   ============================================================================ */
-.nin-logo-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.nin-logo-img-laranja,
-.nin-logo-img-canarinho,
-.nin-logo-img-ouro,
-.nin-logo-img-anil {
-  display: none;
-}
-[data-color-theme='laranja'] .nin-logo-img-blood,
-[data-color-theme='canarinho'] .nin-logo-img-blood,
-[data-color-theme='ouro'] .nin-logo-img-blood,
-[data-color-theme='anil'] .nin-logo-img-blood {
-  display: none;
-}
-[data-color-theme='laranja'] .nin-logo-img-laranja {
-  display: block;
-}
-[data-color-theme='canarinho'] .nin-logo-img-canarinho {
-  display: block;
-}
-[data-color-theme='ouro'] .nin-logo-img-ouro {
-  display: block;
-}
-[data-color-theme='anil'] .nin-logo-img-anil {
-  display: block;
-}
-
-/* ============================================================================
    BLOG: imagem, video, citacao, codigo, spoiler, mencao e indice (TOC)
    ============================================================================
    Compartilhado entre o editor (.ProseMirror) e o site (.prose-shinobi), como a Ficha e a Tabela acima.

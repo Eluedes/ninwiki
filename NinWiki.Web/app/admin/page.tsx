@@ -25,7 +25,7 @@ const STALE_DAYS = 30;
 export default function AdminOverviewPage() {
   // Titulo da aba (esta pagina e' Client Component, entao nao exporta metadata).
   useEffect(() => {
-    document.title = 'Overview - Admin · Nin Online Wiki';
+    document.title = 'Overview - Admin · Nin Codex';
   }, []);
 
   const { dict, locale } = useLanguage();

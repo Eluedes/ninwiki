@@ -1118,6 +1118,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     settings.trust_proxy_headers = True
     check("com TRUST_PROXY_HEADERS usa o ULTIMO X-Forwarded-For (o do proxy), nao o forjado", _resolve_client_ip(escopo) == "203.0.113.50")
     check("CF-Connecting-IP tem prioridade", _resolve_client_ip({"headers": [(b"cf-connecting-ip", b"198.51.100.9")], "client": ("10.0.0.1", 1)}) == "198.51.100.9")
+    antigo_cidrs = settings.trusted_proxy_cidrs
+    settings.trusted_proxy_cidrs = "127.0.0.1,172.16.0.0/12"
+    check("TRUSTED_PROXY_CIDRS: peer de fora da lista NAO tem o cabecalho obedecido (anti-forja)", _resolve_client_ip(escopo) == "10.0.0.1")
+    escopo_docker = {**escopo, "client": ("172.18.0.5", 1)}
+    check("TRUSTED_PROXY_CIDRS: peer na rede do Docker tem o cabecalho obedecido", _resolve_client_ip(escopo_docker) == "203.0.113.50")
+    settings.trusted_proxy_cidrs = antigo_cidrs
     settings.trust_proxy_headers = antigo_trust
     check("FRONTEND_ORIGIN com '/' no fim e' normalizado", Settings(database_url="x", jwt_secret_key="x", frontend_origin="https://a.com/").frontend_origin == "https://a.com")
 

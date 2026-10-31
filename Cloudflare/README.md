@@ -1,4 +1,6 @@
-# Página de manutenção do site (Cloudflare Worker)
+# Página de manutenção do **Nin Codex** (Cloudflare Worker)
+
+> **Ao trocar o subdomínio do site** (para `nincodex.guima.net`): na Cloudflare crie o DNS do novo nome (apontando para o app do site na SquareCloud) e **adicione a rota do Worker** (*Workers Routes*) para o novo host (passo a passo: README, seção 3.13); deixe o host antigo apenas redirecionando (o site faz 308 via `LEGACY_SITE_HOSTS`). Plano B de hospedagem (não usado agora): `Azure/LEIA-ME.md`.
 
 **Problema:** para atualizar o Web você apaga os arquivos do app na SquareCloud e faz o deploy; nesse intervalo o site fica fora do ar e aparece um texto de erro da hospedagem.
 **Solução:** um *Worker* da Cloudflare (grátis) fica **na frente do domínio do site**. Se o site de verdade não responde, ele mostra uma página bonita ("Estamos atualizando a wiki") que **se recarrega sozinha** quando o deploy termina. Não existe liga/desliga: aparece quando o app some e desaparece quando ele volta.

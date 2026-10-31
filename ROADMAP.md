@@ -1,12 +1,46 @@
-# Roadmap — NinWiki
+# Roadmap — Nin Codex (antes NinWiki)
 
 Documento de controle do projeto, no mesmo espírito do roadmap do Guima:
 uma lista viva do que já foi feito e do que falta, organizada em fases.
 Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 
-**Última atualização:** 02/10/2026 (erros no Discord, inglês + DeepL em tudo)
+**Última atualização:** 31/10/2026 (hospedagem continua na SquareCloud; Azure adiado; renome para Nin Codex)
 
-**Legenda:** ✅ feito e testado · 🔄 em andamento / parcial · ⬜ não iniciado
+**Legenda:** ✅ feito e testado · 🔄 em andamento / parcial · ⬜ não iniciado · 🗑️ obsoleto (não vale mais)
+
+> **Decisões de 30/10/2026:** (1) o projeto passa a se chamar **Nin Codex** (o *jogo* continua "Nin Online"; pastas e nomes técnicos
+> `NinWiki.*` **não** mudam); (2) ~~a hospedagem sai da SquareCloud para o Azure~~ **mudou em 31/10:** seguimos na **SquareCloud** (plano renovado); o kit do Azure
+> (1 VM + Docker Compose + Caddy + Cloudflare Tunnel) fica pronto na pasta `Azure/` como **plano B**, sem uso agora; (3) o banco **local** vira a base da produção
+> (`scripts/mesclar_producao.py` + junção de bancos). O resto deste arquivo é o histórico; o que vale hoje está na tabela abaixo
+> e nas fases 8 a 10 no fim do arquivo.
+
+## Estado real em 30/10/2026 (auditado contra o código)
+
+| Item do roadmap | Estado | Evidência |
+|---|---|---|
+| Fases 0, 1 (modelagem/Alembic) | ✅ | 55 arquivos em `NinWiki.Api/alembic/versions`, **uma só head** (`c3f5a7b9d1e4`, `py -m alembic heads`) |
+| Seed `export-seed-data.ts` + `app/seed.py` + `lib/*-data.ts` | 🗑️ removido | arquivos apagados na limpeza (eram só para o primeiro banco de teste vazio) |
+| Fase 2: login Discord, cargos, permissões, Equipe, log | ✅ | `app/core/permissions.py`, `app/api/auth.py`, `testar_permissoes.py` |
+| Fase 2: 2FA do Discord obrigatório | ✅ | `REQUIRE_DISCORD_2FA` em `app/core/config.py`, usado em `app/api/auth.py` |
+| Fase 2: "testar com o Discord de verdade" | 🔄 | em produção o login real é usado pelo dono; **nenhum teste automático alcança o Discord** (só simulado). Repetir o checklist do README (3.9 / Azure) após a migração |
+| Fase 2: bot `/equipe` `/team` | 🗑️ obsoleto | comandos de equipe **removidos** em 08/10 (commit "Bot: remove os comandos /team"); equipe só pelo painel |
+| Fase 3: API pública, rate limit | ✅ | `app/core/hardening.py`, `proxy.ts` |
+| Fase 4: painel (conteúdo, masteries, jutsus, vilas, blog, avisos, permissões, imagens, reports, traduções, manutenção, erros) | ✅ | pastas em `NinWiki.Web/app/admin/*` (content, guides, media, reports, translations, maintenance, errors...) |
+| Blog + importador da Steam | ✅ | `app/core/steam_news.py`, `app/api/steam_news.py`, `NinWiki.Web/app/(wiki)/blog` |
+| Mapa (antes "placeholder SVG" / "dados de mentira") | ✅ | `NinWiki.Web/components/map/*` + `extrair_mapas_do_jogo.py`; os itens antigos de Fase 4/5 sobre o mapa estão **obsoletos** |
+| Missões (seção própria `/missions`) | 🔄 | `app/(wiki)/(lore)/missions` lê `NinWiki.Web/data/missions.json` (154 missões do Fandom). **Não** estão no banco: ver "ideias abertas" |
+| Utility `/utility`, Proficiências `/proficiencies`, Guia com artigos `/guide/<id>` | ✅ | `app/(wiki)/(lore)/{utility,proficiencies,guide}`, `/admin/guides`, `/admin/professions` |
+| Bot: `/status /search /drop /patchnotes /language /item /mob /jutsu /mastery /compare /map /random /help` | ✅ | `grep '@tree.command' NinWiki.Bot` (13 comandos). **Falta:** testar num servidor real do Discord |
+| Backups automáticos (banco + imagens, cifrados) | ✅ | `app/core/backup.py`, `NinWiki.Bot/ninwiki_bot/backup_feed.py`, `scripts/restaurar_backup.py` |
+| Modo manutenção (S.Adm) + Worker da Cloudflare | ✅ | `/admin/maintenance`, `Cloudflare/` |
+| Modo idioma (EN padrão + DeepL, `_pt`) | ✅ | campos `*_pt`; `corrigir_idioma_dados.py` limpou dados em português no campo inglês |
+| Descrição de vila/clã bilíngue | ✅ | migração `c3e8a5b1d9f4` (o item "Próximos passos 3" da Fase 4 já foi feito) |
+| "Testes de tela" (vitest + jsdom) | ⬜ | não existe `vitest` no `NinWiki.Web/package.json`; hoje só `tsc` + `eslint` + testes da API |
+| Rate limit com Redis | ⬜ | só se houver mais de uma instância da API (no Azure será 1 VM: **não precisa**) |
+| Schema de banco separado por ambiente (`beta_ninwiki`) | 🗑️ obsoleto | substituído pelo banco local + banco temporário de teste (`ninwiki_*`) |
+| Fase 7: deploy na SquareCloud | ✅ em uso | hospedagem atual; entrada do Nin Codex em produção: README, seção 3.13 |
+| Fase 7: deploy no **Azure** | ⏸️ adiado | plano B: kit pronto em `Azure/`, não usado agora — ver Fase 8 |
+| Renome para **Nin Codex** | 🔄 | ver Fase 9 |
 
 ---
 
@@ -27,7 +61,7 @@ Atualizar isso a cada rodada de trabalho, marcando o que mudou.
   de decodificação de erro em português no Windows)
 - ✅ Testado ciclo completo `upgrade` → `downgrade` → `upgrade` sem erro (incluindo limpeza
   manual dos tipos ENUM do Postgres, que o autogenerate do Alembic não remove sozinho)
-- ✅ **Script de seed** — `NinWiki.Web/scripts/export-seed-data.ts` exporta o conteúdo mockado
+- 🗑️ (obsoleto; ver tabela do topo) ✅ **Script de seed** — `NinWiki.Web/scripts/export-seed-data.ts` exporta o conteúdo mockado
   do front pra JSON, `NinWiki.Api/app/seed.py` popula as 19 tabelas. Testado de verdade:
   15 entries, 8 masteries, 17 jutsus, 3 vilas, 6 clãs, 10 caminhos — com JOIN real confirmando
   jutsu → mastery → caminho conectado certinho
@@ -68,7 +102,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   **auditoria de todas as rotas da API** — rota nova sem proteção faz o teste falhar) e
   `scripts/testar_bot_integracao.py` (39: o código real do bot contra a API real). Ambos testados por
   mutação (quebrei regras de propósito e o teste acusou)
-- ⬜ **Testar de verdade com o Discord**: login real e bot num servidor real — o ambiente onde isso foi
+- 🔄 **Testar de verdade com o Discord**: login real e bot num servidor real — o ambiente onde isso foi
   desenvolvido não alcança o Discord, então só foi testado com Discord simulado
 - ✅ **Limite de tentativas** (`app/core/rate_limit.py`): por IP, janela deslizante em memória. 30 chamadas/min no
   login; 5 logins negados (ou `state` forjado) em 15 min bloqueiam **antes** de chamar o Discord ou gravar no log
@@ -302,7 +336,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   dado passou a exigir permissão (antes **nenhuma** exigia). `scripts/testar_permissoes.py` (121
   verificações, inclui auditoria automática de todas as rotas) testado por mutação. Guia: `FASE2_LOCAL.md`.
 - ✅ **NinWiki.Bot (28/09)**: bot discord.py (mesma stack do Guima.Bot) com `/equipe listar|adicionar|cargo|
-  desativar|reativar`. Sem regra própria: repassa quem digitou e a API decide (mesmas regras do painel);
+  desativar|reativar` (🗑️ removidos em 08/10). Sem regra própria: repassa quem digitou e a API decide (mesmas regras do painel);
   respostas efêmeras, sem intents privilegiadas, `ALLOWED_GUILD_IDS` opcional. `scripts/testar_bot_integracao.py`
   (39 verificações: o código real do bot contra a API real + cada comando com Discord simulado), testado por
   mutação. `verificar_projeto.py` agora também confere se as bibliotecas do `requirements.txt` estão instaladas.
@@ -363,12 +397,12 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
    30+ dias sem edição, com link direto pro editor). "Termos mais buscados" ficou de fora — exige um sistema
    de analytics de busca que não existe
 
-### Próximos passos — sugestão (a combinar)
+### Próximos passos — sugestão (a combinar) — 🗑️ lista antiga de 02/10; o que vale está na tabela do topo e nas fases 8 a 10
 1. **Testar a Fase 2 com o Discord de verdade** (login + bot num servidor de teste seu — passo a passo em
    `FASE2_LOCAL.md`): único ponto da Fase 2 ainda não visto funcionando de ponta a ponta
 2. ✅ ~~Página pública do Blog~~ — feita em 01/10
-3. **Descrição de vilas/clãs bilíngue** (inglês principal + tradução automática, como Masteries) — hoje é um idioma só
-4. **Mapa** ainda usa dados de mentira de vila (`lib/village-data.ts`): ligar na API
+3. ✅ (feito em 02/10) **Descrição de vilas/clãs bilíngue** (inglês principal + tradução automática, como Masteries) — hoje é um idioma só
+4. ✅ (feito: mapa-mundi do cliente do jogo) **Mapa** usava dados de mentira de vila (`lib/village-data.ts`): ligar na API
 5. **Testes de tela dentro do projeto** (vitest + jsdom — 19 já escritos, faltam entrar no `package.json` e num
    `npm test`)
 6. Rate limit nas rotas públicas de busca (Fase 6) e **finalizar o deploy** (Fase 7 — preparação já feita, falta
@@ -390,7 +424,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 - ✅ Logo do site trocado para a arte enviada pelo mantenedor (shuriken com anel), recolorida
   por processamento de imagem (4 variantes, uma por tema) e aplicada em header/footer/admin/login
 - ✅ Site renomeado para "Nin Online Wiki" (antes "Nin Online Brasil Wiki")
-- ⬜ Trocar o SVG do Mapa pela imagem de referência real, se for oficial
+- ✅ (feito em 30/10) Trocar o SVG do Mapa pelo mapa-mundi extraído do cliente do jogo (`extrair_mapas_do_jogo.py`)
 - ✅ **Conteúdo bilíngue de verdade**: inglês é o principal e a DeepL traduz EN → PT-BR (campos `_pt`,
   nunca sobrescreve correção manual, botão "Retraduzir") em Conteúdo, Masteries e Jutsus. Village,
   Profession, NinjaRank, Summon e Attribute seguem o mesmo padrão (`name` em inglês + `name_pt`)
@@ -452,7 +486,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 - ⬜ Rate limit com **Redis** se um dia houver mais de uma instância (hoje é por processo — exato com uma instância só)
 - ✅ Cloudflare (proxy) na frente, com Worker de manutenção (`Cloudflare/`); WAF/regras extras ficam a critério do dono
 
-## Fase 7 — Deploy
+## Fase 7 — Deploy (SquareCloud) — ✅ EM USO (o Azure da Fase 8 ficou adiado)
 - ✅ **Preparação para a SquareCloud (01/10)**: `README.md` na raiz (rodar local, usar o painel, passo a passo do
   deploy e tabela de problemas); `squarecloud.app` + `.squarecloudignore` em `NinWiki.Api`, `NinWiki.Web` e
   `NinWiki.Bot`; `NinWiki.Api/start.py` (roda `alembic upgrade head` e liga o Uvicorn na porta 80; se a migration
@@ -471,7 +505,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
   com `--ssl-*` (importar e exportar remoto), Secrets `DB_SSL_*` no deploy da API; testado ponta a ponta com uma CA local e
   Postgres `hostssl ... cert`. Tutorial no README 3.3 a 3.6
 - ✅ **Correção do build da SquareCloud (01/10)**: `unrs-resolver install scripts blocked` → `allowScripts` no `package.json` do site
-- ⬜ Schema de banco separado por ambiente (`public` / `beta_ninwiki`, mesmo padrão do Guima)
+- 🗑️ Schema de banco separado por ambiente (`public` / `beta_ninwiki`): não será feito
 
 ---
 
@@ -513,3 +547,37 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 ## Limpeza e correção de 18/10
 - ✅ **Bug 500 em `/content-items/slug/{slug}`** (páginas `/detail/...` quebravam): com o Pydantic 2.13 os schemas de dentro de outro schema (atributos, ataques, drops) também precisam de `from_attributes=True`. Corrigido em `app/schemas/content.py` e `masteries.py`; `verificar_projeto.py` agora confere isso sozinho (`checar_schemas_aninhados`).
 - ✅ **Código morto removido**: 31 componentes `components/ui/*` e `data-table.tsx` sem uso, `.eslintrc.json` (o projeto usa `eslint.config.mjs`), `use-toast`, a tela antiga `/admin/users`, os dados de mentira de `lib/data.ts` e 24 bibliotecas do `package.json` que só eles usavam.
+
+---
+
+## Fase 8 — Migração para o Azure (⏸️ adiada; seguimos na SquareCloud; kit pronto em `Azure/`)
+> Decisão de 31/10/2026: o dono renovou a SquareCloud. Os itens abaixo ficam como **plano B**; o que vale agora é a entrada do Nin Codex na SquareCloud (README, seção 3.13).
+Desenho decidido (30/10/2026): **1 VM** (Azure for Students) com **Docker Compose** (API, Web, Bot, Postgres) atrás do **Caddy**, publicada pela
+**Cloudflare Tunnel** (nenhuma porta aberta na VM), Postgres **sem porta exposta**, **backups em Blob Storage**, segredos fora do Git. O kit fica na pasta
+`Azure/` (guia: `Azure/LEIA-ME.md`, mantido por outro trabalho; o README só aponta para ele).
+- ✅ Código já preparado: `BOT_STATE_DIR` (bot com disco só-leitura), `FRONTEND_ORIGINS` (aceitar o endereço antigo durante a troca), `STANDALONE_BUILD`
+  (build do Web), `scripts/converter_urls_dump.py` (troca `localhost` por domínio no dump)
+- ⬜ Subir a VM, Compose, Caddy e Tunnel e testar fora do ar público (`Azure/`)
+- ⬜ Backup novo do banco **vivo** da SquareCloud → modo manutenção → restaurar o banco **mesclado** → imagens → API → Web → bot (README, seção 3A.4)
+- ⬜ Trocar o login do Discord (redirect), `FRONTEND_ORIGIN`/`API_BASE_URL` e DNS; conferir o checklist
+- ⬜ Substituir os workflows `deploy-*.yml` (SquareCloud) por um deploy para a VM, ou documentar o deploy manual
+- ⬜ Desligar os apps da SquareCloud depois de alguns dias estáveis; manter um último backup
+- Regra de migração: **a produção já está na head** (`c3f5a7b9d1e4`); **não criar migração nova sem aval do dono** durante a troca
+
+## Fase 9 — Renome para Nin Codex (🔄 em andamento)
+Nome visível passa de "Nin Online Wiki/NinWiki" para **Nin Codex** (logo novo, `scripts/gerar_logo`, redirecionamento do subdomínio antigo).
+Pastas, pacotes e identificadores técnicos `NinWiki.*` **continuam** (renomear quebraria workflows, imports e backups). O jogo continua "Nin Online".
+- ✅ README, ROADMAP e CONTEXTO_PARA_IA falam em Nin Codex
+- 🔄 Textos do site (`lib/i18n.ts`), logo, `proxy.ts` (redirect do subdomínio antigo) — outro trabalho em curso
+- ⬜ Conferir depois: título das páginas, Open Graph, e-mails/webhooks, nome do bot no Discord (`Nin Codex status` já mudou no painel do bot)
+
+## Fase 10 — Ideias abertas (não prometidas; sem data)
+- ⬜ **Missões no banco** (tabela `missions` + migração + painel): hoje vivem em `NinWiki.Web/data/missions.json` (somente leitura, vindo do Fandom) e as 658 entradas de
+  missão em rascunho em `content_items` não têm campos de objetivo/recompensa. Exige **migração** (precisa de aval)
+- ⬜ **Jutsus com dados completos:** só o Fandom traz dano/tempo/tier e nem tudo está lá; revisar no painel os que `classificar_jutsus.py` marcou INCERTO
+- ⬜ **Guia:** revisar e publicar os 34 artigos que entraram como rascunho (`criar_guias_do_fandom.py` e `criar_guias_do_jogo.py`); tradução PT pelo botão do painel
+- ⬜ Revisar e publicar os itens/armas/jutsus que entraram como rascunho (`criar_itens_do_jogo.py`, `criar_jutsus_do_jogo.py`)
+- ⬜ Testes de tela (vitest + jsdom) e um `npm test` no CI
+- ⬜ Blog: notificação de comentário no Discord, respostas (thread), denúncia de comentário, busca, posts relacionados
+- ⬜ Tags/categorias no blog já existem; falta paginação
+- ⬜ Mais um provedor de login de leitor (além do Discord)

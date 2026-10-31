@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
+from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import discord, staff_service
@@ -271,10 +272,12 @@ async def reader_dev_login(payload: DevLogin, request: Request, response: Respon
 
 
 @router.post("/logout")
-async def logout(response: Response, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
+async def logout(request: Request, response: Response, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db)):
     """Encerra a sessao: apaga o cookie, invalida o token (token_version; um cookie copiado deixa de valer, e o passe de manutencao tambem) e registra a saida."""
+    ensure_same_origin(request)   # sem isso, com COOKIE_SAMESITE=none um site qualquer poderia deslogar a equipe
     if user is not None:
-        user.token_version += 1   # efeito colateral: derruba tambem as sessoes dessa pessoa em outros aparelhos
+        # efeito colateral: derruba tambem as sessoes dessa pessoa em outros aparelhos; soma feita no banco (atomica)
+        await db.execute(sa_update(User).where(User.id == user.id).values(token_version=User.token_version + 1))
         await log_action(db, action="logout", entity_type="auth", entity_id=str(user.discord_id), actor=user, source="auth")
         await db.commit()
     clear_session_cookie(response)

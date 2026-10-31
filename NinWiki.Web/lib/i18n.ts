@@ -57,6 +57,7 @@ export interface JutsuInfoDict {
 export interface Dictionary {
   siteName: string;
   siteTagline: string;
+  siteSubline: string;
   compare: { title: string; subtitle: string; search: string; noResults: string; change: string; pickBoth: string; button: string };
   nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; proficiencies: string; map: string; blog: string; openMenu: string };
   home: { welcome: string; subtitle: string; };
@@ -78,7 +79,7 @@ export interface Dictionary {
     profRecipesCount: string; profResourcesCount: string; profToolsCount: string; profSearch: string; profNoMatch: string; profPrice: string; profSources: string; profTipsTitle: string; 
     guideSections: { 'new-player': string; combat: string; progression: string; interface: string; economy: string; systems: string };
     guideBackToGuide: string; guideSystemsMissions: string; guideSystemsProficiencies: string; 
-    missionsx: Record<'title' | 'subtitle' | 'searchPlaceholder' | 'results' | 'noResults' | 'clear' | 'filterArea' | 'filterType' | 'filterRank' | 'filterLevel' | 'filterAll' | 'repeatableOnly' | 'levelFmt' | 'levelUnknown' | 'rankFmt' | 'giver' | 'location' | 'requirements' | 'objectives' | 'rewards' | 'rewardExp' | 'rewardRyo' | 'about' | 'request' | 'notes' | 'source' | 'notice' | 'inClient' | 'back' | 'howTitle' | 'howDeskGuide' | 'howLogGuide' | 'partial' | 'sortLevel' | 'crumb' | 'relatedGuides' | 'exp' | 'ryo', string> & { types: Record<'daily' | 'repeatable' | 'story' | 'side', string>; areas: Record<'leaf' | 'sand' | 'mist' | 'takumi' | 'land-of-spirits' | 'land-of-iron', string> };
+    missionsx: Record<'title' | 'subtitle' | 'searchPlaceholder' | 'results' | 'noResults' | 'clear' | 'filterArea' | 'filterType' | 'filterRank' | 'filterLevel' | 'filterAll' | 'repeatableOnly' | 'levelFmt' | 'levelUnknown' | 'rankFmt' | 'giver' | 'location' | 'requirements' | 'objectives' | 'rewards' | 'rewardExp' | 'rewardRyo' | 'about' | 'request' | 'notes' | 'source' | 'notice' | 'inClient' | 'notInClient' | 'differsFromClient' | 'back' | 'howTitle' | 'howDeskGuide' | 'howLogGuide' | 'partial' | 'sortLevel' | 'crumb' | 'relatedGuides' | 'exp' | 'ryo', string> & { types: Record<'daily' | 'repeatable' | 'story' | 'side', string>; areas: Record<'leaf' | 'sand' | 'mist' | 'takumi' | 'land-of-spirits' | 'land-of-iron', string> };
     guidex: Record<'searchPlaceholder' | 'noResults' | 'startHere' | 'startHereDesc' | 'step' | 'browse' | 'guidesCount' | 'onThisPage' | 'readMin' | 'previous' | 'next' | 'related' | 'topicCount' | 'allTopics' | 'results' | 'topics' | 'beginner' | 'openSection', string> & { sectionDesc: Record<'new-player' | 'combat' | 'progression' | 'interface' | 'economy', string> };
     professionBack: string; professionResources: string; professionRecipes: string; professionTools: string; professionLevel: string; professionWorkbench: string; professionLearnedFrom: string; professionNeeds: string; professionNoDetails: string; professionOpen: string; profTabOverview: string; profTabResources: string; profTabRecipes: string; profTabTools: string; profLevelAll: string; profLevelRange: string; profBenchAll: string; profBenchYes: string; profBenchNo: string; profLearnAll: string; profLearnKnown: string; profLearnItem: string; profShowing: string; profClear: string; profWhere: string; profWhereNone: string; profOnMap: string; profDrops: string; profNoRecipesYet: string; profLevelLabel: string; profIngredients: string; profSortLevel: string;
   };
@@ -311,8 +312,9 @@ export interface Dictionary {
 // exatamente a estrutura da interface Dictionary acima.
 export const dictionaries: Record<Locale, Dictionary> = {
   pt: {
-    siteName: 'Nin Online Wiki',
+    siteName: 'Nin Codex',
     siteTagline: 'A enciclopédia definitiva do mundo Nin',
+    siteSubline: 'WIKI · MAPA · FERRAMENTAS',
     compare: {
       title: 'Comparar itens', subtitle: 'Escolha dois itens ou armas para ver os dados lado a lado. As linhas diferentes ficam destacadas.',
       search: 'Buscar item ou arma…', noResults: 'Nada encontrado.', change: 'Trocar', pickBoth: 'Escolha os dois lados para comparar.', button: 'Comparar',
@@ -370,7 +372,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         filterAll: 'Todas', repeatableOnly: 'Só repetíveis', levelFmt: 'Nível {n}+', levelUnknown: 'Nível ?', rankFmt: 'Rank {r}', giver: 'Quem dá a missão', location: 'Local',
         requirements: 'Requisitos', objectives: 'Objetivos', rewards: 'Recompensas', rewardExp: 'EXP', rewardRyo: 'Ryo', about: 'Sobre a missão', request: 'Pedido (texto do jogo)', notes: 'Observações',
         source: 'Fonte: Nin Online Wiki (Fandom), licença CC-BY-SA.', notice: 'Dados da comunidade, ainda em revisão: valores podem mudar a cada atualização do jogo.',
-        inClient: 'Nome confirmado nos arquivos do jogo', back: 'Voltar às missões', howTitle: 'Como as missões funcionam', howDeskGuide: 'Mesa de designação de missões', howLogGuide: 'Diário de missões e rastreador',
+        inClient: 'Nome confirmado nos arquivos do jogo', notInClient: 'Não encontrada nos arquivos do jogo (pode ter sido removida ou renomeada)', differsFromClient: 'Difere dos arquivos do jogo', back: 'Voltar às missões', howTitle: 'Como as missões funcionam', howDeskGuide: 'Mesa de designação de missões', howLogGuide: 'Diário de missões e rastreador',
         partial: 'Ficha parcial: objetivos ou recompensas ainda não registrados.', sortLevel: 'Ordenado por nível', crumb: 'Missões', relatedGuides: 'Guias relacionados', exp: 'EXP', ryo: 'Ryo',
         types: { daily: 'Diária', repeatable: 'Repetível', story: 'História', side: 'Secundária' },
         areas: { leaf: 'Folha', sand: 'Areia', mist: 'Névoa', takumi: 'Takumi', 'land-of-spirits': 'Terra dos Espíritos', 'land-of-iron': 'Terra do Ferro' },
@@ -489,7 +491,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       madeWith: 'Feito pela comunidade',
     },
     invite: {
-      title: 'Leve o NinWiki para o seu servidor', subtitle: 'Consulte itens, mobs, armas, jutsus e o mapa sem sair do Discord. Rápido, gratuito e no idioma do seu servidor.',
+      title: 'Leve o Nin Codex para o seu servidor', subtitle: 'Consulte itens, mobs, armas, jutsus e o mapa sem sair do Discord. Rápido, gratuito e no idioma do seu servidor.',
       button: 'Convidar o bot para o seu servidor', buttonShort: 'Convidar o bot', perms: 'Pede só o essencial: ver canais, enviar mensagens, links incorporados, anexar arquivos e ler o histórico. Nunca pede administrador.',
       badge: 'Bot do Discord', examplesTitle: 'O que ele faz',
       examples: [
@@ -1109,8 +1111,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
   },
   en: {
-    siteName: 'Nin Online Wiki',
+    siteName: 'Nin Codex',
     siteTagline: 'The definitive encyclopedia of the Nin world',
+    siteSubline: 'WIKI · MAP · TOOLS',
     compare: {
       title: 'Compare items', subtitle: 'Pick two items or weapons to see their data side by side. Rows that differ are highlighted.',
       search: 'Search item or weapon…', noResults: 'Nothing found.', change: 'Change', pickBoth: 'Pick both sides to compare.', button: 'Compare',
@@ -1168,7 +1171,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         filterAll: 'All', repeatableOnly: 'Repeatable only', levelFmt: 'Level {n}+', levelUnknown: 'Level ?', rankFmt: 'Rank {r}', giver: 'Given by', location: 'Location',
         requirements: 'Requirements', objectives: 'Objectives', rewards: 'Rewards', rewardExp: 'EXP', rewardRyo: 'Ryo', about: 'About this mission', request: 'Mission text (in game)', notes: 'Notes',
         source: 'Source: Nin Online Wiki (Fandom), CC-BY-SA license.', notice: 'Community data, still being reviewed: values may change with game updates.',
-        inClient: 'Name confirmed in the game files', back: 'Back to missions', howTitle: 'How missions work', howDeskGuide: 'Mission Assignment Desk', howLogGuide: 'Mission Log and tracker',
+        inClient: 'Name confirmed in the game files', notInClient: 'Not found in the game files (may be removed or renamed)', differsFromClient: 'Differs from the game files', back: 'Back to missions', howTitle: 'How missions work', howDeskGuide: 'Mission Assignment Desk', howLogGuide: 'Mission Log and tracker',
         partial: 'Partial sheet: objectives or rewards not recorded yet.', sortLevel: 'Sorted by level', crumb: 'Missions', relatedGuides: 'Related guides', exp: 'EXP', ryo: 'Ryo',
         types: { daily: 'Daily', repeatable: 'Repeatable', story: 'Story', side: 'Side' },
         areas: { leaf: 'Leaf', sand: 'Sand', mist: 'Mist', takumi: 'Takumi', 'land-of-spirits': 'Land of Spirits', 'land-of-iron': 'Land of Iron' },
@@ -1287,7 +1290,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       madeWith: 'Made by the community',
     },
     invite: {
-      title: 'Bring NinWiki to your server', subtitle: 'Look up items, mobs, weapons, jutsus and the map without leaving Discord. Fast, free and in your server\'s language.',
+      title: 'Bring Nin Codex to your server', subtitle: 'Look up items, mobs, weapons, jutsus and the map without leaving Discord. Fast, free and in your server\'s language.',
       button: 'Invite the bot to your server', buttonShort: 'Invite the bot', perms: 'It only asks for the essentials: view channels, send messages, embed links, attach files and read history. Never administrator.',
       badge: 'Discord bot', examplesTitle: 'What it does',
       examples: [

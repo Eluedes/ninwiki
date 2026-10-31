@@ -14,7 +14,7 @@ const MARKER = 'x-ninwiki-web';
 /** HTML da pagina de manutencao (autocontido: nada externo, para funcionar mesmo com todo o resto fora do ar). Texto em PT ou EN conforme o navegador. */
 export const PAGE = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex"><title>Nin Wiki — Updating</title>
+<meta name="robots" content="noindex"><title>Nin Codex — Updating</title>
 <style>
   :root{color-scheme:dark}
   *{box-sizing:border-box}
@@ -35,11 +35,11 @@ export const PAGE = `<!doctype html>
   <h1 id="t">We are updating the wiki</h1>
   <p id="d">A new version is being published. This page reloads by itself as soon as the site is back — usually in a couple of minutes.</p>
   <div class="bar" aria-hidden="true"><i></i></div>
-  <small id="s">Nin Wiki</small>
+  <small id="s">Nin Codex</small>
 </main>
 <script>
   var pt=/^pt/i.test(navigator.language||'');
-  if(pt){document.documentElement.lang='pt-BR';document.title='Nin Wiki — Atualizando';
+  if(pt){document.documentElement.lang='pt-BR';document.title='Nin Codex — Atualizando';
     document.getElementById('t').textContent='Estamos atualizando a wiki';
     document.getElementById('d').textContent='Uma nova versão está sendo publicada. Esta página recarrega sozinha assim que o site voltar — geralmente em poucos minutos.';}
   // a cada 10 s pergunta ao site: quando a resposta trouxer o cabecalho do site de verdade, recarrega.

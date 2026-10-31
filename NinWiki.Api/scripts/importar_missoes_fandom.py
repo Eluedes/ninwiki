@@ -14,6 +14,7 @@ Uso (pasta NinWiki.Api, python do venv):
     python scripts/importar_missoes_fandom.py --cliente "E:/.../locales/English.json"   # outro caminho do cliente
 """
 import argparse
+import difflib
 import html
 import json
 import re
@@ -266,10 +267,92 @@ def nomes_do_cliente(caminho: str) -> set[str]:
     return {x.strip("\x00").strip().lower() for x in dados.get("MissionKeys", []) if x.strip("\x00").strip()}
 
 
+def _nk(t: str) -> str:
+    """Normaliza para comparar: minusculas, sem pontuacao, aspas curvas viram retas."""
+    t = (t or "").replace("\x00", "").replace("\u2019", "'").replace("\u2018", "'").replace("\n", " ")
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", t.lower())).strip()
+
+
+def _sem_links(t: str) -> str:
+    """Tira a marcacao [[A|B]] do wiki (fica so' B)."""
+    return re.sub(r"\[\[(?:[^\]|]*\|)?([^\]]*)\]\]", r"\1", t or "")
+
+
+def conferir_com_cliente(fichas: list[dict], caminho: str) -> None:
+    """Compara cada missao com o cliente do jogo e grava nela `clientStatus` (confirmed / partial / divergent / fandom-only),
+    `clientName` (nome que o jogo usa, se for diferente do Fandom) e `clientNote` (motivo, em ingles).
+    O cliente so' tem NOMES e TEXTOS (pedido, objetivos); nivel, rank, EXP e recompensas nunca sao conferidos aqui."""
+    dados = json.loads(Path(caminho).read_text(encoding="utf-8-sig"), strict=False)
+    chaves = [x.replace("\x00", "").strip() for x in dados.get("MissionKeys", [])]
+    chaves = [c for c in chaves if c]
+    por_nk = {_nk(c): c for c in chaves}
+    longas = [_nk(c) for c in chaves if len(c) > 20]
+    for f in fichas:
+        nome = re.sub(r"\.png$", "", f["name"].strip())
+        base = re.sub(r"\s*-?\s*\(.*$", "", nome).strip()  # tira "- (Leaf Seals)" etc.
+        alvo, achou = None, None
+        for cand in (nome, base, "the " + base):
+            if _nk(cand) in por_nk:
+                achou = por_nk[_nk(cand)]; break
+        if not achou:  # serie "X" -> "X I/II/III..." ou nome quase igual (erro de digitacao)
+            for r in ("i", "ii", "iii", "iv", "v"):
+                if _nk(base) + " " + r in por_nk:
+                    achou = por_nk[_nk(base) + " " + r]; break
+        if not achou and len(_nk(base).split()) >= 2:  # pagina de agrupamento: o jogo tem variantes ("X (Leaf)", "Enter the X...")
+            achou = next((c for c in chaves if len(c) < 60 and re.search(r"\b" + re.escape(_nk(re.sub(r"\s+mission$", "", base, flags=re.I))) + r"\b", _nk(c))), None)
+            if achou:
+                f["clientStatus"], f["clientNote"] = "partial", f"Grouping page: the game has variants such as \"{achou}\"."
+                continue
+        if not achou:
+            alvo = difflib.get_close_matches(_nk(base), [k for k in por_nk if len(k) < 45], 1, 0.93)
+            if alvo:
+                f["clientName"] = por_nk[alvo[0]]
+                if difflib.SequenceMatcher(None, _nk(base), alvo[0]).ratio() >= 0.975:  # erro de digitacao do Fandom: vale o nome do jogo
+                    f["name"], f["clientNote"], f["clientStatus"] = por_nk[alvo[0]], f"Name fixed from the Fandom spelling \"{nome}\" to the game's.", "partial"
+                    f.pop("clientName"); continue
+        if not achou and not f.get("clientName"):
+            dep = [c for c in chaves if _nk(c).startswith(_nk(base)) and "deprecated" in c.lower()]
+            f["clientStatus"], f["clientNote"] = "fandom-only", ("The game marks this mission as deprecated." if dep else "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page).")
+            continue
+        if not achou:
+            f["clientStatus"], f["clientNote"] = "divergent", f"The game calls it \"{f['clientName']}\"."
+            continue
+        if _nk(achou) != _nk(f["name"]) and _nk(achou) != _nk(base) and not f.get("clientName") and not _nk(achou).startswith(_nk(base)):
+            f["clientName"] = achou
+        # texto: pedido/resumo/objetivos do Fandom x textos do cliente
+        textos = [_sem_links(f.get("quote")), _sem_links(f.get("summary"))] + [_sem_links(re.sub(r"\s*\(\d+/\d+\w*\)", "", o)) for o in f["objectives"]]
+        melhor, trecho = 0.0, ""
+        for t in textos:
+            n = _nk(t)
+            if len(n) < 25:
+                continue
+            if any(k in n for k in longas if len(k) > 25) or n in longas:
+                melhor, trecho = 1.0, t; break
+            for k in longas:
+                if abs(len(k) - len(n)) < 0.4 * max(len(k), len(n)):
+                    r = difflib.SequenceMatcher(None, n, k).ratio()
+                    if r > melhor:
+                        melhor, trecho = r, k
+        if melhor >= 0.92:
+            f["clientStatus"] = "confirmed"
+        elif melhor >= 0.65:
+            f["clientStatus"], f["clientNote"] = "divergent", "The request text on the wiki differs from the game text: " + trecho[:200]
+        else:
+            f["clientStatus"] = "partial"
+    f_ok = sum(1 for f in fichas if f["clientStatus"] == "confirmed")
+    print("Conferencia com o cliente:", {k: sum(1 for f in fichas if f["clientStatus"] == k) for k in ("confirmed", "partial", "divergent", "fandom-only")}, f"(confirmed={f_ok})")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[1])
     ap.add_argument("--cliente", default=CLIENTE_PADRAO)
+    ap.add_argument("--so-verificar", action="store_true", help="nao baixa o Fandom: so' reconfere o missions.json atual com o cliente")
     args = ap.parse_args()
+    if args.so_verificar:
+        dados = json.loads(DESTINO.read_text(encoding="utf-8"))
+        conferir_com_cliente(dados["missions"], args.cliente)
+        DESTINO.write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
+        return
     cliente = nomes_do_cliente(args.cliente)
     paginas = baixar_paginas()
     fichas = [converter(t, p, cliente) for t, p in sorted(paginas.items())]
@@ -279,6 +362,7 @@ def main() -> None:
         if f["id"] and f["id"] not in vistos:
             vistos.add(f["id"])
             unicas.append(f)
+    conferir_com_cliente(unicas, args.cliente)
     DESTINO.parent.mkdir(parents=True, exist_ok=True)
     DESTINO.write_text(json.dumps({"source": "Nin Online Wiki (Fandom), CC-BY-SA", "missions": unicas}, ensure_ascii=False, indent=1), encoding="utf-8")
     com_obj = sum(1 for f in unicas if f["objectives"])

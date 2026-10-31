@@ -28,7 +28,7 @@ log = logging.getLogger("ninwiki_bot")
 NO_MENTIONS = discord.AllowedMentions.none()
 KIND_ICON = {"item": "🎒", "mob": "👹", "weapon": "⚔️", "guide": "📘", "mission": "📜", "mastery": "✨", "jutsu": "🌀", "post": "📰"}
 KIND_COLOR = 0x38BDF8
-LOGO_PATH = "/images/logo/nin-logo-blood.png"
+LOGO_PATH = "/images/logo/nin-logo-laranja.png"
 
 
 def _clean(text: str) -> str:
@@ -248,7 +248,7 @@ def register_public_commands(
             return False
         return True
 
-    @tree.command(name="status", description="Is the NinWiki API, database and website up right now?")
+    @tree.command(name="status", description="Is the Nin Codex API, database and website up right now?")
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 10.0, key=lambda i: i.user.id)
     async def status(interaction: discord.Interaction) -> None:

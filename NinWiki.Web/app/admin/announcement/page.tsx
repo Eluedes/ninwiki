@@ -41,7 +41,7 @@ export default function AnnouncementAdminPage() {
   }
 
   useEffect(() => {
-    document.title = `${t.title} - Admin · Nin Online Wiki`;
+    document.title = `${t.title} - Admin · Nin Codex`;
     getAnnouncement().then(fill).catch(() => setError(t.loadError));
   }, [t.title, t.loadError]);
 

@@ -30,9 +30,13 @@ const fontVars = [inter, cinzel, playfair, lora, oswald, bebas, caveat, fira].ma
 export const metadata: Metadata = {
   // base dos enderecos absolutos (og:image, canonical...): NEXT_PUBLIC_SITE_URL, ex: https://wiki.seudominio.com
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  // title.template: cada pagina define so' o seu nome (ex: "Fire Trap") e a aba mostra "Fire Trap · Nin Online Wiki"
-  title: { default: 'Nin Online Wiki', template: '%s · Nin Online Wiki' },
+  // title.template: cada pagina define so' o seu nome (ex: "Fire Trap") e a aba mostra "Fire Trap · Nin Codex"
+  title: { default: 'Nin Codex', template: '%s · Nin Codex' },
   description: 'The definitive encyclopedia of the Nin Online MMORPG — mobs, items, weapons, masteries, guides and missions.',
+  // Cartao de compartilhamento padrao (Discord, WhatsApp, X): o livro + "NIN CODEX" (gerado por NinWiki.Api/scripts/gerar_logo.py).
+  // Favicon e icones vem sozinhos de app/favicon.ico, app/icon.png e app/apple-icon.png (convencao do Next.js).
+  openGraph: { type: 'website', siteName: 'Nin Codex', title: 'Nin Codex', images: [{ url: '/images/logo/og-nin-codex.png', width: 1200, height: 630 }] },
+  twitter: { card: 'summary_large_image', title: 'Nin Codex', images: ['/images/logo/og-nin-codex.png'] },
 };
 
 /** Layout raiz de todas as paginas: fonte, tema, idioma e avisos. Async: le' o nonce da CSP (proxy.ts), o que tambem faz toda pagina ser gerada a cada pedido (o nonce e' novo a cada um). */

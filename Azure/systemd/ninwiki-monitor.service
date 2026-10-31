@@ -1,0 +1,12 @@
+# Checagem simples de disco/containers/backup (avisa no Discord se algo estiver errado).
+[Unit]
+Description=Monitor simples do NinWiki
+
+[Service]
+Type=oneshot
+User=ninwiki
+Group=docker
+ExecStart=/opt/ninwiki/scripts/monitorar.sh
+NoNewPrivileges=true
+PrivateTmp=false
+ProtectHome=true

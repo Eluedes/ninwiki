@@ -64,10 +64,11 @@ docker-compose.override.yml
 .DS_Store
 Thumbs.db
 desktop.ini
-# Gerado por NinWiki.Web/scripts/export-seed-data.ts - nao versionar,
-# regenerar sob demanda antes de rodar o seed (garante que reflete
-# sempre o lib/*.ts mais recente, nunca uma copia desatualizada)
-NinWiki.Api/seed_data.json
+# Saidas de teste e temporarios soltos (lixo gerado, nunca versionar)
+saida_*.txt
+*.bak
+*.orig
+*.tmp
 
 # Imagens enviadas via upload pelo painel admin (app/api/uploads.py) -
 # sao dado de usuario, nao codigo, nao devem ir pro repositorio
@@ -115,3 +116,6 @@ NinWiki.Api/**/client.*
 
 # Backups baixados do bot (/backup): contem dados da producao, nunca vao para o Git
 *.nbk.*
+
+# Prints do jogo enviados pelo dono (ver prints/LEIA-ME.txt): nunca vao para o Git
+prints/

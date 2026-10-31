@@ -14,6 +14,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+import os
 
 import aiohttp
 import discord
@@ -30,6 +31,9 @@ from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_sin
 from ninwiki_bot.language import LanguageStore
 from ninwiki_bot.public_commands import register_public_commands
 from ninwiki_bot.version_feed import VersionStore, build_embed as build_version_embed, merge as merge_versions
+
+# Pasta dos arquivos *_state.json. Padrao: ao lado do main.py (SquareCloud/local). No Docker/Azure: BOT_STATE_DIR=/data (volume), para o container poder ser read_only.
+STATE_DIR = Path(os.getenv("BOT_STATE_DIR") or Path(__file__).resolve().parent)
 
 log = logging.getLogger("ninwiki_bot")
 
@@ -58,28 +62,28 @@ class NinWikiBot(discord.Client):
         self.tree = app_commands.CommandTree(self)
         self.api = NinWikiApi(settings.ninwiki_api_url, settings.bot_api_token)
         # Feed do log: estado (onde parou) guardado em arquivo ao lado do bot, para sobreviver a reinicio.
-        self.feed_store = LogFeedStore(Path(__file__).resolve().parent / "log_state.json")
+        self.feed_store = LogFeedStore(STATE_DIR / "log_state.json")
         self.feed_state = self.feed_store.load()
         self._health_announced = False  # o aviso "monitor ligado" sai uma vez por inicializacao do bot
         self._feed_failing = False  # so' avisa no terminal na PRIMEIRA falha de uma sequencia (sem spam)
         self.log_loop = tasks.loop(seconds=settings.log_poll_seconds)(_safe(self._log_tick))
         self.log_loop.before_loop(self.wait_until_ready)
         # Feed de ERROS do wiki (+ vigia de API/banco/site): estado em arquivo, mesmo esquema do feed de log.
-        self.error_store = ErrorFeedStore(Path(__file__).resolve().parent / "error_state.json")
+        self.error_store = ErrorFeedStore(STATE_DIR / "error_state.json")
         self.error_state = self.error_store.load()
         self._errors_failing = False
         self.error_loop = tasks.loop(seconds=settings.log_poll_seconds)(_safe(self._error_tick))
         self.error_loop.before_loop(self.wait_until_ready)
         self.statuses = {"API": ServiceStatus("API"), "Database": ServiceStatus("Database"), "Website": ServiceStatus("Website")}
-        self.languages = LanguageStore(Path(__file__).resolve().parent / "language_state.json")
-        self.status_store = StatusMessageStore(Path(__file__).resolve().parent / "status_state.json")
+        self.languages = LanguageStore(STATE_DIR / "language_state.json")
+        self.status_store = StatusMessageStore(STATE_DIR / "status_state.json")
         self.health_loop = tasks.loop(seconds=settings.health_poll_seconds)(_safe(self._health_tick))
         self.health_loop.before_loop(self.wait_until_ready)
         # Mensagem "Latest updates" (webhook, editada a cada deploy) e backup periodico (canal privado).
-        self.version_store = VersionStore(Path(__file__).resolve().parent / "version_state.json")
+        self.version_store = VersionStore(STATE_DIR / "version_state.json")
         self.version_loop = tasks.loop(seconds=120)(_safe(self._version_tick))
         self.version_loop.before_loop(self.wait_until_ready)
-        self.backup_store = BackupStore(Path(__file__).resolve().parent / "backup_state.json")
+        self.backup_store = BackupStore(STATE_DIR / "backup_state.json")
         self.backup_loop = tasks.loop(minutes=settings.backup_interval_minutes)(_safe(self._backup_tick))
         self.backup_loop.before_loop(self.wait_until_ready)
 
@@ -236,7 +240,7 @@ class NinWikiBot(discord.Client):
                 lines = [f"{'⚪' if ok is None else '🟢' if ok else '🔴'} **{name}** — {'unknown' if ok is None else 'online' if ok else 'OFFLINE'}" for name, ok in results.items()]
                 if not self.settings.site_url:
                     lines.append("⚪ **Website** — not monitored (set SITE_URL in the bot .env)")
-                messages.insert(0, {"title": "🤖 NinWiki monitor started", "description": "\n".join(lines),
+                messages.insert(0, {"title": "🤖 Nin Codex monitor started", "description": "\n".join(lines),
                                     "color": 0x2ECC71 if all(ok for ok in results.values() if ok is not None) else 0xE74C3C})
         if not messages and not panel:
             return
@@ -276,7 +280,7 @@ class NinWikiBot(discord.Client):
                     except discord.NotFound:
                         message_id = None   # apagaram a mensagem: cria outra abaixo
                 if not message_id:
-                    state["message_id"] = (await webhook.send(embeds=[embed], wait=True, username="NinWiki deploys")).id
+                    state["message_id"] = (await webhook.send(embeds=[embed], wait=True, username="Nin Codex deploys")).id
         except (discord.DiscordException, aiohttp.ClientError) as exc:
             log.warning("Nao consegui atualizar a mensagem de versao no webhook: %s", exc)
             return

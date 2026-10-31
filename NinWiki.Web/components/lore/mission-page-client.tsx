@@ -61,6 +61,8 @@ export function MissionPageClient({ mission: m, refs, guides }: { mission: Missi
         {m.rank && <span className="rounded bg-secondary px-2 py-1 text-muted-foreground">{t.rankFmt.replace('{r}', m.rank)}</span>}
         <span className="rounded bg-primary/10 px-2 py-1 text-primary">{t.types[m.type]}</span>
         {m.areas.map((a) => <span key={a} className="rounded bg-secondary px-2 py-1 text-muted-foreground">{t.areas[a]}</span>)}
+        {m.clientStatus === 'fandom-only' && <span title={m.clientNote} className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-2 py-1 text-amber-500">{t.notInClient}</span>}
+        {m.clientStatus === 'divergent' && <span title={m.clientNote} className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-2 py-1 text-amber-500">{t.differsFromClient}</span>}
         {m.inClient && <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-2 py-1 text-emerald-500"><CheckCircle2 className="h-3 w-3" />{t.inClient}</span>}
       </div>
 

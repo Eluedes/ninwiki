@@ -12,6 +12,8 @@ e quando expira (exp). NAO carrega o cargo: o cargo e' lido do BANCO a
 cada requisicao (ver app/core/auth.py), entao uma promocao, rebaixamento
 ou desativacao vale NA HORA - nao precisa esperar o token expirar.
 """
+import ipaddress
+import logging
 from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 
@@ -146,14 +148,38 @@ def clear_state_cookie(response: Response) -> None:
 def ensure_same_origin(request: Request) -> None:
     """
     Defesa CSRF extra pra' requisicoes que MUDAM dado: se o navegador
-    mandou o header Origin, ele tem que ser exatamente o nosso front.
+    mandou o header Origin, ele tem que ser exatamente o nosso front (FRONTEND_ORIGIN ou uma das FRONTEND_ORIGINS).
     (Uma pagina maliciosa mandando um POST em nome da pessoa logada
     sempre carrega o Origin dela - e e' barrada aqui. Cliente que nao e'
     navegador nao manda Origin e nao e' vetor de CSRF.)
     """
     origin = request.headers.get("origin")
-    if origin is not None and origin != settings.frontend_origin:
+    if origin is not None and origin not in settings.allowed_origins:
         raise HTTPException(status_code=403, detail="Origin not allowed")
+
+
+def _peer_is_trusted(scope: dict) -> bool:
+    """
+    True se podemos confiar nos cabecalhos de IP desta conexao: o IP IMEDIATO (quem abriu o socket) precisa estar em
+    TRUSTED_PROXY_CIDRS. Lista vazia = comportamento antigo (confia em qualquer origem) com UM aviso no log.
+    """
+    global _AVISOU_SEM_CIDRS
+    redes = settings.trusted_proxy_networks
+    if not redes:
+        if not _AVISOU_SEM_CIDRS:
+            _AVISOU_SEM_CIDRS = True
+            logging.getLogger("ninwiki.security").warning(
+                "TRUST_PROXY_HEADERS=true sem TRUSTED_PROXY_CIDRS: qualquer um que alcance a API direto pode forjar o IP. Defina TRUSTED_PROXY_CIDRS.")
+        return True
+    client = scope.get("client")
+    try:
+        peer = ipaddress.ip_address(client[0]) if client else None
+    except ValueError:
+        peer = None
+    return peer is not None and any(peer in rede for rede in redes)
+
+
+_AVISOU_SEM_CIDRS = False
 
 
 def _resolve_client_ip(scope: dict) -> str | None:
@@ -162,7 +188,7 @@ def _resolve_client_ip(scope: dict) -> str | None:
     CF-Connecting-IP e, se nao houver, o ULTIMO valor de X-Forwarded-For - esse e' o que o proxy mais
     proximo anexou (o que vem antes pode ter sido forjado pelo cliente). Sem a flag, usa so' o IP da conexao.
     """
-    if settings.trust_proxy_headers:
+    if settings.trust_proxy_headers and _peer_is_trusted(scope):
         headers = dict(scope.get("headers", []))
         cf = headers.get(b"cf-connecting-ip")
         if cf:

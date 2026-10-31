@@ -1,9 +1,8 @@
-# NinWiki.Bot
+# Nin Codex Bot (pasta `NinWiki.Bot`)
 
-Bot do Discord (discord.py, a mesma stack do Guima.Bot) para **gerenciar a equipe do painel pelo Discord**.
-Ele não decide nada sozinho: em cada comando só repassa à API **quem digitou** e o que pediu. A API aplica
-as **mesmas regras do painel** (só o S.Adm gerencia a equipe, dono não é rebaixado, ninguém se altera...) e o bot
-mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
+Bot do Discord (discord.py, a mesma stack do Guima.Bot) do **Nin Codex**: consulta pública do wiki (`/search`, `/item`, `/mob`...), log, erros, painel "Nin Codex status" e backup no Discord.
+O avatar do bot é `NinWiki.Bot/assets/avatar.png` (gerado por `py scripts/gerar_logo.py` na pasta `NinWiki.Api`; é preciso enviá-lo no Discord Developer Portal).
+Ele não decide nada sozinho: em cada comando só repassa à API **quem digitou** e o que pediu, e a API aplica as regras do painel. Os comandos de equipe (`/team`) foram removidos: a equipe é gerenciada só pelo painel. Tudo que o bot faz aparece no log geral com origem **Bot**.
 
 ## Comandos (só funcionam em servidor, respostas só você vê)
 | Comando | Faz |
@@ -25,7 +24,7 @@ mostra a resposta. Tudo que o bot faz aparece no log geral com origem **Bot**.
 
 **Avisos automáticos de queda:** com `ERROR_CHANNEL_ID` (ou `LOG_CHANNEL_ID`) e `SITE_URL` preenchidos, o bot confere API, banco e site a cada `HEALTH_POLL_SECONDS`
 e avisa no canal **🔴 ... is DOWN** quando algum cai e **🟢 ... is back online** quando volta (com o tempo fora do ar). Sempre que o bot liga, ele também posta
-**🤖 NinWiki monitor started** com o estado atual de cada um. Sem `SITE_URL` o site não é monitorado.
+**🤖 Nin Codex monitor started** com o estado atual de cada um. Sem `SITE_URL` o site não é monitorado.
 
 Quem pode o quê é decidido pela API (`NinWiki.Api/app/core/permissions.py`): só o S.Adm gerencia a equipe (Adm e Creator recebem uma recusa). Quem não é da equipe recebe uma recusa.
 

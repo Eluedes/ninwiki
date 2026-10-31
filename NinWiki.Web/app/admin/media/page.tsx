@@ -84,7 +84,7 @@ export default function MediaPage() {
   }, [t.loadError]);
 
   useEffect(() => {
-    document.title = `${t.title} - Admin · Nin Online Wiki`;
+    document.title = `${t.title} - Admin · Nin Codex`;
     const timer = setTimeout(() => { load(q, page, category); }, q ? 250 : 0);
     return () => clearTimeout(timer);
   }, [q, page, category, load, t.title]);
