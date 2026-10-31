@@ -71,10 +71,10 @@ class SummonRead(CamelModel):
 class ProfessionWrite(CamelModel):
     """Corpo de criar/editar uma proficiencia. Os `details` (receitas, recursos, ferramentas) NAO entram aqui: vem do importador e nao sao mexidos."""
     id: str = Field(min_length=1, max_length=50, pattern=SLUG_PATTERN, description="Slug unico, ex: cooking")
-    name: str = Field(min_length=1, max_length=100)
+    name: str = Field(default="", max_length=100)   # vazio permitido se o _pt vier escrito: o EN e' gerado (translation.fill_missing_translations); vazio nos dois = 422
     name_pt: str | None = Field(default=None, max_length=100)     # vazio = a DeepL traduz
     group: ProfessionGroup
-    description: str = Field(min_length=1)
+    description: str = ""
     description_pt: str | None = None
     icon: str = Field(min_length=1, max_length=20)                # emoji
 
@@ -99,7 +99,7 @@ class GuideArticleWrite(CamelModel):
     id: str = Field(min_length=1, max_length=80, pattern=SLUG_PATTERN, description="Slug unico, ex: crime-system")
     section: str
     position: int = Field(default=0, ge=0, le=999)
-    title: str = Field(min_length=1, max_length=150)
+    title: str = Field(default="", max_length=150)   # vazio permitido se o _pt vier escrito: o EN e' gerado (translation.fill_missing_translations); vazio nos dois = 422
     title_pt: str | None = Field(default=None, max_length=150)    # vazio = a DeepL traduz
     summary: str = Field(default="", max_length=300)
     summary_pt: str | None = Field(default=None, max_length=300)

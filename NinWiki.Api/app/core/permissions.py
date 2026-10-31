@@ -96,6 +96,9 @@ class Permission(str, Enum):
     # --- Reports dos visitantes (conteudo desatualizado / erro de traducao): ler, resolver, descartar e apagar ---
     REPORTS_MANAGE = "reports.manage"
 
+    # --- Inscricoes de voluntarios (formulario /volunteer): ver, avaliar, anotar e apagar (dados pessoais: o Creator nao tem) ---
+    VOLUNTEERS_MANAGE = "volunteers.manage"
+
     # --- Erros do wiki (traceback, IPs - so' o S.Adm) ---
     ERRORS_VIEW = "errors.view"
 
@@ -151,6 +154,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.ANNOUNCEMENT_MANAGE,
     Permission.COMMENTS_MODERATE,
     Permission.REPORTS_MANAGE,
+    Permission.VOLUNTEERS_MANAGE,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,
 })

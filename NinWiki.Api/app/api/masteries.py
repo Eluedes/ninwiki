@@ -30,7 +30,7 @@ from app.core.media_refs import resolve_images
 from app.core.database import get_db
 from app.models.users import User
 from app.core.payloads import apply_scalar_fields
-from app.core.translation import fill_missing_translations, translate_field
+from app.core.translation import fill_missing_translations, retranslate_fields, translate_field
 from app.models.enums import ContentStatus
 from app.models.masteries import Attribute, Jutsu, Mastery, MasteryPath
 from app.schemas.content import CamelModel
@@ -174,7 +174,7 @@ async def update_mastery(mastery_id: str, payload: MasteryWrite, staff: User = D
                 description=path_payload.description, requirement=path_payload.requirement,
             ))
 
-    await fill_missing_translations(mastery, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")])
+    await fill_missing_translations(mastery, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")], required=("name",))   # bidirecional: so' o lado vazio
 
     await db.commit()
     await log_action(db, actor=staff, action="update", entity_type="mastery", entity_id=mastery_id,
@@ -197,10 +197,7 @@ async def retranslate_mastery(mastery_id: str, staff: User = Depends(require_per
     mastery = result.scalar_one_or_none()
     if mastery is None:
         raise HTTPException(status_code=404, detail="Mastery not found")
-    for field_en, field_pt in [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")]:
-        translated = await translate_field(getattr(mastery, field_en))
-        if translated:
-            setattr(mastery, field_pt, translated)
+    await retranslate_fields(mastery, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")])   # EN escrito: refaz o PT; EN vazio e PT escrito: gera o EN
     await db.commit()
     await db.refresh(mastery, attribute_names=["paths", "attributes"])
     return mastery
@@ -269,7 +266,7 @@ async def create_jutsu(payload: JutsuWrite, staff: User = Depends(require_permis
 
     jutsu = Jutsu(**payload.model_dump())
     db.add(jutsu)
-    await fill_missing_translations(jutsu, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")])
+    await fill_missing_translations(jutsu, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")], required=("name",))
     jutsu.name_by_level_pt = await _translate_level_names(jutsu.name_by_level, [], [], payload.name_by_level_pt)
     await db.commit()
     await log_action(db, actor=staff, action="create", entity_type="jutsu", entity_id=jutsu.id, diff={"name": jutsu.name})
@@ -292,7 +289,7 @@ async def update_jutsu(jutsu_id: str, payload: JutsuWrite, staff: User = Depends
     old_level_names, old_level_names_pt = list(jutsu.name_by_level or []), list(jutsu.name_by_level_pt or [])
     apply_scalar_fields(jutsu, payload)
 
-    await fill_missing_translations(jutsu, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")])
+    await fill_missing_translations(jutsu, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")], required=("name",))
     jutsu.name_by_level_pt = await _translate_level_names(jutsu.name_by_level, old_level_names, old_level_names_pt, payload.name_by_level_pt)
 
     await db.commit()
@@ -307,10 +304,7 @@ async def update_jutsu(jutsu_id: str, payload: JutsuWrite, staff: User = Depends
 async def retranslate_jutsu(jutsu_id: str, staff: User = Depends(require_permission(Permission.LORE_EDIT, Permission.TRANSLATION_RETRANSLATE)), db: AsyncSession = Depends(get_db)):
     """Forca traducao nova nos campos de texto - mesma ideia de POST /content-items/{id}/retranslate."""
     jutsu = await _get_jutsu_or_404(jutsu_id, db)
-    for field_en, field_pt in [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")]:
-        translated = await translate_field(getattr(jutsu, field_en))
-        if translated:
-            setattr(jutsu, field_pt, translated)
+    await retranslate_fields(jutsu, [("name", "name_pt"), ("description", "description_pt"), ("long_description", "long_description_pt")])   # EN escrito: refaz o PT; EN vazio e PT escrito: gera o EN
     translated_names = await _translate_level_names(jutsu.name_by_level, [], [], [], force=True)
     if translated_names:   # sem chave/falha da DeepL, a traducao que ja' existe e' preservada
         jutsu.name_by_level_pt = translated_names

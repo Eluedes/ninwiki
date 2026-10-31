@@ -46,7 +46,7 @@ async def _translate_village(village: Village, force: bool = False) -> None:
     fn = retranslate_fields if force else fill_missing_translations
     await fn(village, VILLAGE_TRANSLATABLE)
     for clan in village.clans:
-        await fn(clan, CLAN_TRANSLATABLE)
+        await fn(clan, CLAN_TRANSLATABLE, required=("name",))
 
 
 _WITH_RELATIONS = (selectinload(Village.clans), selectinload(Village.organizations))
@@ -229,7 +229,7 @@ async def create_organization(
     org = Organization(id=payload.id, name=payload.name, description=payload.description,
                        name_pt=payload.name_pt, description_pt=payload.description_pt)
     db.add(org)
-    await fill_missing_translations(org, ORG_TRANSLATABLE)  # DeepL EN -> PT (so' o que veio vazio)
+    await fill_missing_translations(org, ORG_TRANSLATABLE, required=("name",))  # DeepL EN -> PT (so' o que veio vazio)
     await db.flush()
     await _set_org_villages(db, org.id, payload.village_ids)
     await log_action(db, action="create", entity_type="organization", entity_id=org.id,
@@ -256,7 +256,7 @@ async def update_organization(
     org.description = payload.description
     org.name_pt = payload.name_pt
     org.description_pt = payload.description_pt
-    await fill_missing_translations(org, ORG_TRANSLATABLE)  # DeepL EN -> PT (so' o que ficou vazio)
+    await fill_missing_translations(org, ORG_TRANSLATABLE, required=("name",))  # DeepL EN -> PT (so' o que ficou vazio)
     await _set_org_villages(db, org.id, payload.village_ids)
     await log_action(db, action="update", entity_type="organization", entity_id=org.id,
                      diff={"before": before, "after": {"name": org.name}, "villages": payload.village_ids}, actor=staff)
@@ -274,7 +274,7 @@ async def retranslate_organization(
     org = await db.get(Organization, org_id)
     if org is None:
         raise HTTPException(status_code=404, detail="Organization not found")
-    await retranslate_fields(org, ORG_TRANSLATABLE)
+    await retranslate_fields(org, ORG_TRANSLATABLE, required=("name",))
     await db.commit()
     return await _org_read(db, org)
 

@@ -14,6 +14,27 @@ import type { Locale } from './types';
 // tem que existir OBRIGATORIAMENTE nos dois idiomas abaixo (pt e en).
 // O TypeScript acusa erro de compilacao se faltar uma chave em algum
 // dos dois - e' a garantia de que nao existe texto traduzido so' num idioma.
+/** Textos do formulario publico de voluntarios (/volunteer). */
+export interface VolunteerDict {
+  title: string; subtitle: string; intro: string; home: string;
+  sectionAbout: string; sectionHelp: string; sectionMotivation: string;
+  name: string; namePh: string; discord: string; discordPh: string; discordHint: string; gameNick: string; gameNickPh: string;
+  languages: string; languagesPh: string; areas: string; areasHint: string; areaNames: Record<string, string>;
+  availability: string; availabilityPh: string; experience: string; experiencePh: string; motivation: string; motivationPh: string;
+  email: string; emailHint: string; consent: string;
+  privacyTitle: string; privacyPurpose: string; privacyWho: string; privacyDelete: string; privacyNoIp: string;
+  send: string; sending: string; successTitle: string; successText: string; sendAnother: string; fixErrors: string; sendError: string;
+  errors: Record<string, string>;
+}
+
+/** Textos da tela /admin/volunteers (avaliacao das inscricoes). */
+export interface VolunteersPageDict {
+  title: string; subtitle: string; refresh: string; all: string; statuses: Record<string, string>; searchPh: string; empty: string;
+  loadError: string; actionError: string; newCount: string; submittedOn: string; reviewedBy: string; discord: string; gameNick: string;
+  languages: string; areas: string; availability: string; experience: string; motivation: string; email: string; notes: string; notesPh: string;
+  saveNotes: string; saved: string; setStatus: string; delete: string; confirmDelete: string; showing: string; prev: string; next: string; details: string; close: string;
+}
+
 /** Textos das novidades do blog: editor, pagina do post, leitores (curtir/comentar) e moderacao. */
 export interface BlogxDict {
   editor: {
@@ -85,9 +106,10 @@ export interface Dictionary {
   };
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
+  volunteer: VolunteerDict;
   maintenance: { title: string; text: string; back: string; siteTitle: string; siteText: string; staffLogin: string; staffChecking: string; staffHint: string; badge: string };
   jutsuInfo: JutsuInfoDict;
-  blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string };
+  blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string; official: string };
   report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
   catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
   detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; zones: Record<string, string>; soldAt: string; forQty: string; free: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string; rarities: Record<string, string> };
@@ -171,10 +193,11 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; maintenance: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string; panelTitle: string; versionTitle: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; volunteers: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; maintenance: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string; panelTitle: string; versionTitle: string };
     gameNames: { title: string; subtitle: string; chooseFiles: string; invalidFile: string; find: string; loadError: string; summary: string; truncated: string; search: string; hideJutsu: string; selectShown: string; clear: string; empty: string; moreHidden: string; createDrafts: string; confirm: string; created: string; note: string; categories: Record<string, string>; hints: Record<string, string> };
     translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
+    volunteersPage: VolunteersPageDict;
     reportsPage: { title: string; subtitle: string; open: string; resolved: string; dismissed: string; all: string; allKinds: string; kinds: Record<string, string>; targets: Record<string, string>; empty: string; loadError: string; actionError: string; resolve: string; dismiss: string; reopen: string; delete: string; confirmDelete: string; refresh: string; reportedOn: string; handledBy: string; language: string };
     errorsPage: {
       title: string; subtitle: string; open: string; resolved: string; all: string; allSources: string; empty: string; loadError: string; actionError: string;
@@ -393,6 +416,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       loadError: 'Não foi possível carregar os posts agora.',
       notFound: 'Post não encontrado.',
       back: 'Voltar para o Blog',
+      official: 'Post oficial da Hitspark',
       by: 'por',
       updated: 'Atualizado em',
     },
@@ -402,6 +426,25 @@ export const dictionaries: Record<Locale, Dictionary> = {
       messageLabel: 'Descreva o problema', placeholder: 'Ex.: A chance de drop mudou para 5% na última atualização.',
       send: 'Enviar report', sending: 'Enviando…', cancel: 'Cancelar', thanks: 'Obrigado! Seu report foi enviado para a equipe.', close: 'Fechar',
       tooShort: 'Escreva pelo menos 10 caracteres.', error: 'Não foi possível enviar o report. Tente de novo daqui a pouco.',
+    },
+    volunteer: {
+      title: 'Seja voluntário', subtitle: 'Ajude a manter o Nin Codex completo e atualizado.',
+      intro: 'O Nin Codex é feito por fãs, de graça. Se você quer ajudar (traduzir, editar, coletar dados...), conte um pouco sobre você. A equipe lê todas as inscrições e responde pelo Discord.',
+      home: 'Início', sectionAbout: 'Sobre você', sectionHelp: 'Como você quer ajudar', sectionMotivation: 'Experiência e motivação',
+      name: 'Nome ou apelido', namePh: 'Como podemos te chamar?', discord: 'Usuário do Discord', discordPh: 'ex.: usuario123', discordHint: 'É por aqui que a equipe vai te chamar.',
+      gameNick: 'Nick no Nin Online', gameNickPh: 'Seu personagem principal', languages: 'Idiomas que você fala', languagesPh: 'ex.: Português, Inglês',
+      areas: 'Áreas de interesse', areasHint: 'Marque pelo menos uma.',
+      areaNames: { translation: 'Tradução', 'wiki-editing': 'Edição do wiki', 'data-collection': 'Coleta de dados e prints', mapping: 'Mapas', 'bot-dev': 'Bot / programação', 'art-graphics': 'Arte e gráficos', moderation: 'Moderação', other: 'Outro' },
+      availability: 'Disponibilidade', availabilityPh: 'ex.: umas 5 horas por semana, à noite', experience: 'Experiência', experiencePh: 'Já ajudou em wikis, projetos ou comunidades? Conte.',
+      motivation: 'Por que você quer ajudar?', motivationPh: 'Escreva com suas palavras.',
+      email: 'E-mail (opcional)', emailHint: 'Só se você preferir ser contatado por e-mail.',
+      consent: 'Concordo que a equipe do Nin Codex guarde estes dados para avaliar minha inscrição.',
+      privacyTitle: 'Privacidade', privacyPurpose: 'Para que usamos: apenas para avaliar sua inscrição e falar com você.',
+      privacyWho: 'Quem vê: somente a equipe do Nin Codex. Nada é publicado.',
+      privacyDelete: 'Para apagar seus dados, é só pedir pela equipe no Discord do projeto.', privacyNoIp: 'Não guardamos o seu IP.',
+      send: 'Enviar inscrição', sending: 'Enviando…', successTitle: 'Inscrição enviada!', successText: 'Obrigado! A equipe vai avaliar e entrar em contato pelo Discord.',
+      sendAnother: 'Enviar outra', fixErrors: 'Corrija os campos marcados e tente de novo.', sendError: 'Não foi possível enviar agora. Tente de novo daqui a pouco.',
+      errors: { required: 'Campo obrigatório.', tooShort: 'Escreva um pouco mais.', tooLong: 'Texto longo demais.', pickArea: 'Escolha pelo menos uma área.', invalidEmail: 'E-mail inválido.', consentRequired: 'Você precisa concordar para enviar.' },
     },
     catalog: {
       level: 'Nível',
@@ -727,6 +770,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         permissions: 'Permissões',
         errors: 'Erros',
         reports: 'Reports',
+        volunteers: 'Voluntários',
         translations: 'Traduções oficiais',
         villages: 'Vilas',
         organizations: 'Organizações',
@@ -772,6 +816,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
         resolve: 'Resolver', dismiss: 'Descartar', reopen: 'Reabrir', delete: 'Apagar', confirmDelete: 'Apagar este report?',
         refresh: 'Atualizar', reportedOn: 'Enviado em', handledBy: 'Tratado por', language: 'Idioma do visitante',
       },
+      volunteersPage: {
+        title: 'Voluntários', subtitle: 'Inscrições enviadas pelo formulário /volunteer. Só a equipe vê.', refresh: 'Atualizar', all: 'Todos',
+        statuses: { new: 'Nova', reviewing: 'Em avaliação', approved: 'Aprovada', rejected: 'Recusada', contacted: 'Contatada' },
+        searchPh: 'Buscar por nome, Discord ou nick', empty: 'Nenhuma inscrição por aqui.', loadError: 'Não foi possível carregar as inscrições.', actionError: 'Não foi possível concluir a ação.', newCount: 'novas', submittedOn: 'Enviada em', reviewedBy: 'Avaliada por',
+        discord: 'Discord', gameNick: 'Nick no jogo', languages: 'Idiomas', areas: 'Áreas', availability: 'Disponibilidade', experience: 'Experiência', motivation: 'Motivação', email: 'E-mail',
+        notes: 'Notas internas (só a equipe vê)', notesPh: 'Anotações sobre esta pessoa…', saveNotes: 'Salvar notas', saved: 'Salvo', setStatus: 'Status', delete: 'Apagar', confirmDelete: 'Apagar esta inscrição e todos os dados dela? Não dá para desfazer.',
+        showing: 'Mostrando', prev: 'Anterior', next: 'Próxima', details: 'Ver detalhes', close: 'Fechar',
+      },
       errorsPage: {
         title: 'Erros e problemas', subtitle: 'Tudo que quebrou no wiki (API, site, tradução, ataques). O bot também avisa no Discord.',
         open: 'Abertos', resolved: 'Resolvidos', all: 'Todos', allSources: 'Todas as origens', empty: 'Nenhum problema por aqui. 🎉',
@@ -807,7 +859,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', imagecats: 'Categorias do banco de imagens (desmarque para TRANCAR a categoria para este cargo)', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log', analytics: 'Acessos' },
         names: {
           'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
-          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes',
+          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes', 'volunteers.manage': 'Ver, avaliar e apagar as inscrições de voluntários',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
           'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.categorize': 'Mudar a categoria das imagens do banco de imagens', 'site.maintenance': 'Ligar/desligar o modo manutenção do site', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)', 'media.reset_ids': 'Renumerar os IDs do banco de imagens', 'media.closed': 'Ver a categoria fechada do banco de imagens', 'media.cat.weapon': 'Ver imagens: Armas', 'media.cat.gear': 'Ver imagens: Equipamentos', 'media.cat.consumable': 'Ver imagens: Consumíveis', 'media.cat.currency': 'Ver imagens: Moedas', 'media.cat.material': 'Ver imagens: Materiais', 'media.cat.ring': 'Ver imagens: Anéis', 'media.cat.scroll': 'Ver imagens: Pergaminhos', 'media.cat.npc': 'Ver imagens: NPCs', 'media.cat.monster': 'Ver imagens: Monstros', 'media.cat.furniture': 'Ver imagens: Móveis', 'media.cat.hair_beard': 'Ver imagens: Cabelo/Barba', 'media.cat.skin': 'Ver imagens: Skins', 'media.cat.tools': 'Ver imagens: Ferramentas', 'media.cat.other': 'Ver imagens: Outros', 'media.cat.none': 'Ver imagens: Sem categoria',
@@ -1192,6 +1244,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       loadError: 'Could not load posts right now.',
       notFound: 'Post not found.',
       back: 'Back to the Blog',
+      official: 'Official post by Hitspark',
       by: 'by',
       updated: 'Updated on',
     },
@@ -1201,6 +1254,25 @@ export const dictionaries: Record<Locale, Dictionary> = {
       messageLabel: 'Describe the problem', placeholder: 'e.g. The drop chance changed to 5% in the latest update.',
       send: 'Send report', sending: 'Sending…', cancel: 'Cancel', thanks: 'Thank you! Your report was sent to the team.', close: 'Close',
       tooShort: 'Please write at least 10 characters.', error: 'Could not send the report. Try again in a moment.',
+    },
+    volunteer: {
+      title: 'Become a volunteer', subtitle: 'Help keep Nin Codex complete and up to date.',
+      intro: 'Nin Codex is a free, fan-made project. If you want to help (translating, editing, collecting data...), tell us a bit about yourself. The team reads every application and replies on Discord.',
+      home: 'Home', sectionAbout: 'About you', sectionHelp: 'How you want to help', sectionMotivation: 'Experience and motivation',
+      name: 'Name or nickname', namePh: 'What should we call you?', discord: 'Discord username', discordPh: 'e.g. user123', discordHint: 'This is how the team will reach you.',
+      gameNick: 'Nin Online nickname', gameNickPh: 'Your main character', languages: 'Languages you speak', languagesPh: 'e.g. Portuguese, English',
+      areas: 'Areas of interest', areasHint: 'Pick at least one.',
+      areaNames: { translation: 'Translation', 'wiki-editing': 'Wiki editing', 'data-collection': 'Data collection and screenshots', mapping: 'Mapping', 'bot-dev': 'Bot / programming', 'art-graphics': 'Art and graphics', moderation: 'Moderation', other: 'Other' },
+      availability: 'Availability', availabilityPh: 'e.g. about 5 hours a week, evenings', experience: 'Experience', experiencePh: 'Have you helped on wikis, projects or communities? Tell us.',
+      motivation: 'Why do you want to help?', motivationPh: 'Write in your own words.',
+      email: 'E-mail (optional)', emailHint: 'Only if you prefer to be contacted by e-mail.',
+      consent: 'I agree that the Nin Codex team stores this data to review my application.',
+      privacyTitle: 'Privacy', privacyPurpose: 'What we use it for: only to review your application and contact you.',
+      privacyWho: 'Who sees it: only the Nin Codex team. Nothing is published.',
+      privacyDelete: 'To delete your data, just ask the team on the project Discord.', privacyNoIp: 'We do not store your IP address.',
+      send: 'Send application', sending: 'Sending…', successTitle: 'Application sent!', successText: 'Thank you! The team will review it and contact you on Discord.',
+      sendAnother: 'Send another', fixErrors: 'Fix the highlighted fields and try again.', sendError: 'Could not send right now. Please try again in a moment.',
+      errors: { required: 'Required field.', tooShort: 'Please write a little more.', tooLong: 'Text is too long.', pickArea: 'Pick at least one area.', invalidEmail: 'Invalid e-mail.', consentRequired: 'You must agree to submit.' },
     },
     catalog: {
       level: 'Level',
@@ -1297,7 +1369,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         { cmd: '/search', text: 'Find anything on the wiki' },
         { cmd: '/drop', text: 'Who drops an item, and how likely' },
         { cmd: '/compare', text: 'Two items side by side' },
-        { cmd: '/map', text: 'Zone, mobs and exits of an area' },
+        { cmd: '/patchnotes', text: 'Latest news and patch notes' },
       ],
       stepsTitle: 'Get started',
       steps: [
@@ -1526,6 +1598,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         permissions: 'Permissions',
         errors: 'Errors',
         reports: 'Reports',
+        volunteers: 'Volunteers',
         translations: 'Official translations',
         villages: 'Villages',
         organizations: 'Organizations',
@@ -1571,6 +1644,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
         resolve: 'Resolve', dismiss: 'Dismiss', reopen: 'Reopen', delete: 'Delete', confirmDelete: 'Delete this report?',
         refresh: 'Refresh', reportedOn: 'Reported on', handledBy: 'Handled by', language: 'Visitor language',
       },
+      volunteersPage: {
+        title: 'Volunteers', subtitle: 'Applications sent through the /volunteer form. Staff only.', refresh: 'Refresh', all: 'All',
+        statuses: { new: 'New', reviewing: 'Reviewing', approved: 'Approved', rejected: 'Rejected', contacted: 'Contacted' },
+        searchPh: 'Search by name, Discord or nickname', empty: 'No applications here.', loadError: 'Could not load the applications.', actionError: 'Could not complete the action.', newCount: 'new', submittedOn: 'Sent on', reviewedBy: 'Reviewed by',
+        discord: 'Discord', gameNick: 'Game nickname', languages: 'Languages', areas: 'Areas', availability: 'Availability', experience: 'Experience', motivation: 'Motivation', email: 'E-mail',
+        notes: 'Internal notes (staff only)', notesPh: 'Notes about this person…', saveNotes: 'Save notes', saved: 'Saved', setStatus: 'Status', delete: 'Delete', confirmDelete: 'Delete this application and all its data? This cannot be undone.',
+        showing: 'Showing', prev: 'Previous', next: 'Next', details: 'View details', close: 'Close',
+      },
       errorsPage: {
         title: 'Errors and problems', subtitle: 'Everything that broke in the wiki (API, website, translation, attacks). The bot also alerts on Discord.',
         open: 'Open', resolved: 'Resolved', all: 'All', allSources: 'All sources', empty: 'No problems here. 🎉',
@@ -1606,7 +1687,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', imagecats: 'Image library categories (untick to LOCK a category for this role)', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log', analytics: 'Traffic' },
         names: {
           'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
-          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports',
+          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports', 'volunteers.manage': 'View, review and delete volunteer applications',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
           'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.categorize': 'Change the category of images in the image library', 'site.maintenance': 'Turn the site maintenance mode on/off', 'media.upload': 'Upload images to the image library (bulk)', 'media.reset_ids': 'Renumber the image library IDs', 'media.closed': 'See the closed category of the image library', 'media.cat.weapon': 'See images: Weapons', 'media.cat.gear': 'See images: Gear', 'media.cat.consumable': 'See images: Consumables', 'media.cat.currency': 'See images: Currency', 'media.cat.material': 'See images: Materials', 'media.cat.ring': 'See images: Rings', 'media.cat.scroll': 'See images: Scrolls', 'media.cat.npc': 'See images: NPCs', 'media.cat.monster': 'See images: Monsters', 'media.cat.furniture': 'See images: Furniture', 'media.cat.hair_beard': 'See images: Hair/Beard', 'media.cat.skin': 'See images: Skins', 'media.cat.tools': 'See images: Tools', 'media.cat.other': 'See images: Other', 'media.cat.none': 'See images: Uncategorized',

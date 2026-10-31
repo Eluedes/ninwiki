@@ -74,7 +74,7 @@ class VillageRead(CamelModel):
 class ClanWrite(CamelModel):
     """Cla' dentro do corpo de criar/editar vila."""
     id: str = Field(min_length=1, max_length=50, pattern=SLUG_PATTERN, description="Slug unico, ex: yagyu")
-    name: str = Field(min_length=1, max_length=100)
+    name: str = Field(default="", max_length=100)   # vazio permitido se o _pt vier escrito (o EN e' gerado); vazio nos dois = 422
     description: str = ""
     image: str | None = Field(default=None, max_length=500)
     name_pt: str | None = Field(default=None, max_length=100)   # vazio = a DeepL traduz
@@ -124,7 +124,7 @@ class VillageWrite(CamelModel):
 class OrganizationWrite(CamelModel):
     """Corpo de criar/editar uma organizacao."""
     id: str = Field(min_length=1, max_length=50, pattern=SLUG_PATTERN, description="Slug unico, ex: anbu")
-    name: str = Field(min_length=1, max_length=100)
+    name: str = Field(default="", max_length=100)   # vazio permitido se o _pt vier escrito (o EN e' gerado); vazio nos dois = 422
     description: str = ""
     name_pt: str | None = Field(default=None, max_length=100)   # vazio = a DeepL traduz
     description_pt: str | None = None

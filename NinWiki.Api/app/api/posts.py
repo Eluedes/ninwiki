@@ -69,6 +69,7 @@ def _summary(post: Post, counts: tuple[int, int] = (0, 0)) -> dict:
         "author_name": post.author_label or (post.author.username if post.author else None),   # post importado da Steam mostra o nome da desenvolvedora
         "tags": list(post.tags), "published_at": post.published_at,
         "is_scheduled": post.status == ContentStatus.PUBLISHED and not _is_live(post),
+        "is_steam": bool(post.source_id),   # importado da Steam (post oficial da desenvolvedora): o site mostra o selo da logo dela
         "like_count": counts[0], "comment_count": counts[1],
         "created_at": post.created_at, "updated_at": post.updated_at,
     }
@@ -194,7 +195,7 @@ async def create_post(
     post.tags = await _resolve_tags(db, payload.tags)
     _stamp_publication(post, payload.published_at)
     db.add(post)
-    await fill_missing_translations(post, POST_TRANSLATABLE)  # DeepL EN -> PT (so' o que veio vazio)
+    await fill_missing_translations(post, POST_TRANSLATABLE, required=("title",))  # DeepL EN -> PT (so' o que veio vazio)
     await db.flush()
     await log_action(db, action="create", entity_type="post", entity_id=str(post.id),
                      diff={"name": post.title, "status": post.status.value}, actor=staff)
@@ -219,7 +220,7 @@ async def update_post(
     apply_scalar_fields(post, payload, exclude={"tags", "published_at"})
     post.tags = await _resolve_tags(db, payload.tags)
     _stamp_publication(post, payload.published_at)
-    await fill_missing_translations(post, POST_TRANSLATABLE)  # DeepL EN -> PT (so' o que ficou vazio)
+    await fill_missing_translations(post, POST_TRANSLATABLE, required=("title",))  # DeepL EN -> PT (so' o que ficou vazio)
     await log_action(db, action="update", entity_type="post", entity_id=str(post.id),
                      diff={"before": before, "after": {"name": post.title, "status": post.status.value}}, actor=staff)
     await db.commit()
@@ -236,7 +237,7 @@ async def retranslate_post(
     """Forca a traducao nova (EN -> PT) de titulo, resumo e texto - para quando o ingles mudou e o portugues ficou velho."""
     post = await _load(db, post_id)
     _guard_edit(staff, post, post.status)
-    await retranslate_fields(post, POST_TRANSLATABLE)
+    await retranslate_fields(post, POST_TRANSLATABLE, required=("title",))
     await db.commit()
     db.expire_all()
     return await _read_full(db, await _load(db, post_id))

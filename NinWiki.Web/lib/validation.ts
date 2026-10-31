@@ -9,6 +9,14 @@
 
 import { z } from 'zod';
 
+// Nome/titulo: basta escrever em UM dos idiomas. Se so' o portugues vier preenchido, a API gera o ingles ao salvar (dicionario do jogo/DeepL).
+const EN_OR_PT = 'Fill in this field in English or in Portuguese. / Preencha este campo em inglês ou em português.';
+type CampoAdd = { addIssue: (i: { code: 'custom'; path: string[]; message: string }) => void };
+/** Exige pelo menos um dos dois textos (EN ou PT); o erro aparece no campo `path` (o campo em ingles). */
+function exigeUmDosDois(ctx: CampoAdd, en: string | null | undefined, pt: string | null | undefined, path: string): void {
+  if (!(en ?? '').trim() && !(pt ?? '').trim()) ctx.addIssue({ code: 'custom', path: [path], message: EN_OR_PT });
+}
+
 export const contentItemSchema = z.object({
   slug: z
     .string()
@@ -16,7 +24,7 @@ export const contentItemSchema = z.object({
     .max(150, 'The slug can have at most 150 characters.')
     .regex(/^[a-z0-9-]+$/, 'Use only lowercase letters, numbers and hyphens (e.g. fire-larva).'),
   category: z.enum(['mobs', 'items', 'guides', 'weapons', 'missions']),
-  name: z.string().min(1, 'The name is required.').max(200, 'The name can have at most 200 characters.'),
+  name: z.string().max(200, 'The name can have at most 200 characters.'),   // EN ou PT (ver superRefine)
   level: z.coerce.number().int('Level must be a whole number.').min(0, 'Level cannot be negative.'),
   levelUnknown: z.boolean(),
   icon: z.string().min(1, 'Pick an icon (emoji).').max(20),
@@ -52,8 +60,9 @@ export const contentItemSchema = z.object({
   mobType: z.enum(['monster', 'boss', 'npc', 'mount']).nullable().optional(),
   itemType: z.enum(['general', 'ring', 'consumable', 'material', 'currency', 'cast', 'authority', 'accessory', 'shirt', 'vest', 'pant', 'hat', 'mask', 'shoe', 'pack']).nullable().optional(),
 }).superRefine((value, ctx) => {
-  // Descricao e' obrigatoria em todas as categorias, exceto mobs.
-  if (value.category !== 'mobs' && !value.description.trim()) {
+  exigeUmDosDois(ctx, value.name, value.namePt, 'name');
+  // Descricao e' obrigatoria em todas as categorias, exceto mobs (em ingles OU em portugues).
+  if (value.category !== 'mobs' && !value.description.trim() && !(value.descriptionPt ?? '').trim()) {
     ctx.addIssue({ code: 'custom', path: ['description'], message: 'The description is required.' });
   }
 });
@@ -66,7 +75,7 @@ export const jutsuSchema = z.object({
     .min(1, 'The id/slug is required.')
     .max(80, 'The id can have at most 80 characters.')
     .regex(/^[a-z0-9-]+$/, 'Use only lowercase letters, numbers and hyphens (e.g. katon-goukakyuu).'),
-  name: z.string().min(1, 'The name is required.'),
+  name: z.string(),   // EN ou PT (ver superRefine)
   namePt: z.string().nullable().optional(),
   masteryId: z.string().min(1, 'Escolha uma mastery.'),
   pathId: z.string().nullable().optional(),
@@ -100,11 +109,12 @@ export const jutsuSchema = z.object({
   allowedWeapons: z.string().max(100),
   status: z.enum(['draft', 'published']),
 }).superRefine((value, ctx) => {
+  exigeUmDosDois(ctx, value.name, value.namePt, 'name');
   if (value.status === 'draft') return;   // rascunho pode ser salvo incompleto (os jutsus criados em massa vem so' com o nome)
-  if (!value.longDescription.trim()) {
+  if (!value.longDescription.trim() && !(value.longDescriptionPt ?? '').trim()) {
     ctx.addIssue({ code: 'custom', path: ['longDescription'], message: 'The full description is required.' });
   }
-  if (!value.isNpc && !value.description.trim()) {
+  if (!value.isNpc && !value.description.trim() && !(value.descriptionPt ?? '').trim()) {
     ctx.addIssue({ code: 'custom', path: ['description'], message: 'The short description is required.' });
   }
 });
@@ -112,10 +122,10 @@ export const jutsuSchema = z.object({
 export type JutsuFormValues = z.infer<typeof jutsuSchema>;
 
 export const masterySchema = z.object({
-  name: z.string().min(1, 'The name is required.').max(100),
+  name: z.string().max(100),   // EN ou PT (ver superRefine)
   namePt: z.string().nullable().optional(),
-  description: z.string().min(1, 'The description is required.'),
-  longDescription: z.string().min(1, 'The full description is required.'),
+  description: z.string(),
+  longDescription: z.string(),
   descriptionPt: z.string().nullable().optional(),
   longDescriptionPt: z.string().nullable().optional(),
   icon: z.string().min(1, 'Pick an icon.').max(50),
@@ -126,6 +136,10 @@ export const masterySchema = z.object({
   // padrao de attributes/drops no editor de Conteudo: listas
   // dinamicas controladas com useState puro, combinadas na hora de
   // salvar (ver onValid), nao pelo React Hook Form.
+}).superRefine((value, ctx) => {
+  exigeUmDosDois(ctx, value.name, value.namePt, 'name');
+  exigeUmDosDois(ctx, value.description, value.descriptionPt, 'description');
+  exigeUmDosDois(ctx, value.longDescription, value.longDescriptionPt, 'longDescription');
 });
 
 export type MasteryFormValues = z.infer<typeof masterySchema>;
@@ -136,13 +150,13 @@ const slugMessage = 'Use only lowercase letters, numbers and hyphens (e.g. leaf-
 
 export const clanSchema = z.object({
   id: z.string().min(1, 'The clan id is required.').max(50).regex(slugRegex, slugMessage),
-  name: z.string().min(1, 'The clan name is required.').max(100),
+  name: z.string().max(100),   // EN ou PT (ver superRefine)
   // Traducao EN -> PT (vazio = a DeepL traduz ao salvar)
   namePt: z.string().max(100).nullable().optional(),
   descriptionPt: z.string().nullable().optional(),
   description: z.string(),
   image: z.string().max(500).nullable().optional(),
-});
+}).superRefine((value, ctx) => exigeUmDosDois(ctx, value.name, value.namePt, 'name'));
 
 export const villageSchema = z
   .object({
@@ -179,7 +193,7 @@ export const guideArticleSchema = z.object({
   id: z.string().min(1, 'The id/slug is required.').max(80).regex(slugRegex, slugMessage),
   section: z.enum(['new-player', 'combat', 'progression', 'interface', 'economy']),
   position: z.coerce.number().int().min(0, 'Minimum is 0.').max(999, 'Maximum is 999.'),
-  title: z.string().min(1, 'The title is required.').max(150),
+  title: z.string().max(150),   // EN ou PT (ver superRefine)
   titlePt: z.string().max(150).nullable().optional(),
   summary: z.string().max(300, 'Maximum of 300 characters.'),
   summaryPt: z.string().max(300, 'Maximum of 300 characters.').nullable().optional(),
@@ -187,19 +201,22 @@ export const guideArticleSchema = z.object({
   bodyPt: z.string().nullable().optional(),
   icon: z.string().min(1, 'Pick an icon.'),
   status: z.enum(['draft', 'published']),
-});
+}).superRefine((value, ctx) => exigeUmDosDois(ctx, value.title, value.titlePt, 'title'));
 
 export type GuideArticleFormValues = z.infer<typeof guideArticleSchema>;
 
 // Proficiencia (espelha ProfessionWrite em app/schemas/guide.py).
 export const professionSchema = z.object({
   id: z.string().min(1, 'The id/slug is required.').max(50).regex(slugRegex, slugMessage),
-  name: z.string().min(1, 'The name is required.').max(100),
+  name: z.string().max(100),   // EN ou PT (ver superRefine)
   namePt: z.string().max(100).nullable().optional(),
   group: z.enum(['gathering', 'crafting']),
-  description: z.string().min(1, 'The description is required.'),
+  description: z.string(),
   descriptionPt: z.string().nullable().optional(),
   icon: z.string().min(1, 'The emoji is required.').max(20),
+}).superRefine((value, ctx) => {
+  exigeUmDosDois(ctx, value.name, value.namePt, 'name');
+  exigeUmDosDois(ctx, value.description, value.descriptionPt, 'description');
 });
 
 export type ProfessionFormValues = z.infer<typeof professionSchema>;
@@ -207,7 +224,7 @@ export type ProfessionFormValues = z.infer<typeof professionSchema>;
 // ---- Blog (posts) - mesmas regras do backend (app/schemas/posts.py) ----
 
 export const postSchema = z.object({
-  title: z.string().min(1, 'The title is required.').max(200, 'Maximum of 200 characters.'),
+  title: z.string().max(200, 'Maximum of 200 characters.'),   // EN ou PT (ver superRefine)
   slug: z
     .string()
     .min(1, 'The slug is required.')
@@ -226,6 +243,26 @@ export const postSchema = z.object({
   metaTitle: z.string().max(70, 'Maximum of 70 characters.').nullable().optional(),
   metaDescription: z.string().max(200, 'Maximum of 200 characters.').nullable().optional(),
   publishedAt: z.string().nullable().optional(),
-});
+}).superRefine((value, ctx) => exigeUmDosDois(ctx, value.title, value.titlePt, 'title'));
 
 export type PostFormValues = z.infer<typeof postSchema>;
+
+// ---- Formulario publico de voluntarios (/volunteer). Espelha app/schemas/volunteers.py::VolunteerApply. ----
+// As mensagens sao CHAVES (required, tooShort...): a tela traduz com dict.volunteer.errors, entao aqui nao ha' texto de idioma.
+const vText = (min: number, max: number) => z.string().trim().min(1, 'required').min(min, 'tooShort').max(max, 'tooLong');
+
+export const volunteerSchema = z.object({
+  name: vText(2, 80),
+  discord: vText(2, 64),
+  gameNick: vText(1, 60),
+  languages: vText(2, 120),
+  areas: z.array(z.enum(['translation', 'wiki-editing', 'data-collection', 'mapping', 'bot-dev', 'art-graphics', 'moderation', 'other'])).min(1, 'pickArea'),
+  availability: vText(2, 200),
+  experience: vText(10, 1500),
+  motivation: vText(10, 1500),
+  contactEmail: z.string().trim().max(120, 'tooLong').refine((v) => v === '' || /^[^@\s]{1,64}@[^@\s]{1,60}\.[^@\s]{2,20}$/.test(v), 'invalidEmail'),
+  consent: z.boolean().refine((v) => v === true, 'consentRequired'),
+  website: z.string().max(200),   // isca anti-robo (nunca preenchida por pessoas)
+});
+
+export type VolunteerFormValues = z.infer<typeof volunteerSchema>;

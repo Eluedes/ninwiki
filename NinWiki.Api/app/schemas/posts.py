@@ -55,6 +55,7 @@ class PostSummary(CamelModel):
     tags: list[TagRead] = []
     published_at: datetime | None = None
     is_scheduled: bool = False      # publicado com data no FUTURO: ainda invisivel para o publico
+    is_steam: bool = False          # post importado da Steam (oficial da desenvolvedora): selo com a logo dela
     like_count: int = 0
     comment_count: int = 0
     created_at: datetime
@@ -73,7 +74,7 @@ class PostRead(PostSummary):
 class PostWrite(CamelModel):
     """Corpo de criar/editar um post."""
     slug: str = Field(min_length=1, max_length=150, pattern=SLUG_PATTERN)
-    title: str = Field(min_length=1, max_length=200)
+    title: str = Field(default="", max_length=200)   # vazio permitido se o _pt vier escrito: o EN e' gerado (translation.fill_missing_translations); vazio nos dois = 422
     excerpt: str = ""
     content: str = ""
     # Traducoes (vazio = a DeepL traduz do ingles ao salvar; pode corrigir a mao)

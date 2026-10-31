@@ -31,7 +31,7 @@ from app.core.text import escape_like
 from app.core.media_refs import resolve_images
 from app.core.database import get_db
 from app.models.users import User
-from app.core.translation import translate_field_source
+from app.core.translation import fill_pair, is_empty, require_english, translate_field_source
 from app.models.enums import ContentStatus, ItemType, MobType, Rarity
 from app.models.masteries import Jutsu
 from app.models.content import ContentItem, ContentItemAttribute, ContentItemAttack, ContentItemDrop, ContentVersion
@@ -412,7 +412,8 @@ async def _fill_missing_translations(item: ContentItem) -> bool:
     pra' quando a pessoa realmente QUISER forcar uma traducao nova por
     cima do que ja existe.
 
-    Devolve True se a DeepL (automatica) preencheu algum campo. Texto que veio do dicionario OFICIAL do jogo tambem e' gravado,
+    Bidirecional: se o EN esta' vazio e o PT escrito (dono escreveu so' em portugues), gera o EN (dicionario inverso, depois DeepL).
+    Devolve True se a DeepL (automatica) preencheu algum campo PT. Texto que veio do dicionario OFICIAL do jogo tambem e' gravado,
     mas NAO conta aqui: e' oficial e nao ganha o selo de 'traducao automatica'.
 
     Sem efeito nenhum se DEEPL_API_KEY nao estiver configurada -
@@ -421,12 +422,10 @@ async def _fill_missing_translations(item: ContentItem) -> bool:
     """
     filled = False
     for field_en, field_pt in _TRANSLATABLE_FIELDS:
-        if getattr(item, field_pt):
-            continue
-        translated, official = await translate_field_source(getattr(item, field_en))
-        if translated:
-            setattr(item, field_pt, translated)
-            filled = filled or not official
+        side, official = await fill_pair(item, field_en, field_pt)   # bidirecional: EN -> PT ou PT -> EN, so' no lado vazio
+        # shortcut: o selo 'traducao automatica' so' cobre o PT (nao ha' coluna para o EN; criar exigiria migracao)
+        filled = filled or (side == "pt" and not official)
+    require_english(item, ("name",))   # nome em ingles e' obrigatorio: sem traducao disponivel = 422 amigavel
     return filled
 
 
@@ -675,6 +674,9 @@ async def retranslate_content_item(
     item = await _get_item_or_404(item_id, db)
     _guard_edit(staff, item, None)
     for field_en, field_pt in _TRANSLATABLE_FIELDS:
+        if is_empty(getattr(item, field_en)):   # EN vazio e PT escrito: gera o EN (nunca apaga nada)
+            await fill_pair(item, field_en, field_pt)
+            continue
         translated, official = await translate_field_source(getattr(item, field_en))   # dicionario do jogo primeiro, depois DeepL
         if translated:
             setattr(item, field_pt, translated)

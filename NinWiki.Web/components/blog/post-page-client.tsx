@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { formatPostDate } from '@/components/blog/post-card';
+import { OfficialBadge } from '@/components/blog/official-badge';
 import { PostToc } from '@/components/blog/post-toc';
 import { PostEngagement } from '@/components/blog/post-engagement';
 import { readingMinutes, type TocItem } from '@/lib/blog-utils';
@@ -51,6 +52,7 @@ export function PostPageClient({
           <div className="relative mx-auto max-w-[960px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={banner} alt={title} className="block h-auto w-full" />
+            {post.isSteam && <OfficialBadge size="lg" className="bottom-auto top-2 sm:top-3 sm:right-3" />}
             <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-t from-black/85 via-black/20 to-transparent sm:block" />
             <div className="bg-black/60 p-4 sm:absolute sm:inset-x-0 sm:bottom-0 sm:bg-transparent sm:p-8">
               <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>

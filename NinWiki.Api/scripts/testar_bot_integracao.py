@@ -511,9 +511,9 @@ async def testar() -> None:
               blade_pt["title"] == f"{termo} Lamina" and "Uma lamina" in blade_pt["summary"] and any(f["label"] == "Dano base" for f in blade_pt["facts"]), str(blade_pt))
         check("busca acha tambem pelo nome em portugues", any(h["href"] == f"/detail/{termo}-pub" for h in await api.search(f"{termo} Lamina")))
         async def _fake_deepl(valor, reverse=False):
-            """DeepL de mentira: devolve 'PT: texto' (so' para provar que a busca traduz e guarda)."""
-            return f"PT: {valor}" if valor else None
-        with patch("app.core.translation.translate_field", _fake_deepl):
+            """DeepL de mentira: devolve ('PT: texto', oficial=False) (so' para provar que a busca traduz e guarda)."""
+            return (f"PT: {valor}", False) if valor else (None, False)
+        with patch("app.core.translation.translate_field_source", _fake_deepl):
             sempt = next(h for h in await api.search(f"{termo} Larva", "pt") if h["href"] == f"/detail/{termo}-sempt")
         check("busca em portugues traduz na hora o que nao tinha traducao (DeepL)", sempt["title"] == f"PT: {termo} Larva" and "PT: A small larva" in sempt["summary"], str(sempt))
         sempt2 = next(h for h in await api.search(f"{termo} Larva", "pt") if h["href"] == f"/detail/{termo}-sempt")

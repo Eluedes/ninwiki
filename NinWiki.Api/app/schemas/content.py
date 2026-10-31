@@ -222,7 +222,7 @@ class ContentItemBase(CamelModel):
     """Campos compartilhados entre criar e editar - o "miolo" do formulario."""
     slug: str = Field(min_length=1, max_length=150)
     category: ContentCategory
-    name: str = Field(min_length=1, max_length=200)
+    name: str = Field(default="", max_length=200)   # vazio permitido se o _pt vier escrito: o EN e' gerado (translation.fill_missing_translations); vazio nos dois = 422
     level: int = Field(default=0, ge=0)
     level_unknown: bool = False   # nivel ainda nao descoberto: o site mostra "???" (o numero e' ignorado)
     icon: str = Field(min_length=1, max_length=20)
