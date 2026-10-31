@@ -361,6 +361,33 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("/bot/latest-posts devolve lista (posts no ar)", r.status_code == 200 and isinstance(r.json(), list), r.text[:120])
     r = await c.get("/bot/drops", params={"q": item_nome})
     check("/bot/drops sem token do bot (401)", r.status_code == 401)
+    # /bot/recipe: profissao de teste com 1 receita (apagada no fim, mesmo se o teste falhar)
+    from app.models.enums import ProfessionGroup
+    from app.models.guide import Profession
+    prof_id = f"{SLUG}-prof"
+    async with AsyncSessionLocal() as db:
+        db.add(Profession(id=prof_id, name="Testcraft", name_pt="Ofício", group=ProfessionGroup.CRAFTING, description="x", icon="🛠", details={"recipes": [
+            {"level": 3, "workbench": True, "learnedFrom": {"name": "Zzrecipe Scroll", "namePt": "Pergaminho Zz"},
+             "result": {"name": "Zzblade", "namePt": "Lâmina Zz", "slug": "zzblade", "image": None},
+             "needs": [{"qty": 5, "name": "Zzore", "namePt": "Minério Zz", "slug": "zzore"}]}]}))
+        await db.commit()
+    try:
+        r = await c.get("/bot/recipe", params={"q": "zzblade"}, headers=BT)
+        j = r.json()
+        check("/bot/recipe acha a receita (profissao, nivel, bancada, ingrediente com quantidade e link)", r.status_code == 200 and j["found"] and j["href"] == "/detail/zzblade"
+              and j["recipes"][0]["profession"] == "Testcraft" and j["recipes"][0]["level"] == 3 and j["recipes"][0]["workbench"] is True
+              and j["recipes"][0]["needs"] == [{"name": "Zzore", "href": "/detail/zzore", "qty": 5}] and j["recipes"][0]["learnedFrom"] == "Zzrecipe Scroll", r.text[:300])
+        r = await c.get("/bot/recipe", params={"q": "lâmina zz", "lang": "pt"}, headers=BT)
+        check("/bot/recipe em portugues: acha pelo nome PT e responde em PT", r.status_code == 200 and r.json()["found"] and r.json()["title"] == "Lâmina Zz"
+              and r.json()["recipes"][0]["profession"] == "Ofício" and r.json()["recipes"][0]["needs"][0]["name"] == "Minério Zz", r.text[:300])
+    finally:
+        async with AsyncSessionLocal() as db:
+            await db.delete(await db.get(Profession, prof_id))
+            await db.commit()
+    r = await c.get("/bot/recipe", params={"q": "zzzz-nao-existe"}, headers=BT)
+    check("/bot/recipe de nome inexistente: found=false", r.status_code == 200 and r.json()["found"] is False, r.text[:120])
+    r = await c.get("/bot/recipe", params={"q": "zzblade"})
+    check("/bot/recipe sem token do bot (401)", r.status_code == 401)
     r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
     check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("unico"), "category": "weapons", "rarity": "unique"}, headers=C)

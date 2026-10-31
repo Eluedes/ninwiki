@@ -11,6 +11,7 @@ Ele não decide nada sozinho: em cada comando só repassa à API **quem digitou*
 | `/language language` | **só quem tem "Gerenciar servidor"**: idioma padrão do bot **neste servidor** (English ou Português); vale para `/search` e `/status` e fica salvo em `language_state.json` |
 | `/search term [language]` | **qualquer pessoa**: procura no wiki (itens, mobs, armas, guias, missões, masteries, jutsus e posts publicados) e mostra o melhor resultado com **imagem, dados e resumo** (botão para a página completa e um menu para ver os outros resultados) |
 | `/drop item` | **qualquer pessoa**: quais **mobs dropam** o item/arma e a chance de cada um (com link para a página); sugere nomes enquanto você digita |
+| `/recipe item` | **qualquer pessoa**: como **fazer** o item — profissão, nível, se precisa de bancada, de qual receita é aprendida e os ingredientes com a quantidade (cada um com link); sugere nomes enquanto você digita |
 | `/patchnotes` | **qualquer pessoa**: as 3 notícias/patch notes mais recentes do blog (título com link, data e resumo) |
 | `/item` `/mob` `/jutsu` `/mastery` `nome` | **qualquer pessoa**: cartão do resultado só do tipo pedido (imagem, dados, resumo, botão da página); sugere nomes |
 | `/compare a b` | **qualquer pessoa**: dois itens/armas/mobs/jutsus lado a lado |

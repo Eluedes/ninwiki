@@ -197,6 +197,29 @@ def build_drop_embed(result: dict, query: str, site_url: str, lang: str = DEFAUL
     return embed
 
 
+def build_recipe_embed(result: dict, query: str, site_url: str, lang: str = DEFAULT) -> discord.Embed:
+    """Embed do /recipe: o item feito e, para cada profissao, nivel, bancada, de onde se aprende e os ingredientes (com link)."""
+    t = TEXT[lang]
+    base = site_url.rstrip("/")
+
+    def link(name: str, href: str) -> str:
+        """Nome com link para o wiki (sem link se nao houver SITE_URL)."""
+        return f"[{_clean(name)}]({base}{href})" if base else _clean(name)
+
+    if not result.get("found"):
+        return discord.Embed(description=t["rec_none"].format(q=_clean(query)), color=KIND_COLOR)
+    embed = discord.Embed(title=t["rec_title"].format(item=_clean(result["title"]))[:256], url=f"{base}{result['href']}" if base else None, color=KIND_COLOR)
+    if result.get("image"):
+        embed.set_thumbnail(url=result["image"])
+    for r in (result.get("recipes") or [])[:5]:
+        head = [t["rec_level"].format(n=r["level"]), t["rec_bench"] if r.get("workbench") else t["rec_nobench"]]
+        if r.get("learnedFrom"):
+            head.append(t["rec_learn"].format(item=_clean(r["learnedFrom"])))
+        needs = "\n".join(f"• {n['qty']}× {link(n['name'], n['href'])}" for n in r.get("needs") or [])
+        embed.add_field(name=_clean(r["profession"])[:256], value=(" · ".join(head) + "\n" + needs)[:1024], inline=False)
+    return embed
+
+
 def build_posts_embed(posts: list[dict], site_url: str, lang: str = DEFAULT) -> discord.Embed:
     """Embed do /patchnotes: os posts mais recentes (titulo com link, data e resumo)."""
     t = TEXT[lang]
@@ -308,6 +331,25 @@ def register_public_commands(
         await interaction.followup.send(embed=build_drop_embed(result, item, site_url, lang), allowed_mentions=NO_MENTIONS)
 
     drop.autocomplete("item")(_autocomplete)
+
+    @tree.command(name="recipe", description="How to craft an item: ingredients, profession and level")
+    @app_commands.describe(item="Item name (start typing for suggestions)")
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
+    async def recipe(interaction: discord.Interaction, item: app_commands.Range[str, 2, 60]) -> None:
+        """Mostra como fazer o item (no idioma do servidor)."""
+        if not await allowed(interaction):
+            return
+        lang = languages.get(interaction.guild_id)
+        await interaction.response.defer(thinking=True)
+        try:
+            result = await api.recipe(item.strip(), lang)
+        except ApiError:
+            await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
+            return
+        await interaction.followup.send(embed=build_recipe_embed(result, item, site_url, lang), allowed_mentions=NO_MENTIONS)
+
+    recipe.autocomplete("item")(_autocomplete)
 
     @tree.command(name="patchnotes", description="The latest news and patch notes from the wiki blog")
     @app_commands.guild_only()
