@@ -57,6 +57,7 @@ export interface JutsuInfoDict {
 export interface Dictionary {
   siteName: string;
   siteTagline: string;
+  siteSubline: string;
   compare: { title: string; subtitle: string; search: string; noResults: string; change: string; pickBoth: string; button: string };
   nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; proficiencies: string; map: string; blog: string; openMenu: string };
   home: { welcome: string; subtitle: string; };
@@ -311,8 +312,9 @@ export interface Dictionary {
 // exatamente a estrutura da interface Dictionary acima.
 export const dictionaries: Record<Locale, Dictionary> = {
   pt: {
-    siteName: 'Nin Online Wiki',
+    siteName: 'Nin Codex',
     siteTagline: 'A enciclopédia definitiva do mundo Nin',
+    siteSubline: 'WIKI · MAPA · FERRAMENTAS',
     compare: {
       title: 'Comparar itens', subtitle: 'Escolha dois itens ou armas para ver os dados lado a lado. As linhas diferentes ficam destacadas.',
       search: 'Buscar item ou arma…', noResults: 'Nada encontrado.', change: 'Trocar', pickBoth: 'Escolha os dois lados para comparar.', button: 'Comparar',
@@ -489,7 +491,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       madeWith: 'Feito pela comunidade',
     },
     invite: {
-      title: 'Leve o NinWiki para o seu servidor', subtitle: 'Consulte itens, mobs, armas, jutsus e o mapa sem sair do Discord. Rápido, gratuito e no idioma do seu servidor.',
+      title: 'Leve o Nin Codex para o seu servidor', subtitle: 'Consulte itens, mobs, armas, jutsus e o mapa sem sair do Discord. Rápido, gratuito e no idioma do seu servidor.',
       button: 'Convidar o bot para o seu servidor', buttonShort: 'Convidar o bot', perms: 'Pede só o essencial: ver canais, enviar mensagens, links incorporados, anexar arquivos e ler o histórico. Nunca pede administrador.',
       badge: 'Bot do Discord', examplesTitle: 'O que ele faz',
       examples: [
@@ -1109,8 +1111,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
   },
   en: {
-    siteName: 'Nin Online Wiki',
+    siteName: 'Nin Codex',
     siteTagline: 'The definitive encyclopedia of the Nin world',
+    siteSubline: 'WIKI · MAP · TOOLS',
     compare: {
       title: 'Compare items', subtitle: 'Pick two items or weapons to see their data side by side. Rows that differ are highlighted.',
       search: 'Search item or weapon…', noResults: 'Nothing found.', change: 'Change', pickBoth: 'Pick both sides to compare.', button: 'Compare',
@@ -1287,7 +1290,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       madeWith: 'Made by the community',
     },
     invite: {
-      title: 'Bring NinWiki to your server', subtitle: 'Look up items, mobs, weapons, jutsus and the map without leaving Discord. Fast, free and in your server\'s language.',
+      title: 'Bring Nin Codex to your server', subtitle: 'Look up items, mobs, weapons, jutsus and the map without leaving Discord. Fast, free and in your server\'s language.',
       button: 'Invite the bot to your server', buttonShort: 'Invite the bot', perms: 'It only asks for the essentials: view channels, send messages, embed links, attach files and read history. Never administrator.',
       badge: 'Discord bot', examplesTitle: 'What it does',
       examples: [

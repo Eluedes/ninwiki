@@ -3,6 +3,7 @@
 // Pagina inicial (rota "/"): hero de boas-vindas, grade de categorias
 // e os posts mais recentes do blog (vindos da API via app/(wiki)/page.tsx).
 
+import { NinLogo } from '@/components/icons/nin-logo';
 import { useLanguage } from '@/components/providers/language-provider';
 import { WikiButton } from '@/components/wiki/wiki-button';
 import { PostCard } from '@/components/blog/post-card';
@@ -27,7 +28,10 @@ export function HomeClient({ posts, announcement = null }: { posts: ApiPostSumma
           no canto, nao tem funcao alem de visual. */}
       <section className="relative mb-12 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-8 md:p-12">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-        <div className="relative">
+        {/* Livro grande como elemento visual: a direita no desktop, pequeno acima do titulo no celular */}
+        <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-10">
+          <NinLogo className="h-20 w-16 md:order-2 md:h-40 md:w-32 md:shrink-0 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]" />
+          <div className="md:order-1">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
             <Slash className="h-4 w-4" />
             {dict.siteTagline}
@@ -38,6 +42,7 @@ export function HomeClient({ posts, announcement = null }: { posts: ApiPostSumma
           <p className="mt-3 max-w-2xl text-muted-foreground">
             {dict.home.subtitle}
           </p>
+          </div>
         </div>
       </section>
 

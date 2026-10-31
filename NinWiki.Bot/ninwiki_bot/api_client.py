@@ -48,7 +48,7 @@ class NinWikiApi:
             res = await self._client.request(method, path, json=json, params=params, headers=self._headers,
                                              timeout=timeout if timeout is not None else httpx.USE_CLIENT_DEFAULT)
         except httpx.HTTPError as e:
-            raise ApiError(503, "Could not reach the NinWiki API. Try again in a moment.") from e
+            raise ApiError(503, "Could not reach the Nin Codex API. Try again in a moment.") from e
 
         if res.status_code >= 400:
             detail = None
@@ -70,7 +70,7 @@ class NinWikiApi:
         try:
             return res.json()
         except ValueError as e:   # 200 com corpo que nao e' JSON (proxy/pagina de erro): vira ApiError em vez de excecao solta
-            raise ApiError(502, "The NinWiki API sent an unreadable answer. Try again in a moment.") from e
+            raise ApiError(502, "The Nin Codex API sent an unreadable answer. Try again in a moment.") from e
 
     async def _cached(self, key: tuple, ttl: float, fetch) -> Any:
         """Resposta guardada por `ttl` segundos (so' acertos: erro nunca fica em cache). Limite de 500 entradas (limpa as vencidas, depois zera)."""

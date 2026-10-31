@@ -6,6 +6,8 @@ porque: (1) valida o TIPO de cada variavel (ex: access_token_expire_minutes
 tem que ser um numero, nao uma string qualquer) e (2) centraliza tudo
 em um lugar so', em vez de cada arquivo ler o .env por conta propria.
 """
+import ipaddress
+
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -107,6 +109,11 @@ class Settings(BaseSettings):
     # Cloudflare) - ai a API le o IP real do header CF-Connecting-IP pro
     # log. Ligado sem proxy, qualquer um forjaria o IP que aparece no log.
     trust_proxy_headers: bool = False
+    # Lista (separada por virgula) de redes/IPs dos PROXIES em que se confia, ex.: "127.0.0.1,172.16.0.0/12" (rede interna do Docker).
+    # Com TRUST_PROXY_HEADERS=true, CF-Connecting-IP / X-Forwarded-For so' valem se o IP IMEDIATO da conexao estiver nesta lista -
+    # senao quem alcancar a API direto forjaria o IP (e fugiria do limite por IP). Vazia = comportamento antigo (confia em qualquer
+    # origem; a API avisa no log). Em hospedagem sem proxy conhecido (SquareCloud) deixe vazia.
+    trusted_proxy_cidrs: str = ""
 
     # Exige que a conta do DISCORD de quem entra no painel tenha a verificacao em duas etapas (2FA) ligada: o Discord informa isso no perfil
     # (escopo identify) e nao guardamos segredo nenhum. Vale para TODA a equipe (inclusive os donos) so' no login real com Discord; o login de
@@ -138,6 +145,9 @@ class Settings(BaseSettings):
     # Mantido restrito a essa URL (nunca "*") para so' o nosso front
     # conseguir chamar a API com credenciais/cookies.
     frontend_origin: str = "http://localhost:3000"
+    # Origens EXTRAS aceitas (CORS e CSRF), separadas por virgula. Serve para a transicao de endereco do site
+    # (ex.: FRONTEND_ORIGINS=https://antigo.guima.net): as duas origens funcionam; o login sempre volta para FRONTEND_ORIGIN.
+    frontend_origins: str = ""
 
     # URL PUBLICA em que esta propria API e' acessada - usada pra montar
     # o link completo de uma imagem enviada por upload (ex:
@@ -210,6 +220,17 @@ class Settings(BaseSettings):
         return not self.is_development
 
     @property
+    def trusted_proxy_networks(self) -> list:
+        """TRUSTED_PROXY_CIDRS ja' convertido em redes (ipaddress). Entrada invalida derruba a inicializacao (falha alto)."""
+        return [ipaddress.ip_network(c.strip(), strict=False) for c in self.trusted_proxy_cidrs.split(",") if c.strip()]
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        """Origens do front aceitas pelo CORS e pela checagem de CSRF: a principal + as extras de FRONTEND_ORIGINS."""
+        extras = [o for o in self.frontend_origins.split(",") if o]
+        return [self.frontend_origin, *[o for o in extras if o != self.frontend_origin]]
+
+    @property
     def effective_discord_redirect_uri(self) -> str:
         """URL de retorno do login do Discord (a do .env ou a derivada de API_BASE_URL)."""
         return self.discord_redirect_uri or f"{self.api_base_url.rstrip('/')}/auth/discord/callback"
@@ -218,6 +239,7 @@ class Settings(BaseSettings):
     def _normalizar_urls(self) -> "Settings":
         """Tira a "/" final das URLs: FRONTEND_ORIGIN="https://x.com/" nunca bateria com o Origin do navegador (CORS/CSRF quebrariam)."""
         self.frontend_origin = self.frontend_origin.strip().rstrip("/")
+        self.frontend_origins = ",".join(o.strip().rstrip("/") for o in self.frontend_origins.split(",") if o.strip())
         self.api_base_url = self.api_base_url.strip().rstrip("/")
         return self
 
@@ -240,6 +262,7 @@ class Settings(BaseSettings):
             raise ValueError("COOKIE_SAMESITE precisa ser 'lax' ou 'none'.")
         if self.session_samesite == "none" and self.is_development:
             raise ValueError("COOKIE_SAMESITE=none exige HTTPS: use so' fora de development.")
+        self.trusted_proxy_networks  # valida o formato dos CIDRs ja' na inicializacao
         self.super_admin_ids  # valida o formato dos IDs ja' na inicializacao
         return self
 

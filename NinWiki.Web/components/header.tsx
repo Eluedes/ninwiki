@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import { SteamIcon, DiscordIcon } from '@/components/icons/brand-icons';
-import { NinLogo } from '@/components/icons/nin-logo';
+import { NinLockup } from '@/components/icons/nin-logo';
 import { isUnderMaintenance } from '@/lib/maintenance';
 
 // Itens do menu principal. Por decisao do mantenedor, o NavMenu fica
@@ -80,11 +80,10 @@ export function Header() {
     // sticky + backdrop-blur: o header fica fixo no topo ao rolar a
     // pagina, com um leve efeito de "vidro fosco" sobre o conteudo por baixo.
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 md:h-20 max-w-6xl items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <NinLogo className="h-9 w-9" />
-            <span className="text-lg font-bold tracking-tight">{dict.siteName}</span>
+            <NinLockup />
           </Link>
         </div>
 

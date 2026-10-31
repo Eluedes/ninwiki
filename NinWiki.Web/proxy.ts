@@ -6,6 +6,8 @@
 //     User-Agent -> 403 (desligue com BLOCK_SCRAPER_UAS=false se usar algum monitor desse tipo).
 //  4. CSP com NONCE: gera um nonce novo a cada pagina, monta o cabecalho Content-Security-Policy (lib/csp.ts) e o repassa ao Next.js (cabecalhos
 //     x-nonce e Content-Security-Policy da requisicao) - assim os scripts do Next e o do tema levam o nonce e NENHUM script inline sem nonce roda.
+//  0. ENDERECO ANTIGO: pedidos cujo Host esta' em LEGACY_SITE_HOSTS (lista separada por virgula, so' no servidor; vazia = desligado) levam um
+//     redirecionamento 308 para o MESMO caminho e query na origem de NEXT_PUBLIC_SITE_URL. Nunca redireciona /health, /api e arquivos internos do Next.
 //  3. MODO MANUTENCAO (ligado pelo S.Adm em /admin/maintenance): quem nao tem o cookie do passe (ninwiki_pass, valido na API) ve' a pagina de
 //     manutencao no lugar da pagina pedida (status 503, a URL nao muda). /maintenance, /login, /admin e a rota do passe ficam abertos para a equipe
 //     poder entrar. Se a API nao responder, o site continua aberto (nunca tranca todo mundo por um soluco da API).
@@ -35,6 +37,24 @@ const PREFETCH_MULTIPLIER = 4;
 const BLOCK_UAS = (process.env.BLOCK_SCRAPER_UAS ?? 'true') !== 'false';
 const SCRAPER_UA =
   /(python-requests|python-urllib|aiohttp|httpx|scrapy|curl\/|wget|libwww|go-http-client|okhttp|java\/|node-fetch|axios|undici|headlesschrome|phantomjs|httrack|selenium|puppeteer|playwright|mj12bot|semrushbot|ahrefsbot|dotbot|bytespider|petalbot|gptbot|ccbot|claudebot|anthropic-ai|amazonbot|dataforseo)/i;
+
+// Enderecos ANTIGOS do site (ex.: wiki.guima.net) e origem NOVA (NEXT_PUBLIC_SITE_URL). Sem lista = sem redirecionamento.
+const LEGACY_HOSTS = (process.env.LEGACY_SITE_HOSTS ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+const SITE_ORIGIN = (() => {
+  try { return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? '').origin; } catch { return ''; }
+})();
+// Caminhos que nunca sao redirecionados (monitor de saude, rotas internas).
+const NO_REDIRECT = ['/health', '/api', '/_next'];
+
+/** Se o Host do pedido e' um endereco antigo, devolve o 308 para a origem nova (mesmo caminho e query); senao null. */
+function legacyRedirect(req: NextRequest): NextResponse | null {
+  if (!LEGACY_HOSTS.length || !SITE_ORIGIN) return null;
+  const host = (req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? '').split(',')[0].trim().toLowerCase().replace(/:\d+$/, '');
+  if (!LEGACY_HOSTS.includes(host) || host === new URL(SITE_ORIGIN).hostname) return null;   // a 2a condicao evita laco de redirecionamento
+  const path = req.nextUrl.pathname;
+  if (NO_REDIRECT.some((p) => path === p || path.startsWith(`${p}/`))) return null;
+  return NextResponse.redirect(`${SITE_ORIGIN}${path}${req.nextUrl.search}`, 308);
+}
 
 // Cache em memoria do estado da manutencao e da conferencia dos passes.
 let statusCache: { at: number; on: boolean } | null = null;
@@ -119,6 +139,9 @@ export async function proxy(req: NextRequest) {
     res.headers.set('Content-Security-Policy', csp);
     return tag(res);
   };
+  // Endereco antigo -> novo, antes de qualquer outra regra (o robo/visitante so' precisa saber para onde ir).
+  const legacy = legacyRedirect(req);
+  if (legacy) return tag(legacy);
   const ua = req.headers.get('user-agent') ?? '';
   if (BLOCK_UAS && (ua.length < 8 || SCRAPER_UA.test(ua))) {
     return tag(new NextResponse('Forbidden', { status: 403 }));

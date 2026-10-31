@@ -174,7 +174,7 @@ def format_status_panel(statuses: list[ServiceStatus], checked_at: datetime, int
         lines.append("⚪ **Website** — not monitored (set SITE_URL in the bot .env)")
     lines.append(f"\nLast check <t:{int(checked_at.timestamp())}:R> · every {interval_seconds}s · uptime counts since the bot started")
     known = [st.last_ok for st in statuses if st.last_ok is not None]
-    return {"title": "📡 NinWiki status", "description": "\n".join(lines), "color": COLORS["recovered"] if known and all(known) else COLORS["down"]}
+    return {"title": "📡 Nin Codex status", "description": "\n".join(lines), "color": COLORS["recovered"] if known and all(known) else COLORS["down"]}
 
 
 class StatusMessageStore:

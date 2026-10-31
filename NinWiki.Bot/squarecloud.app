@@ -1,5 +1,5 @@
-DISPLAY_NAME=NinWiki Bot
-DESCRIPTION=Bot de Discord do NinWiki (comandos /equipe)
+DISPLAY_NAME=Nin Codex Bot
+DESCRIPTION=Bot de Discord do Nin Codex (comandos /equipe)
 MAIN=main.py
 MEMORY=256
 VERSION=recommended

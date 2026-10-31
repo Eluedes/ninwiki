@@ -78,7 +78,7 @@ def decrypt_to(src: BinaryIO, dst: BinaryIO, passphrase: str) -> None:
     """Decifra um arquivo .nbk inteiro para `dst` (bloco a bloco). ValueError se nao for backup do NinWiki ou se a senha estiver errada."""
     head = src.read(len(MAGIC) + 16)
     if len(head) < len(MAGIC) + 16 or not head.startswith(MAGIC):
-        raise ValueError("This is not a NinWiki backup file (or it is incomplete: did you join all the parts?)")
+        raise ValueError("This is not a Nin Codex backup file (or it is incomplete: did you join all the parts?)")
     fernet = Fernet(_derive_key(passphrase, head[len(MAGIC):]))
     while True:
         size = src.read(4)
