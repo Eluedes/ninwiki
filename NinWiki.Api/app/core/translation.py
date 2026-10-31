@@ -6,8 +6,8 @@ equipe precisar escrever tudo duas vezes.
 
 Direcao EN -> PT (nao PT -> EN): decisao final do Rafael (25/09) - o
 padrao do site e do painel e' INGLES, entao todo conteudo nasce em
-ingles (e' a lingua "principal" de escrita), e a DeepL preenche a
-versao em portugues automaticamente por cima.
+ingles (e' a lingua "principal" de escrita), e o portugues e preenchido automaticamente: primeiro pelo dicionario OFICIAL do jogo
+(app/core/game_dictionary.py), depois pela DeepL.
 
 DESIGN - POR QUE SEM CHAVE NAO QUEBRA NADA: deepl_api_key vazio (o
 padrao) faz toda funcao aqui devolver None/o valor original sem
@@ -26,11 +26,12 @@ volta EXATAMENTE na mesma posicao da arvore - a estrutura (negrito,
 cor, alinhamento, paragrafos) nunca e' tocada, so' o texto dentro dela.
 """
 import json
+import time
 from typing import Any
 
 import httpx
 
-from app.core import error_log
+from app.core import error_log, game_dictionary
 from app.core.config import settings
 
 # Endpoint muda entre plano gratuito e pago da DeepL - free sempre
@@ -42,6 +43,12 @@ _DEEPL_URL = (
     if settings.deepl_api_key.endswith(":fx")
     else "https://api.deepl.com/v2/translate"
 )
+
+
+# Cota da DeepL acabou (HTTP 456): enquanto isto estiver no futuro nem tentamos a DeepL (nao inunda o log de erros
+# nem gasta tempo de cada salvamento). Volta a tentar depois de _QUOTA_PAUSA segundos.
+_quota_ate = 0.0
+_QUOTA_PAUSA = 3600
 
 
 async def _deepl_translate_batch(texts: list[str], reverse: bool = False) -> list[str] | None:
@@ -65,7 +72,8 @@ async def _deepl_translate_batch(texts: list[str], reverse: bool = False) -> lis
     automatica e' um "extra", nunca deve derrubar a criacao/edicao de
     uma entry so' porque a DeepL esta' fora do ar.
     """
-    if not settings.deepl_api_key or not texts:
+    global _quota_ate
+    if not settings.deepl_api_key or not texts or time.monotonic() < _quota_ate:
         return None
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -91,6 +99,8 @@ async def _deepl_translate_batch(texts: list[str], reverse: bool = False) -> lis
         # A traducao e' um "extra" e nunca derruba a criacao/edicao - mas a equipe PRECISA saber que ela parou
         # (chave recusada, cota do plano gratuito acabada...): registra em /admin/errors e no canal do bot.
         status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else None
+        if status == 456:   # cota do mes acabou: um unico registro agrupado (o error_log soma o contador) e pausa as tentativas
+            _quota_ate = time.monotonic() + _QUOTA_PAUSA
         title = {
             456: "DeepL quota exceeded", 403: "DeepL key rejected", 429: "DeepL rate limited",
         }.get(status or 0, "DeepL request failed")
@@ -170,26 +180,31 @@ async def _translate_tiptap_json(value: str, reverse: bool = False) -> str | Non
     return json.dumps(doc, ensure_ascii=False)
 
 
-async def translate_field(value: str | None, reverse: bool = False) -> str | None:
+async def translate_field_source(value: str | None, reverse: bool = False) -> tuple[str | None, bool]:
     """
-    Ponto de entrada usado pelos endpoints - traduz UM campo (texto
-    simples OU Tiptap JSON, detecta sozinho qual e'), EN -> PT por
-    padrao. reverse=True inverte pra PT -> EN - ver o comentario
-    completo em _deepl_translate_batch (so' scripts/
-    backfill_mastery_jutsu_english.py usa isso, nunca o fluxo normal
-    de criar/editar).
-
-    Devolve None se: o campo original esta' vazio, a chave da DeepL
-    nao esta' configurada, ou a traducao falhou por qualquer motivo -
-    nos TRES casos, quem chamou deve simplesmente deixar o campo "_pt"
-    como estava (nunca apagar um valor existente por causa de uma
-    falha de traducao).
+    Como translate_field, mas diz DE ONDE veio a traducao: (texto, oficial). Ordem: 1) dicionario do jogo (oficial, de graca,
+    so' EN -> PT e so' se o texto INTEIRO existe la'); 2) DeepL (se houver chave e cota); 3) (None, False) = deixa vazio.
     """
     if not value or not value.strip():
-        return None
+        return None, False
+    if not reverse and (official := game_dictionary.translate_doc(value)):
+        return official, True
     if _is_tiptap_json(value):
-        return await _translate_tiptap_json(value, reverse=reverse)
-    return None if (result := await _deepl_translate_batch([value], reverse=reverse)) is None else result[0]
+        return await _translate_tiptap_json(value, reverse=reverse), False
+    result = await _deepl_translate_batch([value], reverse=reverse)
+    return (None if result is None else result[0]), False
+
+
+async def translate_field(value: str | None, reverse: bool = False) -> str | None:
+    """
+    Ponto de entrada usado pelos endpoints - traduz UM campo (texto simples OU Tiptap JSON, detecta sozinho), EN -> PT por padrao:
+    primeiro o dicionario oficial do jogo, depois a DeepL. reverse=True inverte pra PT -> EN (so' scripts/
+    backfill_mastery_jutsu_english.py usa; ver _deepl_translate_batch).
+
+    Devolve None se o campo original esta' vazio ou nao ha' traducao (sem chave da DeepL, cota acabada, falha): quem chamou deve
+    deixar o campo "_pt" como estava (nunca apagar um valor existente por causa de uma falha de traducao).
+    """
+    return (await translate_field_source(value, reverse=reverse))[0]
 
 
 async def retranslate_fields(obj: object, field_pairs: list[tuple[str, str]]) -> None:
