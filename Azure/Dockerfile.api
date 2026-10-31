@@ -1,0 +1,26 @@
+# Imagem da API (FastAPI). Build a partir da RAIZ do repo:
+#   docker build -f Azure/Dockerfile.api --build-arg GIT_SHA=<sha> NinWiki.Api
+# Multi-stage: o estagio "builder" instala as dependencias; a imagem final leva so' o venv pronto + o codigo, roda sem root.
+FROM python:3.13-slim AS builder
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+RUN python -m venv /opt/venv
+COPY requirements.txt .
+RUN /opt/venv/bin/pip install -r requirements.txt
+
+FROM python:3.13-slim
+ARG GIT_SHA=unknown
+# PYTHONDONTWRITEBYTECODE: o sistema de arquivos do container e' somente-leitura; PORT: porta interna (nao publicada).
+ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PORT=8000
+# Usuario sem privilegios (uid fixo, para as permissoes dos volumes baterem). uploads/staff_files/geoip sao volumes.
+RUN useradd --uid 10001 --no-create-home --shell /usr/sbin/nologin ninwiki \
+ && mkdir -p /app/uploads /app/staff_files /app/geoip \
+ && chown -R 10001:10001 /app
+WORKDIR /app
+COPY --from=builder /opt/venv /opt/venv
+COPY --chown=10001:10001 . /app
+# VERSION: o /health e o rodape do painel mostram qual commit esta no ar (o deploy da SquareCloud faz o mesmo).
+RUN printf '%s\n' "$GIT_SHA" > /app/VERSION && chown 10001:10001 /app/VERSION
+USER 10001
+EXPOSE 8000
+# start.py aplica as migrations e liga o Uvicorn (se a migration falhar, a API nao sobe).
+CMD ["python", "start.py"]

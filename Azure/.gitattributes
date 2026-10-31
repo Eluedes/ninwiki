@@ -1,0 +1,2 @@
+# Scripts, compose e cloud-init rodam em Linux: finais de linha SEMPRE LF (CRLF quebra "bash\r").
+* text=auto eol=lf

@@ -1,0 +1,12 @@
+# Fora da imagem Docker do bot: segredos, estado local e lixo.
+.env
+.env.*
+venv/
+.venv/
+**/__pycache__/
+*.pyc
+*_state.json
+*.log
+*.md
+.squarecloudignore
+squarecloud.app

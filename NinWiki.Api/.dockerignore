@@ -1,0 +1,21 @@
+# Fora da imagem Docker da API: segredos, dados e lixo local (a imagem so' leva o codigo).
+.env
+.env.*
+certs/
+venv/
+.venv/
+**/__pycache__/
+*.pyc
+uploads/
+staff_files/
+backups/
+envio/
+geoip/
+*.dump
+*.log
+*.md
+scripts/
+restore.log
+docker-compose*.yml
+.squarecloudignore
+squarecloud.app

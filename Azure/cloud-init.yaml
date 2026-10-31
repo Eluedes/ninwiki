@@ -1,0 +1,103 @@
+#cloud-config
+# Configuracao AUTOMATICA da VM na primeira inicializacao (Ubuntu 24.04). Passada ao "az vm create --custom-data".
+# ANTES de usar, troque __SSH_PUBLIC_KEY__ pela sua chave PUBLICA (o LEIA-ME mostra o comando do PowerShell que faz isso).
+# O que faz: instala Docker, firewall (ufw), fail2ban, atualizacoes automaticas de seguranca, swap, endurece o SSH e cria o
+# usuario "ninwiki" (sem sudo) dono da pasta /opt/ninwiki. NAO coloca nenhum segredo na VM.
+package_update: true
+package_upgrade: true
+packages:
+  - docker.io            # Docker do proprio Ubuntu (recebe correcoes de seguranca pelo unattended-upgrades)
+  - docker-compose-v2    # "docker compose"
+  - ufw
+  - fail2ban
+  - unattended-upgrades
+  - age                  # cifra dos backups (chave publica)
+  - curl
+  - python3
+  - iptables
+
+users:
+  - default
+  - name: ninwiki
+    gecos: Usuario do deploy NinWiki (sem sudo)
+    shell: /bin/bash
+    groups: [docker]     # RISCO: quem esta no grupo docker equivale a root na VM (ver LEIA-ME). Por isso so' chave SSH, sem senha.
+    lock_passwd: true
+    ssh_authorized_keys:
+      - __SSH_PUBLIC_KEY__
+
+write_files:
+  # --- SSH so' com chave, sem root, menos tentativas ---
+  - path: /etc/ssh/sshd_config.d/00-ninwiki-hardening.conf
+    permissions: "0644"
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+      PubkeyAuthentication yes
+      MaxAuthTries 3
+      LoginGraceTime 30
+      X11Forwarding no
+      AllowAgentForwarding no
+      AllowTcpForwarding no
+  # --- fail2ban: bane por 1h quem erra o SSH 4 vezes ---
+  - path: /etc/fail2ban/jail.d/ninwiki.local
+    permissions: "0644"
+    content: |
+      [sshd]
+      enabled = true
+      backend = systemd
+      maxretry = 4
+      findtime = 10m
+      bantime = 1h
+  # --- atualizacoes automaticas de seguranca; reinicia sozinho 05:00 UTC se o kernel pedir (os containers voltam sozinhos) ---
+  - path: /etc/apt/apt.conf.d/52ninwiki-unattended
+    permissions: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      Unattended-Upgrade::Automatic-Reboot "true";
+      Unattended-Upgrade::Automatic-Reboot-Time "05:00";
+      Unattended-Upgrade::Remove-Unused-Dependencies "true";
+  # --- Docker: logs com rotacao; containers continuam se o servico do Docker reiniciar ---
+  - path: /etc/docker/daemon.json
+    permissions: "0644"
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "10m", "max-file": "5" },
+        "live-restore": true,
+        "no-new-privileges": true
+      }
+  # --- Bloqueia containers de falarem com o servico de metadados do Azure (169.254.169.254): se a API fosse enganada
+  #     (SSRF) ou invadida, nao conseguiria roubar o token da identidade da VM (que tem acesso ao storage de backups). ---
+  - path: /etc/systemd/system/ninwiki-bloqueia-imds.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Bloqueia containers de acessar o IMDS do Azure
+      After=docker.service
+      Requires=docker.service
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/bin/sh -c 'iptables -C DOCKER-USER -d 169.254.169.254 -j DROP 2>/dev/null || iptables -I DOCKER-USER -d 169.254.169.254 -j DROP'
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  # swap de 2 GB: protege contra falta de memoria na VM de 4 GB (build/arranque do Next, picos do Postgres)
+  - [sh, -c, "[ -f /swapfile ] || (fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab)"]
+  # firewall: nega toda entrada, libera so' o SSH (o NSG do Azure restringe ainda mais ao seu IP)
+  - [ufw, default, deny, incoming]
+  - [ufw, default, allow, outgoing]
+  - [ufw, allow, 22/tcp]
+  - [ufw, --force, enable]
+  - [systemctl, restart, ssh]
+  - [systemctl, enable, --now, fail2ban]
+  - [systemctl, enable, --now, unattended-upgrades]
+  - [systemctl, enable, --now, docker]
+  - [systemctl, daemon-reload]
+  - [systemctl, enable, --now, ninwiki-bloqueia-imds.service]
+  - [install, -d, -o, ninwiki, -g, ninwiki, -m, "0750", /opt/ninwiki]
+  - [touch, /var/lib/cloud/instance/ninwiki-pronto]

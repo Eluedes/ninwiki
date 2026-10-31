@@ -1,0 +1,15 @@
+# Backup do NinWiki para o Azure Blob Storage. Instalado em /etc/systemd/system/ pelo cloud-init (ou manualmente, ver LEIA-ME).
+[Unit]
+Description=Backup do NinWiki para o Azure Blob Storage
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ninwiki
+Group=docker
+ExecStart=/opt/ninwiki/scripts/backup.sh
+# Endurece o servico (so' le o que precisa)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true

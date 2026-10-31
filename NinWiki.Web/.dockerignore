@@ -1,0 +1,10 @@
+# Fora da imagem Docker do site: segredos, dependencias locais e build local (a imagem compila sozinha).
+.env
+.env.*
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+*.log
+.squarecloudignore
+squarecloud.app

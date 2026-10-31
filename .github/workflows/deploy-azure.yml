@@ -1,0 +1,115 @@
+name: Deploy no Azure (manual)
+
+# So' roda quando voce clica em "Run workflow" (aba Actions). NAO substitui os deploys da SquareCloud (deploy-api/web/bot.yml):
+# os dois convivem ate' a migracao terminar (ver Azure/MIGRACAO.md).
+#
+# O que faz:
+#   1) CONSTROI as 3 imagens Docker (api, web, bot) e envia para o GitHub Container Registry (ghcr.io);
+#   2) (opcional) entra na VM por SSH e atualiza na ordem API -> site -> bot, esperando cada um ficar saudavel.
+#
+# Secrets (Settings > Secrets and variables > Actions > Secrets) - so' para o passo 2:
+#   AZURE_VM_HOST         IP publico (ou nome DNS) da VM
+#   AZURE_VM_USER         usuario do deploy na VM: ninwiki
+#   AZURE_SSH_KEY         chave PRIVADA SSH exclusiva do deploy (a publica esta no usuario ninwiki da VM)
+#   AZURE_SSH_KNOWN_HOSTS saida de:  ssh-keyscan -t ed25519 <IP-da-VM>   (fixa a identidade da VM; evita "homem no meio")
+# Variables (aba Variables; NAO sao segredos - ficam gravadas no site na compilacao):
+#   NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID
+# ATENCAO: o SSH da VM so' aceita o SEU IP (NSG). Para o passo 2 funcionar a partir do GitHub, o SSH precisa estar alcancavel
+# (ver LEIA-ME: "Deploy pelo GitHub x deploy manual"). Sem isso deixe "deploy" desmarcado e rode atualizar.sh pelo seu PC.
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Entrar na VM por SSH e atualizar (precisa dos Secrets e do SSH alcancavel)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write          # enviar as imagens para o ghcr.io
+    strategy:
+      fail-fast: true
+      matrix:
+        servico: [api, web, bot]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Nome do dono em minusculas (exigido pelo ghcr.io)
+        id: dono
+        run: echo "dono=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Construir e enviar a imagem (${{ matrix.servico }})
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.servico == 'api' && 'NinWiki.Api' || matrix.servico == 'web' && 'NinWiki.Web' || 'NinWiki.Bot' }}
+          file: Azure/Dockerfile.${{ matrix.servico }}
+          push: true
+          tags: |
+            ghcr.io/${{ steps.dono.outputs.dono }}/ninwiki-${{ matrix.servico }}:${{ github.sha }}
+            ghcr.io/${{ steps.dono.outputs.dono }}/ninwiki-${{ matrix.servico }}:latest
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID=${{ vars.NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID }}
+            NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.servico }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.servico }}
+
+  deploy:
+    needs: build
+    if: ${{ inputs.deploy }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar SSH (chave e identidade da VM)
+        env:
+          SSH_KEY: ${{ secrets.AZURE_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.AZURE_SSH_KNOWN_HOSTS }}
+          HOST: ${{ secrets.AZURE_VM_HOST }}
+          USER_VM: ${{ secrets.AZURE_VM_USER }}
+        run: |
+          for v in SSH_KEY KNOWN_HOSTS HOST USER_VM; do
+            if [ -z "${!v}" ]; then echo "::error::Secret do deploy no Azure faltando (veja o cabecalho do workflow)."; exit 1; fi
+          done
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # StrictHostKeyChecking=yes: se a identidade da VM mudar, o deploy PARA (nunca "aceita qualquer um").
+          printf 'Host vm\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id_deploy\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n' "$HOST" "$USER_VM" > ~/.ssh/config
+      - name: Enviar compose, Caddyfile e scripts (NUNCA o .env)
+        run: |
+          scp Azure/docker-compose.yml Azure/Caddyfile vm:/opt/ninwiki/
+          scp -r Azure/scripts Azure/systemd vm:/opt/ninwiki/
+          ssh vm 'chmod +x /opt/ninwiki/scripts/*.sh'
+      - name: Login no ghcr.io na VM (token temporario do proprio job, via stdin)
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: printf '%s' "$TOKEN" | ssh vm "docker login ghcr.io -u '$ACTOR' --password-stdin" >/dev/null
+      - name: Fixar a versao (IMAGE_TAG) no .env da VM
+        run: ssh vm "sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ github.sha }}/' /opt/ninwiki/.env"
+      - name: Atualizar API
+        run: ssh vm "cd /opt/ninwiki && ./scripts/atualizar.sh api"
+      - name: Atualizar site (web)
+        run: ssh vm "cd /opt/ninwiki && ./scripts/atualizar.sh web"
+      - name: Atualizar bot
+        run: ssh vm "cd /opt/ninwiki && ./scripts/atualizar.sh bot"
+      - name: Sair do ghcr.io na VM
+        if: always()
+        run: ssh vm "docker logout ghcr.io" || true

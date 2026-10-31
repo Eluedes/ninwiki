@@ -1,0 +1,36 @@
+# Caddy: proxy reverso INTERNO (so' na rede do Docker; nenhuma porta e' publicada).
+# O Cloudflare Tunnel entrega aqui as requisicoes (http://caddy:80) e o Caddy escolhe site ou API pelo nome do dominio.
+{
+	# O TLS/HTTPS e' da Cloudflare (borda). Dentro da VM e' HTTP puro na rede interna.
+	auto_https off
+	admin off
+	servers {
+		# Confia nos cabecalhos de IP que vem do cloudflared (rede privada) e os repassa; de qualquer outro lugar eles seriam descartados.
+		trusted_proxies static private_ranges
+	}
+}
+
+# Site
+http://{$SITE_HOST} {
+	header -Server
+	reverse_proxy web:3000
+}
+
+# API (os limites de tamanho de upload sao aplicados pela propria API)
+http://{$API_HOST} {
+	header -Server
+	reverse_proxy api:8000
+}
+
+# Qualquer outro nome (ou acesso por IP): 404. O /ping serve ao healthcheck do Docker.
+http:// {
+	handle /ping {
+		respond "ok" 200
+	}
+	handle {
+		respond "Not found" 404
+	}
+}
+
+# --- OPCIONAL: TLS direto no Caddy (SEM Tunnel) --- exige abrir 80/443 no NSG/ufw e publicar as portas no compose.
+# Nao recomendado neste desenho. Se um dia quiser: troque "http://{$SITE_HOST}" por "{$SITE_HOST}" (o Caddy obtem o certificado sozinho).

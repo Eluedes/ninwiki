@@ -1,0 +1,11 @@
+# Roda o backup todo dia as 03:30 (UTC). Persistent: se a VM estava desligada, roda assim que ligar.
+[Unit]
+Description=Backup diario do NinWiki
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

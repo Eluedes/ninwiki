@@ -1,0 +1,172 @@
+# NinWiki / Nin Codex na VM do Azure - Docker Compose.
+# Uso (na VM, na pasta /opt/ninwiki, com o arquivo .env ao lado):  docker compose up -d
+#
+# Nenhum servico publica porta para a internet (nao ha "ports:" aqui). O trafego entra SO' pelo Cloudflare Tunnel:
+#   visitante -> Cloudflare -> cloudflared (conexao de SAIDA da VM) -> caddy -> web / api
+# O Postgres fica numa rede "db" interna (sem acesso a internet) onde so' a API entra.
+name: ninwiki
+
+x-seguranca: &seguranca
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: ["ALL"]
+  logging:                       # rotaciona os logs (senao o disco enche)
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+services:
+  postgres:
+    <<: *seguranca
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    tmpfs: ["/run/postgresql", "/tmp"]
+    read_only: true
+    # O Postgres precisa destas capacidades para trocar de usuario na 1a subida e ajustar permissoes do volume.
+    cap_add: ["CHOWN", "SETUID", "SETGID", "FOWNER", "DAC_OVERRIDE"]
+    mem_limit: 768m
+    networks: [db]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  api:
+    <<: *seguranca
+    image: ghcr.io/${GHCR_OWNER}/ninwiki-api:${IMAGE_TAG:-latest}
+    # Cada servico recebe SO' as variaveis dele (o token do Tunnel, por exemplo, nunca chega na API nem no bot).
+    # Variavel opcional nova da API (ver NinWiki.Api/.env.example)? Acrescente aqui embaixo e no .env.
+    environment:
+      ENVIRONMENT: production
+      # Montada aqui (nao no .env) para a senha ficar escrita uma vez so'. Rede interna: sem TLS (ver LEIA-ME, pergunta dos certificados).
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SUPER_ADMIN_DISCORD_IDS: ${SUPER_ADMIN_DISCORD_IDS}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:-}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-}
+      API_BASE_URL: ${API_BASE_URL}
+      BOT_API_TOKEN: ${BOT_API_TOKEN}
+      BACKUP_PASSPHRASE: ${BACKUP_PASSPHRASE}
+      DEEPL_API_KEY: ${DEEPL_API_KEY:-}
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-true}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-172.28.0.0/24}
+      COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
+      REQUIRE_DISCORD_2FA: ${REQUIRE_DISCORD_2FA:-true}
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-5}
+      STEAM_NEWS_APP_ID: ${STEAM_NEWS_APP_ID:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+    read_only: true
+    volumes:
+      - api_tmp:/tmp              # o backup do painel monta o arquivo aqui (pode ser grande: fica em disco, nao na RAM)
+      - api_uploads:/app/uploads
+      - api_staff_files:/app/staff_files
+      - api_geoip:/app/geoip
+    mem_limit: 640m
+    networks: [db, edge]
+    healthcheck:                  # /health/ready tambem confere o banco
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=4).status==200 else 1)"]
+      interval: 20s
+      timeout: 6s
+      retries: 5
+      start_period: 60s           # migrations rodam antes de ligar
+
+  web:
+    <<: *seguranca
+    image: ghcr.io/${GHCR_OWNER}/ninwiki-web:${IMAGE_TAG:-latest}
+    environment:
+      NODE_ENV: production
+      BLOCK_SCRAPER_UAS: ${BLOCK_SCRAPER_UAS:-}
+      WEB_RATE_LIMIT_PER_MINUTE: ${WEB_RATE_LIMIT_PER_MINUTE:-}
+    read_only: true
+    tmpfs: ["/tmp:size=64m", "/app/.next/cache:size=128m"]
+    mem_limit: 512m
+    networks: [edge]
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 6s
+      retries: 5
+      start_period: 40s
+
+  bot:
+    <<: *seguranca
+    image: ghcr.io/${GHCR_OWNER}/ninwiki-bot:${IMAGE_TAG:-latest}
+    environment:
+      NINWIKI_API_URL: http://api:8000      # direto pela rede interna (sem passar pela Cloudflare)
+      BOT_API_TOKEN: ${BOT_API_TOKEN}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DEV_GUILD_ID: ${DEV_GUILD_ID:-}
+      ALLOWED_GUILD_IDS: ${ALLOWED_GUILD_IDS:-}
+      LOG_CHANNEL_ID: ${LOG_CHANNEL_ID:-}
+      ERROR_CHANNEL_ID: ${ERROR_CHANNEL_ID:-}
+      STATUS_CHANNEL_ID: ${STATUS_CHANNEL_ID:-}
+      BACKUP_CHANNEL_ID: ${BACKUP_CHANNEL_ID:-}
+      SITE_URL: ${SITE_URL:-}
+      SITE_HEALTH_URL: ${SITE_HEALTH_URL:-}
+      VERSION_WEBHOOK_URL: ${VERSION_WEBHOOK_URL:-}
+    depends_on:
+      api: { condition: service_healthy }
+    read_only: true
+    tmpfs: ["/tmp:size=32m"]
+    volumes:
+      - bot_state:/data
+    mem_limit: 256m
+    networks: [edge]
+    # Sem healthcheck: o bot nao abre porta. Se o processo cair, o Docker reinicia (restart: unless-stopped).
+
+  caddy:
+    <<: *seguranca
+    image: caddy:2-alpine
+    environment:
+      SITE_HOST: ${SITE_HOST}
+      API_HOST: ${API_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    read_only: true
+    tmpfs: ["/data", "/config", "/tmp"]
+    mem_limit: 128m
+    networks: [edge]
+    depends_on: [web, api]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/ping"]
+      interval: 20s
+      timeout: 4s
+      retries: 5
+
+  cloudflared:
+    <<: *seguranca
+    image: cloudflare/cloudflared:latest    # dica: depois fixe uma versao para atualizar so' quando voce quiser
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    read_only: true
+    mem_limit: 128m
+    networks: [edge]
+    depends_on: [caddy]
+
+networks:
+  db:
+    internal: true        # sem rota para a internet: o banco nunca fala com o mundo
+  edge:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24     # fixa: e' esta faixa que vai em TRUSTED_PROXY_CIDRS
+
+volumes:
+  pgdata:
+  api_tmp:
+  api_uploads:
+  api_staff_files:
+  api_geoip:
+  bot_state:
