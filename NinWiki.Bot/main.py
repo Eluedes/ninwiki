@@ -28,6 +28,7 @@ from ninwiki_bot.command_sync import sync_commands, target_guilds
 from ninwiki_bot.config import BotSettings
 from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageStore, decide, format_error, format_report, format_status_panel, query_since as errors_query_since, record_check, update_status
 from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
+from ninwiki_bot.guilds_feed import GuildsFeed
 from ninwiki_bot.language import LanguageStore
 from ninwiki_bot.public_commands import register_public_commands
 from ninwiki_bot.version_feed import VersionStore, build_embed as build_version_embed, merge as merge_versions
@@ -49,6 +50,14 @@ def _safe(tick):
         except Exception:   # noqa: BLE001 - o feed precisa continuar vivo
             log.exception("Volta do feed %s falhou (tento de novo no proximo ciclo)", getattr(tick, "__name__", "?"))
     return wrapper
+
+
+async def _safe_call(fn, *args) -> None:
+    """Roda um evento do Discord sem deixar excecao escapar (o painel de servidores nunca pode derrubar o bot)."""
+    try:
+        await fn(*args)
+    except Exception:   # noqa: BLE001
+        log.exception("Evento do painel de servidores falhou")
 
 
 class NinWikiBot(discord.Client):
@@ -86,6 +95,10 @@ class NinWikiBot(discord.Client):
         self.backup_store = BackupStore(STATE_DIR / "backup_state.json")
         self.backup_loop = tasks.loop(minutes=settings.backup_interval_minutes)(_safe(self._backup_tick))
         self.backup_loop.before_loop(self.wait_until_ready)
+        # Painel de servidores (sem comando): mensagem editada + log de entrada/saida; a 1a volta do loop (apos o bot ficar pronto) faz a sincronizacao inicial.
+        self.guilds_feed = GuildsFeed(self, settings.guilds_channel_id, settings.guilds_log_channel_id, STATE_DIR / "guilds_state.json") if settings.guilds_channel_id else None
+        self.guilds_loop = tasks.loop(minutes=30)(_safe(self._guilds_tick))
+        self.guilds_loop.before_loop(self.wait_until_ready)
 
         @self.tree.error
         async def on_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
@@ -287,6 +300,25 @@ class NinWikiBot(discord.Client):
         self.version_store.save(state)
         log.info("Mensagem de versao atualizada: API %s, Web %s", (state['api'] or {}).get('sha'), (state['web'] or {}).get('sha'))
 
+    async def _guilds_tick(self) -> None:
+        """A cada 30 min (e na 1a volta, ao ligar) confere os servidores; so' edita o painel se algo mudou."""
+        await self.guilds_feed.tick()
+
+    async def on_guild_join(self, guild: discord.Guild) -> None:
+        """O bot entrou num servidor: avisa no canal de log do painel (protegido: erro aqui nao derruba o bot)."""
+        if self.guilds_feed:
+            await _safe_call(self.guilds_feed.on_join, guild)
+
+    async def on_guild_remove(self, guild: discord.Guild) -> None:
+        """O bot saiu (ou foi expulso) de um servidor: avisa no canal de log do painel."""
+        if self.guilds_feed:
+            await _safe_call(self.guilds_feed.on_remove, guild)
+
+    async def on_guild_update(self, before: discord.Guild, after: discord.Guild) -> None:
+        """Um servidor mudou de nome: reagenda a edicao do painel."""
+        if self.guilds_feed and self.guilds_feed.started and before.name != after.name:
+            self.guilds_feed.schedule_refresh()
+
     async def _backup_tick(self) -> None:
         """Pede um backup cifrado (banco + imagens) a' API, manda para o canal privado em partes e apaga os mais antigos (mantem BACKUP_KEEP)."""
         now = datetime.now(timezone.utc)
@@ -355,6 +387,9 @@ class NinWikiBot(discord.Client):
         if self.settings.backup_channel_id:
             self.backup_loop.start()
             log.info("Backup ligado: a cada %s min no canal %s (mantem %s)", self.settings.backup_interval_minutes, self.settings.backup_channel_id, self.settings.backup_keep)
+        if self.guilds_feed:
+            self.guilds_loop.start()
+            log.info("Painel de servidores ligado: canal %s (log em %s)", self.settings.guilds_channel_id, self.guilds_feed.log_channel_id)
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)

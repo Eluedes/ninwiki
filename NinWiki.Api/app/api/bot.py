@@ -20,7 +20,7 @@ from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import backup
@@ -461,19 +461,6 @@ async def bot_latest_posts(
         await _fill_pt(db, list(posts))
     return [BotPostEntry(title=_pick(lang, p.title, p.title_pt), excerpt=_summary(_pick(lang, p.excerpt, p.excerpt_pt)), image=_abs_image(p.cover_image),
                          href=f"/blog/{p.slug}", published_at=p.published_at) for p in posts]
-
-
-@router.get("/random", response_model=BotSearchHit)
-async def bot_random(lang: str = Query("en", pattern="^(en|pt)$"), db: AsyncSession = Depends(get_db)) -> BotSearchHit:
-    """Um item/mob/arma PUBLICADO sorteado, para o /random do bot (404 se o wiki ainda nao tem nada publicado)."""
-    row = (await db.execute(select(ContentItem).where(
-        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.category.in_([ContentCategory.ITEMS, ContentCategory.MOBS, ContentCategory.WEAPONS]))
-        .order_by(func.random()).limit(1))).scalars().first()
-    if row is None:
-        raise HTTPException(status_code=404, detail="Nothing published yet")
-    if lang == "pt":
-        await _fill_pt(db, [row])
-    return _item_hit(row, lang)
 
 
 @router.get("/search", response_model=list[BotSearchHit])

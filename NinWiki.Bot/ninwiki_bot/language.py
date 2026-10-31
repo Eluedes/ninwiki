@@ -1,6 +1,6 @@
 """
 Idioma do bot POR SERVIDOR (en = ingles, o padrao; pt = portugues). Quem tem a permissao "Gerenciar servidor" escolhe com /language
-e a escolha fica salva em language_state.json (sobrevive a reinicio e a deploy). /search, /item, /map, /help e os outros respondem nesse idioma.
+e a escolha fica salva em language_state.json (sobrevive a reinicio e a deploy). /search, /item, /help e os outros respondem nesse idioma.
 Este arquivo NAO importa discord.py: so' guarda e le a escolha, e tem os textos das duas linguas.
 """
 import json
@@ -30,21 +30,15 @@ TEXT = {
         # --- comandos de consulta (wiki_commands.py) ---
         "pick_none": "## 🔎 No {kind} found\nNothing matched **{q}** here. Try /search for everything, or another spelling.",
         "kind_item": "item or weapon", "kind_mob": "mob", "kind_jutsu": "jutsu", "kind_mastery": "mastery",
-        "short_term": "❌ Type at least 2 letters.", "random_none": "Nothing is published on the wiki yet.",
+        "short_term": "❌ Type at least 2 letters.",
         "cmp_title": "⚖️ {a} vs {b}", "cmp_same": "Pick two different names.", "cmp_missing": "❌ Could not find **{q}** (items, weapons, mobs or jutsus).",
         "cmp_hint": "Higher is not always better: read the full pages.", "cmp_nodata": "No data to compare.", "cmp_open": "Open {name}",
-        "map_none": "❌ No map area matched **{q}**. Start typing and pick one from the list.", "map_down": "❌ The map data is not available right now. Try again in a moment.",
-        "map_zone": "Zone", "map_safe": "Safe zone", "map_danger": "Danger zone", "map_war": "War zone", "map_neutral": "Neutral",
-        "map_mobs": "Mobs", "map_exits": "Exits", "map_nomobs": "No mobs listed.", "map_noexits": "No exits listed.", "map_open": "Open on the world map",
-        "dir": {"North": "N", "South": "S", "East": "E", "West": "W"}, "map_level": "Lv {lv}",
         "help_title": "📖 Nin Codex bot — commands", "help_site": "Wiki: {url}",
         "help_lines": [
             ("/search", "Search items, mobs, weapons, jutsus, masteries and posts"),
             ("/item · /mob · /jutsu · /mastery", "Look up one thing by name (start typing for suggestions)"),
             ("/drop", "Which mobs drop an item, and how likely"),
             ("/compare", "Two items, weapons or mobs side by side"),
-            ("/map", "A map area: zone, mobs, exits and a link to the world map"),
-            ("/random", "A random item, weapon or mob"),
             ("/patchnotes", "Latest news and patch notes"),
             ("/status", "Are the API, database and site up?"),
             ("/language", "Server language (needs Manage Server)"),
@@ -69,21 +63,15 @@ TEXT = {
         # --- comandos de consulta (wiki_commands.py) ---
         "pick_none": "## 🔎 Nenhum(a) {kind} encontrado(a)\nNada combinou com **{q}** aqui. Tente /search para tudo, ou outra grafia.",
         "kind_item": "item ou arma", "kind_mob": "mob", "kind_jutsu": "jutsu", "kind_mastery": "maestria",
-        "short_term": "❌ Digite pelo menos 2 letras.", "random_none": "Ainda não há nada publicado no wiki.",
+        "short_term": "❌ Digite pelo menos 2 letras.",
         "cmp_title": "⚖️ {a} vs {b}", "cmp_same": "Escolha dois nomes diferentes.", "cmp_missing": "❌ Não achei **{q}** (itens, armas, mobs ou jutsus).",
         "cmp_hint": "Maior nem sempre é melhor: leia as páginas completas.", "cmp_nodata": "Sem dados para comparar.", "cmp_open": "Abrir {name}",
-        "map_none": "❌ Nenhuma área do mapa combinou com **{q}**. Comece a digitar e escolha uma da lista.", "map_down": "❌ Os dados do mapa não estão disponíveis agora. Tente de novo em instantes.",
-        "map_zone": "Zona", "map_safe": "Zona segura", "map_danger": "Zona de perigo", "map_war": "Zona de guerra", "map_neutral": "Neutra",
-        "map_mobs": "Mobs", "map_exits": "Saídas", "map_nomobs": "Nenhum mob listado.", "map_noexits": "Nenhuma saída listada.", "map_open": "Abrir no mapa-mundi",
-        "dir": {"North": "N", "South": "S", "East": "L", "West": "O"}, "map_level": "Nv {lv}",
         "help_title": "📖 Bot do Nin Codex — comandos", "help_site": "Wiki: {url}",
         "help_lines": [
             ("/search", "Busca itens, mobs, armas, jutsus, maestrias e posts"),
             ("/item · /mob · /jutsu · /mastery", "Consulta uma coisa pelo nome (comece a digitar para ver sugestões)"),
             ("/drop", "Quais mobs dropam um item, e com que chance"),
             ("/compare", "Dois itens, armas ou mobs lado a lado"),
-            ("/map", "Uma área do mapa: zona, mobs, saídas e link para o mapa-mundi"),
-            ("/random", "Um item, arma ou mob aleatório"),
             ("/patchnotes", "Últimas notícias e patch notes"),
             ("/status", "API, banco e site estão no ar?"),
             ("/language", "Idioma do servidor (precisa de Gerenciar servidor)"),

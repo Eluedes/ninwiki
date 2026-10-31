@@ -623,11 +623,8 @@ async def testar() -> None:
             check("/status em servidor nao permitido e' recusado", i2.response.send_message.await_count == 1 and not i2.followup.send.await_count)
             # ---- comandos de consulta novos (wiki_commands.py) ----
             nomes = {c.name for c in arvore.get_commands()}
-            check("novos comandos registrados: item, mob, jutsu, mastery, compare, map, random, help", {"item", "mob", "jutsu", "mastery", "compare", "map", "random", "help"} <= nomes, str(nomes))
+            check("novos comandos registrados: item, mob, jutsu, mastery, compare, help (sem /map nem /random)", {"item", "mob", "jutsu", "mastery", "compare", "help"} <= nomes and not {"map", "random"} & nomes, str(nomes))
             check("todos os comandos tem descricao de 1 a 100 caracteres (limite do Discord)", all(1 <= len(c.description) <= 100 for c in arvore.get_commands()))
-            r = await http.get("/bot/random", params={"lang": "en"}, headers={"X-Bot-Token": TOKEN})
-            check("/bot/random devolve um resultado publicado (nunca rascunho)", r.status_code == 200 and r.json()["href"].startswith("/detail/") and not r.json()["href"].endswith("-rascunho"), r.text[:150])
-            check("/bot/random sem token (401)", (await http.get("/bot/random")).status_code == 401)
             ia = interacao(IDS["creator"])
             await arvore.get_command("mob").callback(ia, f"{termo} Larva")
             check("/mob acha o mob e mostra o cartao (LayoutView)", "Larva" in componentes(ia.followup.send.call_args.kwargs["view"]))
@@ -647,31 +644,9 @@ async def testar() -> None:
             icmp2 = interacao(IDS["creator"])
             await arvore.get_command("compare").callback(icmp2, f"{termo} Blade", "zzzznadaaqui987")
             check("/compare com nome inexistente responde so' para quem digitou", todas_efemeras(icmp2) and "zzzznadaaqui987" in texto_enviado(icmp2))
-            iran = interacao(IDS["creator"])
-            await arvore.get_command("random").callback(iran)
-            check("/random responde com um cartao", isinstance(iran.followup.send.call_args.kwargs.get("view"), discord.ui.LayoutView))
             ihelp = interacao(IDS["creator"], guild_id=42)
             await arvore.get_command("help").callback(ihelp)
             check("/help em portugues, so' para quem pediu, lista os comandos", ihelp.response.send_message.call_args.kwargs["ephemeral"] is True and "/compare" in str(ihelp.response.send_message.call_args.kwargs["embed"].to_dict()) and "Bot do Nin Codex" in ihelp.response.send_message.call_args.kwargs["embed"].title)
-            # /map com dados de mentira (o bot le' o areas-info.json do SITE; aqui nao ha' site)
-            from ninwiki_bot.wiki_commands import build_area_embed, find_area
-            fake_info = {"names": {"1": ["Leaf Village", "Vila da Folha"], "2": ["Dark Forest", "Floresta Sombria"]},
-                         "areas": {"1": {"z": "Safe Zone", "e": [[2, "North"]], "m": []}, "2": {"z": "Danger Zone", "e": [[1, "South"]], "m": [["Bear", "Urso", 36], ["Wolf", "Lobo", 12]]}}}
-            check("find_area acha por id, nome EN, nome PT e pedaco do nome", [find_area(fake_info, q) for q in ("2", "leaf village", "floresta sombria", "dark")] == ["2", "1", "2", "2"] and find_area(fake_info, "xyz") is None)
-            ea = build_area_embed(fake_info, "2", "https://wiki.exemplo.com/", "en").to_dict()
-            campos = {f["name"]: f["value"] for f in ea["fields"]}
-            check("/map: zona, mobs por nivel, saidas com nome e link #map/<id>", campos["Zone"] == "Danger zone" and campos["Mobs"].index("Wolf") < campos["Mobs"].index("Bear") and "S → Leaf Village" in campos["Exits"] and ea["url"] == "https://wiki.exemplo.com/map#map/2", str(ea))
-            ep = build_area_embed(fake_info, "2", "", "pt").to_dict()
-            check("/map em portugues e sem SITE_URL (sem link nem imagem)", ep["title"].endswith("Floresta Sombria") and "Urso" in str(ep["fields"]) and "url" not in ep and "image" not in ep, str(ep))
-            api.areas_info = AsyncMock(return_value=fake_info)
-            imap = interacao(IDS["creator"])
-            arv3 = app_commands.CommandTree(discord.Client(intents=discord.Intents.default()))
-            register_public_commands(arv3, api, set(), "https://wiki.exemplo.com", _checar, True, idiomas)
-            await arv3.get_command("map").callback(imap, "dark")
-            check("/map responde com o embed da area", imap.followup.send.call_args.kwargs["embed"].title.endswith("Dark Forest"))
-            imap2 = interacao(IDS["creator"])
-            await arv3.get_command("map").callback(imap2, "nao existe")
-            check("/map com area inexistente responde so' para quem digitou", todas_efemeras(imap2))
     finally:
         async with AsyncSessionLocal() as db:
             await db.execute(delete(ContentItem).where(ContentItem.slug.like(f"{termo}%")))
@@ -680,11 +655,115 @@ async def testar() -> None:
     await http.aclose()
 
 
+def _guild(i: int, nome: str = "", membros: int = 10, owner: int = 7) -> MagicMock:
+    """Servidor falso (so' os campos que o painel le')."""
+    g = MagicMock()
+    g.id, g.name, g.member_count, g.owner_id, g.preferred_locale = i, nome or f"Server {i}", membros, owner, "en-US"
+    g.me.joined_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    return g
+
+
+def _canal_falso() -> MagicMock:
+    """Canal falso com send/get_partial_message(...).edit assincronos (nenhuma conexao ao Discord)."""
+    c = MagicMock()
+    c.send = AsyncMock(return_value=MagicMock(id=555))
+    c.partial = MagicMock()
+    c.partial.edit = AsyncMock()
+    c.get_partial_message = MagicMock(return_value=c.partial)
+    return c
+
+
+async def testar_painel_servidores() -> None:
+    """Painel de servidores e log de entrada/saida (ninwiki_bot/guilds_feed.py), tudo com objetos falsos."""
+    import tempfile
+    from ninwiki_bot.guilds_feed import GuildsFeed, build_event_embed, build_panel_embeds, diff_known, snapshot
+    secao("Painel de servidores (sem Discord real)")
+    snaps = snapshot([_guild(1, "Small", 5), _guild(2, "Big", 900), _guild(3, "@everyone **bold** `x` [a](http://x)", 50)])
+    emb = build_panel_embeds(snaps)
+    desc = emb[0]["description"]
+    check("painel: titulo com total de servidores e de membros", "3" in emb[0]["title"] and "955" in emb[0]["title"], emb[0]["title"])
+    check("painel: ordenado por membros (maior primeiro)", desc.index("Big") < desc.index("everyone") < desc.index("Small"), desc)
+    check("painel: nome com markdown/@everyone escapado", "@everyone" not in desc and "\\*\\*bold" in desc and "\\`x" in desc, desc)
+    muitos = build_panel_embeds(snapshot([_guild(i, f"Servidor numero {i}", 1000 - i) for i in range(1, 301)]))
+    total = sum(len(e.get("title", "")) + len(e["description"]) + len(e.get("footer", {}).get("text", "")) for e in muitos)
+    check("300 servidores: cabe no Discord (<=10 embeds, descricao <=4096, soma <=6000)", len(muitos) <= 10 and total <= 6000 and all(len(e["description"]) <= 4096 for e in muitos), f"{len(muitos)} embeds, {total} chars")
+    listados = sum(e["description"].count("\n") + 1 for e in muitos) - 1   # menos a linha '+N'
+    mais = int(muitos[-1]["description"].rsplit("**+", 1)[1].split(" ")[0])
+    check("300 servidores: varios embeds, titulo com 300 e '+N more servers' fechando a conta", len(muitos) >= 2 and "300" in muitos[0]["title"] and listados + mais == 300, f"{listados}+{mais}")
+    ev_in = build_event_embed(True, snaps[1])
+    ev_out = build_event_embed(False, snaps[1], 90061)
+    check("log: entrou = verde, saiu = vermelho com 'Stayed' (1d 1h 1m)", ev_in["color"] == 0x2ECC71 and ev_out["color"] == 0xE74C3C and {"name": "Stayed", "value": "1d 1h 1m", "inline": True} in ev_out["fields"])
+    check("log: dono aparece so' como id (sem mencao <@...>)", "<@" not in json.dumps(ev_out) and any(f["name"] == "Owner ID" for f in ev_out["fields"]))
+    check("log: 'detectado ao reiniciar' no rodape", "restart" in build_event_embed(True, snaps[0], offline=True)["footer"]["text"])
+    known = {"1": {"name": "Small", "first_seen": "2026-01-01T00:00:00+00:00"}, "9": {"name": "Gone", "first_seen": "2026-01-01T00:00:00+00:00"}}
+    ent, sai = diff_known(known, snaps)
+    check("diferencas: entrou (2,3) e saiu (9) com o bot offline", {s["id"] for s in ent} == {"2", "3"} and [s["id"] for s in sai] == ["9"])
+    check("diferencas: 1a vez (sem historico) nao inventa entradas nem saidas", diff_known(None, snaps) == ([], []))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        caminho = Path(tmp) / "guilds_state.json"
+        guilds = [_guild(1, "Small", 5), _guild(2, "Big", 900)]
+        cli = MagicMock()
+        cli.guilds = guilds
+        canal = _canal_falso()
+        cli.get_channel = MagicMock(return_value=canal)
+        feed = GuildsFeed(cli, 100, None, caminho)
+        await feed.startup()
+        check("1a vez: cria UMA mensagem e nao posta nada no log (so' vira a base)", canal.send.await_count == 1 and feed.message_id == 555 and feed.started)
+        await feed.refresh()
+        await feed.tick()
+        check("sem mudanca: nao edita nem cria (hash igual)", canal.send.await_count == 1 and canal.partial.edit.await_count == 0)
+        guilds[0].member_count = 6
+        await feed.tick()
+        check("mudou o numero de membros: EDITA a mesma mensagem (sem criar outra)", canal.partial.edit.await_count == 1 and canal.send.await_count == 1)
+        guilds.append(_guild(3, "New", 20))
+        await feed.on_join(guilds[2])
+        log_in = canal.send.call_args.kwargs["embed"]
+        check("on_guild_join: mensagem NOVA no log (verde) sem mencoes", log_in.title.startswith("✅") and canal.send.call_args.kwargs["allowed_mentions"].everyone is False and canal.send.await_count == 2)
+        await feed._pending
+        check("on_guild_join: o painel e' editado em seguida (1 edicao, agrupada)", canal.partial.edit.await_count == 2)
+        gone = guilds.pop(1)
+        await feed.on_remove(gone)
+        log_out = canal.send.call_args.kwargs["embed"]
+        check("on_guild_remove: log vermelho com 'Stayed' e servidor esquecido", log_out.title.startswith("❌") and any(f.name == "Stayed" for f in log_out.fields) and "2" not in feed.known)
+        await feed._pending
+        # a mensagem do painel foi apagada: recria
+        canal.partial.edit.side_effect = discord.NotFound(MagicMock(status=404), "gone")
+        guilds[0].member_count = 7
+        antes = canal.send.await_count
+        await feed.tick()
+        check("mensagem do painel apagada: cria outra", canal.send.await_count == antes + 1)
+        # reinicio: estado em arquivo; um servidor saiu e outro entrou com o bot desligado
+        cli2 = MagicMock()
+        cli2.guilds = [guilds[0], _guild(8, "Offline join", 3)]
+        canal2 = _canal_falso()
+        cli2.get_channel = MagicMock(return_value=canal2)
+        feed2 = GuildsFeed(cli2, 100, 200, caminho)
+        check("estado persistido em arquivo (mensagem e servidores conhecidos)", feed2.message_id == 555 and set(feed2.known) == {"1", "3"}, str(feed2.known))
+        await feed2.startup()
+        titulos = [c.kwargs["embed"].title for c in canal2.send.call_args_list if "embed" in c.kwargs]
+        check("ao ligar: loga quem entrou/saiu offline e marca 'detectado ao reiniciar'", sorted(t[:1] for t in titulos) == ["✅", "❌"] and "restart" in canal2.send.call_args_list[0].kwargs["embed"].footer.text, str(titulos))
+        # canal inexistente / sem permissao: nunca derruba o bot
+        cli3 = MagicMock()
+        cli3.guilds = guilds
+        cli3.get_channel = MagicMock(return_value=None)
+        cli3.fetch_channel = AsyncMock(side_effect=discord.NotFound(MagicMock(status=404), "no"))
+        feed3 = GuildsFeed(cli3, 100, None, Path(tmp) / "outro.json")
+        await feed3.startup()
+        canal_sem = _canal_falso()
+        canal_sem.send = AsyncMock(side_effect=discord.Forbidden(MagicMock(status=403), "no"))
+        cli3.get_channel = MagicMock(return_value=canal_sem)
+        await feed3.on_join(_guild(5))
+        await feed3.refresh()
+        check("canal inexistente / sem permissao: so' registra no terminal, nao levanta erro", feed3.message_id is None)
+
+
 async def main() -> None:
     """Prepara a configuracao, roda os testes e limpa os dados no final."""
     orig = settings.bot_api_token
     try:
         await testar()
+        await testar_painel_servidores()
     finally:
         settings.bot_api_token = orig
         await limpar()

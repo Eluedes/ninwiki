@@ -31,6 +31,10 @@ class BotSettings(BaseSettings):
     # WEBHOOK (URL do Discord: Configuracoes do canal > Integracoes > Webhooks) onde o bot mantem UMA mensagem "Latest updates" com a versao mais recente
     # da API e do site, EDITANDO a mesma mensagem a cada deploy (nao enche o chat). A URL e' um segredo: so' no .env. Vazio = desligado.
     version_webhook_url: str = ""
+    # PAINEL DE SERVIDORES (sem comando): canal PRIVADO do dono onde o bot mantem UMA mensagem editada com os servidores em que esta' (total, membros, lista)
+    # e posta um aviso novo a cada entrada/saida de servidor. GUILDS_LOG_CHANNEL_ID separa os avisos em outro canal (vazio = mesmo canal). Vazio = desligado.
+    guilds_channel_id: int | None = None
+    guilds_log_channel_id: int | None = None
     # Manda tambem uma mensagem NOVA a cada "caiu" / "voltou" (alem do painel que se edita sozinho). Padrao false: o painel basta e nao enche o canal.
     status_alerts: bool = False
     # Mantem UMA mensagem "Nin Codex status" no canal de erros, editada a cada checagem (estado ao vivo, tempo de resposta, uptime). false = so' avisa quando cai/volta.
@@ -48,7 +52,7 @@ class BotSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
-    @field_validator("dev_guild_id", "log_channel_id", "error_channel_id", "status_channel_id", "backup_channel_id", mode="before")
+    @field_validator("dev_guild_id", "log_channel_id", "error_channel_id", "status_channel_id", "backup_channel_id", "guilds_channel_id", "guilds_log_channel_id", mode="before")
     @classmethod
     def _empty_guild_is_none(cls, v):
         """Campo de ID vazio no .env vira None (recurso desligado)."""

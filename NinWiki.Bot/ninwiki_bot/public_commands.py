@@ -7,7 +7,7 @@ Comandos PUBLICOS do bot (qualquer pessoa do servidor pode usar), todos com Comp
   /drop <item>               quais mobs dropam o item (e a chance de cada um)
   /patchnotes                as noticias/patch notes mais recentes do blog
   /language <en|pt>          idioma padrao do bot NESTE servidor (so' quem tem "Gerenciar servidor")
-  (/item /mob /jutsu /mastery /compare /map /random /help: ver wiki_commands.py)
+  (/item /mob /jutsu /mastery /compare /help: ver wiki_commands.py)
   (/search e /drop sugerem nomes enquanto a pessoa digita: autocompletar do Discord)
 
 Nada aqui mostra dado interno: so' online/offline e conteudo PUBLICADO do site. Os construtores de tela (build_*) nao falam

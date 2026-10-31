@@ -14,8 +14,6 @@ Ele não decide nada sozinho: em cada comando só repassa à API **quem digitou*
 | `/patchnotes` | **qualquer pessoa**: as 3 notícias/patch notes mais recentes do blog (título com link, data e resumo) |
 | `/item` `/mob` `/jutsu` `/mastery` `nome` | **qualquer pessoa**: cartão do resultado só do tipo pedido (imagem, dados, resumo, botão da página); sugere nomes |
 | `/compare a b` | **qualquer pessoa**: dois itens/armas/mobs/jutsus lado a lado |
-| `/map área` | **qualquer pessoa**: zona, mobs e saídas da área + link para o mapa do site (lê `SITE_URL/game-maps/areas-info.json`) |
-| `/random` | **qualquer pessoa**: um item/arma/mob sorteado |
 | `/help` | **qualquer pessoa**: lista dos comandos no idioma do servidor (resposta só para quem pediu) |
 
 **Convidar o bot:** use o link `https://discord.com/oauth2/authorize?client_id=SEU_APPLICATION_ID&permissions=117760&scope=bot%20applications.commands` (permissões: ver canais, enviar mensagens, links incorporados, anexar arquivos para o backup e histórico). O site já tem o botão pronto (`NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID`).
@@ -80,6 +78,22 @@ ninwiki_bot/config.py        lê e valida o .env
 ninwiki_bot/api_client.py    fala com /bot/* da API (não importa discord.py)
 ```
 Contrato completo das rotas: `NinWiki.Api/app/api/bot.py`.
+
+
+## Painel de servidores (opcional, sem comando)
+O bot mostra **em quais servidores ele está** sem nenhum comando: mantém **uma mensagem fixa** num canal só seu e a **edita** a cada mudança (igual à mensagem *Latest updates*).
+Ela traz o **total de servidores**, o **total de membros** e a lista ordenada por membros (nome, id, membros e a data em que o bot entrou). Se a lista não couber
+na mensagem (limite do Discord, uns 70 servidores), o final vira "+N more servers". Cada **entrada** e **saída** de servidor também gera um aviso **novo** no canal (verde = entrou,
+vermelho = saiu, com nome, id, membros, id do dono, idioma e, ao sair, **quanto tempo ficou**).
+1. No Discord, crie um canal **privado** só seu (ex.: `#servidores-do-bot`).
+2. Dê ao bot nesse canal as permissões **Ver canal**, **Enviar mensagens** e **Inserir links** (e ele edita a própria mensagem sozinho).
+3. Copie o ID do canal (Modo desenvolvedor > botão direito > Copiar ID do canal).
+4. Na SquareCloud, no app do bot, em *Variáveis de Ambiente* (`BOT_ENV`), coloque `GUILDS_CHANNEL_ID=<id>` (opcional: `GUILDS_LOG_CHANNEL_ID=<id>` para mandar só os avisos de entrada/saída a outro canal). Vazio = recurso desligado.
+5. **Reinicie o bot.** Na primeira vez ele só cria a mensagem (não despeja histórico); nas seguintes, se entrou ou saiu um servidor **com o bot desligado**, o aviso sai marcado como *Detected on restart*.
+- Só edita a mensagem quando o conteúdo mudou (hash) e confere a cada 30 min (muda o número de membros ou o nome). Entradas/saídas seguidas viram uma edição só. Se apagarem a mensagem, o bot cria outra.
+- Sem permissão no canal ou canal inexistente: só um aviso no terminal do bot, nada cai. Usa só a intent padrão `guilds` (nenhuma privilegiada).
+- O estado fica em `guilds_state.json` (id da mensagem, hash e servidores conhecidos com a data de entrada), na mesma pasta dos outros `*_state.json` (`BOT_STATE_DIR`).
+- Código: `ninwiki_bot/guilds_feed.py` e `main.py` (`_guilds_tick`, `on_guild_join/remove/update`). Os textos desse canal são sempre em inglês (canal do dono).
 
 
 ## Log geral no Discord (opcional)

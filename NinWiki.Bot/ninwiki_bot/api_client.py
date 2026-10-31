@@ -109,25 +109,6 @@ class NinWikiApi:
         """Os posts do blog mais recentes que ja' estao no ar (para o /patchnotes)."""
         return await self._request("GET", "/bot/latest-posts", params={"limit": limit, "lang": lang})
 
-    async def random_hit(self, lang: str = "en") -> dict:
-        """Um item/mob/arma publicado sorteado (mesmo formato de um resultado do /search), para o /random."""
-        return await self._request("GET", "/bot/random", params={"lang": lang})
-
-    async def areas_info(self, site_url: str) -> dict | None:
-        """Dados das areas do mapa-mundi (/game-maps/areas-info.json do SITE; cache de 1 h): {names:{id:[en,pt]}, areas:{id:{z,e,m,...}}}, ou None se o site nao respondeu."""
-        async def fetch():
-            try:
-                async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; NinWikiBot/1.0)"}) as client:
-                    res = await client.get(site_url.rstrip("/") + "/game-maps/areas-info.json")
-                    data = res.json() if res.status_code == 200 else None
-            except (httpx.HTTPError, ValueError):
-                return None
-            return data if isinstance(data, dict) and data.get("areas") else None
-        data = await self._cached(("areas", site_url), 3600, fetch)
-        if data is None:
-            self._cache.pop(("areas", site_url), None)   # falha nao fica 1 h em cache
-        return data
-
     async def errors_since(self, since_iso: str, limit: int = 50) -> list[dict]:
         """Problemas (erros do wiki) com ultima ocorrencia depois de `since_iso`, mais antigos primeiro. Sem traceback e sem IP."""
         return await self._request("GET", "/bot/errors", params={"since": since_iso, "limit": limit})
