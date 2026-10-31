@@ -54,7 +54,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Construir e enviar a imagem (${{ matrix.servico }})
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.servico == 'api' && 'NinWiki.Api' || matrix.servico == 'web' && 'NinWiki.Web' || 'NinWiki.Bot' }}
           file: Azure/Dockerfile.${{ matrix.servico }}
