@@ -26,7 +26,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/A_Demon%3F%3F"
+   "source": "https://ninonline.fandom.com/wiki/A_Demon%3F%3F",
+   "clientStatus": "partial",
+   "clientNote": "Grouping page: the game has variants such as \"A Demon? (Deprecated)\"."
   },
   {
    "id": "a-lord-s-legacy-takumi-arc",
@@ -67,7 +69,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/A_Lord%27s_Legacy_-_%28Takumi_arc%29"
+   "source": "https://ninonline.fandom.com/wiki/A_Lord%27s_Legacy_-_%28Takumi_arc%29",
+   "clientStatus": "confirmed"
   },
   {
    "id": "academy-scrolls",
@@ -98,7 +101,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Academy_Scrolls"
+   "source": "https://ninonline.fandom.com/wiki/Academy_Scrolls",
+   "clientStatus": "partial"
   },
   {
    "id": "access-granted",
@@ -124,7 +128,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Access_Granted"
+   "source": "https://ninonline.fandom.com/wiki/Access_Granted",
+   "clientStatus": "partial"
   },
   {
    "id": "among-the-yokai",
@@ -156,7 +161,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Among_the_Yokai"
+   "source": "https://ninonline.fandom.com/wiki/Among_the_Yokai",
+   "clientStatus": "partial"
   },
   {
    "id": "bad-commuters",
@@ -207,7 +213,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Bad_Commuters"
+   "source": "https://ninonline.fandom.com/wiki/Bad_Commuters",
+   "clientStatus": "confirmed"
   },
   {
    "id": "bad-larvae",
@@ -236,7 +243,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Bad_Larva"
+   "source": "https://ninonline.fandom.com/wiki/Bad_Larva",
+   "clientStatus": "partial"
   },
   {
    "id": "baiting-basics-i",
@@ -260,7 +268,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Baiting_Basics_I"
+   "source": "https://ninonline.fandom.com/wiki/Baiting_Basics_I",
+   "clientStatus": "confirmed"
   },
   {
    "id": "balanced-waters",
@@ -301,7 +310,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Balanced_Waters"
+   "source": "https://ninonline.fandom.com/wiki/Balanced_Waters",
+   "clientStatus": "partial"
   },
   {
    "id": "bandit-hunt-i",
@@ -357,7 +367,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Bandit_Hunt_I"
+   "source": "https://ninonline.fandom.com/wiki/Bandit_Hunt_I",
+   "clientStatus": "confirmed"
   },
   {
    "id": "bandit-hunt-ii",
@@ -415,7 +426,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Bandit_Hunt_II"
+   "source": "https://ninonline.fandom.com/wiki/Bandit_Hunt_II",
+   "clientStatus": "confirmed"
   },
   {
    "id": "bandits-defeat-chain",
@@ -455,7 +467,9 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Bandits_Defeat_Chain"
+   "source": "https://ninonline.fandom.com/wiki/Bandits_Defeat_Chain",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "bat-clearance",
@@ -494,7 +508,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Bat_Clearance"
+   "source": "https://ninonline.fandom.com/wiki/Bat_Clearance",
+   "clientStatus": "confirmed"
   },
   {
    "id": "bear-hunt",
@@ -523,7 +538,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Bear_Hunt"
+   "source": "https://ninonline.fandom.com/wiki/Bear_Hunt",
+   "clientStatus": "partial"
   },
   {
    "id": "benkei-s-tools",
@@ -552,7 +568,9 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Benkei%27s_Tools"
+   "source": "https://ninonline.fandom.com/wiki/Benkei%27s_Tools",
+   "clientStatus": "divergent",
+   "clientNote": "The request text on the wiki differs from the game text: while being chased by thugs near takumi village benkei threw his precious tools into a river hoping to retrieve them later but they went missing"
   },
   {
    "id": "big-ancient-insects",
@@ -581,7 +599,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Big_Ancient_Insects"
+   "source": "https://ninonline.fandom.com/wiki/Big_Ancient_Insects",
+   "clientStatus": "confirmed"
   },
   {
    "id": "binding-ofuda",
@@ -614,7 +633,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Binding_Ofuda"
+   "source": "https://ninonline.fandom.com/wiki/Binding_Ofuda",
+   "clientStatus": "partial"
   },
   {
    "id": "blocked-entry",
@@ -641,11 +661,12 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Blocked_Entry"
+   "source": "https://ninonline.fandom.com/wiki/Blocked_Entry",
+   "clientStatus": "partial"
   },
   {
    "id": "blood-puppet-retirment",
-   "name": "Blood Puppet Retirment",
+   "name": "Blood Puppet Retirement",
    "level": null,
    "rank": null,
    "type": "side",
@@ -672,7 +693,9 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Blood_Puppet_Retirment"
+   "source": "https://ninonline.fandom.com/wiki/Blood_Puppet_Retirment",
+   "clientStatus": "partial",
+   "clientNote": "Name fixed from the Fandom spelling \"Blood Puppet Retirment\" to the game's."
   },
   {
    "id": "botanical-research",
@@ -717,7 +740,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Botanical_Research"
+   "source": "https://ninonline.fandom.com/wiki/Botanical_Research",
+   "clientStatus": "confirmed"
   },
   {
    "id": "bounty-hunting",
@@ -767,7 +791,8 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Bounty_Hunting"
+   "source": "https://ninonline.fandom.com/wiki/Bounty_Hunting",
+   "clientStatus": "confirmed"
   },
   {
    "id": "break-the-chain",
@@ -806,7 +831,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Break_the_Chain"
+   "source": "https://ninonline.fandom.com/wiki/Break_the_Chain",
+   "clientStatus": "partial"
   },
   {
    "id": "build-kawasaki-bridge-crisis",
@@ -833,7 +859,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Build%21%21_Kawasaki_Bridge_Crisis"
+   "source": "https://ninonline.fandom.com/wiki/Build%21%21_Kawasaki_Bridge_Crisis",
+   "clientStatus": "partial"
   },
   {
    "id": "cape-of-straw",
@@ -862,7 +889,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cape_of_Straw"
+   "source": "https://ninonline.fandom.com/wiki/Cape_of_Straw",
+   "clientStatus": "partial"
   },
   {
    "id": "cleanse-the-temple-mist-seals-and-temple",
@@ -907,7 +935,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cleanse_The_Temple_-_%28Mist_Seals_and_temple%29"
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_The_Temple_-_%28Mist_Seals_and_temple%29",
+   "clientStatus": "confirmed"
   },
   {
    "id": "cleanse-the-forest-i",
@@ -944,7 +973,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_I"
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_I",
+   "clientStatus": "partial"
   },
   {
    "id": "cleanse-the-forest-ii",
@@ -981,7 +1011,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_II"
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_II",
+   "clientStatus": "partial"
   },
   {
    "id": "cleanse-the-forest-iii",
@@ -1016,7 +1047,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_III"
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_III",
+   "clientStatus": "confirmed"
   },
   {
    "id": "cleanse-the-forest-iv",
@@ -1050,7 +1082,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_IV"
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_IV",
+   "clientStatus": "partial"
   },
   {
    "id": "cleanse-the-forest-v",
@@ -1090,7 +1123,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_V"
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Forest_V",
+   "clientStatus": "confirmed"
   },
   {
    "id": "cleanse-the-remnants-i",
@@ -1122,7 +1156,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Remnants_I"
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Remnants_I",
+   "clientStatus": "partial"
   },
   {
    "id": "cleanse-the-remnants-ii",
@@ -1154,7 +1189,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Remnants_II"
+   "source": "https://ninonline.fandom.com/wiki/Cleanse_the_Remnants_II",
+   "clientStatus": "partial"
   },
   {
    "id": "clear-the-abandoned-lair",
@@ -1195,7 +1231,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Clear_the_Abandoned_Lair"
+   "source": "https://ninonline.fandom.com/wiki/Clear_the_Abandoned_Lair",
+   "clientStatus": "confirmed"
   },
   {
    "id": "clear-the-abandoned-lair-ii",
@@ -1231,7 +1268,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Clear_the_Abandoned_Lair_II"
+   "source": "https://ninonline.fandom.com/wiki/Clear_the_Abandoned_Lair_II",
+   "clientStatus": "confirmed"
   },
   {
    "id": "cold-blooded-killer",
@@ -1285,7 +1323,8 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Cold-Blooded_Killer"
+   "source": "https://ninonline.fandom.com/wiki/Cold-Blooded_Killer",
+   "clientStatus": "confirmed"
   },
   {
    "id": "coyote-hunting",
@@ -1316,7 +1355,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Coyote_Hunting"
+   "source": "https://ninonline.fandom.com/wiki/Coyote_Hunting",
+   "clientStatus": "partial"
   },
   {
    "id": "danger-dangos",
@@ -1345,7 +1385,9 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Danger_Dangos"
+   "source": "https://ninonline.fandom.com/wiki/Danger_Dangos",
+   "clientStatus": "divergent",
+   "clientNote": "The request text on the wiki differs from the game text: give danger dango to itori"
   },
   {
    "id": "darker-places-leaf-seals",
@@ -1388,7 +1430,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Darker_Places_%E2%80%93_Leaf_Seals"
+   "source": "https://ninonline.fandom.com/wiki/Darker_Places_%E2%80%93_Leaf_Seals",
+   "clientStatus": "confirmed"
   },
   {
    "id": "spider",
@@ -1419,7 +1462,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Defeat_Spiders"
+   "source": "https://ninonline.fandom.com/wiki/Defeat_Spiders",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "demon-claws",
@@ -1462,7 +1507,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Demon_Claws_%28mission%29"
+   "source": "https://ninonline.fandom.com/wiki/Demon_Claws_%28mission%29",
+   "clientStatus": "confirmed"
   },
   {
    "id": "dethrone-the-beast",
@@ -1516,7 +1562,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Dethrone_the_Beast"
+   "source": "https://ninonline.fandom.com/wiki/Dethrone_the_Beast",
+   "clientStatus": "confirmed"
   },
   {
    "id": "drunk-entry",
@@ -1554,7 +1601,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Drunk_Entry"
+   "source": "https://ninonline.fandom.com/wiki/Drunk_Entry",
+   "clientStatus": "partial"
   },
   {
    "id": "dull-edges-and-sharp-minds",
@@ -1580,7 +1628,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Dull_Edges_and_Sharp_Minds"
+   "source": "https://ninonline.fandom.com/wiki/Dull_Edges_and_Sharp_Minds",
+   "clientStatus": "partial"
   },
   {
    "id": "eastward-shipment",
@@ -1612,7 +1661,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Eastward_Shipment"
+   "source": "https://ninonline.fandom.com/wiki/Eastward_Shipment",
+   "clientStatus": "confirmed"
   },
   {
    "id": "echos-of-yokai-i",
@@ -1647,7 +1697,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_I"
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_I",
+   "clientStatus": "partial"
   },
   {
    "id": "echos-of-yokai-ii",
@@ -1681,7 +1732,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_II"
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_II",
+   "clientStatus": "partial"
   },
   {
    "id": "echos-of-yokai-iii",
@@ -1716,7 +1768,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_III"
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_III",
+   "clientStatus": "partial"
   },
   {
    "id": "echos-of-yokai-iv",
@@ -1751,7 +1804,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_IV"
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_IV",
+   "clientStatus": "partial"
   },
   {
    "id": "echos-of-yokai-v",
@@ -1785,7 +1839,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_V"
+   "source": "https://ninonline.fandom.com/wiki/Echos_of_Yokai_V",
+   "clientStatus": "partial"
   },
   {
    "id": "endanger-tigers",
@@ -1814,7 +1869,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Endanger_Tigers"
+   "source": "https://ninonline.fandom.com/wiki/Endanger_Tigers",
+   "clientStatus": "partial"
   },
   {
    "id": "escort-the-foreign-envoy",
@@ -1881,7 +1937,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Escort_the_Foreign_Envoy"
+   "source": "https://ninonline.fandom.com/wiki/Escort_the_Foreign_Envoy",
+   "clientStatus": "confirmed"
   },
   {
    "id": "fill-the-bucket",
@@ -1919,7 +1976,8 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Fill_the_Bucket"
+   "source": "https://ninonline.fandom.com/wiki/Fill_the_Bucket",
+   "clientStatus": "partial"
   },
   {
    "id": "gang-war-i",
@@ -1945,7 +2003,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Gang_War_I"
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_I",
+   "clientStatus": "partial"
   },
   {
    "id": "gang-war-ii",
@@ -1971,7 +2030,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Gang_War_II"
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_II",
+   "clientStatus": "partial"
   },
   {
    "id": "gang-war-iii",
@@ -1997,7 +2057,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Gang_War_III"
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_III",
+   "clientStatus": "partial"
   },
   {
    "id": "gang-war-iv",
@@ -2023,7 +2084,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Gang_War_IV"
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_IV",
+   "clientStatus": "partial"
   },
   {
    "id": "gang-war-v",
@@ -2049,7 +2111,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Gang_War_V"
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_V",
+   "clientStatus": "partial"
   },
   {
    "id": "gang-war-vi",
@@ -2075,7 +2138,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Gang_War_VI"
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_VI",
+   "clientStatus": "partial"
   },
   {
    "id": "gang-war-vii",
@@ -2101,7 +2165,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Gang_War_VII"
+   "source": "https://ninonline.fandom.com/wiki/Gang_War_VII",
+   "clientStatus": "partial"
   },
   {
    "id": "giant-fire-ant-infestation",
@@ -2128,7 +2193,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Giant_Fire_Ant_Infestation"
+   "source": "https://ninonline.fandom.com/wiki/Giant_Fire_Ant_Infestation",
+   "clientStatus": "partial"
   },
   {
    "id": "glacier-bear-hunt",
@@ -2157,7 +2223,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Glacier_Bear_Hunt"
+   "source": "https://ninonline.fandom.com/wiki/Glacier_Bear_Hunt",
+   "clientStatus": "confirmed"
   },
   {
    "id": "gobori-s-odd-request",
@@ -2193,7 +2260,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Gobori%27s_Odd_Request"
+   "source": "https://ninonline.fandom.com/wiki/Gobori%27s_Odd_Request",
+   "clientStatus": "partial"
   },
   {
    "id": "guard-the-barricades-i",
@@ -2221,7 +2289,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Guard_the_Barricades_I"
+   "source": "https://ninonline.fandom.com/wiki/Guard_the_Barricades_I",
+   "clientStatus": "partial"
   },
   {
    "id": "guard-the-barricades-ii",
@@ -2249,7 +2318,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Guard_the_Barricades_II"
+   "source": "https://ninonline.fandom.com/wiki/Guard_the_Barricades_II",
+   "clientStatus": "partial"
   },
   {
    "id": "guilty-pleasure",
@@ -2290,7 +2360,9 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Guilty_Pleasure"
+   "source": "https://ninonline.fandom.com/wiki/Guilty_Pleasure",
+   "clientStatus": "divergent",
+   "clientNote": "The request text on the wiki differs from the game text: sneak into leaf village hotsprings for 3 minutes"
   },
   {
    "id": "mist-spa",
@@ -2321,7 +2393,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Guilty_Pleasure_Mist_Style"
+   "source": "https://ninonline.fandom.com/wiki/Guilty_Pleasure_Mist_Style",
+   "clientStatus": "partial",
+   "clientNote": "Grouping page: the game has variants such as \"Enter the Mist Spa... or report Sage to the Police\"."
   },
   {
    "id": "haiku-57-5",
@@ -2349,7 +2423,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Haiku_57-5"
+   "source": "https://ninonline.fandom.com/wiki/Haiku_57-5",
+   "clientStatus": "partial"
   },
   {
    "id": "haji-s-sword",
@@ -2395,7 +2470,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Haji%27s_Sword"
+   "source": "https://ninonline.fandom.com/wiki/Haji%27s_Sword",
+   "clientStatus": "confirmed"
   },
   {
    "id": "hanji-needs-a-break",
@@ -2422,7 +2498,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Hanji_needs_a_Break"
+   "source": "https://ninonline.fandom.com/wiki/Hanji_needs_a_Break",
+   "clientStatus": "partial"
   },
   {
    "id": "help-sage-find-his-way",
@@ -2451,7 +2528,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Help_Sage_find_his_way..."
+   "source": "https://ninonline.fandom.com/wiki/Help_Sage_find_his_way...",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "hidden-seals",
@@ -2506,7 +2585,9 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Hidden_Seals"
+   "source": "https://ninonline.fandom.com/wiki/Hidden_Seals",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "hidden-tomb-takumi-seals",
@@ -2592,7 +2673,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Hidden_Tomb_-_%28Takumi_Seals%29"
+   "source": "https://ninonline.fandom.com/wiki/Hidden_Tomb_-_%28Takumi_Seals%29",
+   "clientStatus": "confirmed"
   },
   {
    "id": "hidden-in-the-desert-sand-seals",
@@ -2633,7 +2715,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Hidden_in_the_Desert_-_%28Sand_Seals%29"
+   "source": "https://ninonline.fandom.com/wiki/Hidden_in_the_Desert_-_%28Sand_Seals%29",
+   "clientStatus": "confirmed"
   },
   {
    "id": "hide-seek",
@@ -2659,7 +2742,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Hide_%26_Seek"
+   "source": "https://ninonline.fandom.com/wiki/Hide_%26_Seek",
+   "clientStatus": "partial"
   },
   {
    "id": "honey-hive-hunt",
@@ -2689,7 +2773,8 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Honey_Hive_Hunt"
+   "source": "https://ninonline.fandom.com/wiki/Honey_Hive_Hunt",
+   "clientStatus": "partial"
   },
   {
    "id": "horned-beasts",
@@ -2728,7 +2813,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Horned_Beasts"
+   "source": "https://ninonline.fandom.com/wiki/Horned_Beasts",
+   "clientStatus": "partial"
   },
   {
    "id": "hornet-infestation",
@@ -2758,7 +2844,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Hornet_Infestation"
+   "source": "https://ninonline.fandom.com/wiki/Hornet_Infestation",
+   "clientStatus": "confirmed"
   },
   {
    "id": "how-to-build-a-bridge",
@@ -2785,7 +2872,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/How-To_Build_a_Bridge"
+   "source": "https://ninonline.fandom.com/wiki/How-To_Build_a_Bridge",
+   "clientStatus": "partial"
   },
   {
    "id": "kairi-s-parcel-asoki",
@@ -2820,7 +2908,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Kairi%27s_Parcel"
+   "source": "https://ninonline.fandom.com/wiki/Kairi%27s_Parcel",
+   "clientStatus": "confirmed"
   },
   {
    "id": "mobster-take-out",
@@ -2885,7 +2974,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Kinsen_Mobsters_Questline"
+   "source": "https://ninonline.fandom.com/wiki/Kinsen_Mobsters_Questline",
+   "clientStatus": "partial"
   },
   {
    "id": "koji-co-employment-opportunity",
@@ -2912,7 +3002,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Koji_Co._Employment_Opportunity"
+   "source": "https://ninonline.fandom.com/wiki/Koji_Co._Employment_Opportunity",
+   "clientStatus": "partial"
   },
   {
    "id": "land-of-toads-i",
@@ -2954,7 +3045,10 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Land_Of_Toads-Mission"
+   "source": "https://ninonline.fandom.com/wiki/Land_Of_Toads-Mission",
+   "clientName": "Land of Toads II",
+   "clientStatus": "divergent",
+   "clientNote": "The game calls it \"Land of Toads II\"."
   },
   {
    "id": "land-of-spirits",
@@ -2992,7 +3086,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Land_of_Spirits_%28Mission%29"
+   "source": "https://ninonline.fandom.com/wiki/Land_of_Spirits_%28Mission%29",
+   "clientStatus": "partial"
   },
   {
    "id": "obtain-talons",
@@ -3042,7 +3137,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Collecting_mission_chain"
+   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Collecting_mission_chain",
+   "clientStatus": "partial"
   },
   {
    "id": "natural-enemies-i",
@@ -3077,7 +3173,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Killing_mission_chain"
+   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Killing_mission_chain",
+   "clientStatus": "partial"
   },
   {
    "id": "resolving-an-argument",
@@ -3103,7 +3200,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Resolving_an_Argument"
+   "source": "https://ninonline.fandom.com/wiki/Land_of_Toads_-_Resolving_an_Argument",
+   "clientStatus": "partial"
   },
   {
    "id": "leaf-village-assault",
@@ -3150,7 +3248,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Leaf_Village_Assault"
+   "source": "https://ninonline.fandom.com/wiki/Leaf_Village_Assault",
+   "clientStatus": "confirmed"
   },
   {
    "id": "light-work",
@@ -3177,7 +3276,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Light_Work"
+   "source": "https://ninonline.fandom.com/wiki/Light_Work",
+   "clientStatus": "partial"
   },
   {
    "id": "find-giba",
@@ -3207,7 +3307,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Lost_Puppy_%22Giba%22"
+   "source": "https://ninonline.fandom.com/wiki/Lost_Puppy_%22Giba%22",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "lover-s-quarrel",
@@ -3245,7 +3347,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Lover%27s_Quarrel"
+   "source": "https://ninonline.fandom.com/wiki/Lover%27s_Quarrel",
+   "clientStatus": "confirmed"
   },
   {
    "id": "lucky-coin",
@@ -3284,7 +3387,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Lucky_Coin"
+   "source": "https://ninonline.fandom.com/wiki/Lucky_Coin",
+   "clientStatus": "partial"
   },
   {
    "id": "medicine-supplies",
@@ -3353,7 +3457,8 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Medical_Supplies"
+   "source": "https://ninonline.fandom.com/wiki/Medical_Supplies",
+   "clientStatus": "confirmed"
   },
   {
    "id": "medicine-supplies-i",
@@ -3379,7 +3484,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_I"
+   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_I",
+   "clientStatus": "partial"
   },
   {
    "id": "medicine-supplies-ii",
@@ -3438,7 +3544,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_II"
+   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_II",
+   "clientStatus": "confirmed"
   },
   {
    "id": "medicine-supplies-iv",
@@ -3499,7 +3606,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_IV"
+   "source": "https://ninonline.fandom.com/wiki/Medicine_Supplies_IV",
+   "clientStatus": "confirmed"
   },
   {
    "id": "deliver-the-scroll",
@@ -3528,7 +3636,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Messenger_Ninja"
+   "source": "https://ninonline.fandom.com/wiki/Messenger_Ninja",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "rat",
@@ -3564,7 +3674,9 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Mission%3A_Mutant_Rats"
+   "source": "https://ninonline.fandom.com/wiki/Mission%3A_Mutant_Rats",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "mist-village-assault",
@@ -3612,7 +3724,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Mist_Village_Assault"
+   "source": "https://ninonline.fandom.com/wiki/Mist_Village_Assault",
+   "clientStatus": "confirmed"
   },
   {
    "id": "mobster-take-out-kinsen-arc",
@@ -3651,7 +3764,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Mobster_Take_Out"
+   "source": "https://ninonline.fandom.com/wiki/Mobster_Take_Out",
+   "clientStatus": "confirmed"
   },
   {
    "id": "moist-sand-beasts",
@@ -3683,7 +3797,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Moist_Sand_Beasts"
+   "source": "https://ninonline.fandom.com/wiki/Moist_Sand_Beasts",
+   "clientStatus": "partial"
   },
   {
    "id": "ninja-evergarden",
@@ -3711,7 +3826,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Ninja_Evergarden"
+   "source": "https://ninonline.fandom.com/wiki/Ninja_Evergarden",
+   "clientStatus": "partial"
   },
   {
    "id": "okada-s-debt",
@@ -3741,7 +3857,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Okada%27s_Debt"
+   "source": "https://ninonline.fandom.com/wiki/Okada%27s_Debt",
+   "clientStatus": "partial"
   },
   {
    "id": "old-blood-puppet-retirement",
@@ -3767,7 +3884,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Old_Blood_Puppet_Retirement"
+   "source": "https://ninonline.fandom.com/wiki/Old_Blood_Puppet_Retirement",
+   "clientStatus": "confirmed"
   },
   {
    "id": "open-for-business",
@@ -3803,7 +3921,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Open_for_Business"
+   "source": "https://ninonline.fandom.com/wiki/Open_for_Business",
+   "clientStatus": "confirmed"
   },
   {
    "id": "panda-food-is-penguin-beaks",
@@ -3831,7 +3950,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Panda_Food_is_Penguin_Beaks%21%3F"
+   "source": "https://ninonline.fandom.com/wiki/Panda_Food_is_Penguin_Beaks%21%3F",
+   "clientStatus": "partial"
   },
   {
    "id": "poisonous-hunger",
@@ -3861,7 +3981,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Poisonous_Hunger"
+   "source": "https://ninonline.fandom.com/wiki/Poisonous_Hunger",
+   "clientStatus": "confirmed"
   },
   {
    "id": "prison-work",
@@ -3899,7 +4020,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Prison_Work"
+   "source": "https://ninonline.fandom.com/wiki/Prison_Work",
+   "clientStatus": "confirmed"
   },
   {
    "id": "puppet-retirement",
@@ -3931,7 +4053,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Puppet_Retirement"
+   "source": "https://ninonline.fandom.com/wiki/Puppet_Retirement",
+   "clientStatus": "partial",
+   "clientNote": "Grouping page: the game has variants such as \"Blood Puppet Retirement\"."
   },
   {
    "id": "remnants-of-the-wicked-i",
@@ -3964,7 +4088,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Remnants_of_the_Wicked_I"
+   "source": "https://ninonline.fandom.com/wiki/Remnants_of_the_Wicked_I",
+   "clientStatus": "partial"
   },
   {
    "id": "rescue-grandpa-iroh",
@@ -3993,7 +4118,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Rescue_grandpa_Iroh"
+   "source": "https://ninonline.fandom.com/wiki/Rescue_grandpa_Iroh",
+   "clientStatus": "partial"
   },
   {
    "id": "retrieve-compromised-documents",
@@ -4045,7 +4171,9 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Retrieve_Compromised_Documents"
+   "source": "https://ninonline.fandom.com/wiki/Retrieve_Compromised_Documents",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "revenge-on-kuraken",
@@ -4076,7 +4204,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Revenge_on_Kuraken"
+   "source": "https://ninonline.fandom.com/wiki/Revenge_on_Kuraken",
+   "clientStatus": "partial"
   },
   {
    "id": "riddle-of-the-blood-and-riddle-of-the-blood-2",
@@ -4104,7 +4233,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Riddle_of_the_Blood%2C_and_Riddle_of_the_Blood_2"
+   "source": "https://ninonline.fandom.com/wiki/Riddle_of_the_Blood%2C_and_Riddle_of_the_Blood_2",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "sand-style-relaxation",
@@ -4145,7 +4276,8 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Sand_Style_Relaxation"
+   "source": "https://ninonline.fandom.com/wiki/Sand_Style_Relaxation",
+   "clientStatus": "confirmed"
   },
   {
    "id": "sansan-s-gold",
@@ -4174,7 +4306,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Sansan%27s_Gold"
+   "source": "https://ninonline.fandom.com/wiki/Sansan%27s_Gold",
+   "clientStatus": "partial"
   },
   {
    "id": "scattered-report",
@@ -4248,7 +4381,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Scattered_Report"
+   "source": "https://ninonline.fandom.com/wiki/Scattered_Report",
+   "clientStatus": "confirmed"
   },
   {
    "id": "something-shiny-something-old",
@@ -4308,7 +4442,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Sea_Mini_Questlines"
+   "source": "https://ninonline.fandom.com/wiki/Sea_Mini_Questlines",
+   "clientStatus": "partial"
   },
   {
    "id": "seeker-of-truth-takumi-arc",
@@ -4350,7 +4485,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Seeker_of_Truth_-_%28Takumi_arc%29"
+   "source": "https://ninonline.fandom.com/wiki/Seeker_of_Truth_-_%28Takumi_arc%29",
+   "clientStatus": "confirmed"
   },
   {
    "id": "shark-attack",
@@ -4405,7 +4541,8 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Shark_Attack"
+   "source": "https://ninonline.fandom.com/wiki/Shark_Attack",
+   "clientStatus": "partial"
   },
   {
    "id": "silent-shipment",
@@ -4474,11 +4611,13 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Silent_Shipment"
+   "source": "https://ninonline.fandom.com/wiki/Silent_Shipment",
+   "clientStatus": "partial",
+   "clientNote": "Grouping page: the game has variants such as \"Silent Shipment (Leaf)\"."
   },
   {
    "id": "speak-to-contruction-site-manager-png",
-   "name": "Speak to Contruction Site Manager.png",
+   "name": "Speak to Construction Site Manager",
    "level": 20,
    "rank": "D",
    "type": "story",
@@ -4501,7 +4640,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Speak_to_Construction_Site_Manager"
+   "source": "https://ninonline.fandom.com/wiki/Speak_to_Construction_Site_Manager",
+   "clientStatus": "partial",
+   "clientNote": "Name fixed from the Fandom spelling \"Speak to Contruction Site Manager\" to the game's."
   },
   {
    "id": "speak-to-riku",
@@ -4527,7 +4668,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Speak_to_Riku"
+   "source": "https://ninonline.fandom.com/wiki/Speak_to_Riku",
+   "clientStatus": "partial"
   },
   {
    "id": "speak-to-riku-again",
@@ -4554,7 +4696,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Speak_to_Riku_Again"
+   "source": "https://ninonline.fandom.com/wiki/Speak_to_Riku_Again",
+   "clientStatus": "partial"
   },
   {
    "id": "spy-on-kage-office",
@@ -4604,7 +4747,9 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Spy_on_Hokage/Kazekage/Mizukage_Office"
+   "source": "https://ninonline.fandom.com/wiki/Spy_on_Hokage/Kazekage/Mizukage_Office",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "stolen-train-keys",
@@ -4630,7 +4775,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Stolen_Train_Keys"
+   "source": "https://ninonline.fandom.com/wiki/Stolen_Train_Keys",
+   "clientStatus": "partial"
   },
   {
    "id": "stronger-than-the-samurai",
@@ -4658,7 +4804,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Stronger_than_the_Samurai_I"
+   "source": "https://ninonline.fandom.com/wiki/Stronger_than_the_Samurai_I",
+   "clientStatus": "partial"
   },
   {
    "id": "stronger-than-the-samurai-ii",
@@ -4686,7 +4833,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Stronger_than_the_Samurai_II"
+   "source": "https://ninonline.fandom.com/wiki/Stronger_than_the_Samurai_II",
+   "clientStatus": "partial"
   },
   {
    "id": "survey-village-entrance",
@@ -4736,7 +4884,9 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Survey_Leaf/Sand/Mist_Village_Entrance"
+   "source": "https://ninonline.fandom.com/wiki/Survey_Leaf/Sand/Mist_Village_Entrance",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "trash-bag",
@@ -4767,7 +4917,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Take_out_the_Trash"
+   "source": "https://ninonline.fandom.com/wiki/Take_out_the_Trash",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "takumi-watch",
@@ -4799,7 +4951,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Takumi_Watch"
+   "source": "https://ninonline.fandom.com/wiki/Takumi_Watch",
+   "clientStatus": "partial"
   },
   {
    "id": "talk-to-the-rebel-leader",
@@ -4827,7 +4980,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Talk_to_the_Rebel_Leader"
+   "source": "https://ninonline.fandom.com/wiki/Talk_to_the_Rebel_Leader",
+   "clientStatus": "partial"
   },
   {
    "id": "the-exorcist",
@@ -4856,7 +5010,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Exorcist"
+   "source": "https://ninonline.fandom.com/wiki/The_Exorcist",
+   "clientStatus": "partial"
   },
   {
    "id": "the-fur-maniac",
@@ -4885,7 +5040,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Fur_maniac"
+   "source": "https://ninonline.fandom.com/wiki/The_Fur_maniac",
+   "clientStatus": "partial"
   },
   {
    "id": "the-hijacked-train",
@@ -4911,7 +5067,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Hijacked_Train"
+   "source": "https://ninonline.fandom.com/wiki/The_Hijacked_Train",
+   "clientStatus": "partial"
   },
   {
    "id": "the-iron-tower",
@@ -4939,7 +5096,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Iron_Tower"
+   "source": "https://ninonline.fandom.com/wiki/The_Iron_Tower",
+   "clientStatus": "partial"
   },
   {
    "id": "the-memory-lane",
@@ -4991,7 +5149,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Memory_Lane"
+   "source": "https://ninonline.fandom.com/wiki/The_Memory_Lane",
+   "clientStatus": "confirmed"
   },
   {
    "id": "the-mob-boss-kinsen-arc",
@@ -5022,7 +5181,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Mob_Boss"
+   "source": "https://ninonline.fandom.com/wiki/The_Mob_Boss",
+   "clientStatus": "partial"
   },
   {
    "id": "the-sandstorm-predator",
@@ -5065,7 +5225,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Sandstorm_Predator"
+   "source": "https://ninonline.fandom.com/wiki/The_Sandstorm_Predator",
+   "clientStatus": "confirmed"
   },
   {
    "id": "the-venomous-requirement-mission",
@@ -5092,7 +5253,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/The_Venomous_Requirement"
+   "source": "https://ninonline.fandom.com/wiki/The_Venomous_Requirement",
+   "clientStatus": "partial",
+   "clientNote": "Grouping page: the game has variants such as \"The Venomous Requirement\"."
   },
   {
    "id": "the-well",
@@ -5135,7 +5298,9 @@
     }
    ],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/The_Well"
+   "source": "https://ninonline.fandom.com/wiki/The_Well",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   },
   {
    "id": "the-whispering-well",
@@ -5166,7 +5331,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Whispering_Well"
+   "source": "https://ninonline.fandom.com/wiki/The_Whispering_Well",
+   "clientStatus": "partial"
   },
   {
    "id": "the-wolf-pack",
@@ -5222,7 +5388,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/The_Wolf_Pack"
+   "source": "https://ninonline.fandom.com/wiki/The_Wolf_Pack",
+   "clientStatus": "confirmed"
   },
   {
    "id": "time-off",
@@ -5254,7 +5421,8 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Time_Off"
+   "source": "https://ninonline.fandom.com/wiki/Time_Off",
+   "clientStatus": "confirmed"
   },
   {
    "id": "twin-sister-delivery",
@@ -5284,7 +5452,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Twin_Sister_Delivery"
+   "source": "https://ninonline.fandom.com/wiki/Twin_Sister_Delivery",
+   "clientStatus": "confirmed"
   },
   {
    "id": "very-weird-frog-eggs",
@@ -5311,7 +5480,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Very_Weird_Frog_Eggs"
+   "source": "https://ninonline.fandom.com/wiki/Very_Weird_Frog_Eggs",
+   "clientStatus": "partial"
   },
   {
    "id": "very-weird-frogs",
@@ -5337,7 +5507,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Very_Weird_Frogs"
+   "source": "https://ninonline.fandom.com/wiki/Very_Weird_Frogs",
+   "clientStatus": "partial"
   },
   {
    "id": "village-entrance-guard-duty",
@@ -5366,7 +5537,9 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Village_Entrance_Guard_Duty"
+   "source": "https://ninonline.fandom.com/wiki/Village_Entrance_Guard_Duty",
+   "clientStatus": "divergent",
+   "clientNote": "The request text on the wiki differs from the game text: guard leaf village entrance for 10 minutes"
   },
   {
    "id": "village-s-most-wanted",
@@ -5396,7 +5569,8 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Village%27s_Most_Wanted"
+   "source": "https://ninonline.fandom.com/wiki/Village%27s_Most_Wanted",
+   "clientStatus": "partial"
   },
   {
    "id": "village-s-most-wanted-iii",
@@ -5425,7 +5599,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Village%27s_Most_Wanted_III"
+   "source": "https://ninonline.fandom.com/wiki/Village%27s_Most_Wanted_III",
+   "clientStatus": "partial"
   },
   {
    "id": "waging-war",
@@ -5457,7 +5632,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Waging_War"
+   "source": "https://ninonline.fandom.com/wiki/Waging_War",
+   "clientStatus": "divergent",
+   "clientNote": "The request text on the wiki differs from the game text: you have been tasked with finding and defeating enemies of the village that come too close to our borders or enter their borders and attack them kills only count for ninja 10 levels lower than you or "
   },
   {
    "id": "wolf-hunting",
@@ -5488,7 +5665,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Wolf_Hunting"
+   "source": "https://ninonline.fandom.com/wiki/Wolf_Hunting",
+   "clientStatus": "confirmed"
   },
   {
    "id": "your-best-behavior",
@@ -5525,7 +5703,8 @@
     }
    ],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Your_Best_Behavior"
+   "source": "https://ninonline.fandom.com/wiki/Your_Best_Behavior",
+   "clientStatus": "partial"
   },
   {
    "id": "yozo-the-bozo",
@@ -5555,7 +5734,8 @@
    },
    "sections": [],
    "inClient": true,
-   "source": "https://ninonline.fandom.com/wiki/Yozo_the_Bozo"
+   "source": "https://ninonline.fandom.com/wiki/Yozo_the_Bozo",
+   "clientStatus": "partial"
   },
   {
    "id": "yuu-mini-questline",
@@ -5581,7 +5761,9 @@
    },
    "sections": [],
    "inClient": false,
-   "source": "https://ninonline.fandom.com/wiki/Yuu_Mini_Questline"
+   "source": "https://ninonline.fandom.com/wiki/Yuu_Mini_Questline",
+   "clientStatus": "fandom-only",
+   "clientNote": "No mission with this name exists in the game files (removed, renamed or a Fandom grouping page)."
   }
  ]
 }

@@ -25,6 +25,10 @@ export interface Mission {
   rewards: { exp: string | null; ryo: string | null; extra: string | null; list: string[] };
   sections: { title: string; lines: string[] }[];
   inClient: boolean;
+  /** Conferencia com os textos do cliente do jogo (so' nomes e textos; nivel/rank/recompensas nao existem no cliente). */
+  clientStatus?: 'confirmed' | 'partial' | 'divergent' | 'fandom-only';
+  clientName?: string;
+  clientNote?: string;
   source: string;
 }
 
