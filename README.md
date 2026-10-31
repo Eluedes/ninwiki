@@ -1,6 +1,6 @@
-# NinWiki
+# Nin Codex
 
-Wiki com painel administrativo (mais uma página extra do Guima). Projetos independentes na mesma pasta:
+**Nin Codex** (antes Nin Online Wiki / NinWiki) é a wiki do jogo **Nin Online**, com painel administrativo (mais uma página extra do Guima). O *jogo* continua se chamando Nin Online; as pastas e os nomes técnicos continuam `NinWiki.*` de propósito (renomear quebraria workflows e backups). Projetos independentes na mesma pasta:
 
 | Pasta | O que é | Tecnologia | Porta local |
 |---|---|---|---|
@@ -9,8 +9,11 @@ Wiki com painel administrativo (mais uma página extra do Guima). Projetos indep
 | `Guima.Site` | Página única "em construção" da Guima Company (Node sem dependências, segurança embutida; ver `Guima.Site/README.md`) | Node | 3100 |
 | `NinWiki.Bot` | Bot de Discord (`/status`, `/search`, `/language`, log, erros e painel de status no canal) | Python, discord.py | — |
 
-Outros documentos: `NinWiki.Web/GUIA_DE_EDICAO.md` (editar o frontend), `NinWiki.Web/MAESTRIAS.md`,
-`NinWiki.Bot/README.md`, `ROADMAP.md` (o que já foi feito / falta), `FASE2_LOCAL.md` (login e cargos).
+Outros documentos: `ROADMAP.md` (estado real do que está feito / falta / obsoleto e as próximas fases), `FASE2_LOCAL.md` (login e cargos),
+`NinWiki.Bot/README.md`, `Cloudflare/README.md`, [`Azure/LEIA-ME.md`](Azure/LEIA-ME.md) (hospedagem nova) e `CONTEXTO_PARA_IA.md` (regras para qualquer IA).
+`NinWiki.Web/GUIA_DE_EDICAO.md` e `NinWiki.Web/MAESTRIAS.md` estão **obsoletos** (mandavam editar `lib/*-data.ts`; hoje o conteúdo é editado no painel).
+
+> **Hospedagem:** o destino é o **Azure** (seção 3A). A SquareCloud (seção 3) é **legado até a migração terminar**.
 
 > **Scripts `.bat`/`.cmd` não vão para o repositório** (estão no `.gitignore` e o CI recusa). Se quiser um atalho
 > no Windows, crie o seu localmente — ele fica só na sua máquina.
@@ -44,8 +47,8 @@ O que editar no `.env` para uso local:
 
 Teste: <http://localhost:8000/health>; documentação interativa em <http://localhost:8000/docs> (só em desenvolvimento).
 
-**Conteúdo inicial (opcional, UMA vez):** `python -m app.seed` (usa o `seed_data.json`). ⚠️ **Apaga** o catálogo antes de
-recarregar — nunca rode num banco que já tem conteúdo real.
+**Conteúdo inicial (obsoleto):** `python -m app.seed` (usa o `seed_data.json`, gerado por `NinWiki.Web/scripts/export-seed-data.ts`) só cria um banco de teste com poucos dados de exemplo. ⚠️ **Apaga** o catálogo antes de
+recarregar — nunca rode num banco que já tem conteúdo real. Para ter o conteúdo de verdade, restaure um backup (`restaurar_backup.py`) ou use o banco do dono.
 
 ### 1.2 Site
 ```bash
@@ -182,7 +185,7 @@ Quando estiver tudo certo, faça o merge da branch na `main` (pull request no Gi
 - **Banner do post do blog:** aparece **inteiro**, no tamanho real da arte (até 960 px) e centralizado, com a mesma arte desfocada preenchendo as laterais; a arte padrão (`public/images/blog/steam-banner.webp`) tem 960×311 px — para ficar mais nítida em telas grandes, troque por uma versão de 1920 px ou mais na mesma proporção.
 - **Usando o Claude Code no VS Code:** o arquivo `CLAUDE.md` na raiz é lido automaticamente e traz as regras do projeto (idioma, comentários, testes, não mexer no banco de produção, README sempre em dia). Antes de encerrar qualquer mudança, rode `py scripts/verificar_readme.py` na pasta `NinWiki.Api`: ele confere variáveis, permissões, comandos do bot, migrações e telas citados aqui contra o código e também roda no GitHub (aba *Actions*) e dentro de `verificar_projeto.py`.
 - **Telas do painel:** `/admin` (Visão Geral), `/admin/content` (conteúdo: itens, mobs, armas, missões, guias), `/admin/masteries`, `/admin/jutsus`, `/admin/import` (importar JSON e nomes novos do jogo), `/admin/translations`, `/admin/media`, `/admin/blog-posts`, `/admin/comments`, `/admin/reports`, `/admin/announcement`, `/admin/villages`, `/admin/organizations`, `/admin/staff`, `/admin/permissions`, `/admin/audit-log`, `/admin/errors` (cada uma só aparece para quem tem a permissão — veja a tabela acima).
-- **Temas de cor do site (botão da paleta no topo):** **Laranja** (padrão — a cor do logo original do jogo, o `icon.png` do cliente ampliado para 256×256), Sangue, Canarinho, Ouro e Anil. Quem já escolheu um tema continua com o dele; quem nunca escolheu vê o laranja. O tema fica no navegador (`localStorage`). Cores em `app/globals.css` (`data-color-theme`), logos em `public/images/logo/nin-logo-{tema}.png` — todos são o **logo original do jogo**; nos outros temas só o **anel** muda para a cor do tema (a shuriken prateada fica igual); o favicon (`app/icon.png`) e a imagem de compartilhamento usam o logo laranja.
+- **Temas de cor do site (botão da paleta no topo):** **Laranja** (padrão — a cor do logo original do jogo, o `icon.png` do cliente ampliado para 256×256), Sangue, Canarinho, Ouro e Anil. Quem já escolheu um tema continua com o dele; quem nunca escolheu vê o laranja. O tema fica no navegador (`localStorage`). Cores em `app/globals.css` (`data-color-theme`), a marca do **Nin Codex** é um **livro único** (`public/images/logo/nin-codex-livro.svg`/`.png`) com o emblema do jogo na capa; o logo temático de 5 variantes foi removido. O favicon e os ícones (`app/favicon.ico`, `icon.png`, `apple-icon.png`) usam só o emblema, e a imagem de compartilhamento é `og-nin-codex.png`. Tudo sai de `py scripts/gerar_logo.py` (pasta `NinWiki.Api`; idempotente).
 - **Seleção em massa por clique:** nas tabelas do painel (Conteúdo e Jutsus) e na grade do **banco de imagens**, clicar em **qualquer ponto** da linha/cartão marca ou desmarca (não precisa acertar a caixinha); **Shift+clique** marca o intervalo desde o último clique. Links, botões, campos e a própria caixinha continuam com a função deles. No banco de imagens só vale para quem tem `media.manage`. No banco de imagens a **barra de seleção** (Selecionar tudo, N marcadas, Aplicar categoria, Apagar) fica **fixa no topo ao rolar** a página e traz também os **botões Anterior/Próxima** (os de baixo continuam), então dá para trocar de página e confirmar a ação sem subir ou descer.
 - **Onde encontrar (mobs) em lista, como o "Found in" do Atlas:** no editor do mob, **Onde encontrar (lugares)** é uma lista — um lugar por linha, com **zona** (Safe, Danger, War, Arena, Parkour ou sem zona) e, se quiser, o nome em português. A ficha pública mostra cada lugar numa linha com um ponto na cor da zona e o nome da zona (verde = segura, laranja = perigo, vermelho = guerra). O texto livre antigo só vale quando a lista está vazia, e o botão **Transformar o texto antigo em lista** converte "A, B, C" em linhas. O bot (`/search`) usa a mesma lista. `python scripts/importar_locais_atlas.py` (pasta `NinWiki.Api`, `$env:PYTHONPATH="."`; sem `--aplicar` é só simulação) preenche a lista dos monstros a partir dos mapas do Nin Atlas, com o nome em português do arquivo oficial do jogo; **só preenche mob que ainda não tem lista** e nunca troca uma que você montou. Migration nova: `c5e7a9b1d4f6` (rode o **Deploy API** antes do Web).
 - **NPC da arma com link:** no editor da arma, o campo **NPC (onde conseguir)** ganhou a busca de páginas (só mobs/NPCs): ligado, o nome **acompanha a página** do NPC (inclusive em português) e vira **link** na ficha da arma — o link só aparece se a página do NPC está **publicada** (senão fica só o nome). O selo verde desliga o vínculo e volta ao texto livre. Esse campo é para o NPC que **vende ou entrega** a arma; quem **dropa** a arma aparece sozinho em "Dropado por". Mesma migration `c5e7a9b1d4f6` (coluna `weapon_npc_id`).
@@ -242,7 +245,7 @@ negadas). Mostra o **IP** de quem agiu no rodapé (`Panel · IP x`) — desligue
 - a **DeepL** para de funcionar (chave recusada, cota do plano gratuito acabou, fora do ar);
 - alguém estoura o limite de requisições (possível flood/cópia em massa);
 - a **API, o banco ou o site** (`SITE_URL`) **caem** — e quando **voltam**.
-**Painel de status ao vivo** (`STATUS_PANEL=true`, padrão): uma mensagem **📡 NinWiki status** no canal do monitor (`STATUS_CHANNEL_ID`; vazio = o de erros), **editada a cada checagem** (online/offline, ms, uptime desde que o bot ligou; o banco aparece como "unknown" se a API estiver fora). Mensagens novas de "caiu/voltou" ficam **desligadas** por padrão (o painel basta); ligue com `STATUS_ALERTS=true`. O site conta como no ar se **responder** (qualquer status abaixo de 500; 403 da Cloudflare incluso); 5xx, timeout, erro de conexão e redirecionamento em loop contam como fora do ar, e o motivo vai para o log do bot.
+**Painel de status ao vivo** (`STATUS_PANEL=true`, padrão): uma mensagem **📡 Nin Codex status** no canal do monitor (`STATUS_CHANNEL_ID`; vazio = o de erros), **editada a cada checagem** (online/offline, ms, uptime desde que o bot ligou; o banco aparece como "unknown" se a API estiver fora). Mensagens novas de "caiu/voltou" ficam **desligadas** por padrão (o painel basta); ligue com `STATUS_ALERTS=true`. O site conta como no ar se **responder** (qualquer status abaixo de 500; 403 da Cloudflare incluso); 5xx, timeout, erro de conexão e redirecionamento em loop contam como fora do ar, e o motivo vai para o log do bot.
 Anti-spam: o 1º aviso sai na hora; se o mesmo problema continua, só um novo aviso a cada 10 min (com "+N desde o último").
 Problema marcado como resolvido no painel não é repostado (se voltar a acontecer, reabre). Detalhes e traceback: `/admin/errors`.
 
@@ -327,7 +330,119 @@ O português antigo vai para o campo `_pt` e a tradução em inglês vira o camp
 
 ---
 
-## 3. Hospedar na SquareCloud (com o deploy automático do GitHub)
+## 3A. Hospedar no Azure (destino atual)
+
+> **Em migração.** O Nin Codex está saindo da SquareCloud (seção 3, agora **legado**) para o **Azure for Students**. Esta seção é o
+> resumo em alto nível; **o passo a passo detalhado, os arquivos de Docker e os scripts ficam na pasta [`Azure/`](Azure/) — comece por
+> [`Azure/LEIA-ME.md`](Azure/LEIA-ME.md)**. (Se o `LEIA-ME.md` ainda não existir na sua cópia, o kit está sendo montado; os arquivos
+> `Azure/docker-compose.yml`, `Caddyfile` e `Dockerfile.*` já mostram o desenho.)
+
+### 3A.1 Visão geral do desenho
+| Peça | Onde roda | Observação |
+|---|---|---|
+| **1 VM Linux** (Azure for Students) | Azure | roda tudo abaixo com **Docker Compose** |
+| **Caddy** | container | recebe o tráfego e separa: `wiki.seudominio` para o site, `api.seudominio` para a API |
+| **Cloudflare Tunnel** (`cloudflared`) | container | a VM só faz conexão de **saída**: **nenhuma porta é aberta** para a internet |
+| **API** (`NinWiki.Api`), **Site** (`NinWiki.Web`), **Bot** (`NinWiki.Bot`) | containers | imagens montadas pelos `Azure/Dockerfile.*` |
+| **PostgreSQL 17** | container, rede interna | **sem porta exposta**: só a API alcança; dados em volume |
+| **Backups** | Azure **Blob Storage** (+ o backup cifrado do bot no Discord) | banco e imagens; ver 3A.6 |
+
+A Cloudflare continua na frente (DNS, proteção, Worker de manutenção em `Cloudflare/`). Como só existe **uma** instância da API, o limite de uso por
+IP em memória continua exato (não precisa de Redis).
+
+### 3A.2 Ordem de deploy (sempre esta)
+1. **API primeiro** — ao iniciar ela roda `alembic upgrade head` (se a migração falhar, a API não sobe).
+2. **Site (Web) depois** — ele pode depender de campos/rotas novos da API.
+3. **Reiniciar o Bot** — sempre que o código do bot ou as rotas `/bot/*` mudarem (comandos novos só aparecem depois do reinício).
+
+É a mesma ordem do legado (Deploy API, Deploy Web, Bot).
+
+### 3A.3 Variáveis de ambiente no Azure (o que muda)
+As variáveis são as da seção 4. Mudanças e novidades:
+- Os segredos ficam num arquivo `.env` **na VM** (ao lado do `docker-compose.yml`, fora do Git, permissão restrita) — nunca na imagem nem no repositório.
+- `ENVIRONMENT=production`, `DEV_LOGIN_ENABLED=false`, `TRUST_PROXY_HEADERS=true` (o IP real vem da Cloudflare: `CF-Connecting-IP`) **junto com `TRUSTED_PROXY_CIDRS`** = a rede interna do Docker onde o Caddy fala com a API (sem isso, quem alcançasse a API direto poderia forjar o IP).
+- `DATABASE_URL` aponta para o container `postgres` da rede interna (sem os `DATABASE_SSL_*`, que eram exigência do banco da SquareCloud).
+- `FRONTEND_ORIGIN` / `API_BASE_URL` / `DISCORD_REDIRECT_URI` com os domínios finais; **atualize o *Redirect* no Discord Developer Portal**.
+- **`FRONTEND_ORIGINS`** (API, opcional): origens **extras** aceitas no CORS/CSRF durante a troca de endereço (ex.: o domínio antigo). O login sempre volta
+  para `FRONTEND_ORIGIN`. Apague quando a transição acabar.
+- **`BOT_STATE_DIR`** (Bot): pasta dos arquivos `*_state.json` do bot (padrão: ao lado do `main.py`). No Docker use um volume (ex.: `/data`) para o container poder ter o disco só-leitura.
+- Site: `NEXT_PUBLIC_*` entram no **build** da imagem (mudou? reconstrua a imagem do Web). `STANDALONE_BUILD=true` e `NEXT_PUBLIC_BUILD_SHA` são só do build.
+- `BACKUP_PASSPHRASE` continua obrigatória para o backup cifrado: **guarde também fora da VM** (sem ela o backup não abre).
+
+### 3A.4 Passo a passo para colocar o banco no ar no Azure (alto nível)
+Os comandos exatos estão em `Azure/` e nos scripts citados. Faça **nesta ordem** e não pule o backup:
+1. **Backup novo da produção atual (SquareCloud)** — o dado vivo (equipe, comentários, posts da Steam...) só existe lá. Baixe todas as partes do último `.nbk` do canal de backup do Discord e guarde.
+2. **Ligar o modo manutenção** (`/admin/maintenance`, S.Adm) para ninguém gravar durante a troca; depois de ligar, baixe o backup mais recente.
+3. **Restaurar esse backup num banco temporário local** e **mesclar** com o banco local: `py scripts/mesclar_producao.py --prod ninwiki_prod_copy --destino ninwiki_merged` (simulação primeiro; `--aplicar` depois). Regras de mescla no topo do script. O `ninwiki_merged` é a base nova.
+4. **Preparar o dump para o domínio novo:** `py scripts/converter_urls_dump.py ENTRADA.dump SAIDA.dump --dominio https://api.seudominio.com` (troca `http://localhost:8000` pelo endereço público da API; roda só em banco temporário). O `enviar_para_producao.py preparar` faz a mesma troca e ainda junta as imagens novas em `envio/imagens.zip`.
+5. **Subir a VM** (`docker compose up -d` com o `.env` pronto), primeiro só Postgres e API, e **restaurar o banco mesclado** no container (`pg_restore`, ver `Azure/`). A produção já estava na head das migrações.
+6. **Imagens:** copie a pasta `uploads/` (todas as imagens) para o volume de uploads da API. O banco guarda só o endereço; sem os arquivos as imagens quebram.
+7. **Subir a API, depois o Web, depois reiniciar o Bot** (3A.2).
+8. **Apontar o DNS/túnel** para o Azure, atualizar o *Redirect* do Discord, conferir o checklist (o da 3.9 vale aqui também) e **desligar a manutenção**.
+9. Deixar a SquareCloud **parada, não apagada**, por alguns dias (plano B); depois desligue os apps e guarde um último backup.
+
+Se algo der errado antes do passo 8, nada mudou para o visitante: o DNS ainda aponta para a SquareCloud.
+
+### 3A.7 Checklist do dono depois de trocar o subdomínio do site
+O endereço novo ainda **não foi definido**: abaixo uso `<subdominio-novo>.guima.net` como marcador; o dono informa o nome final.
+- [ ] **Cloudflare, DNS:** criar o registro de `<subdominio-novo>.guima.net` (túnel); manter o nome antigo apontando para o mesmo lugar para o redirect funcionar.
+- [ ] **Cloudflare, Worker de manutenção:** mudar a rota (*Workers Routes*) para o host novo (`Cloudflare/README.md`).
+- [ ] **Site (`WEB_ENV`/`.env`):** `NEXT_PUBLIC_SITE_URL=https://<subdominio-novo>.guima.net` e `LEGACY_SITE_HOSTS=<endereço-antigo>` (sem `https://`); **reconstruir** o Web.
+- [ ] **API:** `FRONTEND_ORIGIN=https://<subdominio-novo>.guima.net` e `FRONTEND_ORIGINS=https://<endereço-antigo>` durante a transição; depois apague o `FRONTEND_ORIGINS`. Se existir `COOKIE_DOMAIN` (ou o cookie for de um domínio), confira que cobre o host novo e a API.
+- [ ] **Discord Developer Portal:** nome do bot **Nin Codex** e avatar `NinWiki.Bot/assets/avatar.png`; o *Redirect* do OAuth só muda se o **domínio da API** mudar (`https://api…/auth/discord/callback`).
+- [ ] **Bot:** `SITE_URL` com o endereço novo e **reiniciar o bot** (o painel "Nin Codex status" e os botões usam esse endereço).
+- [ ] **Quem estava logado no endereço antigo precisa entrar de novo** (o cookie não passa de um host para o outro).
+- [ ] Conferir `/version`, o login, uma imagem, o `sitemap.xml`/RSS (devem usar o endereço novo) e que o endereço antigo redireciona (308) para o novo.
+
+### 3A.5 Scripts desta etapa (pasta `NinWiki.Api`, venv ativo, `$env:PYTHONPATH="."`, Docker ligado, **sempre em banco local**)
+Todos fazem **simulação por padrão** e só gravam com `--aplicar` (o detalhe de cada um está na seção 2.1 e no topo do próprio script).
+| Script | Para quê |
+|---|---|
+| `criar_itens_do_jogo.py` | cria como **rascunho** os itens novos do cliente do jogo (e registra os ícones no banco de imagens) |
+| `corrigir_armas_do_jogo.py` | corrige armas pelos patches (posts da Steam + textos do cliente); só mexe com evidência |
+| `corrigir_idioma_dados.py` | move português que estava no campo **inglês** (atributos, vilas, ranks, clãs...) para `_pt` e grava o inglês |
+| `criar_guias_do_jogo.py` / `criar_guias_do_fandom.py` | artigos do Guia como rascunho (livro de guias do cliente / páginas do Fandom) |
+| `criar_jutsus_do_jogo.py` | jutsus do cliente como rascunho (só nome EN/PT) |
+| `importar_jutsus_fandom.py` / `importar_jutsus_atlas.py` | completam os jutsus (só campos vazios) com Fandom / Nin Atlas |
+| `classificar_jutsus.py` | dá caminho/mastery com evidência e publica os completos (`--aplicar --publicar`) |
+| `importar_missoes_fandom.py` | gera `NinWiki.Web/data/missions.json` (não mexe no banco); `--so-verificar` confere com o cliente |
+| `verificar_com_cliente.py` | corrige nomes e `name_pt` pelos textos do jogo (só banco local) |
+| `extrair_mapas_do_jogo.py` | gera os dados do mapa-mundi a partir do cliente do jogo |
+| `atualizar_retratos_lobos.py` | retratos novos dos 4 lobos (patch 6.0.2.4); não apaga a imagem antiga |
+| `gerar_logo.py` | gera logo, favicon e imagem de compartilhamento do **Nin Codex** a partir do emblema do jogo |
+| `mesclar_producao.py` | junta o banco local com os dados vivos do backup da produção (só em bancos temporários `ninwiki_*`) |
+| `converter_urls_dump.py` | troca `localhost` pelo domínio público dentro de um dump |
+| `restaurar_backup.py` / `migrar_banco.py` | restaurar um backup `.nbk` / exportar e importar o banco (`pg_dump`/`pg_restore`) |
+
+**Ordem segura (conteúdo até a produção):**
+1. `migrar_banco.py exportar` (cópia de segurança do banco local).
+2. Importadores e correções que ainda quiser (simulação, depois `--aplicar`). Para jutsus: `classificar_jutsus --aplicar`, `importar_jutsus_atlas --aplicar`, `classificar_jutsus --aplicar --publicar`.
+3. Revisar os rascunhos no painel e publicar.
+4. `mesclar_producao.py` (3A.4, passo 3), depois `converter_urls_dump.py`.
+5. Restaurar no Azure (3A.4).
+
+Nunca aponte esses scripts para o banco de produção sem backup e sem o `--permitir-remoto` (quando o script o exige).
+
+### 3A.5b Banco final pronto e roteiro (`NinWiki.Api/envio/`)
+O banco mesclado já foi gerado: `envio/ninwiki-codex-final.dump` (pg_dump `-Fc`, feito no Postgres 16; restaura no 17) e a lista das imagens novas `envio/imagens_novas.txt`
+(4.832 imagens de `uploads/`). **Leia `NinWiki.Api/envio/RUNBOOK_BANCO.md`** (passo a passo em português simples, conferências e rollback). Resumo: `converter_urls_dump.py`
+troca `http://localhost:8000` pelo domínio da API (precisa dar `SOBRARAM_LOCALHOST=0`) → copiar dump e imagens para a VM → backup do que existir → parar API/site/bot → `pg_restore` →
+conferir `alembic_version` = `c3f5a7b9d1e4` → subir API, site, bot. O `gerar_logo.py` (livro, favicon, ícones, imagem de compartilhamento e `NinWiki.Bot/assets/avatar.png`, a partir do emblema do jogo)
+é idempotente: pode rodar de novo. A pasta `envio/` e os `.nbk` não vão para o Git.
+
+### 3A.6 Segurança e backups no Azure
+- **Nenhuma porta aberta** na VM (só a conexão de saída do túnel); SSH, se usado, só por chave e restrito por IP no grupo de segurança de rede.
+- Postgres na rede interna **sem acesso à internet** e sem porta publicada; containers com `no-new-privileges`, `cap_drop: ALL` e logs com rotação (veja `Azure/docker-compose.yml`).
+- Segredos só no `.env` da VM; `.env`, certificados e dumps nunca vão para o Git (`.gitignore`).
+- Continuam valendo todas as proteções do app (CSP com nonce, 2FA do Discord, cookies `httpOnly`, limite de uso, cabeçalhos — seção 2.3).
+- **Backups:** (a) o backup cifrado do bot continua indo para o canal privado do Discord (seção *Backup automático*); (b) cópia do banco e das imagens no **Blob Storage** do Azure (agendamento em `Azure/`); (c) antes de qualquer mudança grande, um dump à mão. **Teste a restauração** de vez em quando (`restaurar_backup.py` num banco temporário): backup que nunca foi restaurado não é backup.
+- Mantenha a VM e as imagens atualizadas; o Dependabot semanal já abre PRs das bibliotecas.
+
+---
+
+## 3. Legado (até a migração terminar): hospedar na SquareCloud (com o deploy automático do GitHub)
+
+> **Legado.** Mantida só enquanto a produção ainda está na SquareCloud e para consulta (variáveis, certificados, problemas comuns). Para um deploy novo use a seção 3A (Azure).
 
 Este é o passo a passo **completo, do zero até o site no ar**, usando os **workflows do GitHub Actions** para enviar o
 código. Você **não precisa** ter Python, Node nem Docker para publicar: o GitHub monta o pacote e manda para a SquareCloud.
@@ -604,10 +719,12 @@ novo do GitHub**: tudo que aparece abaixo é uma **linha a mais dentro desses tr
 | `DEV_LOGIN_ENABLED` | `false` | login de desenvolvimento — **nunca** `true` em produção |
 | `BOT_API_TOKEN` | vazio | senha entre bot e API (o **mesmo** valor no `BOT_ENV`); vazio = rotas `/bot` desligadas (inclui `/status` e `/search` do bot) |
 | `TRUST_PROXY_HEADERS` | `false` | `true` atrás de SquareCloud/Cloudflare: usa o IP real e o país (`CF-IPCountry`) do **gráfico de acessos** |
+| `TRUSTED_PROXY_CIDRS` | vazio | redes (vírgula, ex.: `127.0.0.1,172.16.0.0/12`) cujos cabeçalhos de IP real (`CF-Connecting-IP`/`X-Forwarded-For`) a API obedece quando `TRUST_PROXY_HEADERS=true`; de fora da lista o cabeçalho é ignorado (anti-forja de IP). **No Azure/Docker defina** a rede interna do Docker; vazio = confia em qualquer origem (a API avisa no log) — aceitável só na SquareCloud |
 | `COOKIE_SAMESITE` | `lax` | `none` só se usar `*.squareweb.app` em vez de domínio próprio |
 | `DISCORD_CLIENT_ID` / `_SECRET` / `DISCORD_REDIRECT_URI` | vazio | login com Discord |
 | `FRONTEND_ORIGIN` / `API_BASE_URL` | localhost | endereços públicos do site e da API (CORS, CSRF, links de arquivos) |
 | `DEEPL_API_KEY` | vazio | tradução EN→PT (chaves grátis terminam em `:fx`) |
+| `FRONTEND_ORIGINS` | vazio | origens **extras** (separadas por vírgula) aceitas no CORS/CSRF **só durante a troca de endereço** do site (ex.: o domínio antigo); o login sempre volta para `FRONTEND_ORIGIN`. Vazio = só a principal |
 | `MAX_UPLOAD_SIZE_MB` | `5` | imagem enviada pelo editor/painel |
 | `MAX_NOTICE_FILE_MB` | **`200`** | anexo do Quadro de avisos (gravado aos pedaços; a Cloudflare grátis corta acima de 100 MB) |
 | `MAX_JSON_BODY_KB` | `512` | corpo máximo das requisições comuns |
@@ -635,10 +752,12 @@ sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem s
 | Variável | Padrão | Para quê |
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | endereço da API (entra no build) |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | endereço público do site: sitemap, RSS, links, vídeos da Twitch (entra no build) |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | endereço público do site: sitemap, RSS, links, vídeos da Twitch e destino do redirecionamento do endereço antigo (**vale no build**: mudou, reconstrua o site) |
+| `LEGACY_SITE_HOSTS` | vazio (desligado) | **só no servidor**: hosts antigos do site, separados por vírgula e **sem `https://`** (ex.: `endereco-antigo.guima.net`). Pedidos a eles recebem redirect **308** para o `NEXT_PUBLIC_SITE_URL`. Use junto com `FRONTEND_ORIGINS` na API durante a troca de subdomínio |
 | `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID` | vazio | Application ID do **bot** (público, não é segredo): liga o botão "Convidar o bot" no rodapé e na Home; vazio = botão escondido (entra no build) |
 | `WEB_RATE_LIMIT_PER_MINUTE` | `300` | páginas por minuto por IP (`proxy.ts`) |
 | `BLOCK_SCRAPER_UAS` | `true` | bloqueia robôs de cópia conhecidos |
+| `STANDALONE_BUILD` / `NEXT_PUBLIC_BUILD_SHA` | vazio | só do **build** (imagem Docker/deploy): `STANDALONE_BUILD=true` gera o servidor `standalone`; `NEXT_PUBLIC_BUILD_SHA` é o commit mostrado em `/version`. Não se usa no `.env.local` |
 
 ### 4.3 Bot (`BOT_ENV`)
 | Variável | Padrão | Para quê |
@@ -654,14 +773,15 @@ sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem s
 | `BACKUP_CHANNEL_ID` / `BACKUP_INTERVAL_MINUTES` / `BACKUP_KEEP` / `BACKUP_PART_MB` | vazio / `180` / `8` / `9` | backup automático no canal privado: de quantos em quantos minutos (mín. 30), quantos manter, tamanho de cada parte (ver *Backup automático*); canal vazio = sem backup |
 | `VERSION_WEBHOOK_URL` | vazio | webhook da mensagem *Latest updates* (versão da API e do Web, editada a cada deploy). É segredo |
 | `SITE_HEALTH_URL` | vazio | (opcional) endereço **só** da checagem de saúde, ex.: `https://ninwiki.squareweb.app` (direto da hospedagem, sem Cloudflare/cache na frente); vazio = checa o `SITE_URL` |
-| `STATUS_CHANNEL_ID` | vazio | canal **só do monitor** (painel "NinWiki status" + avisos de API/banco/site caiu/voltou), separado dos erros do wiki; vazio = usa o `ERROR_CHANNEL_ID` |
+| `STATUS_CHANNEL_ID` | vazio | canal **só do monitor** (painel "Nin Codex status" + avisos de API/banco/site caiu/voltou), separado dos erros do wiki; vazio = usa o `ERROR_CHANNEL_ID` |
 | `STATUS_ALERTS` | `false` | `true` = além do painel, manda uma mensagem **nova** a cada "caiu" / "voltou" (padrão: só o painel, que se edita sozinho) |
 | `STATUS_DOWN_AFTER` | `3` | checagens seguidas que precisam falhar para avisar "caiu" (suba para 5 se a rede oscila e o bot avisa demais) |
-| `STATUS_PANEL` | `true` | mensagem **📡 NinWiki status** editada a cada checagem; `false` = só avisa queda/volta |
+| `STATUS_PANEL` | `true` | mensagem **📡 Nin Codex status** editada a cada checagem; `false` = só avisa queda/volta |
 | `LOG_SHOW_IP` | `true` | mostra o IP de quem agiu no canal de log (canal só da equipe); `false` = não mostra |
 | `HEALTH_POLL_SECONDS` | `60` | intervalo da checagem de API/banco/site (mín. 30) |
 | `LOG_POLL_SECONDS` | `20` | intervalo do feed do log (mín. 10) |
 | `LOG_IGNORE_ACTIONS` | vazio | ações fora do canal (ex.: `login,logout`) |
+| `BOT_STATE_DIR` | pasta do `main.py` | onde ficam os `*_state.json` do bot (log, backup, versão...). No Docker/Azure use um volume (ex.: `/data`) para o container poder ter o disco só-leitura |
 
 ## 5. Mapa do código (onde cada coisa mora)
 
@@ -674,6 +794,7 @@ Todo arquivo começa com um comentário-resumo do que faz e toda função tem um
 - `NinWiki.Bot/main.py` + `ninwiki_bot/*` = `/status`, `/search` e `/language` (`public_commands.py`), log no Discord (`log_feed.py`), erros e painel de status (`error_feed.py`).
 - `NinWiki.Web/components/admin/rich-text-editor.tsx` (+ `editor-color-picker.tsx`, `lib/editor-fonts.ts`) = editor de texto; `components/lore/rich-text.tsx` = como o texto aparece no site; `components/admin/traffic-card.tsx` = gráfico de acessos.
 - **Backup / versão / manutenção:** `NinWiki.Api/app/core/backup.py` (gera o backup cifrado) + `app/api/bot.py` (`/bot/backup`, `/bot/version`) + `scripts/restaurar_backup.py`; `NinWiki.Bot/ninwiki_bot/backup_feed.py` e `version_feed.py` (decidem nomes/retenção/quando editar) + `command_sync.py` (comandos por servidor) + `main.py` (os laços); `NinWiki.Api/app/core/steam_news.py` (importador da Steam); `NinWiki.Web/app/version/route.ts` e `proxy.ts` (cabeçalho `x-ninwiki-web`); `Cloudflare/` (Worker da página de manutenção). Ferramentas locais sem relação com o wiki ficam na branch `ferramentas-locais` (**nunca** dar merge).
+- `Azure/` = kit da VM do Azure (`docker-compose.yml`, `Caddyfile`, `Dockerfile.*`, scripts; guia em `Azure/LEIA-ME.md`). `.github/workflows/deploy-*.yml` = deploy **legado** da SquareCloud.
 - `NinWiki.Api/app/api/analytics.py` + `core/geoip.py` = acessos anônimos e país; `app/api/bot.py` = rotas do bot (equipe, log, erros, busca).
 
 

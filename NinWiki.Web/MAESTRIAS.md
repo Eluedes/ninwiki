@@ -1,3 +1,9 @@
+> **⚠️ OBSOLETO (30/10/2026) — Nin Codex (antes NinWiki).** Este documento vem da época em que o conteúdo ficava em arquivos (`lib/masteries-data.ts`, `lib/data.ts`,
+> `lib/village-data.ts`). **Hoje todo o conteúdo mora no banco e é editado pelo painel (`/admin`)**; nenhuma página do site lê esses arquivos
+> (só o script de seed `scripts/export-seed-data.ts`, que gera um banco de teste vazio). Não edite os arquivos de `lib/*-data.ts` para mudar o
+> site. Os caminhos (`pathId`) de hoje são cadastrados no painel, em **Masteries** e **Jutsus**; os valores desta tabela continuam sendo os ids dos caminhos. Documentação atual:
+> `README.md` e `ROADMAP.md` na raiz.
+
 # Caminhos de Mastery
 
 Cinco masteries possuem caminhos confirmados na wiki:

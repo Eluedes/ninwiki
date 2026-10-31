@@ -1,4 +1,4 @@
-# Fase 2 — Login e cargos (S.Adm / Adm / Creator) — como usar localmente
+# Nin Codex — Fase 2 — Login e cargos (S.Adm / Adm / Creator) — como usar localmente
 
 Tudo funciona no seu computador. Há dois jeitos de entrar no painel:
 **login de desenvolvimento** (rápido, sem Discord) e **login com Discord de verdade**.
@@ -77,9 +77,9 @@ py scripts/testar_permissoes.py
 Simula ataques (token forjado, CSRF, promoção indevida, bot com token errado...) e confere **todas
 as rotas da API**: uma rota nova sem proteção faz o teste falhar. Cria e apaga os próprios dados.
 
-## 7) Registrar a equipe pelo Discord (bot)
-O bot (`NinWiki.Bot`, discord.py) tem os comandos `/team list|manage|status` (o `manage` abre um formulário/modal que faz tudo: adicionar, trocar cargo, renomear, desativar e reativar) e segue
-exatamente as mesmas regras do painel. Passo a passo em `NinWiki.Bot/README.md`. Resumo: crie o bot no Discord,
+## 7) O bot do Discord
+> **Atualização:** os comandos `/team` foram **removidos do bot** em 08/10/2026. A equipe (adicionar, cargo, desativar) agora é gerenciada **só pelo painel** (`/admin/staff`, S.Adm).
+O bot (`NinWiki.Bot`, discord.py) hoje serve de consulta pública (`/status`, `/search`, `/drop`, `/patchnotes`, `/item`, `/mob`, `/jutsu`, `/mastery`, `/compare`, `/map`, `/random`, `/help`, `/language`) e de log/erros/backup no Discord, sempre repassando a decisão à API. Passo a passo em `NinWiki.Bot/README.md`. Resumo: crie o bot no Discord,
 gere um `BOT_API_TOKEN` e coloque **o mesmo valor** no `.env` da API e no `.env` do bot, e rode `python main.py`.
 Teste sem Discord: `py scripts/testar_bot_integracao.py` (na pasta `NinWiki.Api`).
 
@@ -88,5 +88,5 @@ Por IP, em memória (`app/core/rate_limit.py`): 30 chamadas de login por minuto;
 bloqueiam o IP **antes** de chamar o Discord ou gravar no log; 10 tokens de bot errados em 10 minutos bloqueiam até
 o token certo. Quem passa do limite vê "Muitas tentativas" e espera a janela andar (o aviso diz quantos segundos).
 Ajustável no `.env` (`LOGIN_REQUESTS_PER_MINUTE`, `LOGIN_FAIL_LIMIT`, `LOGIN_FAIL_WINDOW_MINUTES`, `BOT_FAIL_LIMIT`).
-**Ao publicar atrás de um proxy (Cloudflare/SquareCloud)** ligue `TRUST_PROXY_HEADERS=true`; senão todo mundo
+**Ao publicar atrás de um proxy (Cloudflare/Caddy no Azure; antes SquareCloud)** ligue `TRUST_PROXY_HEADERS=true`; senão todo mundo
 parece ter o mesmo IP e uma pessoa que erra bloqueia todas.

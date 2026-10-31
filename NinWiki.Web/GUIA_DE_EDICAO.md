@@ -1,3 +1,9 @@
+> **⚠️ OBSOLETO (30/10/2026) — Nin Codex (antes NinWiki).** Este guia vem da época em que o conteúdo ficava em arquivos (`lib/masteries-data.ts`, `lib/data.ts`,
+> `lib/village-data.ts`). **Hoje todo o conteúdo mora no banco e é editado pelo painel (`/admin`)**; nenhuma página do site lê esses arquivos
+> (só o script de seed `scripts/export-seed-data.ts`, que gera um banco de teste vazio). Não edite os arquivos de `lib/*-data.ts` para mudar o
+> site. O que ainda vale aqui: o mapa de pastas, as regras de imagem em `public/images/` e o que `components/lore/*` faz. Documentação atual:
+> `README.md` e `ROADMAP.md` na raiz.
+
 # Guia de edição do NinWiki.Web
 
 Este documento explica onde cada parte do frontend está localizada e quais arquivos devem ser alterados enquanto o backend e o painel de publicação ainda não existem.
