@@ -31,7 +31,7 @@ from app.core.text import escape_like
 from app.core.media_refs import resolve_images
 from app.core.database import get_db
 from app.models.users import User
-from app.core.translation import translate_field
+from app.core.translation import translate_field_source
 from app.models.enums import ContentStatus, ItemType, MobType, Rarity
 from app.models.masteries import Jutsu
 from app.models.content import ContentItem, ContentItemAttribute, ContentItemAttack, ContentItemDrop, ContentVersion
@@ -412,7 +412,8 @@ async def _fill_missing_translations(item: ContentItem) -> bool:
     pra' quando a pessoa realmente QUISER forcar uma traducao nova por
     cima do que ja existe.
 
-    Devolve True se preencheu algum campo.
+    Devolve True se a DeepL (automatica) preencheu algum campo. Texto que veio do dicionario OFICIAL do jogo tambem e' gravado,
+    mas NAO conta aqui: e' oficial e nao ganha o selo de 'traducao automatica'.
 
     Sem efeito nenhum se DEEPL_API_KEY nao estiver configurada -
     translate_field ja' devolve None nesse caso, e o campo so' fica
@@ -422,10 +423,10 @@ async def _fill_missing_translations(item: ContentItem) -> bool:
     for field_en, field_pt in _TRANSLATABLE_FIELDS:
         if getattr(item, field_pt):
             continue
-        translated = await translate_field(getattr(item, field_en))
+        translated, official = await translate_field_source(getattr(item, field_en))
         if translated:
             setattr(item, field_pt, translated)
-            filled = True
+            filled = filled or not official
     return filled
 
 
@@ -674,10 +675,10 @@ async def retranslate_content_item(
     item = await _get_item_or_404(item_id, db)
     _guard_edit(staff, item, None)
     for field_en, field_pt in _TRANSLATABLE_FIELDS:
-        translated = await translate_field(getattr(item, field_en))
+        translated, official = await translate_field_source(getattr(item, field_en))   # dicionario do jogo primeiro, depois DeepL
         if translated:
             setattr(item, field_pt, translated)
-            item.translation_auto = True   # retraduzir sobrescreve com a traducao automatica
+            item.translation_auto = not official   # DeepL = selo de automatica; dicionario do jogo = oficial
     await db.commit()
     return await _get_item_or_404(item.id, db)
 

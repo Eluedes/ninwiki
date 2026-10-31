@@ -216,6 +216,10 @@ async def limpar(inicio: datetime) -> None:
 
 async def rodar_testes(c: httpx.AsyncClient) -> None:
     """Todas as secoes de teste: login, cargos, permissoes, blog, vilas, avisos, endurecimento..."""
+    # O dicionario oficial do jogo tem teste proprio (testar_dicionario_jogo.py). Aqui ele fica DESLIGADO: textos de exemplo como
+    # "hello" existem nele e nunca chegariam a' DeepL simulada dos testes de traducao abaixo.
+    from app.core import game_dictionary as _gd
+    _gd.translate_doc = lambda valor: None
     sadm = await criar_user("sadm", StaffRole.SUPER_ADMIN)
     adm = await criar_user("adm", StaffRole.ADMIN)
     adm2 = await criar_user("adm2", StaffRole.ADMIN)
@@ -267,7 +271,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
     # Selo "traducao automatica": so' quando a DeepL preencheu o portugues e ninguem revisou
     from unittest.mock import AsyncMock, patch as _patch
-    with _patch("app.api.content_items.translate_field", new=AsyncMock(return_value="TRADUZIDO")):
+    with _patch("app.api.content_items.translate_field_source", new=AsyncMock(return_value=("TRADUZIDO", False))):   # (texto, oficial=False -> DeepL)
         r = await c.post("/content-items", json={**novo_conteudo("sel-auto"), "category": "items"}, headers=C)
         check("conteudo sem portugues traduzido pela DeepL ganha translationAuto=true", r.status_code == 201 and r.json()["translationAuto"] is True and r.json()["namePt"] == "TRADUZIDO", r.text[:200])
         sel_id = r.json()["id"]
@@ -1282,10 +1286,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     try:
         with patch.object(httpx.AsyncClient, "post", post_cota):
             check("DeepL sem cota: a traducao devolve None (nao quebra)", await tr.translate_field("hello") is None)
+        tr._quota_ate = 0.0   # o 456 acima pausa a DeepL por 1 hora: zera para o proximo caso realmente tentar a rede
         with patch.object(httpx.AsyncClient, "post", post_fora):
             check("DeepL fora do ar: devolve None (nao quebra)", await tr.translate_field("hello") is None)
     finally:
         settings.deepl_api_key = segredo_deepl
+        tr._quota_ate = 0.0
     r = await c.get("/errors?status=all&source=deepl", headers=S)
     titulos = {e["title"] for e in r.json()}
     check("falhas da DeepL aparecem no registro (cota e fora do ar)", {"DeepL quota exceeded", "DeepL request failed"} <= titulos, str(titulos))
@@ -2522,7 +2528,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     of_a = r.json()["id"]
     r = await c.post("/content-items", json={**novo_conteudo("of-b"), "category": "items", "name": "Teste Oficial Beta", "namePt": "Manual"}, headers=C)
     of_b = r.json()["id"]
-    with _pt("app.api.content_items.translate_field", new=_AM(return_value="AUTOMATICO")):
+    with _pt("app.api.content_items.translate_field_source", new=_AM(return_value=("AUTOMATICO", False))):
         r = await c.post("/content-items", json={**novo_conteudo("of-c"), "category": "items", "name": "Teste Oficial Auto"}, headers=C)
     of_c = r.json()["id"]
     check("preparo: item 'c' tem selo de traducao automatica", r.json()["translationAuto"] is True)
