@@ -1,5 +1,7 @@
 # Migração SquareCloud → Azure (sem perder dados)
 
+> **PLANO B — NÃO é a hospedagem atual.** Em 31/10/2026 o dono decidiu **continuar na SquareCloud** (README, seção 3 e 3.13). Este kit do Azure fica pronto e versionado para o caso de precisar mudar um dia; não execute nada daqui agora.
+
 Pré-requisito: o `LEIA-ME.md` está feito **até o Passo 13** (VM no ar, backup de teste "ok"), usando **domínios de teste** (ex.: `teste.guima.net` / `apiteste.guima.net`) — a SquareCloud continua servindo o endereço de verdade.
 
 > Regras: não apague nada da SquareCloud antes do fim. Use os **bancos de produção só para ler** (backup). Nunca aponte testes para o banco da SquareCloud.
@@ -67,14 +69,14 @@ Alternativa: o **backup do painel/bot** (banco + imagens, cifrado) também resta
 > Se o banco veio da produção, as imagens da produção também precisam vir (o backup do painel as contém). Confirme com o outro agente se `uploads` local já é a união.
 
 ## 6. Trocar o endereço (DNS / Tunnel)
-1. Na Cloudflare: o endereço de verdade (`codex.guima.net`, `api.guima.net` ou o que usar) aponta hoje para a SquareCloud (CNAME/Worker). **Altere** para o Tunnel: nos hostnames públicos do Tunnel adicione os nomes reais → `caddy:80` (a Cloudflare pede para substituir o registro DNS antigo — confirme). O Worker de manutenção (`Cloudflare/`) deve continuar na frente, se você o usa.
+1. Na Cloudflare: o endereço de verdade (`nincodex.guima.net`, `api.guima.net` ou o que usar) aponta hoje para a SquareCloud (CNAME/Worker). **Altere** para o Tunnel: nos hostnames públicos do Tunnel adicione os nomes reais → `caddy:80` (a Cloudflare pede para substituir o registro DNS antigo — confirme). O Worker de manutenção (`Cloudflare/`) deve continuar na frente, se você o usa.
 2. `.env` da VM: volte `SITE_HOST`, `API_HOST`, `FRONTEND_ORIGIN`, `API_BASE_URL`, `SITE_URL` para os reais; `./scripts/atualizar.sh` (e reconstrua o site no GitHub com as *Variables* reais).
 3. Discord (developers): *Redirect* real `https://api.guima.net/auth/discord/callback`.
 4. **Bot**: pare o bot da SquareCloud (painel > app do bot > Parar) **antes** de ligar o do Azure (mesmo token não pode rodar em dois lugares). Ligue: `docker compose up -d bot`. O estado antigo (`*_state.json`) não é copiado: o bot cria mensagens novas de status/versão; se quiser evitar duplicatas, apague as antigas no Discord.
 5. Se o banco novo começou do dump, **troque a `BACKUP_PASSPHRASE`** só se não precisar abrir backups antigos do Discord; senão mantenha a antiga (os backups antigos dependem dela).
 
 ## 7. Testar (marque)
-- [ ] `https://codex.guima.net` abre, imagens aparecem, idioma EN/PT ok
+- [ ] `https://nincodex.guima.net` abre, imagens aparecem, idioma EN/PT ok
 - [ ] Login com Discord funciona e **fica logado** (cookie `lax`; se não, veja `FRONTEND_ORIGIN`/domínios)
 - [ ] Painel: editar e salvar algo, subir uma imagem, ver o log de ações
 - [ ] Bot: `/search`, `/help` respondem; canal de status mostra "no ar"

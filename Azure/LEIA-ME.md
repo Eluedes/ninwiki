@@ -1,5 +1,7 @@
 # Hospedar o Nin Codex / NinWiki no Azure (guia para iniciante)
 
+> **PLANO B — NÃO é a hospedagem atual.** Em 31/10/2026 o dono decidiu **continuar na SquareCloud** (README, seção 3 e 3.13). Este kit do Azure fica pronto e versionado para o caso de precisar mudar um dia; não execute nada daqui agora.
+
 Este kit coloca **site + API + bot + banco** numa única máquina virtual (VM) do Azure, bem protegida.
 Tudo aqui foi **preparado mas NÃO testado contra um Azure real** (não havia login). Siga na ordem e **pare e me chame se algum comando der erro** — não "force".
 
@@ -60,7 +62,7 @@ Por isso o passo do **alerta de orçamento** é obrigatório, e quando o crédit
 2. **Azure CLI** (`az`) no Windows: `winget install -e --id Microsoft.AzureCLI` (feche e reabra o PowerShell depois). Teste: `az version`.
 3. **OpenSSH** (já vem no Windows 10/11): `ssh -V`.
 4. **age** (cifra dos backups): `winget install -e --id FiloSottile.age`.
-5. Um **domínio na Cloudflare** (plano Free), ex.: `guima.net`. Vamos usar `codex.guima.net` (site) e `api.guima.net` (API). **Os dois no mesmo domínio** é o que faz o login funcionar (cookie `SameSite=lax`).
+5. Um **domínio na Cloudflare** (plano Free), ex.: `guima.net`. Vamos usar `nincodex.guima.net` (site) e `api.guima.net` (API). **Os dois no mesmo domínio** é o que faz o login funcionar (cookie `SameSite=lax`).
 6. O repositório no GitHub (para o Actions construir as imagens) e o código na sua pasta.
 
 Todos os comandos abaixo são **PowerShell**, a partir da **pasta raiz do projeto** (`C:\Users\User\Desktop\ninwiki`), salvo quando eu disser "na VM".
@@ -195,7 +197,7 @@ O arquivo `chave-backup-ninwiki.txt` é a chave **privada**: guarde-o em um **ge
 2. **Networks > Tunnels > Create a tunnel > Cloudflared** → nome `ninwiki-azure`.
 3. Na tela "Install and run" escolha **Docker** e **copie só o token** (o texto longo depois de `--token`). **É um segredo.**
 4. Aba **Public Hostname**, adicione 2:
-   * `codex.guima.net` → Service **HTTP** → `caddy:80`
+   * `nincodex.guima.net` → Service **HTTP** → `caddy:80`
    * `api.guima.net` → Service **HTTP** → `caddy:80`
    (A Cloudflare cria os registros DNS sozinha. Se já existirem registros antigos com esses nomes, ela pede para removê-los — **só faça isso na hora da migração**, veja `MIGRACAO.md`. Para testar antes, use nomes novos, ex. `teste.guima.net` / `apiteste.guima.net`.)
 
@@ -215,7 +217,7 @@ Aproveite e **atualize o Discord**: em https://discord.com/developers/applicatio
 
 ### Passo 12 — Construir as imagens (GitHub)
 No GitHub: **Settings > Secrets and variables > Actions > aba Variables**, crie:
-`NEXT_PUBLIC_API_URL` = `https://api.guima.net`, `NEXT_PUBLIC_SITE_URL` = `https://codex.guima.net`, `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID` = (id do bot).
+`NEXT_PUBLIC_API_URL` = `https://api.guima.net`, `NEXT_PUBLIC_SITE_URL` = `https://nincodex.guima.net`, `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID` = (id do bot).
 Depois **Actions > "Deploy no Azure (manual)" > Run workflow** (deixe *deploy* desmarcado). Espere ficar verde: as 3 imagens vão para `ghcr.io/<seu-usuario>/ninwiki-api|web|bot`.
 
 ### Passo 13 — Subir tudo
@@ -238,7 +240,7 @@ sudo /opt/ninwiki/scripts/verificar_seguranca.sh        # deve terminar com "tud
 ```powershell
 curl.exe -sI https://api.guima.net/health | Select-String "HTTP|strict-transport"
 curl.exe -s  https://api.guima.net/health
-curl.exe -sI https://codex.guima.net | Select-String "HTTP|content-security"
+curl.exe -sI https://nincodex.guima.net | Select-String "HTTP|content-security"
 curl.exe -s -o NUL -w "%{http_code}`n" https://api.guima.net/docs     # esperado: 404 (docs desligados em produção)
 Test-NetConnection $VMIP -Port 80     # esperado: TcpTestSucceeded False
 Test-NetConnection $VMIP -Port 443    # esperado: False
@@ -332,7 +334,7 @@ az vm start      -g $RG -n $VM        # liga de novo (o IP fixo se mantém)
 
 **Por que não abrir as portas 80/443?** Tudo que está aberto na internet é testado por robôs em minutos. Com o Tunnel a VM **liga para fora** para a Cloudflare; ninguém consegue "bater na porta" do seu servidor, e a Cloudflare filtra ataques antes de chegarem. Também resolve o risco de alguém falar direto com a API e forjar o IP (por isso adicionei `TRUSTED_PROXY_CIDRS`).
 
-**O que é o Cloudflare Tunnel?** Um programinha (`cloudflared`) rodando na VM que mantém uma conexão de saída com a Cloudflare. Quando alguém acessa `codex.guima.net`, a Cloudflare entrega o pedido por esse "cano" ao Caddy, que passa ao site ou à API.
+**O que é o Cloudflare Tunnel?** Um programinha (`cloudflared`) rodando na VM que mantém uma conexão de saída com a Cloudflare. Quando alguém acessa `nincodex.guima.net`, a Cloudflare entrega o pedido por esse "cano" ao Caddy, que passa ao site ou à API.
 
 **Para que o Caddy se já tem o Tunnel?** Para escolher entre site e API pelo endereço e centralizar logs/cabeçalhos num só lugar. É HTTP puro dentro da VM; o HTTPS é da Cloudflare.
 
@@ -345,4 +347,4 @@ Resposta curta: **não neste desenho.** Explicando:
 * **Azure Database for PostgreSQL (Flexible Server)**, segundo a documentação atual da Microsoft: exige TLS (1.2 ou 1.3; dá para exigir só 1.3 com `ssl_min_protocol_version`), aceita acesso privado (VNet/Private Endpoint) e login por senha ou Entra ID — e **não suporta certificado de cliente (mTLS)**; a recomendação é `sslmode=verify-full`/`verify-ca` com as CAs raiz *DigiCert Global Root G2* e *Microsoft RSA Root CA 2017*. Ou seja, **mesmo lá você não teria os 3 certificados**. Além disso o tamanho Burstable (B1ms ≈ 2 GB) custaria algumas dezenas de dólares por mês do seu crédito e a própria Microsoft diz que Burstable não é para produção. Não vale para o seu crédito.
 * **Se um dia o banco sair da VM** (Flexible Server ou outra máquina), configure só a CA, sem certificado de cliente: `DATABASE_SSL_CA` com o texto das duas CAs acima (uma depois da outra), `DATABASE_SSL_VERIFY_HOSTNAME=true`, **sem** `DATABASE_SSL_CERT/KEY`, e `?ssl` fora da URL (a API já suporta isso). Para mTLS entre containers na mesma VM (não recomendo) seria preciso criar uma CA própria, emitir certificados de servidor e cliente, montá-los como volumes e ligar `ssl=on` + `pg_hba.conf` com `hostssl ... cert` no Postgres — muito trabalho para pouco ganho.
 
-**Posso usar o SameSite=lax mesmo?** Sim, porque `codex.guima.net` e `api.guima.net` são o *mesmo site* (domínio registrável `guima.net`). Nunca use `none`.
+**Posso usar o SameSite=lax mesmo?** Sim, porque `nincodex.guima.net` e `api.guima.net` são o *mesmo site* (domínio registrável `guima.net`). Nunca use `none`.

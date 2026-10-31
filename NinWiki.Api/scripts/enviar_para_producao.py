@@ -19,6 +19,7 @@ COMO USAR (pasta NinWiki.Api, venv ativado, Docker ligado, `$env:PYTHONPATH="."`
         $env:SQUARE_API_KEY="..." ; $env:SQUARE_APP_ID_API="..."
         python scripts/enviar_para_producao.py enviar-imagens --teste      # manda so' um arquivo de teste, para ver se o app aceita
         python scripts/enviar_para_producao.py enviar-imagens --confirmo   # manda as imagens de verdade
+        python scripts/enviar_para_producao.py enviar-imagens --lista envio/imagens_novas.txt --confirmo   # manda so' as imagens da lista
      Sem chave? Envie o `envio/imagens.zip` pelo painel do app (Commit/Upload de arquivos).
 
 IMPORTANTE: o Deploy API (migracoes) precisa ter rodado ANTES, para a producao estar na mesma versao do banco que o dump.
@@ -29,6 +30,7 @@ import os
 import subprocess
 import sys
 import zipfile
+from pathlib import Path
 
 import httpx
 
@@ -146,6 +148,19 @@ def enviar_imagens(args: argparse.Namespace) -> None:
         ENVIO.mkdir(exist_ok=True)
         with zipfile.ZipFile(arquivo, "w") as z:
             z.writestr("uploads/_teste_envio.txt", "teste de envio de imagens (pode apagar)")
+    elif args.lista:
+        # Monta o zip so' com as imagens listadas (uma por linha, ex.: envio/imagens_novas.txt), tiradas de uploads/.
+        nomes = [l.strip() for l in Path(args.lista).read_text(encoding="utf-8").splitlines() if l.strip()]
+        faltando = [n for n in nomes if not (UPLOADS / n).is_file()]
+        if faltando:
+            sys.exit(f"{len(faltando)} imagem(ns) da lista nao existem em uploads/ (ex.: {faltando[0]}). Nada foi enviado.")
+        if not args.confirmo:
+            sys.exit("Isto envia arquivos para a PRODUCAO. Rode com --confirmo (ou use --teste antes).")
+        arquivo = ENVIO / "imagens-novas.zip"
+        with zipfile.ZipFile(arquivo, "w", zipfile.ZIP_DEFLATED) as z:
+            for nome in nomes:
+                z.write(UPLOADS / nome, f"uploads/{nome}")
+        print(f"Zip montado com {len(nomes)} imagens da lista {args.lista}.")
     else:
         arquivo = ENVIO / "imagens.zip"
         if not arquivo.is_file():
@@ -173,6 +188,7 @@ def main() -> None:
     e = sub.add_parser("enviar-imagens", help="envia envio/imagens.zip para o app da API na SquareCloud")
     e.add_argument("--app-id", help="ID do app da API (ou a variavel SQUARE_APP_ID_API)")
     e.add_argument("--teste", action="store_true", help="envia so' um arquivo de teste")
+    e.add_argument("--lista", help="em vez de envio/imagens.zip, monta o zip a partir de uma lista de nomes em uploads/ (ex.: envio/imagens_novas.txt)")
     e.add_argument("--confirmo", action="store_true", help="confirma o envio das imagens")
     args = ap.parse_args()
     preparar(args) if args.cmd == "preparar" else enviar_imagens(args)

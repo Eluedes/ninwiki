@@ -4,13 +4,13 @@ Documento de controle do projeto, no mesmo espírito do roadmap do Guima:
 uma lista viva do que já foi feito e do que falta, organizada em fases.
 Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 
-**Última atualização:** 30/10/2026 (auditoria do roadmap contra o código; migração para o Azure; renome para Nin Codex)
+**Última atualização:** 31/10/2026 (hospedagem continua na SquareCloud; Azure adiado; renome para Nin Codex)
 
 **Legenda:** ✅ feito e testado · 🔄 em andamento / parcial · ⬜ não iniciado · 🗑️ obsoleto (não vale mais)
 
 > **Decisões de 30/10/2026:** (1) o projeto passa a se chamar **Nin Codex** (o *jogo* continua "Nin Online"; pastas e nomes técnicos
-> `NinWiki.*` **não** mudam); (2) a hospedagem sai da SquareCloud e vai para o **Azure** (Azure for Students: 1 VM + Docker Compose +
-> Caddy + Cloudflare Tunnel; Postgres sem porta aberta; backups em Blob); (3) o banco **local** vira a base da produção
+> `NinWiki.*` **não** mudam); (2) ~~a hospedagem sai da SquareCloud para o Azure~~ **mudou em 31/10:** seguimos na **SquareCloud** (plano renovado); o kit do Azure
+> (1 VM + Docker Compose + Caddy + Cloudflare Tunnel) fica pronto na pasta `Azure/` como **plano B**, sem uso agora; (3) o banco **local** vira a base da produção
 > (`scripts/mesclar_producao.py` + junção de bancos). O resto deste arquivo é o histórico; o que vale hoje está na tabela abaixo
 > e nas fases 8 a 10 no fim do arquivo.
 
@@ -19,7 +19,7 @@ Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 | Item do roadmap | Estado | Evidência |
 |---|---|---|
 | Fases 0, 1 (modelagem/Alembic) | ✅ | 55 arquivos em `NinWiki.Api/alembic/versions`, **uma só head** (`c3f5a7b9d1e4`, `py -m alembic heads`) |
-| Seed `export-seed-data.ts` + `app/seed.py` + `lib/*-data.ts` | 🗑️ obsoleto | só servem para o **primeiro banco de teste**; nenhuma página importa `masteries-data`/`village-data`/`guide-data` (`git grep`: só `scripts/export-seed-data.ts` e comentários); `seed.py` **apaga** o catálogo. Mantidos (não é código "morto" provado: ainda geram um banco de teste vazio), mas **não use em produção** |
+| Seed `export-seed-data.ts` + `app/seed.py` + `lib/*-data.ts` | 🗑️ removido | arquivos apagados na limpeza (eram só para o primeiro banco de teste vazio) |
 | Fase 2: login Discord, cargos, permissões, Equipe, log | ✅ | `app/core/permissions.py`, `app/api/auth.py`, `testar_permissoes.py` |
 | Fase 2: 2FA do Discord obrigatório | ✅ | `REQUIRE_DISCORD_2FA` em `app/core/config.py`, usado em `app/api/auth.py` |
 | Fase 2: "testar com o Discord de verdade" | 🔄 | em produção o login real é usado pelo dono; **nenhum teste automático alcança o Discord** (só simulado). Repetir o checklist do README (3.9 / Azure) após a migração |
@@ -38,8 +38,8 @@ Atualizar isso a cada rodada de trabalho, marcando o que mudou.
 | "Testes de tela" (vitest + jsdom) | ⬜ | não existe `vitest` no `NinWiki.Web/package.json`; hoje só `tsc` + `eslint` + testes da API |
 | Rate limit com Redis | ⬜ | só se houver mais de uma instância da API (no Azure será 1 VM: **não precisa**) |
 | Schema de banco separado por ambiente (`beta_ninwiki`) | 🗑️ obsoleto | substituído pelo banco local + banco temporário de teste (`ninwiki_*`) |
-| Fase 7: deploy na SquareCloud | 🗑️ legado | segue no ar até a migração terminar (README seção 3L); depois desligar os apps |
-| Fase 7: deploy no **Azure** | 🔄 | kit na pasta `Azure/` (em criação) — ver Fase 8 |
+| Fase 7: deploy na SquareCloud | ✅ em uso | hospedagem atual; entrada do Nin Codex em produção: README, seção 3.13 |
+| Fase 7: deploy no **Azure** | ⏸️ adiado | plano B: kit pronto em `Azure/`, não usado agora — ver Fase 8 |
 | Renome para **Nin Codex** | 🔄 | ver Fase 9 |
 
 ---
@@ -486,7 +486,7 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 - ⬜ Rate limit com **Redis** se um dia houver mais de uma instância (hoje é por processo — exato com uma instância só)
 - ✅ Cloudflare (proxy) na frente, com Worker de manutenção (`Cloudflare/`); WAF/regras extras ficam a critério do dono
 
-## Fase 7 — Deploy (SquareCloud) — 🗑️ LEGADO: substituída pelo Azure (Fase 8)
+## Fase 7 — Deploy (SquareCloud) — ✅ EM USO (o Azure da Fase 8 ficou adiado)
 - ✅ **Preparação para a SquareCloud (01/10)**: `README.md` na raiz (rodar local, usar o painel, passo a passo do
   deploy e tabela de problemas); `squarecloud.app` + `.squarecloudignore` em `NinWiki.Api`, `NinWiki.Web` e
   `NinWiki.Bot`; `NinWiki.Api/start.py` (roda `alembic upgrade head` e liga o Uvicorn na porta 80; se a migration
@@ -550,7 +550,8 @@ Cargos da equipe: **S.Adm** (dono), **Adm** e **Creator**. Guia de uso local: `F
 
 ---
 
-## Fase 8 — Migração para o Azure (🔄 em andamento)
+## Fase 8 — Migração para o Azure (⏸️ adiada; seguimos na SquareCloud; kit pronto em `Azure/`)
+> Decisão de 31/10/2026: o dono renovou a SquareCloud. Os itens abaixo ficam como **plano B**; o que vale agora é a entrada do Nin Codex na SquareCloud (README, seção 3.13).
 Desenho decidido (30/10/2026): **1 VM** (Azure for Students) com **Docker Compose** (API, Web, Bot, Postgres) atrás do **Caddy**, publicada pela
 **Cloudflare Tunnel** (nenhuma porta aberta na VM), Postgres **sem porta exposta**, **backups em Blob Storage**, segredos fora do Git. O kit fica na pasta
 `Azure/` (guia: `Azure/LEIA-ME.md`, mantido por outro trabalho; o README só aponta para ele).

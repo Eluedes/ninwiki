@@ -84,6 +84,7 @@ services:
     image: ghcr.io/${GHCR_OWNER}/ninwiki-web:${IMAGE_TAG:-latest}
     environment:
       NODE_ENV: production
+      LEGACY_SITE_HOSTS: ${LEGACY_SITE_HOSTS:-}   # hosts antigos do site: recebem redirect 308 para NEXT_PUBLIC_SITE_URL (vazio = desligado)
       BLOCK_SCRAPER_UAS: ${BLOCK_SCRAPER_UAS:-}
       WEB_RATE_LIMIT_PER_MINUTE: ${WEB_RATE_LIMIT_PER_MINUTE:-}
     read_only: true

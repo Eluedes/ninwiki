@@ -4,12 +4,12 @@ Cole/anexe este arquivo no começo de qualquer conversa com uma IA (Gemini, Chat
 Claude...) que vá alterar o projeto. Vários bugs já foram causados por uma IA que
 não sabia o que já estava pronto.
 
-## Nome e hospedagem (30/10/2026)
+## Nome e hospedagem (atualizado em 31/10/2026)
 - O projeto se chama **Nin Codex** (antes Nin Online Wiki / NinWiki). O **jogo** continua **Nin Online**. Pastas, pacotes,
   workflows e identificadores técnicos `NinWiki.*` **não mudam** — não renomeie pasta nem import.
-- A hospedagem está **saindo da SquareCloud para o Azure** (1 VM + Docker Compose + Caddy + Cloudflare Tunnel; kit na pasta
-  `Azure/`, guia em `Azure/LEIA-ME.md`). Até a migração terminar a SquareCloud é o **legado** (README, seção 3). Não invente
-  passos de deploy: leia o README (3A) e a pasta `Azure/`.
+- A hospedagem **ativa é a SquareCloud** (README, seção 3; entrada do Nin Codex em produção: seção 3.13). O **Azure** (1 VM + Docker Compose + Caddy +
+  Cloudflare Tunnel; pasta `Azure/`, README 3A) é só o **plano B**, pronto e **não usado agora**: não o trate como destino. Endereços: site
+  `https://nincodex.guima.net` (antigo `ninwiki.guima.net`, redireciona 308), API `https://api.guima.net`. Não invente passos de deploy: leia o README.
 - O banco **local** é a base da produção (`NinWiki.Api/scripts/mesclar_producao.py` junta com os dados vivos). A produção **já
   está na head** do Alembic: **não crie migração sem o dono pedir** (e nunca edite uma já aplicada).
 
@@ -90,9 +90,7 @@ não sabia o que já estava pronto.
     padrão** e só gravam com `--aplicar`; só rodam em banco **local** (`--permitir-remoto` existe só em alguns, com backup). Só
     preenchem campo **vazio** e criam **rascunho**. Use o que já existe (lista e ordem segura no README, seção 3A.5) em vez de
     criar um importador novo.
-13. **Código antigo que não vale mais:** `NinWiki.Web/scripts/export-seed-data.ts`, `NinWiki.Api/app/seed.py` e
-    `NinWiki.Web/lib/{masteries,village,guide}-data.ts` só geram um banco de teste vazio — **nunca** são a fonte do conteúdo
-    (o conteúdo mora no banco). `GUIA_DE_EDICAO.md` e `MAESTRIAS.md` (em `NinWiki.Web/`) estão marcados como OBSOLETOS.
+13. **Código antigo removido:** o fluxo de seed (`export-seed-data.ts`, `app/seed.py`, `lib/*-data.ts`) e os guias `GUIA_DE_EDICAO.md`/`MAESTRIAS.md` foram apagados; o conteúdo mora no banco.
     Os comandos `/team` do bot foram removidos (equipe só pelo painel).
 14. **Documentos de controle:** `ROADMAP.md` (estado real + próximas fases), `README.md` (como rodar/hospedar; mantido em dia por
     `scripts/verificar_readme.py`), `FASE2_LOCAL.md` (login/cargos local). Atualize-os na mesma entrega.

@@ -9,7 +9,7 @@
 - **Comente todo código novo** (docstring/comentário em português, no mesmo estilo dos arquivos vizinhos).
 
 ## Estrutura e comandos (na pasta indicada)
-- **Nome:** o site/projeto é o **Nin Codex** (antes Nin Online Wiki); o jogo é Nin Online. Pastas e identificadores `NinWiki.*` **não mudam**. Logo: um **livro único + emblema no favicon** (o logo temático de 5 variantes foi removido; `py scripts/gerar_logo.py`). Hospedagem: Azure (pasta `Azure/`); SquareCloud é legado.
+- **Nome:** o site/projeto é o **Nin Codex** (antes Nin Online Wiki); o jogo é Nin Online. Pastas e identificadores `NinWiki.*` **não mudam**. Logo: um **livro único + emblema no favicon** (o logo temático de 5 variantes foi removido; `py scripts/gerar_logo.py`). Hospedagem: **SquareCloud** (atual; README seção 3 e 3.13); o Azure (pasta `Azure/`) é só plano B, não usado agora.
 - `NinWiki.Api` (FastAPI + Alembic + PostgreSQL), `NinWiki.Web` (Next.js), `NinWiki.Bot` (discord.py), `Cloudflare`, `Guima.Site`.
 - Testes da API (banco **local** ligado e migrado): `py scripts/testar_permissoes.py` e `py scripts/testar_bot_integracao.py` (em `NinWiki.Api`). Saúde geral: `py scripts/verificar_projeto.py`. **README em dia:** `py scripts/verificar_readme.py` (`--corrigir` regera a tabela de permissões).
 - Site (em `NinWiki.Web`): `npx tsc --noEmit` e `npx eslint app components lib`; `npx next build` para o build.

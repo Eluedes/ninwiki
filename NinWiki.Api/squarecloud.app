@@ -1,5 +1,5 @@
-DISPLAY_NAME=NinWiki API
-DESCRIPTION=API FastAPI do NinWiki
+DISPLAY_NAME=Nin Codex API
+DESCRIPTION=API FastAPI do Nin Codex
 MAIN=start.py
 MEMORY=512
 VERSION=recommended

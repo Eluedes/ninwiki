@@ -10,10 +10,10 @@
 | `NinWiki.Bot` | Bot de Discord (`/status`, `/search`, `/language`, log, erros e painel de status no canal) | Python, discord.py | — |
 
 Outros documentos: `ROADMAP.md` (estado real do que está feito / falta / obsoleto e as próximas fases), `FASE2_LOCAL.md` (login e cargos),
-`NinWiki.Bot/README.md`, `Cloudflare/README.md`, [`Azure/LEIA-ME.md`](Azure/LEIA-ME.md) (hospedagem nova) e `CONTEXTO_PARA_IA.md` (regras para qualquer IA).
-`NinWiki.Web/GUIA_DE_EDICAO.md` e `NinWiki.Web/MAESTRIAS.md` estão **obsoletos** (mandavam editar `lib/*-data.ts`; hoje o conteúdo é editado no painel).
+`NinWiki.Bot/README.md`, `Cloudflare/README.md`, [`Azure/LEIA-ME.md`](Azure/LEIA-ME.md) (plano B: hospedagem no Azure, não usada agora) e `CONTEXTO_PARA_IA.md` (regras para qualquer IA).
+Os antigos guias `GUIA_DE_EDICAO.md`/`MAESTRIAS.md` e o fluxo de seed (`app/seed.py`, `lib/*-data.ts`) foram **removidos**; o conteúdo é editado no painel.
 
-> **Hospedagem:** o destino é o **Azure** (seção 3A). A SquareCloud (seção 3) é **legado até a migração terminar**.
+> **Hospedagem:** o Nin Codex roda na **SquareCloud** (seção 3; passo a passo de entrada em produção na **3.13**). O **Azure** (seção 3A e pasta `Azure/`) é só o **plano B**, pronto e sem uso por enquanto.
 
 > **Scripts `.bat`/`.cmd` não vão para o repositório** (estão no `.gitignore` e o CI recusa). Se quiser um atalho
 > no Windows, crie o seu localmente — ele fica só na sua máquina.
@@ -47,8 +47,7 @@ O que editar no `.env` para uso local:
 
 Teste: <http://localhost:8000/health>; documentação interativa em <http://localhost:8000/docs> (só em desenvolvimento).
 
-**Conteúdo inicial (obsoleto):** `python -m app.seed` (usa o `seed_data.json`, gerado por `NinWiki.Web/scripts/export-seed-data.ts`) só cria um banco de teste com poucos dados de exemplo. ⚠️ **Apaga** o catálogo antes de
-recarregar — nunca rode num banco que já tem conteúdo real. Para ter o conteúdo de verdade, restaure um backup (`restaurar_backup.py`) ou use o banco do dono.
+**Conteúdo inicial:** o script de seed antigo foi removido. Para ter o conteúdo de verdade, restaure um backup (`restaurar_backup.py`) ou use o banco do dono.
 
 ### 1.2 Site
 ```bash
@@ -252,7 +251,7 @@ Problema marcado como resolvido no painel não é repostado (se voltar a acontec
 Como ligar:
 1. Crie o(s) canal(is) só para a equipe e copie o ID (Modo Desenvolvedor → botão direito no canal → *Copiar ID*).
 2. Dê ao bot, **nesses canais**, *Ver canal*, *Enviar mensagens* e *Inserir links*.
-3. No `.env` do bot: `LOG_CHANNEL_ID`, `ERROR_CHANNEL_ID`, `SITE_URL=https://wiki.seudominio.com` (opcional: `LOG_POLL_SECONDS`,
+3. No `.env` do bot: `LOG_CHANNEL_ID`, `ERROR_CHANNEL_ID`, `SITE_URL=https://nincodex.guima.net` (opcional: `LOG_POLL_SECONDS`,
    `HEALTH_POLL_SECONDS`, `LOG_IGNORE_ACTIONS=login,logout`).
 4. Reinicie o bot. Ele guarda onde parou em `log_state.json` e `error_state.json` (não repete nem perde avisos ao reiniciar).
 Se o **próprio bot** ou a SquareCloud inteira caírem, ninguém avisa — vale ter também um monitor externo (ex: UptimeRobot) no `/health/ready` da API.
@@ -330,119 +329,9 @@ O português antigo vai para o campo `_pt` e a tradução em inglês vira o camp
 
 ---
 
-## 3A. Hospedar no Azure (destino atual)
+## 3. Hospedar na SquareCloud (hospedagem ATUAL, com o deploy automático do GitHub)
 
-> **Em migração.** O Nin Codex está saindo da SquareCloud (seção 3, agora **legado**) para o **Azure for Students**. Esta seção é o
-> resumo em alto nível; **o passo a passo detalhado, os arquivos de Docker e os scripts ficam na pasta [`Azure/`](Azure/) — comece por
-> [`Azure/LEIA-ME.md`](Azure/LEIA-ME.md)**. (Se o `LEIA-ME.md` ainda não existir na sua cópia, o kit está sendo montado; os arquivos
-> `Azure/docker-compose.yml`, `Caddyfile` e `Dockerfile.*` já mostram o desenho.)
-
-### 3A.1 Visão geral do desenho
-| Peça | Onde roda | Observação |
-|---|---|---|
-| **1 VM Linux** (Azure for Students) | Azure | roda tudo abaixo com **Docker Compose** |
-| **Caddy** | container | recebe o tráfego e separa: `wiki.seudominio` para o site, `api.seudominio` para a API |
-| **Cloudflare Tunnel** (`cloudflared`) | container | a VM só faz conexão de **saída**: **nenhuma porta é aberta** para a internet |
-| **API** (`NinWiki.Api`), **Site** (`NinWiki.Web`), **Bot** (`NinWiki.Bot`) | containers | imagens montadas pelos `Azure/Dockerfile.*` |
-| **PostgreSQL 17** | container, rede interna | **sem porta exposta**: só a API alcança; dados em volume |
-| **Backups** | Azure **Blob Storage** (+ o backup cifrado do bot no Discord) | banco e imagens; ver 3A.6 |
-
-A Cloudflare continua na frente (DNS, proteção, Worker de manutenção em `Cloudflare/`). Como só existe **uma** instância da API, o limite de uso por
-IP em memória continua exato (não precisa de Redis).
-
-### 3A.2 Ordem de deploy (sempre esta)
-1. **API primeiro** — ao iniciar ela roda `alembic upgrade head` (se a migração falhar, a API não sobe).
-2. **Site (Web) depois** — ele pode depender de campos/rotas novos da API.
-3. **Reiniciar o Bot** — sempre que o código do bot ou as rotas `/bot/*` mudarem (comandos novos só aparecem depois do reinício).
-
-É a mesma ordem do legado (Deploy API, Deploy Web, Bot).
-
-### 3A.3 Variáveis de ambiente no Azure (o que muda)
-As variáveis são as da seção 4. Mudanças e novidades:
-- Os segredos ficam num arquivo `.env` **na VM** (ao lado do `docker-compose.yml`, fora do Git, permissão restrita) — nunca na imagem nem no repositório.
-- `ENVIRONMENT=production`, `DEV_LOGIN_ENABLED=false`, `TRUST_PROXY_HEADERS=true` (o IP real vem da Cloudflare: `CF-Connecting-IP`) **junto com `TRUSTED_PROXY_CIDRS`** = a rede interna do Docker onde o Caddy fala com a API (sem isso, quem alcançasse a API direto poderia forjar o IP).
-- `DATABASE_URL` aponta para o container `postgres` da rede interna (sem os `DATABASE_SSL_*`, que eram exigência do banco da SquareCloud).
-- `FRONTEND_ORIGIN` / `API_BASE_URL` / `DISCORD_REDIRECT_URI` com os domínios finais; **atualize o *Redirect* no Discord Developer Portal**.
-- **`FRONTEND_ORIGINS`** (API, opcional): origens **extras** aceitas no CORS/CSRF durante a troca de endereço (ex.: o domínio antigo). O login sempre volta
-  para `FRONTEND_ORIGIN`. Apague quando a transição acabar.
-- **`BOT_STATE_DIR`** (Bot): pasta dos arquivos `*_state.json` do bot (padrão: ao lado do `main.py`). No Docker use um volume (ex.: `/data`) para o container poder ter o disco só-leitura.
-- Site: `NEXT_PUBLIC_*` entram no **build** da imagem (mudou? reconstrua a imagem do Web). `STANDALONE_BUILD=true` e `NEXT_PUBLIC_BUILD_SHA` são só do build.
-- `BACKUP_PASSPHRASE` continua obrigatória para o backup cifrado: **guarde também fora da VM** (sem ela o backup não abre).
-
-### 3A.4 Passo a passo para colocar o banco no ar no Azure (alto nível)
-Os comandos exatos estão em `Azure/` e nos scripts citados. Faça **nesta ordem** e não pule o backup:
-1. **Backup novo da produção atual (SquareCloud)** — o dado vivo (equipe, comentários, posts da Steam...) só existe lá. Baixe todas as partes do último `.nbk` do canal de backup do Discord e guarde.
-2. **Ligar o modo manutenção** (`/admin/maintenance`, S.Adm) para ninguém gravar durante a troca; depois de ligar, baixe o backup mais recente.
-3. **Restaurar esse backup num banco temporário local** e **mesclar** com o banco local: `py scripts/mesclar_producao.py --prod ninwiki_prod_copy --destino ninwiki_merged` (simulação primeiro; `--aplicar` depois). Regras de mescla no topo do script. O `ninwiki_merged` é a base nova.
-4. **Preparar o dump para o domínio novo:** `py scripts/converter_urls_dump.py ENTRADA.dump SAIDA.dump --dominio https://api.seudominio.com` (troca `http://localhost:8000` pelo endereço público da API; roda só em banco temporário). O `enviar_para_producao.py preparar` faz a mesma troca e ainda junta as imagens novas em `envio/imagens.zip`.
-5. **Subir a VM** (`docker compose up -d` com o `.env` pronto), primeiro só Postgres e API, e **restaurar o banco mesclado** no container (`pg_restore`, ver `Azure/`). A produção já estava na head das migrações.
-6. **Imagens:** copie a pasta `uploads/` (todas as imagens) para o volume de uploads da API. O banco guarda só o endereço; sem os arquivos as imagens quebram.
-7. **Subir a API, depois o Web, depois reiniciar o Bot** (3A.2).
-8. **Apontar o DNS/túnel** para o Azure, atualizar o *Redirect* do Discord, conferir o checklist (o da 3.9 vale aqui também) e **desligar a manutenção**.
-9. Deixar a SquareCloud **parada, não apagada**, por alguns dias (plano B); depois desligue os apps e guarde um último backup.
-
-Se algo der errado antes do passo 8, nada mudou para o visitante: o DNS ainda aponta para a SquareCloud.
-
-### 3A.7 Checklist do dono depois de trocar o subdomínio do site
-O endereço novo ainda **não foi definido**: abaixo uso `<subdominio-novo>.guima.net` como marcador; o dono informa o nome final.
-- [ ] **Cloudflare, DNS:** criar o registro de `<subdominio-novo>.guima.net` (túnel); manter o nome antigo apontando para o mesmo lugar para o redirect funcionar.
-- [ ] **Cloudflare, Worker de manutenção:** mudar a rota (*Workers Routes*) para o host novo (`Cloudflare/README.md`).
-- [ ] **Site (`WEB_ENV`/`.env`):** `NEXT_PUBLIC_SITE_URL=https://<subdominio-novo>.guima.net` e `LEGACY_SITE_HOSTS=<endereço-antigo>` (sem `https://`); **reconstruir** o Web.
-- [ ] **API:** `FRONTEND_ORIGIN=https://<subdominio-novo>.guima.net` e `FRONTEND_ORIGINS=https://<endereço-antigo>` durante a transição; depois apague o `FRONTEND_ORIGINS`. Se existir `COOKIE_DOMAIN` (ou o cookie for de um domínio), confira que cobre o host novo e a API.
-- [ ] **Discord Developer Portal:** nome do bot **Nin Codex** e avatar `NinWiki.Bot/assets/avatar.png`; o *Redirect* do OAuth só muda se o **domínio da API** mudar (`https://api…/auth/discord/callback`).
-- [ ] **Bot:** `SITE_URL` com o endereço novo e **reiniciar o bot** (o painel "Nin Codex status" e os botões usam esse endereço).
-- [ ] **Quem estava logado no endereço antigo precisa entrar de novo** (o cookie não passa de um host para o outro).
-- [ ] Conferir `/version`, o login, uma imagem, o `sitemap.xml`/RSS (devem usar o endereço novo) e que o endereço antigo redireciona (308) para o novo.
-
-### 3A.5 Scripts desta etapa (pasta `NinWiki.Api`, venv ativo, `$env:PYTHONPATH="."`, Docker ligado, **sempre em banco local**)
-Todos fazem **simulação por padrão** e só gravam com `--aplicar` (o detalhe de cada um está na seção 2.1 e no topo do próprio script).
-| Script | Para quê |
-|---|---|
-| `criar_itens_do_jogo.py` | cria como **rascunho** os itens novos do cliente do jogo (e registra os ícones no banco de imagens) |
-| `corrigir_armas_do_jogo.py` | corrige armas pelos patches (posts da Steam + textos do cliente); só mexe com evidência |
-| `corrigir_idioma_dados.py` | move português que estava no campo **inglês** (atributos, vilas, ranks, clãs...) para `_pt` e grava o inglês |
-| `criar_guias_do_jogo.py` / `criar_guias_do_fandom.py` | artigos do Guia como rascunho (livro de guias do cliente / páginas do Fandom) |
-| `criar_jutsus_do_jogo.py` | jutsus do cliente como rascunho (só nome EN/PT) |
-| `importar_jutsus_fandom.py` / `importar_jutsus_atlas.py` | completam os jutsus (só campos vazios) com Fandom / Nin Atlas |
-| `classificar_jutsus.py` | dá caminho/mastery com evidência e publica os completos (`--aplicar --publicar`) |
-| `importar_missoes_fandom.py` | gera `NinWiki.Web/data/missions.json` (não mexe no banco); `--so-verificar` confere com o cliente |
-| `verificar_com_cliente.py` | corrige nomes e `name_pt` pelos textos do jogo (só banco local) |
-| `extrair_mapas_do_jogo.py` | gera os dados do mapa-mundi a partir do cliente do jogo |
-| `atualizar_retratos_lobos.py` | retratos novos dos 4 lobos (patch 6.0.2.4); não apaga a imagem antiga |
-| `gerar_logo.py` | gera logo, favicon e imagem de compartilhamento do **Nin Codex** a partir do emblema do jogo |
-| `mesclar_producao.py` | junta o banco local com os dados vivos do backup da produção (só em bancos temporários `ninwiki_*`) |
-| `converter_urls_dump.py` | troca `localhost` pelo domínio público dentro de um dump |
-| `restaurar_backup.py` / `migrar_banco.py` | restaurar um backup `.nbk` / exportar e importar o banco (`pg_dump`/`pg_restore`) |
-
-**Ordem segura (conteúdo até a produção):**
-1. `migrar_banco.py exportar` (cópia de segurança do banco local).
-2. Importadores e correções que ainda quiser (simulação, depois `--aplicar`). Para jutsus: `classificar_jutsus --aplicar`, `importar_jutsus_atlas --aplicar`, `classificar_jutsus --aplicar --publicar`.
-3. Revisar os rascunhos no painel e publicar.
-4. `mesclar_producao.py` (3A.4, passo 3), depois `converter_urls_dump.py`.
-5. Restaurar no Azure (3A.4).
-
-Nunca aponte esses scripts para o banco de produção sem backup e sem o `--permitir-remoto` (quando o script o exige).
-
-### 3A.5b Banco final pronto e roteiro (`NinWiki.Api/envio/`)
-O banco mesclado já foi gerado: `envio/ninwiki-codex-final.dump` (pg_dump `-Fc`, feito no Postgres 16; restaura no 17) e a lista das imagens novas `envio/imagens_novas.txt`
-(4.832 imagens de `uploads/`). **Leia `NinWiki.Api/envio/RUNBOOK_BANCO.md`** (passo a passo em português simples, conferências e rollback). Resumo: `converter_urls_dump.py`
-troca `http://localhost:8000` pelo domínio da API (precisa dar `SOBRARAM_LOCALHOST=0`) → copiar dump e imagens para a VM → backup do que existir → parar API/site/bot → `pg_restore` →
-conferir `alembic_version` = `c3f5a7b9d1e4` → subir API, site, bot. O `gerar_logo.py` (livro, favicon, ícones, imagem de compartilhamento e `NinWiki.Bot/assets/avatar.png`, a partir do emblema do jogo)
-é idempotente: pode rodar de novo. A pasta `envio/` e os `.nbk` não vão para o Git.
-
-### 3A.6 Segurança e backups no Azure
-- **Nenhuma porta aberta** na VM (só a conexão de saída do túnel); SSH, se usado, só por chave e restrito por IP no grupo de segurança de rede.
-- Postgres na rede interna **sem acesso à internet** e sem porta publicada; containers com `no-new-privileges`, `cap_drop: ALL` e logs com rotação (veja `Azure/docker-compose.yml`).
-- Segredos só no `.env` da VM; `.env`, certificados e dumps nunca vão para o Git (`.gitignore`).
-- Continuam valendo todas as proteções do app (CSP com nonce, 2FA do Discord, cookies `httpOnly`, limite de uso, cabeçalhos — seção 2.3).
-- **Backups:** (a) o backup cifrado do bot continua indo para o canal privado do Discord (seção *Backup automático*); (b) cópia do banco e das imagens no **Blob Storage** do Azure (agendamento em `Azure/`); (c) antes de qualquer mudança grande, um dump à mão. **Teste a restauração** de vez em quando (`restaurar_backup.py` num banco temporário): backup que nunca foi restaurado não é backup.
-- Mantenha a VM e as imagens atualizadas; o Dependabot semanal já abre PRs das bibliotecas.
-
----
-
-## 3. Legado (até a migração terminar): hospedar na SquareCloud (com o deploy automático do GitHub)
-
-> **Legado.** Mantida só enquanto a produção ainda está na SquareCloud e para consulta (variáveis, certificados, problemas comuns). Para um deploy novo use a seção 3A (Azure).
+> **Esta é a hospedagem em uso.** O Nin Codex continua na SquareCloud (o plano foi renovado). O Azure (seção 3A) ficou como **plano B pronto**, sem uso por enquanto. Endereços reais: site `https://nincodex.guima.net` (antes `ninwiki.guima.net`) e API `https://api.guima.net`. Para colocar a versão nova no ar, siga a **seção 3.13**.
 
 Este é o passo a passo **completo, do zero até o site no ar**, usando os **workflows do GitHub Actions** para enviar o
 código. Você **não precisa** ter Python, Node nem Docker para publicar: o GitHub monta o pacote e manda para a SquareCloud.
@@ -453,8 +342,8 @@ código. Você **não precisa** ter Python, Node nem Docker para publicar: o Git
 | Peça | Onde roda | Endereço | Obrigatória |
 |---|---|---|---|
 | Banco PostgreSQL | *Databases* da SquareCloud | interno (host/porta + certificados) | sim |
-| **API** (`NinWiki.Api`) | app da SquareCloud | `https://api.seudominio.com` | sim |
-| **Site** (`NinWiki.Web`) | app da SquareCloud | `https://wiki.seudominio.com` | sim |
+| **API** (`NinWiki.Api`) | app da SquareCloud | `https://api.guima.net` | sim |
+| **Site** (`NinWiki.Web`) | app da SquareCloud | `https://nincodex.guima.net` | sim |
 | **Bot** (`NinWiki.Bot`) | app da SquareCloud | — (não tem endereço) | não |
 
 Como funciona o ciclo: você **empurra o código para o GitHub** → abre *Actions → Deploy ... → Run workflow* → o GitHub
@@ -465,7 +354,7 @@ na SquareCloud, que reinicia. A API, ao iniciar, aplica sozinha as migrações d
 3.5 criar os apps na SquareCloud → 3.6 GitHub Secrets → 3.7 rodar os workflows → 3.8 domínios → 3.9 conferir → depois, 3.10 no dia a dia.
 
 > ⚠️ **Domínio próprio é o recomendado.** O login usa cookie `SameSite=Lax`: o site e a API precisam estar no **mesmo site**
-> (`wiki.seudominio.com` + `api.seudominio.com`). Com os endereços `*.squareweb.app` (ex.: `ninwiki.squareweb.app` + `ninwiki-api.squareweb.app`)
+> (`nincodex.guima.net` + `api.guima.net`). Com os endereços `*.squareweb.app` (ex.: `ninwiki.squareweb.app` + `ninwiki-api.squareweb.app`)
 > o navegador pode tratá-los como sites diferentes e **o login não persiste**. Para **testar sem domínio**, ponha `COOKIE_SAMESITE=none` no `API_ENV`
 > (funciona em Chrome/Edge/Firefox; o Safari e navegadores que bloqueiam cookies de terceiros continuam sem funcionar). Com domínio próprio, deixe o padrão (`lax`).
 > O domínio personalizado pode depender do plano da SquareCloud — confira no painel.
@@ -473,7 +362,7 @@ na SquareCloud, que reinicia. A API, ao iniciar, aplica sozinha as migrações d
 ### 3.1 Antes de começar: contas e segredos
 Você vai precisar de:
 - conta na **SquareCloud** com plano que comporte 2–3 apps + 1 banco (API 512 MB, site 512 MB, bot 256 MB);
-- um **domínio** (ex.: `seudominio.com`) — de preferência com DNS na **Cloudflare** (3.8);
+- um **domínio** (`guima.net`) — de preferência com DNS na **Cloudflare** (3.8);
 - este repositório no **GitHub** (você já tem) com permissão para criar *Secrets* e rodar *Actions*;
 - uma **aplicação no Discord Developer Portal** (3.2).
 
@@ -486,7 +375,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"   # 1º = JWT_SECRE
 ### 3.2 Discord: aplicação do login (e do bot)
 1. <https://discord.com/developers/applications> → **New Application** (o nome aparece na tela de autorização).
 2. **OAuth2** → copie **Client ID** e **Client Secret** (*Reset Secret* se precisar) → vão para `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET`.
-3. **OAuth2 → Redirects** → *Add Redirect*: `https://api.seudominio.com/auth/discord/callback` (idêntico ao `DISCORD_REDIRECT_URI`;
+3. **OAuth2 → Redirects** → *Add Redirect*: `https://api.guima.net/auth/discord/callback` (idêntico ao `DISCORD_REDIRECT_URI`;
    esse mesmo endereço serve ao login da equipe **e** ao dos leitores do blog). Salve.
 4. Seu **Discord ID** (vai em `SUPER_ADMIN_DISCORD_IDS`): Discord → Configurações → Avançado → *Modo Desenvolvedor* → botão
    direito no seu nome → *Copiar ID do usuário*.
@@ -574,7 +463,7 @@ GitHub → o repositório → **Settings → Secrets and variables → Actions �
 5. Apague a pasta `certs/` antiga no File Manager do app e, no GitHub, os Secrets `DB_SSL_CA/CERT/KEY` (não são mais usados).
 6. Localmente o `.env` pode continuar apontando para arquivos (`certs/ca.crt`...): os dois formatos funcionam.
 
-**Modelo do `API_ENV`** (troque tudo que está em MAIÚSCULAS/`seudominio`):
+**Modelo do `API_ENV`** (troque tudo que está em MAIÚSCULAS):
 ```env
 ENVIRONMENT=production
 # ATENÇÃO: começa com postgresql+asyncpg:// (com o +asyncpg) e TERMINA com /NOME_DO_BANCO (o nome do banco do painel; costuma ser igual ao usuário)
@@ -583,15 +472,16 @@ DATABASE_SSL_CA=-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----   # 
 DATABASE_SSL_CERT=-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----  # texto do .pem
 DATABASE_SSL_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----       # texto do .key
 JWT_SECRET_KEY=COLE_O_PRIMEIRO_SEGREDO_GERADO
-FRONTEND_ORIGIN=https://wiki.seudominio.com
-API_BASE_URL=https://api.seudominio.com
+FRONTEND_ORIGIN=https://nincodex.guima.net
+API_BASE_URL=https://api.guima.net
 DISCORD_CLIENT_ID=SEU_CLIENT_ID
 DISCORD_CLIENT_SECRET=SEU_CLIENT_SECRET
-DISCORD_REDIRECT_URI=https://api.seudominio.com/auth/discord/callback
+DISCORD_REDIRECT_URI=https://api.guima.net/auth/discord/callback
 SUPER_ADMIN_DISCORD_IDS=SEU_DISCORD_ID
 DEV_LOGIN_ENABLED=false
 TRUST_PROXY_HEADERS=true
 # COOKIE_SAMESITE=none   # só se usar os endereços *.squareweb.app em vez de domínio próprio (ver aviso da 3.0)
+# FRONTEND_ORIGINS=https://ninwiki.guima.net   # só durante a troca de endereço (aceita o site antigo); apague depois (ver 3.13)
 BOT_API_TOKEN=COLE_O_SEGUNDO_SEGREDO_GERADO
 DEEPL_API_KEY=
 # ---- opcionais (valores padrão entre parênteses; descrição na seção 4) ----
@@ -606,8 +496,8 @@ DEEPL_API_KEY=
 
 **Modelo do `WEB_ENV`:**
 ```env
-NEXT_PUBLIC_API_URL=https://api.seudominio.com
-NEXT_PUBLIC_SITE_URL=https://wiki.seudominio.com
+NEXT_PUBLIC_API_URL=https://api.guima.net
+NEXT_PUBLIC_SITE_URL=https://nincodex.guima.net
 NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID=ID_DA_APLICACAO_DO_BOT   # liga o botão "Convidar o bot" (ver 2.2d)
 # opcionais: WEB_RATE_LIMIT_PER_MINUTE=300   BLOCK_SCRAPER_UAS=true
 ```
@@ -616,12 +506,12 @@ NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID=ID_DA_APLICACAO_DO_BOT   # liga o botão "Conv
 **Modelo do `BOT_ENV`** (detalhes de cada opção em `NinWiki.Bot/.env.example`):
 ```env
 DISCORD_BOT_TOKEN=TOKEN_DO_BOT
-NINWIKI_API_URL=https://api.seudominio.com
+NINWIKI_API_URL=https://api.guima.net
 BOT_API_TOKEN=O_MESMO_SEGUNDO_SEGREDO_DA_API
 ALLOWED_GUILD_IDS=ID_DO_SEU_SERVIDOR
 LOG_CHANNEL_ID=ID_DO_CANAL_DE_LOG
 ERROR_CHANNEL_ID=ID_DO_CANAL_DE_ALERTAS
-SITE_URL=https://wiki.seudominio.com
+SITE_URL=https://nincodex.guima.net
 # ---- opcionais (valores padrão entre parênteses; descrição na seção 4) ----
 # STATUS_PANEL=true
 # LOG_SHOW_IP=true
@@ -633,7 +523,7 @@ SITE_URL=https://wiki.seudominio.com
 ### 3.7 Rodar os workflows (nesta ordem)
 GitHub → aba **Actions** → escolha o workflow na lista da esquerda → **Run workflow** (branch `main`, ou a que você publica) → **Run workflow**.
 1. **Deploy API na SquareCloud (manual)** → espere ficar verde. Painel da SquareCloud → app da API → **Logs**: deve aparecer
-   `aplicando migrations...` e depois `iniciando API na porta 80...`. Teste `https://api.seudominio.com/health` (depois do 3.8; antes
+   `aplicando migrations...` e depois `iniciando API na porta 80...`. Teste `https://api.guima.net/health` (depois do 3.8; antes
    disso use o endereço `*.squareweb.app` do app só para testar).
 2. **Deploy Web na SquareCloud (manual)** → o site é **compilado no próprio GitHub** (leva 2–4 min no workflow) e só o resultado vai para a SquareCloud, que apenas executa `node server.js` (uns 200 MB de RAM). Nos Logs do app deve aparecer `Ready`. (Compilar dentro da SquareCloud estoura a memória e o processo morre com `Killed` — por isso não fazemos assim.)
 3. **Deploy Bot na SquareCloud (manual)** (opcional) → Logs: o bot conecta e, os comandos aparecem na hora nos servidores de `ALLOWED_GUILD_IDS`/`DEV_GUILD_ID` (sem nenhum deles, em até 1 h em todos).
@@ -643,17 +533,17 @@ O que o workflow faz por você: monta o `.env` a partir do Secret, grava os cert
 Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o conteúdo do `.env`).
 
 ### 3.8 Domínios e DNS
-1. Em **cada app** (API e site) → painel → *Custom Domain* → informe `api.seudominio.com` / `wiki.seudominio.com`. A SquareCloud mostra o **registro DNS** a criar (normalmente um CNAME).
+1. Em **cada app** (API e site) → painel → *Custom Domain* → informe `api.guima.net` / `nincodex.guima.net`. A SquareCloud mostra o **registro DNS** a criar (normalmente um CNAME).
 2. No DNS do domínio (Cloudflare recomendada) crie esses registros exatamente como a SquareCloud mostrou.
 3. **Cloudflare (recomendado):** nuvem laranja ligada, modo SSL **Full (strict)**, *Bot Fight Mode* ligado e uma regra de rate limit.
    Com isso `TRUST_PROXY_HEADERS=true` usa o IP real do visitante (`CF-Connecting-IP`) e floods são barrados antes de chegar na SquareCloud.
-4. Espere o DNS propagar (minutos a horas) e confira `https://api.seudominio.com/health`.
+4. Espere o DNS propagar (minutos a horas) e confira `https://api.guima.net/health`.
 
 ### 3.9 Conferir se está tudo certo (checklist)
-- [ ] `https://api.seudominio.com/health` → `{"status":"ok","environment":"production"}`
-- [ ] `https://api.seudominio.com/health/ready` → `{"status":"ok","database":"ok"}` (se `503`, a API não alcança o banco: revise `DATABASE_URL` e os certificados)
-- [ ] `https://wiki.seudominio.com` abre a Home; `/blog` abre (vazio, se começou sem dados)
-- [ ] `https://wiki.seudominio.com/login` → **Entrar com Discord** com a conta do `SUPER_ADMIN_DISCORD_IDS` → cai no `/admin`
+- [ ] `https://api.guima.net/health` → `{"status":"ok","environment":"production"}`
+- [ ] `https://api.guima.net/health/ready` → `{"status":"ok","database":"ok"}` (se `503`, a API não alcança o banco: revise `DATABASE_URL` e os certificados)
+- [ ] `https://nincodex.guima.net` abre a Home; `/blog` abre (vazio, se começou sem dados)
+- [ ] `https://nincodex.guima.net/login` → **Entrar com Discord** com a conta do `SUPER_ADMIN_DISCORD_IDS` → cai no `/admin`
 - [ ] Em `/admin/staff` cadastre o resto da equipe e ajuste `/admin/permissions`
 - [ ] Crie um post de teste com imagem; confira a imagem no site (se não aparecer, `API_BASE_URL` está errado)
 - [ ] Num navegador sem login: abra um post, entre com o Discord (leitor), comente e curta
@@ -686,7 +576,7 @@ Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o 
 | Site: "Não foi possível conectar à API" | `NEXT_PUBLIC_API_URL` errada no `WEB_ENV` (rode o workflow do site de novo) ou API fora do ar |
 | Site: log com `Creating an optimized production build ...` e depois `Killed` | o app ainda está com a versão antiga (que compilava dentro da SquareCloud). Rode o workflow **Deploy Web** atualizado; se o app seguir com o comando antigo, no painel do app ajuste o arquivo principal para `server.js` e o comando de início para `HOSTNAME=0.0.0.0 PORT=80 node --env-file=.env server.js` |
 | Aviso `unrs-resolver install scripts blocked` | era do build dentro da SquareCloud; com o build no GitHub não aparece mais (e o `package.json` já tem o `allowScripts`) |
-| Login volta para `/login` sem erro | site e API em "sites" diferentes (use `wiki.` e `api.` do mesmo domínio) ou `FRONTEND_ORIGIN` diferente do endereço real do site |
+| Login volta para `/login` sem erro | site e API em "sites" diferentes (use endereços do mesmo domínio (`nincodex.guima.net` e `api.guima.net`)) ou `FRONTEND_ORIGIN` diferente do endereço real do site |
 | `redirect_uri` inválido no Discord | redirect da 3.2 não cadastrado ou diferente do `DISCORD_REDIRECT_URI` |
 | Muitos `429` para todo mundo | `TRUST_PROXY_HEADERS=false` atrás de proxy, ou limite baixo: aumente `PUBLIC_REQUESTS_PER_MINUTE` / `WEB_RATE_LIMIT_PER_MINUTE` |
 | Bot: "BOT_API_TOKEN diferente nos dois .env" | o `BOT_ENV` e o `API_ENV` precisam ter o **mesmo** `BOT_API_TOKEN` |
@@ -697,6 +587,166 @@ Se algo der errado, o log do workflow mostra a resposta da SquareCloud (nunca o 
 ### 3.12 Alternativa sem GitHub Actions (envio manual do zip)
 Se preferir não usar os workflows: crie o `.env` dentro da pasta do app, zipe o **conteúdo** da pasta (sem `venv`, `node_modules`, `.next`,
 `uploads`, `staff_files`, `backups`) e envie pelo painel. Na API inclua também `certs/`. O resto (Discord, domínios, conferência) é igual.
+
+### 3.13 Entrada em produção do Nin Codex na SquareCloud (passo a passo, na ordem segura)
+Situação: o site antigo (`ninwiki.guima.net`) está no ar na SquareCloud; queremos pôr no ar o **Nin Codex** (`https://nincodex.guima.net`, API `https://api.guima.net` — a mesma de antes) com o banco novo
+(`NinWiki.Api/envio/ninwiki-final-dominio.dump`, já com os endereços de imagem trocados para `https://api.guima.net`) e as 4.832 imagens novas. **Ninguém pode gravar no site entre o backup e o fim da troca.**
+Comandos de PC: PowerShell, pasta `NinWiki.Api`, venv ativo, Docker ligado, `$env:PYTHONPATH="."`. **Nunca cole senhas/certificados em chat.** Faça tudo em ordem; se um passo falhar, **pare** e vá para "Rollback" no fim.
+
+**A. Preparar (nada muda para o visitante)**
+1. **Backup novo da produção.** Pegue o backup mais recente do canal de backup do Discord (todas as partes `.nbk.01-of-NN...`) **e**, além dele, um dump do banco da SquareCloud (uma linha só; gera `backups/ninwiki-AAAAMMDD-HHMM.dump`; guarde uma cópia fora do PC também):
+   `py scripts/migrar_banco.py exportar --url "postgresql://USUARIO:SENHA@HOST:PORTA/BANCO" --ssl-ca certs/ca-certificate.crt --ssl-cert certs/certificate.pem --ssl-key certs/private-key.key`
+   Baixe também a pasta `uploads/` do app da API (painel → *Files*).
+2. **A produção mudou desde o backup de 30/10 01:50?** O banco final foi montado com aquele backup. Veja em `/admin/audit-log` se há registros **depois de 30/10 01:50**, se saiu post novo da Steam em `/admin/posts`, comentário novo, ou mudança de equipe/cargos em `/admin/staff`. **Se mudou:** o dump final está desatualizado — refaça a mescla com o backup novo: restaure-o num banco temporário (`py scripts/restaurar_backup.py CAMINHO.nbk.01-of-NN --confirmo`, com o `DATABASE_URL` do `.env` local apontando para `ninwiki_prod_copy`, como explica o topo do `restaurar_backup.py`), rode `py scripts/mesclar_producao.py --prod ninwiki_prod_copy --destino ninwiki_merged` (simulação; depois igual com `--aplicar`), exporte o resultado com `migrar_banco.py exportar` e converta: `py scripts/converter_urls_dump.py ENTRADA.dump envio/ninwiki-final-dominio.dump --dominio https://api.guima.net` (precisa dar `SOBRARAM_LOCALHOST=0`). **Se não mudou:** siga com o dump pronto.
+3. Confira o dump: `certutil -hashfile envio\ninwiki-final-dominio.dump SHA256` (anote). O Alembic do dump é `c3f5a7b9d1e4`, a mesma head do código (`py -m alembic heads`).
+
+**B. Troca (a partir daqui o site fica em manutenção)**
+4. **Ligue a manutenção:** `/admin/maintenance` (S.Adm). O site mostra a página de manutenção; a equipe entra pelo login.
+5. **Variáveis do app da API** (painel → app da API → *Variáveis de Ambiente*; salve, o Deploy do passo 6 reinicia). Só estas mudam (o resto, incluindo `DATABASE_URL` e os 3 `DATABASE_SSL_*`, **continua igual**):
+   - `FRONTEND_ORIGIN=https://nincodex.guima.net` (o login sempre volta para ele).
+   - `FRONTEND_ORIGINS=https://ninwiki.guima.net` (**só durante a transição**: aceita o endereço antigo no CORS/CSRF; apague depois de uns dias).
+   - `API_BASE_URL=https://api.guima.net` e `DISCORD_REDIRECT_URI=https://api.guima.net/auth/discord/callback` (iguais aos de hoje; só confira — nada muda no Discord Developer Portal).
+   - `COOKIE_SAMESITE=lax` (ou apague a linha: `lax` é o padrão). Se hoje está `none`, era porque site e API estavam em "sites" diferentes; agora os dois ficam em `guima.net`, então `lax` é mais seguro. **Mantenha `none` só se** o teste do passo 15 mostrar que o login não persiste (ou se for testar pelos endereços `*.squareweb.app`). Teste: entrar com o Discord em `nincodex.guima.net`, recarregar e continuar logado; abrir `/admin`.
+   - `TRUST_PROXY_HEADERS=true` (como já estava) e `TRUSTED_PROXY_CIDRS`: **deixe vazio** por enquanto. O aviso no log da API (`TRUST_PROXY_HEADERS=true sem TRUSTED_PROXY_CIDRS`) quer dizer só "a API confia no cabeçalho de IP vindo de qualquer um"; na SquareCloud o app só é alcançado pelo proxy dela (e pela Cloudflare), então é aceitável e é o comportamento de antes. Só preencha se descobrir **o IP que a API enxerga como quem abriu a conexão** (o proxy da SquareCloud, que **não** é a faixa da Cloudflare): se a lista estiver errada, a API ignora o IP real e **todos os visitantes parecem ter o mesmo IP** (o limite de uso passa a barrar todo mundo). As faixas oficiais da Cloudflare estão em <https://www.cloudflare.com/ips/> (só servem se a conexão chegar mesmo da Cloudflare; confirme com o suporte da SquareCloud antes). Teste depois de mexer: em `/admin` → Visão Geral os IPs/países têm que variar, não ser um só.
+   - `BOT_LOG_SHOW_IP=false` (padrão). Ponha `true` só se quiser que o bot mostre o IP de quem agiu no canal de log (canal só da equipe).
+6. **Deploy API** (GitHub → Actions → *Deploy API na SquareCloud (manual)*, na branch do Nin Codex). Ele envia o código e **reinicia** a API, que roda `alembic upgrade head` ao iniciar. Nos *Logs* do app: `aplicando migrations...` e depois `iniciando API`. Se a migração falhar a API não sobe: **pare** (Rollback).
+7. **Importar o banco final** (**substitui as tabelas; a produção antiga é apagada** — por isso os passos 1 e 4). Antes, pare o **bot** (painel do app do bot → *Stop*). No PC, **uma linha só**:
+   `py scripts/migrar_banco.py importar envio/ninwiki-final-dominio.dump --url "postgresql://USUARIO:SENHA@HOST:PORTA/BANCO" --ssl-ca certs/ca-certificate.crt --ssl-cert certs/certificate.pem --ssl-key certs/private-key.key --confirmo`
+   A URL é a do banco da SquareCloud, começando em `postgresql://` (sem `+asyncpg`); os 3 certificados ficam em `NinWiki.Api/certs/` (nunca no Git). O script usa o Docker com `postgres:17-alpine` e roda `pg_restore --clean --if-exists --no-owner --no-acl --exit-on-error`: **apaga e recria as tabelas que estão no dump** e para no primeiro erro de verdade (avisos "does not exist, skipping" são normais). **Atenção:** `error_events` (lista de erros) e `traffic_visitors` (impressões digitais de visitantes, que a API apaga em 2 dias) ficam **como no banco local**; os da produção antiga se perdem (o registro de erros recomeça; os contadores de acesso vêm da mescla). Se o comando falhar no meio, o banco pode ficar pela metade: **não ligue o site**, vá para o Rollback.
+   Depois **reinicie o app da API** e confira: `https://api.guima.net/health/ready` → `database: ok`.
+8. **Enviar as 4.832 imagens novas** (35 MB; o banco já aponta para elas, sem isso as imagens quebram). Com a chave e o ID do app da API (3.5), no PowerShell:
+   `$env:SQUARE_API_KEY="..." ; $env:SQUARE_APP_ID_API="..."`
+   `py scripts/enviar_para_producao.py enviar-imagens --teste` — manda só `uploads/_teste_envio.txt`. No painel do app da API → *Files* confira que ele apareceu **e que `uploads/` e o resto do app continuam lá** (não foi verificado se o envio por pacote preserva o que já existe; por isso o teste vem antes e o passo 1 baixa a `uploads/`).
+   `py scripts/enviar_para_producao.py enviar-imagens --lista envio/imagens_novas.txt --confirmo` — monta `envio/imagens-novas.zip` só com as imagens da lista e envia sem reiniciar. (**Não** use `enviar-imagens --confirmo` sozinho: ele manda o `envio/imagens.zip` antigo, de 19/10, que não tem as 4.832.) Sem a chave, envie o `envio/imagens-novas.zip` (criado por esse comando) pelo painel. Depois abra um item com imagem nova e confira; reinicie a API se preciso.
+9. **Variáveis do Web.** No GitHub, edite o Secret **`WEB_ENV`** (vale só para o **build**; os `NEXT_PUBLIC_*` ficam embutidos no site): `NEXT_PUBLIC_API_URL=https://api.guima.net`, `NEXT_PUBLIC_SITE_URL=https://nincodex.guima.net`, `NEXT_PUBLIC_DISCORD_BOT_CLIENT_ID=1549636610323120128` (ID público do bot; liga o botão "Convidar o bot"). Mudou algum? Precisa rodar o **Deploy Web** de novo. No painel do app do site (*Variáveis de Ambiente*, valem ao rodar) ponha `LEGACY_SITE_HOSTS=ninwiki.guima.net` (sem `https://`): quem chegar por esse nome recebe **redirecionamento 308** para o endereço novo (ponha também no `WEB_ENV` por garantia).
+10. **Deploy Web** (Actions → *Deploy Web na SquareCloud (manual)*). O site é compilado no GitHub e só roda na SquareCloud; leva alguns minutos e fica fora do ar um instante (o Worker mostra a manutenção). *Logs* do app: `Ready`.
+11. **Bot.** No `BOT_ENV` (painel do app do bot) ponha `SITE_URL=https://nincodex.guima.net`; `NINWIKI_API_URL=https://api.guima.net` e o `BOT_API_TOKEN` (igual ao da API) continuam. No **Discord Developer Portal** → sua aplicação → *General Information*: nome **Nin Codex** e *App Icon* = `NinWiki.Bot/assets/avatar.png`. Rode o **Deploy Bot** (as rotas `/bot` mudaram, o bot **precisa reiniciar**).
+
+**C. Domínio e Cloudflare**
+12. **DNS (zona `guima.net` na Cloudflare):** painel da SquareCloud → app do **site** → *Custom Domain* → adicione `nincodex.guima.net` e crie na Cloudflare o registro que a SquareCloud mostrar (normalmente um CNAME), **nuvem laranja** (proxied) e SSL *Full (strict)*. **Mantenha `ninwiki.guima.net` apontando para o mesmo app**, para o redirect 308 funcionar (se a SquareCloud aceitar só **um** domínio personalizado por app — não verificado —, faça o redirect na Cloudflare: *Rules → Redirect Rules*, de `ninwiki.guima.net/*` para `https://nincodex.guima.net/${1}`, código 308). `api.guima.net` **não muda**. **Worker de manutenção:** em *Workers & Pages* → `ninwiki-manutencao` → *Domains & Routes*, adicione a rota `nincodex.guima.net/*` (mantenha a do antigo; veja `Cloudflare/README.md`).
+13. **Discord (login):** o *Redirect* do OAuth continua `https://api.guima.net/auth/discord/callback` (a API não mudou de endereço). Nada a fazer.
+
+**D. Conferir e abrir**
+14. Com a equipe logada (passe de 12 h), ainda em manutenção: `https://nincodex.guima.net` abre; `curl -I https://ninwiki.guima.net` mostra `308` e `location: https://nincodex.guima.net/...`; `https://api.guima.net/health`; uma imagem nova; `sitemap.xml` e `feed.xml` com o endereço novo.
+15. **Cookies e login:** `F12` → *Application* → *Cookies*. O cookie da sessão deve ser do host da **API** (`api.guima.net`), `HttpOnly`, `Secure`, `SameSite=Lax` (ou `None` se mantiver `none`). Faça login do **Taku** (S.Adm), recarregue, abra `/admin`. Quem estava logado no endereço antigo precisa **entrar de novo**. Confira `/admin/audit-log` (histórico mesclado, ~7.773 registros, mais a sua entrada de login) e `/admin/staff` (6 ativos; usuários de teste inativos). Contagens esperadas (`RUNBOOK_BANCO.md`): users 11, posts 30, content_items 3.534, media_images 9.933.
+16. **Tire a manutenção** (`/admin/maintenance`) e teste sem login (janela anônima): Home, um item, uma imagem, o blog; entre como leitor com o Discord e comente. O bot deve voltar a postar no canal de log.
+17. Depois de alguns dias sem problema, apague `FRONTEND_ORIGINS` (API) e `LEGACY_SITE_HOSTS` só quando ninguém mais usar o endereço antigo.
+
+**Rollback (voltar atrás)**
+- **Antes do passo 7 (banco):** nenhum dado mudou. Reponha as variáveis antigas da API (`FRONTEND_ORIGIN=https://ninwiki.guima.net`, sem `FRONTEND_ORIGINS`), rode Deploy API/Web da versão anterior (*Run workflow* em outra branch/tag) e tire a manutenção.
+- **Depois do passo 7:** pare API e bot; restaure o dump do passo 1 com o mesmo comando do passo 7 (`migrar_banco.py importar backups/ninwiki-....dump ... --confirmo`); reponha as variáveis antigas e rode Deploy API e Deploy Web da versão anterior. Imagens novas que sobraram em `uploads/` não atrapalham.
+- DNS: se o endereço novo der problema, tire a rota/DNS novo e o antigo continua; o Worker desliga com `MAINTENANCE_DISABLE=1`.
+- Hospedagem alternativa (plano B): `Azure/` (seção 3A), não usada agora.
+
+---
+
+## 3A. Alternativa pronta: Azure (plano B, NÃO usada agora)
+
+> **Plano B — não é a hospedagem atual.** Decidimos continuar na SquareCloud (seção 3). Esta seção guarda o desenho do **Azure for Students** para o caso de
+> precisar mudar um dia. É o resumo em alto nível; **o passo a passo detalhado, os arquivos de Docker e os scripts ficam na pasta [`Azure/`](Azure/) — comece por
+> [`Azure/LEIA-ME.md`](Azure/LEIA-ME.md)**. (Se o `LEIA-ME.md` ainda não existir na sua cópia, o kit está sendo montado; os arquivos
+> `Azure/docker-compose.yml`, `Caddyfile` e `Dockerfile.*` já mostram o desenho.)
+
+### 3A.1 Visão geral do desenho
+| Peça | Onde roda | Observação |
+|---|---|---|
+| **1 VM Linux** (Azure for Students) | Azure | roda tudo abaixo com **Docker Compose** |
+| **Caddy** | container | recebe o tráfego e separa: `wiki.seudominio` para o site, `api.seudominio` para a API |
+| **Cloudflare Tunnel** (`cloudflared`) | container | a VM só faz conexão de **saída**: **nenhuma porta é aberta** para a internet |
+| **API** (`NinWiki.Api`), **Site** (`NinWiki.Web`), **Bot** (`NinWiki.Bot`) | containers | imagens montadas pelos `Azure/Dockerfile.*` |
+| **PostgreSQL 17** | container, rede interna | **sem porta exposta**: só a API alcança; dados em volume |
+| **Backups** | Azure **Blob Storage** (+ o backup cifrado do bot no Discord) | banco e imagens; ver 3A.6 |
+
+A Cloudflare continua na frente (DNS, proteção, Worker de manutenção em `Cloudflare/`). Como só existe **uma** instância da API, o limite de uso por
+IP em memória continua exato (não precisa de Redis).
+
+### 3A.2 Ordem de deploy (sempre esta)
+1. **API primeiro** — ao iniciar ela roda `alembic upgrade head` (se a migração falhar, a API não sobe).
+2. **Site (Web) depois** — ele pode depender de campos/rotas novos da API.
+3. **Reiniciar o Bot** — sempre que o código do bot ou as rotas `/bot/*` mudarem (comandos novos só aparecem depois do reinício).
+
+É a mesma ordem da SquareCloud (Deploy API, Deploy Web, Bot).
+
+### 3A.3 Variáveis de ambiente no Azure (o que muda)
+As variáveis são as da seção 4. Mudanças e novidades:
+- Os segredos ficam num arquivo `.env` **na VM** (ao lado do `docker-compose.yml`, fora do Git, permissão restrita) — nunca na imagem nem no repositório.
+- `ENVIRONMENT=production`, `DEV_LOGIN_ENABLED=false`, `TRUST_PROXY_HEADERS=true` (o IP real vem da Cloudflare: `CF-Connecting-IP`) **junto com `TRUSTED_PROXY_CIDRS`** = a rede interna do Docker onde o Caddy fala com a API (sem isso, quem alcançasse a API direto poderia forjar o IP).
+- `DATABASE_URL` aponta para o container `postgres` da rede interna (sem os `DATABASE_SSL_*`, que eram exigência do banco da SquareCloud).
+- `FRONTEND_ORIGIN` / `API_BASE_URL` / `DISCORD_REDIRECT_URI` com os domínios finais; **atualize o *Redirect* no Discord Developer Portal**.
+- **`FRONTEND_ORIGINS`** (API, opcional): origens **extras** aceitas no CORS/CSRF durante a troca de endereço (ex.: o domínio antigo). O login sempre volta
+  para `FRONTEND_ORIGIN`. Apague quando a transição acabar.
+- **`BOT_STATE_DIR`** (Bot): pasta dos arquivos `*_state.json` do bot (padrão: ao lado do `main.py`). No Docker use um volume (ex.: `/data`) para o container poder ter o disco só-leitura.
+- Site: `NEXT_PUBLIC_*` entram no **build** da imagem (mudou? reconstrua a imagem do Web). `STANDALONE_BUILD=true` e `NEXT_PUBLIC_BUILD_SHA` são só do build.
+- `BACKUP_PASSPHRASE` continua obrigatória para o backup cifrado: **guarde também fora da VM** (sem ela o backup não abre).
+
+### 3A.4 Passo a passo para colocar o banco no ar no Azure (alto nível)
+Os comandos exatos estão em `Azure/` e nos scripts citados. Faça **nesta ordem** e não pule o backup:
+1. **Backup novo da produção atual (SquareCloud)** — o dado vivo (equipe, comentários, posts da Steam...) só existe lá. Baixe todas as partes do último `.nbk` do canal de backup do Discord e guarde.
+2. **Ligar o modo manutenção** (`/admin/maintenance`, S.Adm) para ninguém gravar durante a troca; depois de ligar, baixe o backup mais recente.
+3. **Restaurar esse backup num banco temporário local** e **mesclar** com o banco local: `py scripts/mesclar_producao.py --prod ninwiki_prod_copy --destino ninwiki_merged` (simulação primeiro; `--aplicar` depois). Regras de mescla no topo do script. O `ninwiki_merged` é a base nova.
+4. **Preparar o dump para o domínio novo:** `py scripts/converter_urls_dump.py ENTRADA.dump SAIDA.dump --dominio https://api.seudominio.com` (troca `http://localhost:8000` pelo endereço público da API; roda só em banco temporário). O `enviar_para_producao.py preparar` faz a mesma troca e ainda junta as imagens novas em `envio/imagens.zip`.
+5. **Subir a VM** (`docker compose up -d` com o `.env` pronto), primeiro só Postgres e API, e **restaurar o banco mesclado** no container (`pg_restore`, ver `Azure/`). A produção já estava na head das migrações.
+6. **Imagens:** copie a pasta `uploads/` (todas as imagens) para o volume de uploads da API. O banco guarda só o endereço; sem os arquivos as imagens quebram.
+7. **Subir a API, depois o Web, depois reiniciar o Bot** (3A.2).
+8. **Apontar o DNS/túnel** para o Azure, atualizar o *Redirect* do Discord, conferir o checklist (o da 3.9 vale aqui também) e **desligar a manutenção**.
+9. Deixar a SquareCloud **parada, não apagada**, por alguns dias (plano B); depois desligue os apps e guarde um último backup.
+
+Se algo der errado antes do passo 8, nada mudou para o visitante: o DNS ainda aponta para a SquareCloud.
+
+### 3A.7 Checklist do dono depois de trocar o subdomínio do site
+Endereço novo definido: `nincodex.guima.net` (o antigo é `ninwiki.guima.net`). Na SquareCloud use a seção 3.13; esta lista vale também para o Azure.
+- [ ] **Cloudflare, DNS:** criar o registro de `nincodex.guima.net` (túnel); manter o nome antigo apontando para o mesmo lugar para o redirect funcionar.
+- [ ] **Cloudflare, Worker de manutenção:** mudar a rota (*Workers Routes*) para o host novo (`Cloudflare/README.md`).
+- [ ] **Site (`WEB_ENV`/`.env`):** `NEXT_PUBLIC_SITE_URL=https://nincodex.guima.net` e `LEGACY_SITE_HOSTS=<endereço-antigo>` (sem `https://`); **reconstruir** o Web.
+- [ ] **API:** `FRONTEND_ORIGIN=https://nincodex.guima.net` e `FRONTEND_ORIGINS=https://<endereço-antigo>` durante a transição; depois apague o `FRONTEND_ORIGINS`. Se existir `COOKIE_DOMAIN` (ou o cookie for de um domínio), confira que cobre o host novo e a API.
+- [ ] **Discord Developer Portal:** nome do bot **Nin Codex** e avatar `NinWiki.Bot/assets/avatar.png`; o *Redirect* do OAuth só muda se o **domínio da API** mudar (`https://api…/auth/discord/callback`).
+- [ ] **Bot:** `SITE_URL` com o endereço novo e **reiniciar o bot** (o painel "Nin Codex status" e os botões usam esse endereço).
+- [ ] **Quem estava logado no endereço antigo precisa entrar de novo** (o cookie não passa de um host para o outro).
+- [ ] Conferir `/version`, o login, uma imagem, o `sitemap.xml`/RSS (devem usar o endereço novo) e que o endereço antigo redireciona (308) para o novo.
+
+### 3A.5 Scripts desta etapa (pasta `NinWiki.Api`, venv ativo, `$env:PYTHONPATH="."`, Docker ligado, **sempre em banco local**)
+Todos fazem **simulação por padrão** e só gravam com `--aplicar` (o detalhe de cada um está na seção 2.1 e no topo do próprio script).
+| Script | Para quê |
+|---|---|
+| `criar_itens_do_jogo.py` | cria como **rascunho** os itens novos do cliente do jogo (e registra os ícones no banco de imagens) |
+| `corrigir_armas_do_jogo.py` | corrige armas pelos patches (posts da Steam + textos do cliente); só mexe com evidência |
+| `corrigir_idioma_dados.py` | move português que estava no campo **inglês** (atributos, vilas, ranks, clãs...) para `_pt` e grava o inglês |
+| `criar_guias_do_jogo.py` / `criar_guias_do_fandom.py` | artigos do Guia como rascunho (livro de guias do cliente / páginas do Fandom) |
+| `criar_jutsus_do_jogo.py` | jutsus do cliente como rascunho (só nome EN/PT) |
+| `importar_jutsus_fandom.py` / `importar_jutsus_atlas.py` | completam os jutsus (só campos vazios) com Fandom / Nin Atlas |
+| `classificar_jutsus.py` | dá caminho/mastery com evidência e publica os completos (`--aplicar --publicar`) |
+| `importar_missoes_fandom.py` | gera `NinWiki.Web/data/missions.json` (não mexe no banco); `--so-verificar` confere com o cliente |
+| `verificar_com_cliente.py` | corrige nomes e `name_pt` pelos textos do jogo (só banco local) |
+| `extrair_mapas_do_jogo.py` | gera os dados do mapa-mundi a partir do cliente do jogo |
+| `atualizar_retratos_lobos.py` | retratos novos dos 4 lobos (patch 6.0.2.4); não apaga a imagem antiga |
+| `gerar_logo.py` | gera logo, favicon e imagem de compartilhamento do **Nin Codex** a partir do emblema do jogo |
+| `mesclar_producao.py` | junta o banco local com os dados vivos do backup da produção (só em bancos temporários `ninwiki_*`) |
+| `converter_urls_dump.py` | troca `localhost` pelo domínio público dentro de um dump |
+| `restaurar_backup.py` / `migrar_banco.py` | restaurar um backup `.nbk` / exportar e importar o banco (`pg_dump`/`pg_restore`) |
+
+**Ordem segura (conteúdo até a produção):**
+1. `migrar_banco.py exportar` (cópia de segurança do banco local).
+2. Importadores e correções que ainda quiser (simulação, depois `--aplicar`). Para jutsus: `classificar_jutsus --aplicar`, `importar_jutsus_atlas --aplicar`, `classificar_jutsus --aplicar --publicar`.
+3. Revisar os rascunhos no painel e publicar.
+4. `mesclar_producao.py` (3A.4, passo 3), depois `converter_urls_dump.py`.
+5. Restaurar no Azure (3A.4).
+
+Nunca aponte esses scripts para o banco de produção sem backup e sem o `--permitir-remoto` (quando o script o exige).
+
+### 3A.5b Banco final pronto e roteiro (`NinWiki.Api/envio/`)
+O banco mesclado já foi gerado: `envio/ninwiki-codex-final.dump` (pg_dump `-Fc`, feito no Postgres 16; restaura no 17) e a lista das imagens novas `envio/imagens_novas.txt`
+(4.832 imagens de `uploads/`). **Leia `NinWiki.Api/envio/RUNBOOK_BANCO.md`** (passo a passo em português simples, conferências e rollback). Resumo: `converter_urls_dump.py`
+troca `http://localhost:8000` pelo domínio da API (precisa dar `SOBRARAM_LOCALHOST=0`) → copiar dump e imagens para a VM → backup do que existir → parar API/site/bot → `pg_restore` →
+conferir `alembic_version` = `c3f5a7b9d1e4` → subir API, site, bot. O `gerar_logo.py` (livro, favicon, ícones, imagem de compartilhamento e `NinWiki.Bot/assets/avatar.png`, a partir do emblema do jogo)
+é idempotente: pode rodar de novo. A pasta `envio/` e os `.nbk` não vão para o Git.
+
+### 3A.6 Segurança e backups no Azure
+- **Nenhuma porta aberta** na VM (só a conexão de saída do túnel); SSH, se usado, só por chave e restrito por IP no grupo de segurança de rede.
+- Postgres na rede interna **sem acesso à internet** e sem porta publicada; containers com `no-new-privileges`, `cap_drop: ALL` e logs com rotação (veja `Azure/docker-compose.yml`).
+- Segredos só no `.env` da VM; `.env`, certificados e dumps nunca vão para o Git (`.gitignore`).
+- Continuam valendo todas as proteções do app (CSP com nonce, 2FA do Discord, cookies `httpOnly`, limite de uso, cabeçalhos — seção 2.3).
+- **Backups:** (a) o backup cifrado do bot continua indo para o canal privado do Discord (seção *Backup automático*); (b) cópia do banco e das imagens no **Blob Storage** do Azure (agendamento em `Azure/`); (c) antes de qualquer mudança grande, um dump à mão. **Teste a restauração** de vez em quando (`restaurar_backup.py` num banco temporário): backup que nunca foi restaurado não é backup.
+- Mantenha a VM e as imagens atualizadas; o Dependabot semanal já abre PRs das bibliotecas.
 
 ---
 
@@ -794,7 +844,7 @@ Todo arquivo começa com um comentário-resumo do que faz e toda função tem um
 - `NinWiki.Bot/main.py` + `ninwiki_bot/*` = `/status`, `/search` e `/language` (`public_commands.py`), log no Discord (`log_feed.py`), erros e painel de status (`error_feed.py`).
 - `NinWiki.Web/components/admin/rich-text-editor.tsx` (+ `editor-color-picker.tsx`, `lib/editor-fonts.ts`) = editor de texto; `components/lore/rich-text.tsx` = como o texto aparece no site; `components/admin/traffic-card.tsx` = gráfico de acessos.
 - **Backup / versão / manutenção:** `NinWiki.Api/app/core/backup.py` (gera o backup cifrado) + `app/api/bot.py` (`/bot/backup`, `/bot/version`) + `scripts/restaurar_backup.py`; `NinWiki.Bot/ninwiki_bot/backup_feed.py` e `version_feed.py` (decidem nomes/retenção/quando editar) + `command_sync.py` (comandos por servidor) + `main.py` (os laços); `NinWiki.Api/app/core/steam_news.py` (importador da Steam); `NinWiki.Web/app/version/route.ts` e `proxy.ts` (cabeçalho `x-ninwiki-web`); `Cloudflare/` (Worker da página de manutenção). Ferramentas locais sem relação com o wiki ficam na branch `ferramentas-locais` (**nunca** dar merge).
-- `Azure/` = kit da VM do Azure (`docker-compose.yml`, `Caddyfile`, `Dockerfile.*`, scripts; guia em `Azure/LEIA-ME.md`). `.github/workflows/deploy-*.yml` = deploy **legado** da SquareCloud.
+- `Azure/` = kit da VM do Azure (`docker-compose.yml`, `Caddyfile`, `Dockerfile.*`, scripts; guia em `Azure/LEIA-ME.md`). `.github/workflows/deploy-*.yml` = deploy da SquareCloud (hospedagem atual); `deploy-azure.yml` é do plano B.
 - `NinWiki.Api/app/api/analytics.py` + `core/geoip.py` = acessos anônimos e país; `app/api/bot.py` = rotas do bot (equipe, log, erros, busca).
 
 

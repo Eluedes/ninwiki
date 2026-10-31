@@ -1,5 +1,5 @@
-DISPLAY_NAME=NinWiki Web
-DESCRIPTION=Frontend Next.js do NinWiki
+DISPLAY_NAME=Nin Codex Web
+DESCRIPTION=Frontend Next.js do Nin Codex
 MAIN=server.js
 MEMORY=512
 VERSION=recommended
