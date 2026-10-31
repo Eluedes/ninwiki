@@ -354,6 +354,7 @@ export default function MasteryEditorPage({ params }: { params: Promise<{ id: st
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{dict.admin.translation.nameLabel}</label>
           <Input {...register('namePt')} />
+          <FieldHint id="translate.ptOnly" />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-semibold text-card-foreground">{dict.admin.translation.descriptionLabel}</label>

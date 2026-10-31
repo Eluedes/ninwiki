@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Loader2, AlertTriangle, Plus, Pencil, Trash2, ArrowLeft, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -77,7 +78,7 @@ export default function OrganizationsAdminPage() {
     e.preventDefault();
     if (!form) return;
     const { data, isNew } = form;
-    if (!data.name.trim()) return setFormError(t.orgNameRequired);
+    if (!data.name.trim() && !(data.namePt ?? '').trim()) return setFormError(t.orgNameRequired);
     if (!SLUG.test(data.id)) return setFormError(t.orgIdInvalid);
     setBusy(true);
     setFormError(null);
@@ -211,7 +212,15 @@ export default function OrganizationsAdminPage() {
             <p className="text-xs text-muted-foreground">{t.orgTranslationNote}</p>
             <div className="space-y-2">
               <label className={label}>{dict.admin.translation.nameLabel}</label>
-              <Input value={form.data.namePt ?? ''} onChange={(e) => setForm((f) => f && { ...f, data: { ...f.data, namePt: e.target.value } })} />
+              <Input
+                value={form.data.namePt ?? ''}
+                onChange={(e) => {
+                  const namePt = e.target.value;
+                  // Escreveu so' em portugues: o id (slug) nasce do nome em portugues enquanto o ingles estiver vazio
+                  setForm((f) => f && { ...f, data: { ...f.data, namePt, id: f.isNew && !f.idTouched && !f.data.name ? slugify(namePt) : f.data.id } });
+                }}
+              />
+              <FieldHint id="translate.ptOnly" />
             </div>
             <div className="space-y-2">
               <label className={label}>{dict.admin.translation.descriptionLabel}</label>

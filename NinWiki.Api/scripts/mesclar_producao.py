@@ -33,7 +33,7 @@ import asyncpg
 from app.core.config import settings
 
 # --- tabelas por estrategia (ordem = maes primeiro) ---
-SUBSTITUI_PROD = ["role_permissions", "site_maintenance", "site_announcement", "content_reports", "notice_files", "notices", "post_comments", "post_likes"]
+SUBSTITUI_PROD = ["role_permissions", "site_maintenance", "site_announcement", "content_reports", "volunteer_applications", "notice_files", "notices", "post_comments", "post_likes"]
 TRAFEGO = ["traffic_daily", "traffic_pages", "traffic_places"]
 UPSERT_PROD = ["custom_roles", "users", "readers"]       # prod vence nas linhas em comum; as so' do local ficam
 SO_NOVAS_PROD = ["audit_log", "content_versions", "tags", "posts", "post_tag_links"]   # insere so' o que falta
@@ -130,6 +130,8 @@ async def main() -> None:
         if not a.manter_trafego_local:
             lista += TRAFEGO
         for t in lista:
+            if await P.fetchval("select to_regclass($1)", t) is None:   # backup antigo, de antes de a tabela existir (ex.: voluntarios)
+                resumo.append(f"substitui {t}: tabela ainda nao existe na producao (mantida como esta no local)"); continue
             pk = await pk_cols(M, t)
             antes = await M.fetchval(f'select count(*) from "{t}"')
             await M.execute(f'delete from "{t}"')

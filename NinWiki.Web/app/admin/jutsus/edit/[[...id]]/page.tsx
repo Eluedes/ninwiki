@@ -487,6 +487,7 @@ export default function JutsuEditorPage({ params }: { params: Promise<{ id?: str
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{dict.admin.translation.nameLabel}</label>
             <Input {...register('namePt')} />
+            <FieldHint id="translate.ptOnly" />
           </div>
           {!isNpc && (
             <div className="space-y-2">

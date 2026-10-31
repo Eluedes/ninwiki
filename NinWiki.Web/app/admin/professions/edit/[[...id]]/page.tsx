@@ -10,6 +10,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmojiPicker } from '@/components/admin/emoji-picker';
@@ -49,7 +50,7 @@ export default function ProfessionEditorPage({ params }: { params: Promise<{ id?
   const [apiError, setApiError] = useState<string | null>(null);
   const [idTouched, setIdTouched] = useState(false);
 
-  const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<ProfessionFormValues>({
+  const { register, control, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm<ProfessionFormValues>({
     resolver: zodResolver(professionSchema),
     defaultValues: emptyForm,
   });
@@ -183,7 +184,13 @@ export default function ProfessionEditorPage({ params }: { params: Promise<{ id?
         <p className="text-xs text-muted-foreground">{t.translationNote}</p>
         <div className="space-y-2">
           <label className={label}>{t.namePt}</label>
-          <Input {...register('namePt')} />
+          <Input
+            {...register('namePt', {
+              // Escreveu so' em portugues: o id (slug) nasce do nome em portugues enquanto o ingles estiver vazio
+              onChange: (e) => { if (!isEdit && !idTouched && !getValues('name')) setValue('id', slugify(e.target.value), { shouldValidate: true }); },
+            })}
+          />
+          <FieldHint id="translate.ptOnly" />
         </div>
         <div className="space-y-2">
           <label className={label}>{t.descriptionPt}</label>

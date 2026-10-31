@@ -7,6 +7,8 @@ import type { Locale } from '@/lib/types';
 type Hints = Record<string, string>;
 
 const en: Hints = {
+  // ---- Traducao nos dois sentidos (campos _pt de todos os formularios de conteudo) ----
+  'translate.ptOnly': 'Wrote only in Portuguese? The English version is generated automatically on save (game dictionary or DeepL).',
   // ---- Jutsu ----
   'jutsu.name': 'Name shown on the wiki. The Portuguese version is translated automatically if left empty below.',
   'jutsu.id': 'Used in the page link (/jutsus/<id>): lowercase, no spaces. It cannot be changed after creation.',
@@ -53,6 +55,7 @@ const en: Hints = {
 };
 
 const pt: Hints = {
+  'translate.ptOnly': 'Escreveu só em português? O inglês é gerado automaticamente ao salvar (dicionário do jogo ou DeepL).',
   'jutsu.name': 'Nome mostrado no wiki. A versão em português é traduzida automaticamente se ficar vazia abaixo.',
   'jutsu.id': 'Usado no link da página (/jutsus/<id>): minúsculas, sem espaços. Não pode ser alterado depois de criado.',
   'jutsu.icon': 'Escolha um ícone na lista. Ele aparece em listas, cards e na ficha do jutsu.',

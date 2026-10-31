@@ -28,6 +28,8 @@ interface WikiImageProps {
   imageClassName?: string;
   /** Estilo extra do contêiner (ex.: brilho de fundo na cor da raridade). */
   style?: React.CSSProperties;
+  /** Overlay opcional por cima da imagem (ex.: selo de post oficial). */
+  children?: ReactNode;
 }
 
 /** Imagem com icone de reserva quando nao ha' imagem ou ela falha ao carregar. */
@@ -38,6 +40,7 @@ export function WikiImage({
   className,
   imageClassName,
   style,
+  children,
 }: WikiImageProps) {
   const [hasError, setHasError] = useState(false);
   const showImage = Boolean(src) && !hasError;
@@ -66,6 +69,7 @@ export function WikiImage({
           {fallback}
         </span>
       )}
+      {children}
     </div>
   );
 }

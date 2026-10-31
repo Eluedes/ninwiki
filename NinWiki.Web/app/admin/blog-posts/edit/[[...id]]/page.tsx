@@ -14,6 +14,7 @@ import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Textarea } from '@/components/ui/textarea';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
 import { ImageUploadField } from '@/components/admin/image-upload-field';
@@ -93,6 +94,7 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
     handleSubmit,
     reset,
     setValue,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<PostFormValues>({ resolver: zodResolver(postSchema), defaultValues: emptyForm });
 
@@ -353,7 +355,13 @@ export default function BlogPostEditorPage({ params }: { params: Promise<{ id?: 
           <p className="text-xs text-muted-foreground">{dict.admin.translation.emptyHint}</p>
           <div className="space-y-2">
             <label className={label}>{dict.admin.translation.titleLabel}</label>
-            <Input {...register('titlePt')} />
+            <Input
+              {...register('titlePt', {
+                // Escreveu so' em portugues: o slug nasce do titulo em portugues enquanto o ingles estiver vazio
+                onChange: (e) => { if (!slugTouched && !getValues('title')) setValue('slug', slugify(e.target.value).slice(0, 150), { shouldValidate: true }); },
+              })}
+            />
+            <FieldHint id="translate.ptOnly" />
           </div>
           <div className="space-y-2">
             <label className={label}>{dict.admin.translation.excerptLabel}</label>

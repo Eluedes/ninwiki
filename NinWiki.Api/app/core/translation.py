@@ -4,10 +4,11 @@ campos "_pt" de content_items (name_pt, description_pt, lore_pt,
 synergy_pt, spawn_location_pt - ver app/models/content.py) sem a
 equipe precisar escrever tudo duas vezes.
 
-Direcao EN -> PT (nao PT -> EN): decisao final do Rafael (25/09) - o
-padrao do site e do painel e' INGLES, entao todo conteudo nasce em
-ingles (e' a lingua "principal" de escrita), e o portugues e preenchido automaticamente: primeiro pelo dicionario OFICIAL do jogo
-(app/core/game_dictionary.py), depois pela DeepL.
+Direcao: o padrao do site e' INGLES (campo sem sufixo), o portugues e' o campo `_pt`. A traducao e' BIDIRECIONAL por par
+(campo EN, campo PT): EN preenchido + PT vazio -> EN -> PT; PT preenchido + EN vazio -> PT -> EN (o dono pode escrever so' em
+portugues); os dois preenchidos -> nunca mexe (texto escrito a mao jamais e' sobrescrito). Ordem em cada sentido: dicionario OFICIAL do
+jogo (app/core/game_dictionary.py; no sentido PT -> EN so' o dicionario inverso sem ambiguidade), depois DeepL, senao fica vazio.
+Campo ingles OBRIGATORIO (nome/titulo) que continuar vazio -> erro 422 amigavel (nunca copiamos o portugues pro campo ingles).
 
 DESIGN - POR QUE SEM CHAVE NAO QUEBRA NADA: deepl_api_key vazio (o
 padrao) faz toda funcao aqui devolver None/o valor original sem
@@ -30,6 +31,7 @@ import time
 from typing import Any
 
 import httpx
+from fastapi import HTTPException
 
 from app.core import error_log, game_dictionary
 from app.core.config import settings
@@ -183,11 +185,11 @@ async def _translate_tiptap_json(value: str, reverse: bool = False) -> str | Non
 async def translate_field_source(value: str | None, reverse: bool = False) -> tuple[str | None, bool]:
     """
     Como translate_field, mas diz DE ONDE veio a traducao: (texto, oficial). Ordem: 1) dicionario do jogo (oficial, de graca,
-    so' EN -> PT e so' se o texto INTEIRO existe la'); 2) DeepL (se houver chave e cota); 3) (None, False) = deixa vazio.
+    so' se o texto INTEIRO existe la'; no sentido PT -> EN, pelo dicionario inverso); 2) DeepL (se houver chave e cota); 3) (None, False) = deixa vazio.
     """
     if not value or not value.strip():
         return None, False
-    if not reverse and (official := game_dictionary.translate_doc(value)):
+    if official := game_dictionary.translate_doc(value, reverso=reverse):   # EN -> PT, ou o inverso (so' se nao ha' ambiguidade)
         return official, True
     if _is_tiptap_json(value):
         return await _translate_tiptap_json(value, reverse=reverse), False
@@ -207,35 +209,90 @@ async def translate_field(value: str | None, reverse: bool = False) -> str | Non
     return (await translate_field_source(value, reverse=reverse))[0]
 
 
-async def retranslate_fields(obj: object, field_pairs: list[tuple[str, str]]) -> None:
+def is_empty(value: str | None) -> bool:
+    """Vazio de verdade: None, so' espacos, ou documento do editor rico sem nenhum texto (ex.: um paragrafo vazio)."""
+    if not value or not value.strip():
+        return True
+    if _is_tiptap_json(value):
+        nodes: list[tuple[dict, str]] = []
+        _collect_text_nodes(json.loads(value), nodes)
+        return not nodes
+    return False
+
+
+def decide_direction(en: str | None, pt: str | None) -> str | None:
     """
-    Como fill_missing_translations, mas SOBRESCREVE a traducao existente (botao "Retraduzir" do painel):
-    util quando o texto em ingles mudou e a versao em portugues ficou velha. So' troca o campo `_pt`
-    quando a DeepL realmente devolveu algo (sem chave ou com falha, o valor atual e' preservado).
+    Decide o que fazer com um par (campo EN, campo PT): "en_to_pt" (PT vazio, EN escrito), "pt_to_en" (EN vazio, PT escrito) ou None
+    (os dois escritos, ou os dois vazios = nada a fazer). So' o campo `_pt` preenchido dispara PT -> EN: texto em portugues digitado por
+    engano no campo ingles NUNCA e' traduzido sozinho.
+    """
+    en_vazio, pt_vazio = is_empty(en), is_empty(pt)
+    if pt_vazio and not en_vazio:
+        return "en_to_pt"
+    if en_vazio and not pt_vazio:
+        return "pt_to_en"
+    return None
+
+
+async def fill_pair(obj: object, field_en: str, field_pt: str, bidirectional: bool = True) -> tuple[str | None, bool]:
+    """
+    Preenche o lado VAZIO de um par. Devolve (lado_preenchido, oficial): lado "pt"/"en" ou None se nada foi gravado; oficial=True quando
+    veio do dicionario do jogo (nao ganha selo de traducao automatica). bidirectional=False (bot) so' faz EN -> PT.
+    """
+    direction = decide_direction(getattr(obj, field_en), getattr(obj, field_pt))
+    if direction == "en_to_pt":
+        translated, official = await translate_field_source(getattr(obj, field_en))
+        target = "pt"
+    elif direction == "pt_to_en" and bidirectional:
+        translated, official = await translate_field_source(getattr(obj, field_pt), reverse=True)
+        target = "en"
+    else:
+        return None, False
+    if is_empty(translated):
+        return None, False
+    setattr(obj, field_pt if target == "pt" else field_en, translated)
+    return target, official
+
+
+def require_english(obj: object, required: tuple[str, ...]) -> None:
+    """
+    Campos ingleses OBRIGATORIOS (nome/titulo) que continuaram vazios depois da tentativa de traducao: erro 422 claro. Nao inventa e nao
+    copia o portugues pro campo ingles ("portugues no campo ingles" e' erro de dados, ver CONTEXTO_PARA_IA regra 5).
+    """
+    if any(is_empty(getattr(obj, f, None)) for f in required):
+        raise HTTPException(status_code=422, detail=MSG_TRADUCAO_OBRIGATORIA)
+
+
+MSG_TRADUCAO_OBRIGATORIA = (
+    "Could not translate the name/title automatically right now; please write it in English too. "
+    "(Nao foi possivel traduzir o nome/titulo automaticamente agora; escreva tambem em ingles.)"
+)
+
+
+async def retranslate_fields(obj: object, field_pairs: list[tuple[str, str]], required: tuple[str, ...] = ()) -> None:
+    """
+    Como fill_missing_translations, mas SOBRESCREVE a traducao existente (botao "Retraduzir" do painel): com o EN escrito refaz o PT; com
+    o EN vazio e o PT escrito gera o EN (nunca apaga nada). So' troca o campo quando a traducao realmente veio (sem chave/cota ou com falha,
+    o valor atual e' preservado).
     """
     for field_en, field_pt in field_pairs:
-        translated = await translate_field(getattr(obj, field_en))
-        if translated:
-            setattr(obj, field_pt, translated)
+        if not is_empty(getattr(obj, field_en)):
+            translated = await translate_field(getattr(obj, field_en))
+            if translated:
+                setattr(obj, field_pt, translated)
+        else:
+            await fill_pair(obj, field_en, field_pt)
+    require_english(obj, required)
 
 
-async def fill_missing_translations(obj: object, field_pairs: list[tuple[str, str]]) -> None:
+async def fill_missing_translations(
+    obj: object, field_pairs: list[tuple[str, str]], required: tuple[str, ...] = (), bidirectional: bool = True,
+) -> None:
     """
-    Versao GENERICA de _fill_missing_translations (que existia so' em
-    app/api/content_items.py) - reaproveitada por Masteries/Jutsus
-    (app/api/masteries.py) pra' nao duplicar a mesma logica em cada
-    arquivo de rota que precisar de traducao automatica.
-
-    `obj` e' qualquer objeto ORM (ContentItem, Mastery, Jutsu...) e
-    `field_pairs` e' a lista de (campo_en, campo_pt) desse objeto -
-    ver app/api/content_items.py::_TRANSLATABLE_FIELDS pro formato
-    exato. Mesma regra de sempre: so' preenche o que estiver vazio,
-    nunca sobrescreve uma traducao ja existente (automatica ou
-    corrigida a mao).
+    Versao GENERICA usada pelos endpoints de conteudo. `obj` e' qualquer objeto ORM e `field_pairs` a lista de (campo_en, campo_pt).
+    Regra: so' preenche o lado vazio de cada par (EN -> PT ou PT -> EN, ver decide_direction); nunca sobrescreve texto ja' escrito.
+    `required` = campos ingleses que nao podem ficar vazios (levanta 422 amigavel). bidirectional=False so' faz EN -> PT (bot).
     """
     for field_en, field_pt in field_pairs:
-        if getattr(obj, field_pt):
-            continue
-        translated = await translate_field(getattr(obj, field_en))
-        if translated:
-            setattr(obj, field_pt, translated)
+        await fill_pair(obj, field_en, field_pt, bidirectional)
+    require_english(obj, required)

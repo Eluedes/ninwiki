@@ -86,7 +86,7 @@ async def create_profession(
     if await db.get(Profession, payload.id) is not None:
         raise HTTPException(status_code=409, detail=f"A profession with the id '{payload.id}' already exists")
     profession = Profession(**payload.model_dump())
-    await fill_missing_translations(profession, PROFESSION_TRANSLATABLE)
+    await fill_missing_translations(profession, PROFESSION_TRANSLATABLE, required=("name",))
     db.add(profession)
     await log_action(db, action="create", entity_type="profession", entity_id=profession.id, diff={"name": profession.name}, actor=staff)
     await db.commit()
@@ -109,7 +109,7 @@ async def update_profession(
         raise HTTPException(status_code=400, detail="The profession id cannot be changed")
     before = {"name": profession.name}
     apply_scalar_fields(profession, payload, exclude={"id"})
-    await fill_missing_translations(profession, PROFESSION_TRANSLATABLE)
+    await fill_missing_translations(profession, PROFESSION_TRANSLATABLE, required=("name",))
     await log_action(db, action="update", entity_type="profession", entity_id=profession_id,
                      diff={"before": before, "after": {"name": profession.name}}, actor=staff)
     await db.commit()
@@ -172,7 +172,7 @@ async def create_guide_article(
     if await db.get(GuideArticle, payload.id) is not None:
         raise HTTPException(status_code=409, detail=f"A guide article with the id '{payload.id}' already exists")
     article = GuideArticle(**payload.model_dump())
-    await fill_missing_translations(article, ARTICLE_TRANSLATABLE)
+    await fill_missing_translations(article, ARTICLE_TRANSLATABLE, required=("title",))
     db.add(article)
     await log_action(db, action="create", entity_type="guide_article", entity_id=article.id,
                      diff={"title": article.title, "section": article.section}, actor=staff)
@@ -196,7 +196,7 @@ async def update_guide_article(
         raise HTTPException(status_code=400, detail="The article id cannot be changed")
     before = {"title": article.title, "status": article.status.value}
     apply_scalar_fields(article, payload, exclude={"id"})
-    await fill_missing_translations(article, ARTICLE_TRANSLATABLE)
+    await fill_missing_translations(article, ARTICLE_TRANSLATABLE, required=("title",))
     await log_action(db, action="update", entity_type="guide_article", entity_id=article_id,
                      diff={"before": before, "after": {"title": article.title, "status": article.status.value}}, actor=staff)
     await db.commit()

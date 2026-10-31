@@ -407,7 +407,7 @@ async def _fill_pt(db: AsyncSession, rows: list) -> None:
     for row in rows[:MAX_TRANSLATED_PER_SEARCH]:
         pairs = PT_FIELDS[type(row)]
         if any(not getattr(row, pt) and getattr(row, en) for en, pt in pairs):
-            await fill_missing_translations(row, pairs)
+            await fill_missing_translations(row, pairs, bidirectional=False)   # bot: so' EN -> PT (nunca PT -> EN)
             changed = True
     if changed:
         await db.commit()

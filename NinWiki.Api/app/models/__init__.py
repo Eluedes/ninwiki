@@ -26,3 +26,4 @@ from app.models.traffic import TrafficDaily, TrafficPage, TrafficPlace, TrafficV
 from app.models.announcement import SiteAnnouncement  # noqa: F401
 from app.models.media import MediaImage  # noqa: F401
 from app.models.reports import ContentReport  # noqa: F401
+from app.models.volunteers import VolunteerApplication  # noqa: F401

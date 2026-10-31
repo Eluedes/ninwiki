@@ -133,6 +133,7 @@ ROTAS_PUBLICAS = {
     ("POST", "/auth/dev-login"),   # so' funciona em development + confere a origem
     ("POST", "/auth/logout"),      # sem sessao so' limpa o cookie
     ("POST", "/reports"),           # visitante avisa conteudo desatualizado / erro de traducao (origem + limites + isca + alvo conferido)
+    ("POST", "/volunteers/apply"),  # visitante se inscreve como voluntario (origem + limite por IP + isca + consentimento + teto diario)
     ("POST", "/client-errors"),    # o navegador do visitante avisa que o site quebrou (origem + limite por IP + teto por hora)
 }
 
@@ -219,7 +220,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     # O dicionario oficial do jogo tem teste proprio (testar_dicionario_jogo.py). Aqui ele fica DESLIGADO: textos de exemplo como
     # "hello" existem nele e nunca chegariam a' DeepL simulada dos testes de traducao abaixo.
     from app.core import game_dictionary as _gd
-    _gd.translate_doc = lambda valor: None
+    _gd.translate_doc = lambda valor, *args, **kwargs: None   # aceita o `reverso=` do sentido PT->EN
     sadm = await criar_user("sadm", StaffRole.SUPER_ADMIN)
     adm = await criar_user("adm", StaffRole.ADMIN)
     adm2 = await criar_user("adm2", StaffRole.ADMIN)
@@ -271,7 +272,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("mudou a raridade do item: o drop acompanha (rare) sem editar o mob", r.status_code == 200 and r.json()["drops"][0]["rarity"] == "rare", r.text[:200])
     # Selo "traducao automatica": so' quando a DeepL preencheu o portugues e ninguem revisou
     from unittest.mock import AsyncMock, patch as _patch
-    with _patch("app.api.content_items.translate_field_source", new=AsyncMock(return_value=("TRADUZIDO", False))):   # (texto, oficial=False -> DeepL)
+    with _patch("app.core.translation.translate_field_source", new=AsyncMock(return_value=("TRADUZIDO", False))):   # (texto, oficial=False -> DeepL); fill_pair le' daqui
         r = await c.post("/content-items", json={**novo_conteudo("sel-auto"), "category": "items"}, headers=C)
         check("conteudo sem portugues traduzido pela DeepL ganha translationAuto=true", r.status_code == 201 and r.json()["translationAuto"] is True and r.json()["namePt"] == "TRADUZIDO", r.text[:200])
         sel_id = r.json()["id"]
@@ -2528,7 +2529,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     of_a = r.json()["id"]
     r = await c.post("/content-items", json={**novo_conteudo("of-b"), "category": "items", "name": "Teste Oficial Beta", "namePt": "Manual"}, headers=C)
     of_b = r.json()["id"]
-    with _pt("app.api.content_items.translate_field_source", new=_AM(return_value=("AUTOMATICO", False))):
+    with _pt("app.core.translation.translate_field_source", new=_AM(return_value=("AUTOMATICO", False))):
         r = await c.post("/content-items", json={**novo_conteudo("of-c"), "category": "items", "name": "Teste Oficial Auto"}, headers=C)
     of_c = r.json()["id"]
     check("preparo: item 'c' tem selo de traducao automatica", r.json()["translationAuto"] is True)
@@ -2647,6 +2648,78 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("Adm apaga o report (204)", r.status_code == 204, f"veio {r.status_code}")
     async with _SessR() as db:
         await db.execute(text("DELETE FROM content_reports WHERE target_id LIKE :p OR target_id = 'nao-existe-teste-perm' OR message LIKE 'flood numero%' OR ip_address IS NOT NULL AND created_at > now() - interval '1 hour'"), {"p": f"{SLUG}%"})
+        await db.commit()
+
+    secao("37) Voluntarios: inscricao publica com defesas; so' volunteers.manage (S.Adm e Adm) ve, avalia e apaga")
+    from app.core.rate_limit import limiter as _limV
+    from app.core.database import AsyncSessionLocal as _SessV
+    ORIGEM = {"Origin": settings.frontend_origin}
+    vol = {"name": "Teste Perm Voluntario", "discord": "voluntario_teste_perm", "gameNick": "NickTeste", "languages": "Portuguese, English",
+           "areas": ["translation", "wiki-editing"], "availability": "5h por semana", "experience": "Ja traduzi jogos antes.",
+           "motivation": "Quero ajudar a manter o wiki completo.", "contactEmail": "teste@example.com", "consent": True, "website": ""}
+    _limV._hits.clear()
+    r = await c.post("/volunteers/apply", json=vol, headers=ORIGEM)
+    check("visitante anonimo se inscreve (204, sem eco dos dados)", r.status_code == 204 and not r.content, f"veio {r.status_code} {r.text[:120]}")
+    r = await c.post("/volunteers/apply", json={k: v for k, v in vol.items() if k != "consent"}, headers=ORIGEM)
+    check("sem consentimento = 422", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/volunteers/apply", json={**vol, "consent": False}, headers=ORIGEM)
+    check("consentimento false = 422", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/volunteers/apply", json={**vol, "areas": []}, headers=ORIGEM)
+    check("sem nenhuma area de interesse = 422", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/volunteers/apply", json={**vol, "motivation": "x" * 1501}, headers=ORIGEM)
+    check("texto acima do limite = 422", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/volunteers/apply", json={**vol, "contactEmail": "nao-e-email"}, headers=ORIGEM)
+    check("e-mail invalido = 422", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.post("/volunteers/apply", json=vol, headers={"Origin": "https://site-malicioso.example"})
+    check("origem de outro site e' recusada (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.post("/volunteers/apply", json={**vol, "name": "Robo Isca", "website": "http://spam.example"}, headers=ORIGEM)
+    check("isca preenchida: finge 204 mas descarta", r.status_code == 204, f"veio {r.status_code}")
+    r = await c.get("/volunteers?limit=100", headers=A)
+    nomes = [x["name"] for x in r.json()["items"]] if r.status_code == 200 else []
+    check("Adm lista: a inscricao valida esta' la' e a do robo nao", "Teste Perm Voluntario" in nomes and "Robo Isca" not in nomes, str(nomes)[:200])
+    check("lista traz status NEW (new), total e contador de novas", r.status_code == 200 and r.json()["total"] >= 1 and r.json()["newCount"] >= 1
+          and all(x["status"] == "new" for x in r.json()["items"] if x["name"] == "Teste Perm Voluntario"), r.text[:200])
+    vid = next((x["id"] for x in r.json()["items"] if x["name"] == "Teste Perm Voluntario"), "") if r.status_code == 200 else ""
+    r = await c.get("/volunteers?q=voluntario_teste_perm&status=new", headers=A)
+    check("busca por Discord + filtro de status acham a inscricao", r.status_code == 200 and r.json()["total"] >= 1, r.text[:160])
+    r = await c.get("/volunteers?q=zzzz-ninguem-assim&status=new", headers=A)
+    check("busca sem resultado volta vazia", r.status_code == 200 and r.json()["items"] == [], r.text[:160])
+    for quem, tem in ((C, False), (A, True)):
+        perms = (await c.get("/auth/me", headers=quem)).json().get("permissions", [])
+        check(f"/auth/me {'inclui' if tem else 'NAO inclui'} volunteers.manage (a entrada do painel {'aparece' if tem else 'fica escondida'})",
+              ("volunteers.manage" in perms) == tem, str(perms)[:120])
+    r = await c.get("/volunteers")
+    check("anonimo NAO lista voluntarios (401)", r.status_code == 401, f"veio {r.status_code}")
+    r = await c.get("/volunteers", headers=C)
+    check("Creator NAO lista voluntarios (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.get(f"/volunteers/{vid}", headers=C)
+    check("Creator NAO abre uma inscricao (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.patch(f"/volunteers/{vid}", json={"status": "approved"}, headers=C)
+    check("Creator NAO muda status (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.delete(f"/volunteers/{vid}", headers=C)
+    check("Creator NAO apaga (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.get(f"/volunteers/{vid}", headers=A)
+    check("Adm abre uma inscricao completa", r.status_code == 200 and r.json()["motivation"].startswith("Quero ajudar"), r.text[:160])
+    r = await c.patch(f"/volunteers/{vid}", json={"status": "reviewing", "staffNotes": "  parece bom  "}, headers=A)
+    check("Adm muda status e anota (guarda quem avaliou)", r.status_code == 200 and r.json()["status"] == "reviewing"
+          and r.json()["staffNotes"] == "parece bom" and r.json()["reviewedBy"], r.text[:200])
+    r = await c.patch(f"/volunteers/{vid}", json={"status": "qualquer"}, headers=A)
+    check("status invalido = 422", r.status_code == 422, f"veio {r.status_code}")
+    r = await c.get("/volunteers?status=reviewing", headers=A)
+    check("filtro por status acha a inscricao em avaliacao", any(x["id"] == vid for x in r.json()["items"]), r.text[:160])
+    r = await c.get(f"/audit-log?limit=50", headers=S)
+    check("o log registrou a avaliacao sem guardar as notas nem dados pessoais",
+          r.status_code != 200 or ("parece bom" not in r.text and "voluntario_teste_perm" not in r.text), "texto sensivel no log")
+    r = await c.delete(f"/volunteers/{vid}", headers=A)
+    check("Adm apaga a inscricao (204)", r.status_code == 204, f"veio {r.status_code}")
+    r = await c.get(f"/volunteers/{vid}", headers=A)
+    check("depois de apagada, 404", r.status_code == 404, f"veio {r.status_code}")
+    _limV._hits.clear()
+    codigos = [(await c.post("/volunteers/apply", json={**vol, "name": f"Flood Teste {i}"}, headers=ORIGEM)).status_code for i in range(7)]
+    check("limite por IP: depois de 5 por hora vem 429", codigos[:5] == [204] * 5 and 429 in codigos[5:], str(codigos))
+    _limV._hits.clear()
+    async with _SessV() as db:
+        await db.execute(text("DELETE FROM volunteer_applications WHERE name LIKE 'Flood Teste%' OR name LIKE '%Teste Perm Voluntario%' OR name = 'Robo Isca'"))
         await db.commit()
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")

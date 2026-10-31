@@ -8,6 +8,7 @@ import { ArrowRight, Heart, MessageSquare, Newspaper } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { localizedText } from '@/lib/localized';
 import { useLanguage } from '@/components/providers/language-provider';
+import { OfficialBadge } from '@/components/blog/official-badge';
 import { WikiImage } from '@/components/wiki/wiki-image';
 import type { ApiPostSummary } from '@/lib/api-client';
 
@@ -35,7 +36,9 @@ export function PostCard({ post }: { post: ApiPostSummary }) {
         fallback={<Newspaper className="h-8 w-8 text-primary" />}
         className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary"
         imageClassName="h-full w-full object-cover"
-      />
+      >
+        {post.isSteam && <OfficialBadge size="sm" className="bottom-0.5 right-0.5" />}
+      </WikiImage>
       <div className="min-w-0 flex-1">
         <div className="mb-1 text-sm text-muted-foreground">
           {formatPostDate(post.publishedAt ?? post.createdAt, locale)}
@@ -91,7 +94,9 @@ export function PostCardLarge({ post, featured = false }: { post: ApiPostSummary
         fallback={<Newspaper className="h-10 w-10 text-primary" />}
         className={cn('flex shrink-0 items-center justify-center overflow-hidden bg-secondary', featured ? 'aspect-[16/9] lg:aspect-auto lg:w-3/5' : 'aspect-[16/9]')}
         imageClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-      />
+      >
+        {post.isSteam && <OfficialBadge size={featured ? 'lg' : 'md'} />}
+      </WikiImage>
       <div className="flex min-w-0 flex-1 flex-col p-5">
         <div className="mb-1 text-xs text-muted-foreground">
           {formatPostDate(post.publishedAt ?? post.createdAt, locale)}

@@ -963,6 +963,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ id?: s
           <div className="space-y-2">
             <label className="text-sm font-semibold text-card-foreground">{dict.admin.translation.nameLabel}</label>
             <Input {...register('namePt')} placeholder={dict.admin.translation.emptyHint} />
+            <FieldHint id="translate.ptOnly" />
           </div>
 
           <div className="space-y-2">

@@ -118,10 +118,10 @@ class MasteryWrite(CamelModel):
     NAO inclui id/type/element - esses 3 continuam fixos (sao a propria
     identidade do elemento do jogo, editar mudaria qual mastery e' essa).
     """
-    name: str = Field(min_length=1, max_length=100)
+    name: str = Field(default="", max_length=100)   # vazio permitido se o _pt vier escrito: o EN e' gerado (translation.fill_missing_translations); vazio nos dois = 422
     name_pt: str | None = None
-    description: str
-    long_description: str
+    description: str = ""
+    long_description: str = ""
     description_pt: str | None = None
     long_description_pt: str | None = None
     icon: str = Field(min_length=1, max_length=50)
@@ -180,14 +180,14 @@ class JutsuRead(CamelModel):
 class JutsuWrite(CamelModel):
     """Corpo aceito em criar/editar um jutsu."""
     id: str = Field(min_length=1, max_length=80, description="Slug único, ex: katon-goukakyuu")
-    name: str
+    name: str = ""   # vazio permitido se o _pt vier escrito: o EN e' gerado (translation.fill_missing_translations); vazio nos dois = 422
     name_pt: str | None = None
     mastery_id: str | None   # OBRIGATORIO no corpo, mas pode ser null = jutsu de UTILIDADE (Utility: nao e' mastery, qualquer pessoa pode usar)
     path_id: str | None = None
     tier: int = Field(ge=1, le=5, description="1 a 5 (maximo 5)")
     chakra_cost: int = Field(ge=0)
-    description: str
-    long_description: str
+    description: str = ""
+    long_description: str = ""
     description_pt: str | None = None
     long_description_pt: str | None = None
     effect: str = ""

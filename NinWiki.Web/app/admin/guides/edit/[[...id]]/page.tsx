@@ -10,6 +10,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FieldHint } from '@/components/admin/field-hint';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/admin/rich-text-editor';
@@ -54,7 +55,7 @@ export default function GuideArticleEditorPage({ params }: { params: Promise<{ i
   const [apiError, setApiError] = useState<string | null>(null);
   const [idTouched, setIdTouched] = useState(false);
 
-  const { register, control, handleSubmit, reset, setValue, formState: { errors } } = useForm<GuideArticleFormValues>({
+  const { register, control, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm<GuideArticleFormValues>({
     resolver: zodResolver(guideArticleSchema),
     defaultValues: emptyForm,
   });
@@ -218,7 +219,13 @@ export default function GuideArticleEditorPage({ params }: { params: Promise<{ i
         <p className="text-xs text-muted-foreground">{t.translationNote}</p>
         <div className="space-y-2">
           <label className={label}>{t.titlePt}</label>
-          <Input {...register('titlePt')} />
+          <Input
+            {...register('titlePt', {
+              // Escreveu so' em portugues: o id (slug) nasce do titulo em portugues enquanto o ingles estiver vazio
+              onChange: (e) => { if (!isEdit && !idTouched && !getValues('title')) setValue('id', slugify(e.target.value), { shouldValidate: true }); },
+            })}
+          />
+          <FieldHint id="translate.ptOnly" />
         </div>
         <div className="space-y-2">
           <label className={label}>{t.summaryPt}</label>

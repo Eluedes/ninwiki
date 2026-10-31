@@ -871,7 +871,7 @@ export type StaffRole = 'super_admin' | 'admin' | 'creator';
 // Nomes das permissoes - espelham app/core/permissions.py::Permission no backend.
 export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
-  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'translation.import'
+  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'volunteers.manage' | 'translation.import'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.categorize' | 'site.maintenance' | 'media.upload' | 'media.reset_ids' | 'media.closed'
@@ -1011,6 +1011,7 @@ export interface ApiPostSummary {
   tags: ApiTag[];
   publishedAt: string | null;
   isScheduled: boolean; // publicado com data no futuro (ainda invisivel ao publico)
+  isSteam?: boolean;    // importado da Steam (post oficial da desenvolvedora): mostra o selo da logo dela
   likeCount: number;
   commentCount: number;
   createdAt: string;
@@ -1694,6 +1695,49 @@ export function setReportStatus(id: string, status: ReportStatus): Promise<ApiRe
 /** Painel: apaga o report. */
 export function deleteReport(id: string): Promise<void> {
   return apiFetch(`/reports/${id}`, { method: 'DELETE' });
+}
+
+// ---- Voluntarios (formulario publico /volunteer + painel /admin/volunteers) ----
+
+export const VOLUNTEER_AREAS = ['translation', 'wiki-editing', 'data-collection', 'mapping', 'bot-dev', 'art-graphics', 'moderation', 'other'] as const;
+export type VolunteerArea = (typeof VOLUNTEER_AREAS)[number];
+export const VOLUNTEER_STATUSES = ['new', 'reviewing', 'approved', 'rejected', 'contacted'] as const;
+export type VolunteerStatus = (typeof VOLUNTEER_STATUSES)[number];
+
+/** O que o visitante envia (espelha VolunteerApply no backend). `website` e' a isca anti-robo e deve ir sempre vazia. */
+export interface VolunteerApplyInput {
+  name: string; discord: string; gameNick: string; languages: string; areas: VolunteerArea[];
+  availability: string; experience: string; motivation: string; contactEmail: string | null; consent: true; website: string;
+}
+
+/** Uma inscricao como o painel ve' (espelha VolunteerRead). */
+export interface ApiVolunteer {
+  id: string; createdAt: string; name: string; discord: string; gameNick: string; languages: string; areas: string[];
+  availability: string; experience: string; motivation: string; contactEmail: string | null; status: VolunteerStatus;
+  staffNotes: string | null; reviewedBy: string | null; reviewedAt: string | null;
+}
+
+/** Visitante (sem login) envia a inscricao de voluntario. */
+export function applyAsVolunteer(input: VolunteerApplyInput): Promise<void> {
+  return apiFetch('/volunteers/apply', { method: 'POST', body: JSON.stringify(input) }, true);
+}
+
+/** Painel: lista as inscricoes (filtro de status, busca e paginacao) + total + quantas estao NOVAS. */
+export function listVolunteers(opts: { status?: VolunteerStatus; q?: string; limit: number; offset: number }): Promise<{ items: ApiVolunteer[]; total: number; newCount: number }> {
+  const params = new URLSearchParams({ limit: String(opts.limit), offset: String(opts.offset) });
+  if (opts.status) params.set('status', opts.status);
+  if (opts.q?.trim()) params.set('q', opts.q.trim());
+  return apiFetch(`/volunteers?${params}`);
+}
+
+/** Painel: muda o status e/ou as notas internas de uma inscricao. */
+export function updateVolunteer(id: string, patch: { status?: VolunteerStatus; staffNotes?: string }): Promise<ApiVolunteer> {
+  return apiFetch(`/volunteers/${id}`, { method: 'PATCH', body: JSON.stringify(patch) });
+}
+
+/** Painel: apaga a inscricao (pedido de exclusao de dados). */
+export function deleteVolunteer(id: string): Promise<void> {
+  return apiFetch(`/volunteers/${id}`, { method: 'DELETE' });
 }
 
 // ---- Historico de versoes do conteudo (desfazer edicao) ----
