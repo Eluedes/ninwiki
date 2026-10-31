@@ -1,13 +1,19 @@
-# Dependabot: atualizacoes semanais de dependencias.
-# Minor/patch vem agrupado num unico PR por ecossistema (menos PRs); major vem separado.
+# Dependabot: atualizacoes de dependencias, COM POUCO RUIDO.
+# - mensal (nao semanal) e no maximo 2 PRs abertos por pasta;
+# - minor/patch vem agrupado num unico PR por ecossistema;
+# - saltos de versao MAIOR (ex.: zod 3 -> 4, eslint 9 -> 10) sao ignorados: costumam quebrar o build e se atualizam a mao quando valer a pena.
+# Alertas de SEGURANCA continuam chegando pelo GitHub (Settings > Code security) independente deste arquivo.
 version: 2
 updates:
   # API (FastAPI) - pip
   - package-ecosystem: "pip"
     directory: "/NinWiki.Api"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       api-minor-patch:
         update-types: ["minor", "patch"]
@@ -16,8 +22,11 @@ updates:
   - package-ecosystem: "pip"
     directory: "/NinWiki.Bot"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       bot-minor-patch:
         update-types: ["minor", "patch"]
@@ -26,8 +35,11 @@ updates:
   - package-ecosystem: "npm"
     directory: "/NinWiki.Web"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       web-minor-patch:
         update-types: ["minor", "patch"]
@@ -36,8 +48,11 @@ updates:
   - package-ecosystem: "npm"
     directory: "/Guima.Site"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       guima-minor-patch:
         update-types: ["minor", "patch"]
@@ -46,8 +61,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    open-pull-requests-limit: 2
     groups:
       actions-minor-patch:
         update-types: ["minor", "patch"]
