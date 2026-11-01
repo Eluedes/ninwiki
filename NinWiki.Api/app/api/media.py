@@ -16,6 +16,7 @@ Limite: quem digita o ID de uma imagem 'closed' num campo de imagem (img:12) ain
 Os arquivos continuam em uploads/ com nome aleatorio (mesma validacao do POST /uploads/image: assinatura binaria, limite de pixels, redimensionar).
 """
 import asyncio
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
@@ -40,6 +41,14 @@ from app.models.villages import Clan, Village
 from app.schemas.content import CamelModel
 
 router = APIRouter(prefix="/media", tags=["media"])
+
+
+def _apagar_arquivo(filename: str) -> None:
+    """Apaga o arquivo de uploads/ SEM derrubar a requisicao: o banco ja' foi gravado, e arquivo de outro dono/somente leitura (ex.: enviado por pacote) nao pode virar erro 500."""
+    try:
+        (UPLOAD_DIR / Path(filename).name).unlink(missing_ok=True)
+    except OSError as exc:
+        logging.getLogger("uvicorn.error").warning("Nao consegui apagar uploads/%s (%s); a linha do banco ja' foi removida.", Path(filename).name, exc)
 
 
 # Categorias do banco de imagens ('' = sem categoria). Fixas de proposito: o filtro do painel fica pequeno e o nome nao vira lixo digitado.
@@ -365,7 +374,7 @@ async def bulk_delete_media(
                          diff={"count": len(deleted), "force": payload.force}, actor=staff)
     await db.commit()
     for filename in files:
-        (UPLOAD_DIR / Path(filename).name).unlink(missing_ok=True)
+        _apagar_arquivo(filename)
     return MediaBulkResult(deleted=deleted, in_use=in_use, not_found=not_found)
 
 
@@ -385,4 +394,4 @@ async def delete_media(
     await db.delete(m)
     await log_action(db, action="delete", entity_type="media", entity_id=str(media_id), diff={"file": filename, "usedIn": len(uses)}, actor=staff)
     await db.commit()
-    (UPLOAD_DIR / Path(filename).name).unlink(missing_ok=True)
+    _apagar_arquivo(filename)
