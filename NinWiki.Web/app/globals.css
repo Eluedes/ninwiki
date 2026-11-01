@@ -418,3 +418,10 @@
 .season-particle.season-rise { top: auto; bottom: 0; animation-direction: reverse; }
 @media (max-width: 640px) { .season-particle:nth-child(n + 13) { display: none; } }   /* celular: metade das particulas */
 @media (prefers-reduced-motion: reduce) { .season-particle { display: none; } }
+
+/* Fundo ilustrado (components/seasonal-background.tsx): a nevoa anda devagar e as luzes/brilhos piscam de leve. Sem movimento para quem pede menos movimento. */
+@keyframes sb-drift { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
+@keyframes sb-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.sb-mist { animation: sb-drift 40s ease-in-out infinite alternate; }
+.sb-twinkle { animation: sb-twinkle 2.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .sb-mist, .sb-twinkle { animation: none; } }

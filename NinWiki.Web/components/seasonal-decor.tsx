@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { useLanguage } from '@/components/providers/language-provider';
 import { getSeasonalTheme, type SeasonalTheme } from '@/lib/api-client';
+import { SeasonalBackground } from '@/components/seasonal-background';
 
 type Season = Exclude<SeasonalTheme, 'none'>;
 
@@ -88,26 +89,28 @@ function Greeting({ season }: { season: Season }) {
 
 /** Tema festivo do site: le o tema da API, marca data-season no <html> e mostra os enfeites. Sem tema (ou API fora) = nao mostra nada. */
 export function SeasonalDecor() {
-  const [season, setSeason] = useState<SeasonalTheme>('none');
+  // null = ainda perguntando a API (nao desenha nada, para o fundo padrao nao piscar antes do fundo da epoca)
+  const [season, setSeason] = useState<SeasonalTheme | null>(null);
 
   useEffect(() => {
     let alive = true;
-    getSeasonalTheme().then((s) => { if (alive) setSeason(s.theme); }).catch(() => { /* API fora: site normal */ });
+    getSeasonalTheme().then((s) => { if (alive) setSeason(s.theme); }).catch(() => { if (alive) setSeason('none'); });   // API fora: fundo padrao
     return () => { alive = false; };
   }, []);
 
   useEffect(() => {
     const root = document.documentElement;
-    if (season === 'none') delete root.dataset.season;
+    if (!season || season === 'none') delete root.dataset.season;
     else root.dataset.season = season;
     return () => { delete root.dataset.season; };
   }, [season]);
 
-  if (season === 'none') return null;
+  if (!season) return null;
   return (
     <>
-      <Particles season={season} />
-      <Greeting season={season} />
+      <SeasonalBackground season={season} />
+      {season !== 'none' && <Particles season={season} />}
+      {season !== 'none' && <Greeting season={season} />}
     </>
   );
 }
