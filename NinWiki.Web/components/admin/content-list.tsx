@@ -30,7 +30,7 @@ import { itemTypeLabels } from '@/lib/item-types';
 import { TanstackDataTable } from '@/components/admin/tanstack-data-table';
 
 /** Todos os tipos de item que a mudanca em massa aceita (cada peca de roupa aparece como tipo proprio). */
-const BULK_ITEM_TYPES: ItemType[] = ['general', 'ring', 'accessory', 'shirt', 'vest', 'pant', 'hat', 'mask', 'shoe', 'consumable', 'material', 'currency', 'cast', 'authority', 'pack', 'tool', 'scroll'];
+const BULK_ITEM_TYPES: ItemType[] = ['general', 'ring', 'accessory', 'shirt', 'vest', 'pant', 'hat', 'mask', 'shoe', 'consumable', 'material', 'currency', 'cast', 'authority', 'pack', 'tool', 'scroll', 'recipe', 'furniture', 'food', 'trophy', 'other'];
 
 /** Seletor "Mudar o tipo do item..." + botao Aplicar da barra de selecao (so' S.Adm; a lista e' a de itens selecionados). */
 function BulkItemTypePicker({ onApply }: { onApply: (type: ItemType) => void }) {

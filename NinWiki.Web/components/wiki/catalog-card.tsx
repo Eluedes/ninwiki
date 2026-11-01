@@ -35,6 +35,11 @@ const itemTypeBadge: Record<string, { label: string; className: string }> = {
   authority: { label: 'Authority', className: 'bg-cyan-400/15 text-cyan-300' },
   tool: { label: 'Tool', className: 'bg-orange-500/15 text-orange-400' },
   scroll: { label: 'Scroll', className: 'bg-fuchsia-500/15 text-fuchsia-400' },
+  recipe: { label: 'Recipe', className: 'bg-yellow-500/15 text-yellow-400' },
+  furniture: { label: 'Furniture', className: 'bg-stone-500/15 text-stone-300' },
+  food: { label: 'Food', className: 'bg-red-400/15 text-red-300' },
+  trophy: { label: 'Trophy', className: 'bg-amber-400/15 text-amber-300' },
+  other: { label: 'Other', className: 'bg-slate-500/15 text-slate-300' },
 };
 
 interface CatalogCardProps {

@@ -445,7 +445,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("/bot/recipe sem token do bot (401)", r.status_code == 401)
     r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
     check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
-    for tipo_novo in ("tool", "scroll"):
+    for tipo_novo in ("tool", "scroll", "recipe", "other", "furniture", "food", "trophy"):
         r = await c.post("/content-items", json={**novo_conteudo(f"tipo-{tipo_novo}"), "category": "items", "itemType": tipo_novo}, headers=C)
         check(f"item tipo {tipo_novo} e' criado e volta com o tipo certo", r.status_code == 201 and r.json()["itemType"] == tipo_novo, r.text[:160])
     # --- mudanca em massa do Item type (so' S.Adm: permissao exclusiva content.bulk_type) ---
