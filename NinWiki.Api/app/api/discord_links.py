@@ -71,11 +71,11 @@ async def bot_guilds_sync(payload: GuildsSync, db: AsyncSession = Depends(get_db
     for gid, g in reported.items():
         row = existing.get(gid)
         if row is None:
-            db.add(DiscordGuild(guild_id=gid, name=g.name or gid, active=True, updated_at=now))
+            db.add(DiscordGuild(guild_id=gid, name=g.name or gid, active=True, member_count=g.member_count, updated_at=now))
         else:
             if not row.active:
                 flipped.append(gid)
-            row.name, row.active, row.updated_at = g.name or gid, True, now
+            row.name, row.active, row.updated_at, row.member_count = g.name or gid, True, now, g.member_count
     for gid, row in existing.items():
         if gid not in reported and row.active:
             row.active = False
@@ -119,7 +119,7 @@ async def _guild_view(db: AsyncSession, g: DiscordGuild) -> GuildLinkRead:
     """Servidor + cargos + quantos leitores tem cargos informados nele."""
     roles = (await db.execute(select(DiscordRole).where(DiscordRole.guild_id == g.guild_id).order_by(DiscordRole.name))).scalars().all()
     n = (await db.execute(select(func.count()).select_from(DiscordMemberRoles).where(DiscordMemberRoles.guild_id == g.guild_id))).scalar_one()
-    return GuildLinkRead(guild_id=g.guild_id, name=g.name, active=g.active, village_id=g.village_id, readers=n,
+    return GuildLinkRead(guild_id=g.guild_id, name=g.name, active=g.active, member_count=g.member_count, village_id=g.village_id, readers=n,
                          roles=[RoleLinkRead(role_id=r.role_id, name=r.name, ninja_rank_id=r.ninja_rank_id) for r in roles])
 
 

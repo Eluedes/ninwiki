@@ -22,6 +22,7 @@ export const ROUTE_PERMISSIONS: { prefix: string; permission: PermissionName }[]
   { prefix: '/admin/volunteers', permission: 'volunteers.manage' },
   { prefix: '/admin/tournaments', permission: 'tournaments.manage' },
   { prefix: '/admin/discord-links', permission: 'discord.links' },
+  { prefix: '/admin/bot', permission: 'discord.links' },   // servidores do bot (somente leitura): mesma permissao das ligacoes
   { prefix: '/admin/translations', permission: 'translation.import' },
   { prefix: '/admin/media', permission: 'uploads.create' },
   { prefix: '/admin/announcement', permission: 'announcement.manage' },

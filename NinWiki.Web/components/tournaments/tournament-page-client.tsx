@@ -20,6 +20,7 @@ import { localizedName } from '@/lib/localized';
 import { cn, formatDateTime } from '@/lib/utils';
 import { BracketView } from './bracket-view';
 import { OrganizerPanel } from './organizer-panel';
+import { Podium } from './podium';
 import { LoginButton, Section, StatusBadge, selectClass, teamModeLabel, useReader } from './shared';
 
 /** Janela para lancar/corrigir o placar de uma partida (so' o organizador chega aqui). */
@@ -198,7 +199,7 @@ export function TournamentPageClient({ id }: { id: string }) {
       <Tabs defaultValue="bracket">
         <TabsList className="h-auto w-full justify-start overflow-x-auto sm:w-auto">
           <TabsTrigger value="bracket" className="gap-1.5"><Swords className="h-4 w-4" aria-hidden />{d.tabBracket}</TabsTrigger>
-          <TabsTrigger value="entries" className="gap-1.5"><Users className="h-4 w-4" aria-hidden />{d.tabEntries}<span className="rounded-full bg-muted px-1.5 text-xs tabular-nums">{t.entries.length}</span></TabsTrigger>
+          <TabsTrigger value="entries" className="gap-1.5"><Trophy className="h-4 w-4" aria-hidden />{d.tabPodium}</TabsTrigger>
           {isOrg && <TabsTrigger value="manage" className="gap-1.5"><Settings className="h-4 w-4" aria-hidden />{d.tabManage}</TabsTrigger>}
         </TabsList>
 
@@ -222,11 +223,12 @@ export function TournamentPageClient({ id }: { id: string }) {
           )}
         </TabsContent>
 
-        <TabsContent value="entries" className="mt-5">
+        <TabsContent value="entries" className="mt-5 space-y-5">
+          <Podium entries={t.entries} finished={t.status === 'finished'} detail={detail} />
           <Section title={fill(d.entriesTitle, { n: t.entries.length })}>
             {t.entries.length === 0 ? <p className="text-sm text-muted-foreground">{d.noEntries}</p> : (
               <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {t.entries.map((e, i) => {
+                {[...t.entries.entries()].sort(([, x], [, y]) => (x.placement ?? 999) - (y.placement ?? 999)).map(([i, e]) => {
                   const sub = detail(e);
                   const name = e.readerId
                     ? <Link href={`/players/${e.readerId}`} className="block truncate font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{e.displayName}</Link>

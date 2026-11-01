@@ -93,13 +93,16 @@ class NinWikiApi:
             params["includeIp"] = "true"
         return await self._request("GET", "/bot/audit-log", params=params)
 
-    async def search(self, query: str, lang: str = "en") -> list[dict]:
-        """Busca publica pelo nome (itens, mobs, armas, jutsus, masteries, posts) em `en` ou `pt`: ate' 10 resultados com resumo, imagem e dados."""
-        return await self._request("GET", "/bot/search", params={"q": query, "lang": lang})
+    async def search(self, query: str, lang: str = "en", kind: str | None = None) -> list[dict]:
+        """Busca publica pelo nome (itens, mobs, armas, jutsus, masteries, posts) em `en` ou `pt`: ate' 10 resultados com resumo, imagem e dados. `kind` (item, mob, jutsu, mastery) busca so' esse tipo."""
+        params = {"q": query, "lang": lang, **({"kind": kind} if kind else {})}
+        return await self._request("GET", "/bot/search", params=params)
 
-    async def suggest(self, query: str, lang: str = "en") -> list[str]:
-        """Nomes para o autocompletar do Discord (ate' 20) que combinam com `query`. Cache de 2 min e prazo de 2,5 s (o Discord desiste do autocompletar em 3 s)."""
-        return await self._cached(("suggest", query.lower(), lang), 120, lambda: self._request("GET", "/bot/suggest", params={"q": query, "lang": lang}, timeout=2.5))
+    async def suggest(self, query: str, lang: str = "en", kind: str | None = None) -> list[str]:
+        """Nomes para o autocompletar do Discord (ate' 20) que combinam com `query`; `kind` (item, weapon, mob, jutsu, mastery, recipe) limita ao tipo, sem ele sugere de tudo.
+        Cache de 2 min (o `kind` entra na chave) e prazo de 2,5 s (o Discord desiste do autocompletar em 3 s)."""
+        params = {"q": query, "lang": lang, **({"kind": kind} if kind else {})}
+        return await self._cached(("suggest", query.lower(), lang, kind), 120, lambda: self._request("GET", "/bot/suggest", params=params, timeout=2.5))
 
     async def drops(self, query: str, lang: str = "en") -> dict:
         """Quais mobs dropam o item `query` ({found, title, href, image, rarity, mobs:[{name, href, chance, chanceQualifier}]})."""

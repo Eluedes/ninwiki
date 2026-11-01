@@ -5,12 +5,16 @@
 
 import { levelText } from '@/lib/utils';
 import Link from 'next/link';
-import { Skull, Sword } from 'lucide-react';
+import { MapPin, Skull, Sword } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
 import type { ApiContentItemSummary } from '@/lib/api-client';
 import { useLanguage } from '@/components/providers/language-provider';
 import { WikiImage } from '@/components/wiki/wiki-image';
+import { ZONE_DOT } from '@/components/wiki/detail-sidebar';
+
+/** Quantos lugares o card mostra antes de resumir o resto em "+N" (a ficha completa lista todos). */
+const MAX_PLACES = 3;
 
 // Selo do subtipo ('monster' fica sem selo: e' o tipo comum). Chaves iguais as do CatalogCard.
 const MOB_TYPE_LABEL: Record<string, { en: string; pt: string; className: string }> = {
@@ -25,6 +29,11 @@ export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary;
   const name = locale === 'pt' ? (entry.namePt ?? entry.name) : entry.name;
   const rarity = rarityConfig[entry.rarity];
   const type = kind === 'mob' && entry.mobType ? MOB_TYPE_LABEL[entry.mobType] : undefined;
+  // Onde o mob aparece (bestiario): a lista com zona vale; sem lista, o texto livre antigo e' quebrado por virgula (sem zona), como na ficha.
+  const spawnText = locale === 'pt' ? (entry.spawnLocationPt ?? entry.spawnLocation) : entry.spawnLocation;
+  const places: { name: string; zone: string | null }[] = kind !== 'mob' ? [] : (entry.spawnLocations ?? []).length > 0
+    ? (entry.spawnLocations ?? []).map((l) => ({ name: locale === 'pt' ? (l.namePt ?? l.name) : l.name, zone: l.zone ?? null }))
+    : (spawnText ?? '').split(/[,;]/).map((p) => p.trim().replace(/\.$/, '')).filter(Boolean).map((n) => ({ name: n, zone: null }));
 
   return (
     <Link href={`/detail/${entry.slug}`} className="group block">
@@ -59,6 +68,18 @@ export function MobCard({ entry, kind = 'mob' }: { entry: ApiContentItemSummary;
             )}
             {kind === 'weapon' && <span className={cn('text-[11px] font-semibold', rarity.color)}>{dict.detail.rarities[entry.rarity]}</span>}   {/* mobs nao tem raridade */}
           </div>
+          {places.length > 0 && (
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground" title={places.map((p) => p.name).join(', ')}>
+              <MapPin className="h-3 w-3 shrink-0" aria-label={dict.detail.spawnLocation} />
+              {places.slice(0, MAX_PLACES).map((p, i) => (
+                <span key={i} className="inline-flex items-center gap-1">
+                  <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', ZONE_DOT[p.zone ?? 'none'])} aria-hidden />
+                  {p.name}
+                </span>
+              ))}
+              {places.length > MAX_PLACES && <span className="font-semibold">+{places.length - MAX_PLACES}</span>}
+            </p>
+          )}
         </div>
       </div>
     </Link>

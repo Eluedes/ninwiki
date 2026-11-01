@@ -27,6 +27,7 @@ class BotGuild(CamelModel):
     """Servidor onde o bot esta' + os cargos dele (sem o @everyone)."""
     id: str = Field(pattern=_ID)
     name: str = Field(max_length=100)
+    member_count: int = Field(default=0, ge=0, le=100_000_000)
     roles: list[BotRole] = Field(default_factory=list, max_length=250)
 
     @field_validator("name", mode="after")
@@ -80,6 +81,7 @@ class GuildLinkRead(CamelModel):
     guild_id: str
     name: str
     active: bool
+    member_count: int
     village_id: str | None
     readers: int
     roles: list[RoleLinkRead]

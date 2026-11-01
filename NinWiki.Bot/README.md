@@ -10,10 +10,10 @@ Ele não decide nada sozinho: em cada comando só repassa à API **quem digitou*
 | `/status` | **qualquer pessoa**: API, banco e site no ar agora (tempo de resposta e uptime), em cartão Components V2 |
 | `/language language` | **só quem tem "Gerenciar servidor"**: idioma padrão do bot **neste servidor** (English ou Português); vale para `/search` e `/status` e fica salvo em `language_state.json` |
 | `/search term [language]` | **qualquer pessoa**: procura no wiki (itens, mobs, armas, guias, missões, masteries, jutsus e posts publicados) e mostra o melhor resultado com **imagem, dados e resumo** (botão para a página completa e um menu para ver os outros resultados) |
-| `/drop item` | **qualquer pessoa**: quais **mobs dropam** o item/arma e a chance de cada um (com link para a página); sugere nomes enquanto você digita |
+| `/drop item` | **qualquer pessoa**: quais **mobs dropam** o item/arma e a chance de cada um (com link para a página); sugere só itens e armas (não mobs) enquanto você digita |
 | `/recipe item` | **qualquer pessoa**: como **fazer** o item — profissão, nível, se precisa de bancada, de qual receita é aprendida e os ingredientes com a quantidade (cada um com link); sugere nomes enquanto você digita |
 | `/patchnotes` | **qualquer pessoa**: as 3 notícias/patch notes mais recentes do blog (título com link, data e resumo) |
-| `/item` `/mob` `/jutsu` `/mastery` `nome` | **qualquer pessoa**: cartão do resultado só do tipo pedido (imagem, dados, resumo, botão da página); sugere nomes |
+| `/item` `/mob` `/jutsu` `/mastery` `nome` | **qualquer pessoa**: cartão do resultado só do tipo pedido (imagem, dados, resumo, botão da página); sugere nomes **só do tipo do comando** (reinicie o bot e faça o Deploy API) |
 | `/compare a b` | **qualquer pessoa**: dois itens/armas/mobs/jutsus lado a lado |
 | `/help` | **qualquer pessoa**: lista dos comandos no idioma do servidor (resposta só para quem pediu) |
 

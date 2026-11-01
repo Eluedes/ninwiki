@@ -244,14 +244,15 @@ def build_search_view(query: str, hits: list[dict], site_url: str, index: int = 
     return SearchView(query, hits, site_url, index, owner_id, True, lang, owner_name)
 
 
-def _autocomplete_for(api: NinWikiApi, languages: LanguageStore):
-    """Autocompletar do Discord (sugere nomes do wiki enquanto a pessoa digita; 2+ letras; falha em silencio). Compartilhado por /search, /drop, /item..."""
+def _autocomplete_for(api: NinWikiApi, languages: LanguageStore, kind: str | None = None):
+    """Autocompletar do Discord (sugere nomes do wiki enquanto a pessoa digita; 2+ letras; falha em silencio).
+    `kind` limita as sugestoes ao tipo do comando (item, mob, jutsu, mastery, recipe); sem ele sugere de tudo (/search, /compare)."""
     async def _autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         """Sugestoes (a API guarda em cache e responde em ate' 2,5 s: o Discord desiste em 3 s)."""
         if len(current.strip()) < 2:
             return []
         try:
-            names = await api.suggest(current.strip(), languages.get(interaction.guild_id))
+            names = await api.suggest(current.strip(), languages.get(interaction.guild_id), kind)
         except ApiError:
             return []
         return [app_commands.Choice(name=n[:100], value=n[:100]) for n in names[:25]]
@@ -330,7 +331,7 @@ def register_public_commands(
             return
         await interaction.followup.send(embed=build_drop_embed(result, item, site_url, lang), allowed_mentions=NO_MENTIONS)
 
-    drop.autocomplete("item")(_autocomplete)
+    drop.autocomplete("item")(_autocomplete_for(api, languages, "item"))   # /drop: so' itens e armas (mob nao dropa)
 
     @tree.command(name="recipe", description="How to craft an item: ingredients, profession and level")
     @app_commands.describe(item="Item name (start typing for suggestions)")
@@ -349,7 +350,7 @@ def register_public_commands(
             return
         await interaction.followup.send(embed=build_recipe_embed(result, item, site_url, lang), allowed_mentions=NO_MENTIONS)
 
-    recipe.autocomplete("item")(_autocomplete)
+    recipe.autocomplete("item")(_autocomplete_for(api, languages, "recipe"))   # /recipe: so' itens que alguma profissao fabrica
 
     @tree.command(name="patchnotes", description="The latest news and patch notes from the wiki blog")
     @app_commands.guild_only()

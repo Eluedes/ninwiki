@@ -13,6 +13,7 @@ import { RichText } from '@/components/lore/rich-text';
 import { PostToc } from '@/components/blog/post-toc';
 import { useLanguage } from '@/components/providers/language-provider';
 import { localizedName, localizedText } from '@/lib/localized';
+import { topicHref } from '@/lib/guide-topics';
 import { prepareContent, readingMinutes } from '@/lib/blog-utils';
 import { ArrowLeft, ArrowRight, Clock } from 'lucide-react';
 
@@ -59,7 +60,7 @@ export function GuideArticleClient({ article, siblings }: { article: ApiGuideArt
         breadcrumbs={[
           { label: t.home, href: '/' },
           { label: dict.nav.guides, href: '/catalog/guides' },
-          { label: t.guideSections[article.section], href: `/catalog/guides#${article.section}` },
+          { label: t.guideSections[article.section], href: topicHref(article.section) },
           { label: title },
         ]}
         icon={<GuideIcon icon={article.icon} className="h-7 w-7" />}

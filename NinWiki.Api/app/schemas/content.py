@@ -403,5 +403,15 @@ class ContentItemSummary(CamelModel):
     # nao no card resumido da listagem.
     name_pt: str | None
     description_pt: str | None
+    # Onde o mob aparece (so' mobs): o card do bestiario mostra os lugares sem abrir a ficha. Lista vazia = usa o texto livre.
+    spawn_location: str | None = None
+    spawn_location_pt: str | None = None
+    spawn_locations: list[LocationEntrySchema] = Field(default_factory=list)
+
+    @field_validator("spawn_locations", mode="before")
+    @classmethod
+    def _no_locations(cls, value):
+        """Coluna nula no banco (item/mob antigo) vira lista vazia."""
+        return value or []
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)

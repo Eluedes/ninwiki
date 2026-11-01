@@ -372,6 +372,26 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("/bot/drops de nome inexistente: found=false", r.status_code == 200 and r.json()["found"] is False, r.text[:120])
     r = await c.get("/bot/suggest", params={"q": item_nome[:6]}, headers=BT)
     check("/bot/suggest devolve nomes para o autocompletar (sem repetir)", r.status_code == 200 and item_nome in r.json() and len(set(r.json())) == len(r.json()), r.text[:200])
+    # kind: cada comando do bot sugere so' o seu tipo (o item de teste e o mob de teste tem o mesmo prefixo "TESTE")
+    mob_nome = "TESTE drop-mob"
+    sug = {k: await c.get("/bot/suggest", params={"q": "TESTE", "kind": k}, headers=BT) for k in ("item", "weapon", "mob", "jutsu", "mastery", "recipe")}
+    check("/bot/suggest?kind=item: so' itens/armas (traz o item, nunca o mob)", sug["item"].status_code == 200 and item_nome in sug["item"].json() and mob_nome not in sug["item"].json(), sug["item"].text[:200])
+    check("/bot/suggest?kind=mob: so' mobs (traz o mob, nunca o item)", sug["mob"].status_code == 200 and mob_nome in sug["mob"].json() and item_nome not in sug["mob"].json(), sug["mob"].text[:200])
+    check("/bot/suggest?kind=weapon: nao traz item comum nem mob", sug["weapon"].status_code == 200 and item_nome not in sug["weapon"].json() and mob_nome not in sug["weapon"].json(), sug["weapon"].text[:200])
+    check("/bot/suggest?kind=jutsu/mastery: nao trazem item nem mob", all(sug[k].status_code == 200 and item_nome not in sug[k].json() and mob_nome not in sug[k].json() for k in ("jutsu", "mastery")), str([sug[k].text[:80] for k in ("jutsu", "mastery")]))
+    check("/bot/suggest?kind=recipe: so' o que alguma profissao fabrica (item de teste fora)", sug["recipe"].status_code == 200 and item_nome not in sug["recipe"].json(), sug["recipe"].text[:200])
+    r = await c.get("/bot/suggest", params={"q": "TESTE"}, headers=BT)
+    check("/bot/suggest sem kind continua geral (item e mob juntos, como o /search)", r.status_code == 200 and item_nome in r.json() and mob_nome in r.json(), r.text[:200])
+    bus = {k: await c.get("/bot/search", params={"q": "TESTE", "kind": k}, headers=BT) for k in ("item", "mob", "jutsu", "mastery")}
+    check("/bot/search?kind=mob: so' mobs", bus["mob"].status_code == 200 and bus["mob"].json() and all(h["kind"] == "mob" for h in bus["mob"].json()), bus["mob"].text[:200])
+    check("/bot/search?kind=item: so' itens/armas (nunca mob, guia ou missao)", bus["item"].status_code == 200 and bus["item"].json() and all(h["kind"] in ("item", "weapon") for h in bus["item"].json()), bus["item"].text[:200])
+    check("/bot/search?kind=jutsu/mastery: nao trazem item nem mob", all(bus[k].status_code == 200 and all(h["kind"] == k for h in bus[k].json()) for k in ("jutsu", "mastery")), str([bus[k].text[:80] for k in ("jutsu", "mastery")]))
+    r = await c.get("/bot/search", params={"q": "TESTE"}, headers=BT)
+    check("/bot/search sem kind continua geral (item e mob juntos)", r.status_code == 200 and {"mob"} <= {h["kind"] for h in r.json()} and {h["kind"] for h in r.json()} - {"mob"}, r.text[:200])
+    r = await c.get("/bot/search", params={"q": "TESTE", "kind": "post"}, headers=BT)
+    check("/bot/search com kind invalido (422)", r.status_code == 422, r.text[:120])
+    r = await c.get("/bot/suggest", params={"q": "TESTE", "kind": "post"}, headers=BT)
+    check("/bot/suggest com kind invalido (422)", r.status_code == 422, r.text[:120])
     r = await c.get("/bot/latest-posts", headers=BT)
     check("/bot/latest-posts devolve lista (posts no ar)", r.status_code == 200 and isinstance(r.json(), list), r.text[:120])
     r = await c.get("/bot/drops", params={"q": item_nome})
@@ -395,6 +415,11 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         r = await c.get("/bot/recipe", params={"q": "lâmina zz", "lang": "pt"}, headers=BT)
         check("/bot/recipe em portugues: acha pelo nome PT e responde em PT", r.status_code == 200 and r.json()["found"] and r.json()["title"] == "Lâmina Zz"
               and r.json()["recipes"][0]["profession"] == "Ofício" and r.json()["recipes"][0]["needs"][0]["name"] == "Minério Zz", r.text[:300])
+        r = await c.get("/bot/suggest", params={"q": "zzbla", "kind": "recipe"}, headers=BT)
+        r2 = await c.get("/bot/suggest", params={"q": "lâmina", "kind": "recipe", "lang": "pt"}, headers=BT)
+        r3 = await c.get("/bot/suggest", params={"q": "zzbla", "kind": "item"}, headers=BT)
+        check("/bot/suggest?kind=recipe sugere o resultado da receita (EN e PT); kind=item nao (nao e' item publicado)",
+              r.json() == ["Zzblade"] and r2.json() == ["Lâmina Zz"] and r3.json() == [], f"{r.text[:80]} {r2.text[:80]} {r3.text[:80]}")
     finally:
         async with AsyncSessionLocal() as db:
             await db.delete(await db.get(Profession, prof_id))
@@ -2115,7 +2140,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     cc = r.json()
     r = await c.post("/media", files={"file": ("b.png", _png((3, 2, 1)), "image/png")}, data={"category": "inventada"}, headers=S)
     check("categoria desconhecida e' recusada (422)", r.status_code == 422)
-    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard", "skin", "tools"):
+    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard", "skin", "vanity", "tools"):
         r = await c.post("/media", files={"file": (f"{nova}.png", _png((4, 4, len(nova))), "image/png")}, data={"category": nova}, headers=S)
         check(f"categoria nova '{nova}' existe", r.status_code == 201 and r.json()["category"] == nova, r.text[:100])
         if r.status_code == 201:
@@ -2211,7 +2236,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     # TRANCAR categorias por cargo (permissao media.cat.<categoria>): igual a 'closed', mas escolhido pelo S.Adm
     r = await c.get("/roles/permissions", headers=S)
     nomes = {p["name"] for p in r.json()["permissions"]}
-    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.skin", "media.cat.tools", "media.cat.none"} <= nomes)
+    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.skin", "media.cat.vanity", "media.cat.tools", "media.cat.none"} <= nomes)
     me_cr = (await c.get("/auth/me", headers=Cm)).json()["permissions"]
     check("por padrao o Creator ve todas as categorias (menos closed)", "media.cat.weapon" in me_cr and "media.cat.none" in me_cr and "media.closed" not in me_cr)
     trancada = (await c.post("/media", files={"file": ("tr.png", _png((31, 3, 3)), "image/png")}, data={"name": f"{SLUG} trancada", "category": "weapon"}, headers=S)).json()
@@ -3103,7 +3128,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         return [{"id": i, "name": n} for i, n in pares]
 
     r = await api("POST", "/bot/guilds-sync", BT, json={"guilds": [
-        {"id": G_A, "name": "Servidor A TESTE", "roles": cargos(("11", nome_gen), ("12", "Cargo qualquer"), ("13", "Membro"))},
+        {"id": G_A, "name": "Servidor A TESTE", "memberCount": 1234, "roles": cargos(("11", nome_gen), ("12", "Cargo qualquer"), ("13", "Membro"))},
         {"id": G_B, "name": "Servidor B TESTE", "roles": cargos(("21", nome_chu), ("22", "Outro"))},
         {"id": G_C, "name": "Servidor C TESTE", "roles": cargos(("31", "Visitante"))}]})
     check("guilds-sync guarda servidores e cargos", r.status_code == 200 and r.json()["guilds"] == 3, r.text[:200])
@@ -3135,6 +3160,9 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         perms_dl = perms_dl and (("discord.links" in (await api("GET", "/auth/me", h)).json()["permissions"]) == esperado)
     check("/auth/me inclui discord.links para S.Adm e Adm, nao para Creator", perms_dl)
     lista = (await api("GET", "/discord-links", A)).json()
+    check("painel do bot: o servidor traz a quantidade de membros informada (e 0 quando o bot nao informou)",
+          next(g for g in lista if g["guildId"] == G_A)["memberCount"] == 1234 and next(g for g in lista if g["guildId"] == G_C)["memberCount"] == 0)
+    check("guilds-sync: quantidade de membros negativa -> 422", (await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": G_A, "name": "x", "memberCount": -1, "roles": []}]})).status_code == 422)
     gA = next((g for g in lista if g["guildId"] == G_A), None)
     check("Adm lista os servidores do bot com cargos e leitores", gA is not None and gA["active"] and gA["readers"] == 1 and {x["roleId"] for x in gA["roles"]} == {"11", "12", "13"}, str(gA)[:200])
     check("vila inexistente / rank inexistente / cargo de outro servidor -> 422",

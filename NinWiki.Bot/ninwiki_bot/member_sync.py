@@ -35,7 +35,7 @@ def roles_payload(roles: Iterable) -> list[dict]:
 
 def guild_payload(guild) -> dict:
     """Servidor + cargos para /bot/guilds-sync."""
-    return {"id": str(guild.id), "name": str(guild.name)[:100], "roles": roles_payload(guild.roles)}
+    return {"id": str(guild.id), "name": str(guild.name)[:100], "memberCount": int(guild.member_count or 0), "roles": roles_payload(guild.roles)}
 
 
 def member_fact(member) -> dict:

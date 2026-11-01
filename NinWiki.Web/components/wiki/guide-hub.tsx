@@ -1,7 +1,7 @@
 'use client';
 
-// Indice do Guia (rota /catalog/guides): busca, "Comece por aqui" (passos numerados para quem acabou de chegar), os assuntos em cartoes com atalho
-// por ancora, os artigos de cada assunto e o atalho para o sistema de Proficiencias. Artigos vem de Admin > Artigos do Guia; assunto sem artigo
+// Indice do Guia (rota /catalog/guides): busca, "Comece por aqui" (passos numerados para quem acabou de chegar), os assuntos em cartoes que levam
+// a pagina propria, um resumo (3 guias + 'Ver todos') de cada assunto e o atalho para o sistema de Proficiencias. Artigos vem de Admin > Artigos do Guia; assunto sem artigo
 // publicado nao aparece. (Missoes sairam daqui: tem secao propria em /missions.)
 
 import Link from 'next/link';
@@ -12,9 +12,27 @@ import { GuideIcon } from '@/components/lore/guide-icons';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/providers/language-provider';
 import { localizedName, localizedText } from '@/lib/localized';
+import { topicHref } from '@/lib/guide-topics';
 
 const CARD = 'group flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/50 hover:bg-secondary/40';
 const ICON_BOX = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary';
+
+/** Quantos guias cada assunto mostra no indice; o resto fica na pagina do assunto. */
+const PREVIEW = 3;
+
+/** Cartao de um artigo do Guia (usado no hub, nos resultados da busca e nas paginas de assunto). */
+export function GuideArticleCard({ article: a }: { article: ApiGuideArticle }) {
+  const { locale } = useLanguage();
+  return (
+    <Link href={`/guide/${a.id}`} className={CARD}>
+      <span className={ICON_BOX}><GuideIcon icon={a.icon} className="h-5 w-5" /></span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-card-foreground group-hover:text-primary">{localizedName(locale, a.title, a.titlePt)}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{localizedText(locale, a.summary, a.summaryPt)}</span>
+      </span>
+    </Link>
+  );
+}
 
 /** Artigos do Guia: busca, comece por aqui, assuntos e atalhos dos sistemas com pagina propria. */
 export function GuideHub({ articles }: { articles: ApiGuideArticle[] }) {
@@ -39,16 +57,7 @@ export function GuideHub({ articles }: { articles: ApiGuideArticle[] }) {
   const sections = GUIDE_SECTIONS.filter((s) => (bySection.get(s) ?? []).length > 0);
   const start = bySection.get('new-player') ?? [];
 
-  /** Cartao de um artigo (usado nas listas por assunto e nos resultados da busca). */
-  const articleCard = (a: ApiGuideArticle) => (
-    <Link key={a.id} href={`/guide/${a.id}`} className={CARD}>
-      <span className={ICON_BOX}><GuideIcon icon={a.icon} className="h-5 w-5" /></span>
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold text-card-foreground group-hover:text-primary">{localizedName(locale, a.title, a.titlePt)}</span>
-        <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{localizedText(locale, a.summary, a.summaryPt)}</span>
-      </span>
-    </Link>
-  );
+  const articleCard = (a: ApiGuideArticle) => <GuideArticleCard key={a.id} article={a} />;
 
   return (
     <div className="mb-10 space-y-8">
@@ -87,7 +96,7 @@ export function GuideHub({ articles }: { articles: ApiGuideArticle[] }) {
             </section>
           )}
 
-          {/* Assuntos: cartoes grandes que levam (por ancora) para a lista de cada assunto logo abaixo */}
+          {/* Assuntos: cartoes grandes que levam para a pagina propria de cada assunto */}
           {sections.length > 0 && (
             <section>
               <h2 className="mb-3 text-lg font-bold tracking-tight">{g.browse}</h2>
@@ -95,14 +104,14 @@ export function GuideHub({ articles }: { articles: ApiGuideArticle[] }) {
                 {sections.map((s) => {
                   const list = bySection.get(s) ?? [];
                   return (
-                    <a key={s} href={s === 'new-player' ? '#start' : `#${s}`} className={CARD} aria-label={`${t.guideSections[s]} - ${g.openSection}`}>
+                    <Link key={s} href={topicHref(s)} className={CARD} aria-label={`${t.guideSections[s]} - ${g.openSection}`}>
                       <span className={ICON_BOX}><GuideIcon icon={list[0]?.icon ?? 'book-open'} className="h-5 w-5" /></span>
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-card-foreground group-hover:text-primary">{t.guideSections[s]}</span>
                         <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{g.sectionDesc[s]}</span>
                         <span className="mt-1 block text-[11px] font-medium text-primary">{g.topicCount.replace('{n}', String(list.length))}</span>
                       </span>
-                    </a>
+                    </Link>
                   );
                 })}
               </div>
@@ -110,9 +119,12 @@ export function GuideHub({ articles }: { articles: ApiGuideArticle[] }) {
           )}
 
           {sections.filter((s) => s !== 'new-player').map((s) => (   // 'Comece por aqui' ja' aparece em destaque acima
-            <section key={s} id={s} className="scroll-mt-24">
-              <h2 className="mb-3 text-lg font-bold tracking-tight">{t.guideSections[s]}</h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{(bySection.get(s) ?? []).map(articleCard)}</div>
+            <section key={s}>
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2 className="text-lg font-bold tracking-tight">{t.guideSections[s]}</h2>
+                <Link href={topicHref(s)} className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline" aria-label={`${g.viewAll}: ${t.guideSections[s]}`}>{g.viewAll}<ArrowRight className="h-3.5 w-3.5" /></Link>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{(bySection.get(s) ?? []).slice(0, PREVIEW).map(articleCard)}</div>
             </section>
           ))}
 

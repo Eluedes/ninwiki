@@ -73,7 +73,7 @@ function SoldAt({ sales }: { sales: SaleEntry[] }) {
   );
 }
 
-const ZONE_DOT: Record<string, string> = {
+export const ZONE_DOT: Record<string, string> = {
   safe: 'bg-green-400', danger: 'bg-orange-400', war: 'bg-red-400', arena: 'bg-yellow-200', parkour: 'bg-cyan-400', none: 'bg-muted-foreground/50',
 };
 

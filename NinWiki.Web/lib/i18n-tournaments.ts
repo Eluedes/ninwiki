@@ -25,7 +25,7 @@ const en = {
   // pagina do torneio
   back: 'All tournaments', notFound: 'Tournament not found. It may be a draft, hidden or removed.', loadingError: 'Could not load this tournament.',
   hiddenNotice: 'This tournament was hidden by the moderators. Only you can see it, and it cannot be edited.', share: 'Copy link', copied: 'Link copied',
-  organizerLabel: 'Organizer', tabBracket: 'Bracket', tabEntries: 'Entries', tabManage: 'Manage', noPhases: 'No phases yet.',
+  organizerLabel: 'Organizer', tabBracket: 'Bracket', tabPodium: 'Podium', podiumPending: 'The podium appears when the tournament ends.', podiumLabel: 'Tournament podium', podiumTbd: 'Awaiting result', podiumThird: 'Tied for 3rd', tabManage: 'Manage', noPhases: 'No phases yet.',
   noBracketYet: 'The bracket for this phase has not been built yet.', teamMode: '{n}v{n}', teamModeCustom: 'Custom {n}v{n}',
   formatSingle: 'Single elimination', formatRoundRobin: 'Round robin', phaseSetup: 'Not started', phaseRunning: 'In progress', phaseFinished: 'Finished',
   bye: 'Bye', tbd: 'To be decided', roundN: 'Round {n}', roundFinal: 'Final', roundSemi: 'Semifinals', roundQuarter: 'Quarterfinals',
@@ -86,7 +86,7 @@ const pt: TournamentsDict = {
   errRequired: 'Campo obrigatório.', errTooShort: 'Curto demais.', errTooLong: 'Longo demais.',
   back: 'Todos os torneios', notFound: 'Torneio não encontrado. Pode ser um rascunho, estar escondido ou ter sido removido.', loadingError: 'Não foi possível carregar este torneio.',
   hiddenNotice: 'Este torneio foi escondido pela moderação. Só você o vê e ele não pode ser editado.', share: 'Copiar link', copied: 'Link copiado',
-  organizerLabel: 'Organizador', tabBracket: 'Chave', tabEntries: 'Inscritos', tabManage: 'Gerenciar', noPhases: 'Ainda não há fases.',
+  organizerLabel: 'Organizador', tabBracket: 'Chave', tabPodium: 'Pódio', podiumPending: 'O pódio aparece quando o torneio terminar.', podiumLabel: 'Pódio do torneio', podiumTbd: 'Aguardando resultado', podiumThird: 'Empate no 3º lugar', tabManage: 'Gerenciar', noPhases: 'Ainda não há fases.',
   noBracketYet: 'A chave desta fase ainda não foi montada.', teamMode: '{n}v{n}', teamModeCustom: 'Personalizado {n}v{n}',
   formatSingle: 'Eliminatória simples', formatRoundRobin: 'Todos contra todos', phaseSetup: 'Não iniciada', phaseRunning: 'Em andamento', phaseFinished: 'Concluída',
   bye: 'Folga', tbd: 'A definir', roundN: 'Rodada {n}', roundFinal: 'Final', roundSemi: 'Semifinais', roundQuarter: 'Quartas de final',

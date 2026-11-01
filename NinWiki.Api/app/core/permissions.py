@@ -64,6 +64,7 @@ class Permission(str, Enum):
     MEDIA_CAT_FURNITURE = "media.cat.furniture"
     MEDIA_CAT_HAIR_BEARD = "media.cat.hair_beard"
     MEDIA_CAT_SKIN = "media.cat.skin"
+    MEDIA_CAT_VANITY = "media.cat.vanity"
     MEDIA_CAT_TOOLS = "media.cat.tools"
     MEDIA_CAT_OTHER = "media.cat.other"
     MEDIA_CAT_NONE = "media.cat.none"       # a categoria "Sem categoria"

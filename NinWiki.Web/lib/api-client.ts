@@ -164,6 +164,9 @@ export interface ApiContentItemSummary {
   description: string;
   namePt: string | null;
   descriptionPt: string | null;
+  spawnLocation?: string | null;      // so' mobs: onde aparece (texto livre antigo)
+  spawnLocationPt?: string | null;
+  spawnLocations?: LocationEntry[];   // so' mobs: lista de lugares com zona (vazia = usa o texto)
 }
 // controla os dois: id e' gerado, status so' muda explicitamente no
 // PUT, nunca no POST, que sempre nasce "draft").
@@ -1516,7 +1519,7 @@ export function clearAnnouncement(): Promise<ApiAnnouncement> {
 // ---- Banco de imagens ----
 
 /** Categorias do banco de imagens (a API aceita so' estas; vazio = sem categoria). */
-export const MEDIA_CATEGORIES = ['weapon', 'gear', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'furniture', 'hair_beard', 'skin', 'tools', 'closed', 'other'] as const;
+export const MEDIA_CATEGORIES = ['weapon', 'gear', 'consumable', 'currency', 'material', 'ring', 'scroll', 'npc', 'monster', 'furniture', 'hair_beard', 'skin', 'vanity', 'tools', 'closed', 'other'] as const;
 export type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
 export interface ApiMedia {
@@ -1881,7 +1884,7 @@ export function updateMyProfile(input: { gameName: string | null }): Promise<Api
 
 // ---- Ligacao Discord -> perfil (painel; permissao discord.links) ----
 export interface ApiDiscordRole { roleId: string; name: string; ninjaRankId: string | null }
-export interface ApiDiscordGuild { guildId: string; name: string; active: boolean; villageId: string | null; readers: number; roles: ApiDiscordRole[] }
+export interface ApiDiscordGuild { guildId: string; name: string; active: boolean; memberCount: number; villageId: string | null; readers: number; roles: ApiDiscordRole[] }
 /** Servidores que o bot informou, com a vila e o mapeamento cargo -> rank. */
 export function listDiscordLinks(): Promise<ApiDiscordGuild[]> { return apiFetch('/discord-links', { cache: 'no-store' }); }
 /** Salva a vila do servidor e os cargos -> rank (a API recalcula na hora o perfil dos jogadores do servidor). */
