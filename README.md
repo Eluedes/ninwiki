@@ -766,6 +766,7 @@ Todos fazem **simulação por padrão** e só gravam com `--aplicar` (o detalhe 
 | `extrair_mapas_do_jogo.py` | gera os dados do mapa-mundi a partir do cliente do jogo |
 | `atualizar_retratos_lobos.py` | retratos novos dos 4 lobos (patch 6.0.2.4); não apaga a imagem antiga |
 | `gerar_logo.py` | gera favicon, logo do site, imagem de compartilhamento, avatar do bot e logo do bot do **Nin Codex** a partir da logo (`public/images/logo/nin-codex-logo.png`) |
+| `criar_post_apresentacao.py` | cria o post "Welcome to Nin Codex" no blog (EN + PT, por *Nin Codex Team*) como **rascunho**; `--publicar` já publica; não sobrescreve se o post existe; simulação por padrão, `--aplicar` grava, `--permitir-remoto` para a produção (backup antes) |
 | `mesclar_producao.py` | junta o banco local com os dados vivos do backup da produção (só em bancos temporários `ninwiki_*`) |
 | `converter_urls_dump.py` | troca `localhost` pelo domínio público dentro de um dump |
 | `restaurar_backup.py` / `migrar_banco.py` | restaurar um backup `.nbk` / exportar e importar o banco (`pg_dump`/`pg_restore`) |
