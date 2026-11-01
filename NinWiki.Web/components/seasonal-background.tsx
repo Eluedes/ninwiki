@@ -1,22 +1,34 @@
 'use client';
 
 // Fundo do site PUBLICO: padrao japones repetido, no estilo do fundo da wiki do Fandom, desenhado aqui em SVG (nenhuma imagem baixada).
-// A COR e' sempre a mesma (clara ou escura, conforme o tema do visitante). O que muda em cada epoca e' o FORMATO do desenho e o JEITO de se mexer:
-//   fora de epoca = ondas (seigaiha) que deslizam e balancam; Natal = flocos de neve; Ano Novo = fogos de artificio; Valentine's Day = coracoes;
-//   Pascoa = ovos; Halloween = teias de aranha. Os movimentos de cada epoca estao em app/globals.css (classes sb-*, ligadas por data-sb).
-// Nada cai nem sobe na tela. Quem pede menos movimento ao aparelho ve o fundo parado.
+// Fora de epoca: ondas (seigaiha) na COR DO TEMA DE CORES que o visitante escolheu (Canary, Orange, Blood, Gold, Indigo), lida de --primary.
+// Em cada epoca festiva o desenho e as cores sao proprios: Natal = flocos azul-gelo; Ano Novo = fogos (com foguetes de verdade subindo e estourando em
+// canvas); Valentine's Day = coracoes rosa (com baloes de coracao que enchem e estouram em canvas); Pascoa = ovos pastel; Halloween = teias roxo/laranja.
+// Os movimentos suaves do desenho estao em app/globals.css (classes sb-*, ligadas por data-sb). Quem pede menos movimento ao aparelho ve tudo parado.
 
+import { useEffect, useState } from 'react';
 import type { SeasonalTheme } from '@/lib/api-client';
+import { SeasonCanvas } from '@/components/season-canvas';
 
 interface Palette {
   bg: string;     // cor do fundo
   ring: string;   // cor das linhas do desenho
 }
-/** [claro, escuro]: iguais em todas as epocas (so' o formato muda). O claro parece com o do Fandom. */
-const COLORS: [Palette, Palette] = [
-  { bg: '#eef1f3', ring: '#d9dfe3' },
-  { bg: '#0b1316', ring: '#1b2d33' },
-];
+/** Cores proprias de cada epoca: [claro, escuro]. ('none' nao entra aqui: usa a cor do tema de cores do visitante.) */
+const SEASON_COLORS: Record<Exclude<SeasonalTheme, 'none'>, [Palette, Palette]> = {
+  christmas: [{ bg: '#eaf1fb', ring: '#bfd2ee' }, { bg: '#0a1426', ring: '#213d73' }],
+  newyear: [{ bg: '#f6f1e3', ring: '#e2d3a3' }, { bg: '#0b0b1f', ring: '#2b2b61' }],
+  valentine: [{ bg: '#faeef2', ring: '#ecc6d3' }, { bg: '#1c0a16', ring: '#4f1f3a' }],
+  easter: [{ bg: '#f3f0fa', ring: '#d5cbeb' }, { bg: '#14112a', ring: '#302b68' }],
+  halloween: [{ bg: '#f8efe6', ring: '#e7cdb0' }, { bg: '#150b1c', ring: '#43203a' }],
+};
+
+/** O que o fundo padrao le da pagina: tema claro/escuro e as variaveis de cor (--primary e --background, no formato "H S% L%"). */
+interface Env { dark: boolean; primary: string; background: string }
+function readEnv(): Env {
+  const root = document.documentElement, cs = getComputedStyle(root);
+  return { dark: root.classList.contains('dark'), primary: cs.getPropertyValue('--primary').trim(), background: cs.getPropertyValue('--background').trim() };
+}
 
 const HEART = 'M0 6C-12 -4 -10 -14 -3 -13C0 -12 0 -9 0 -8C0 -9 0 -12 3 -13C10 -14 12 -4 0 6Z';
 const f = (n: number) => n.toFixed(1);
@@ -39,7 +51,7 @@ const flake = (x: number, y: number, r: number, c: string) => [0, 60, 120].map((
   return `<line x1="${f(x - dx)}" y1="${f(y - dy)}" x2="${f(x + dx)}" y2="${f(y + dy)}" stroke="${c}" stroke-width="1.6" stroke-linecap="round"/>`
     + `<circle cx="${f(x + dx)}" cy="${f(y + dy)}" r="1.6" fill="${c}"/><circle cx="${f(x - dx)}" cy="${f(y - dy)}" r="1.6" fill="${c}"/>`;
 }).join('');
-/** Fogo de artificio: raios saindo do centro com uma bolinha na ponta. */
+/** Fogo de artificio parado: raios saindo do centro com uma bolinha na ponta. */
 const burst = (x: number, y: number, r: number, c: string) => Array.from({ length: 12 }, (_, i) => {
   const a = i * Math.PI / 6, c1 = Math.cos(a), s1 = Math.sin(a);
   return `<line x1="${f(x + c1 * r * 0.35)}" y1="${f(y + s1 * r * 0.35)}" x2="${f(x + c1 * r)}" y2="${f(y + s1 * r)}" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><circle cx="${f(x + c1 * (r + 2.5))}" cy="${f(y + s1 * (r + 2.5))}" r="1.3" fill="${c}"/>`;
@@ -60,28 +72,40 @@ const TILES: Record<SeasonalTheme, Tile> = {
 };
 const SCALE = 1.5;   // tamanho na tela = peca x 1.5
 
+/** Cores do fundo agora: da epoca, ou (sem tema) da cor escolhida pelo visitante. */
+function paletteFor(season: SeasonalTheme, env: Env): Palette {
+  if (season !== 'none') return SEASON_COLORS[season][env.dark ? 1 : 0];
+  if (!env.primary || !env.background) return SEASON_COLORS.christmas[env.dark ? 1 : 0];   // variaveis ainda nao lidas: nao acontece na pratica
+  return { bg: `hsl(${env.background})`, ring: `hsl(${env.primary} / ${env.dark ? 0.22 : 0.18})` };
+}
+
 /** Imagem de fundo (data URI) de uma epoca com uma paleta. */
 function tileUrl(t: Tile, p: Palette) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${t.w}" height="${t.h}" viewBox="0 0 ${t.w} ${t.h}"><rect width="${t.w}" height="${t.h}" fill="${p.bg}"/>${t.draw(p.ring, p.bg)}</svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 
-/** Uma versao do fundo (clara ou escura); `show` diz em qual tema do visitante ela aparece. A camada e' maior que a tela para o balanco/pulso nao mostrar bordas. */
-function Layer({ season, p, show }: { season: SeasonalTheme; p: Palette; show: string }) {
-  const t = TILES[season];
-  return (
-    <div className={`absolute inset-0 overflow-hidden ${show}`} style={{ background: p.bg }}>
-      <div className="sb-waves absolute -inset-8" style={{ backgroundImage: tileUrl(t, p), backgroundSize: `${t.w * SCALE}px ${t.h * SCALE}px`, ['--sb-tile' as string]: `${t.w * SCALE}px` }} />
-    </div>
-  );
-}
-
-/** Fundo fixo atras do site; `season` 'none' = fundo padrao (ondas). */
+/** Fundo fixo atras do site; `season` 'none' = fundo padrao (ondas na cor do tema de cores). */
 export function SeasonalBackground({ season }: { season: SeasonalTheme }) {
+  const [env, setEnv] = useState<Env>(readEnv);   // so' monta no navegador (SeasonalDecor espera a API), por isso pode ler o documento ja' aqui
+
+  // Acompanha a troca de claro/escuro e de tema de cores (o <html> muda de classe / data-color-theme).
+  useEffect(() => {
+    const root = document.documentElement;
+    const update = () => setEnv((old) => { const n = readEnv(); return n.dark === old.dark && n.primary === old.primary && n.background === old.background ? old : n; });
+    update();
+    const mo = new MutationObserver(update);
+    mo.observe(root, { attributes: true, attributeFilter: ['class', 'data-color-theme'] });
+    return () => mo.disconnect();
+  }, []);
+
+  const t = TILES[season], p = paletteFor(season, env);
   return (
-    <div aria-hidden data-sb={season} className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <Layer season={season} p={COLORS[0]} show="dark:hidden" />
-      <Layer season={season} p={COLORS[1]} show="hidden dark:block" />
+    <div aria-hidden data-sb={season} className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" style={{ background: p.bg }}>
+      {/* camada maior que a tela: o balanco/pulso nao mostra bordas */}
+      <div className="sb-waves absolute -inset-8" style={{ backgroundImage: tileUrl(t, p), backgroundSize: `${t.w * SCALE}px ${t.h * SCALE}px`, ['--sb-tile' as string]: `${t.w * SCALE}px` }} />
+      {season === 'newyear' && <SeasonCanvas kind="fireworks" dark={env.dark} />}
+      {season === 'valentine' && <SeasonCanvas kind="balloons" dark={env.dark} />}
     </div>
   );
 }
