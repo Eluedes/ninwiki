@@ -67,6 +67,11 @@ class ItemType(str, enum.Enum):
     AUTHORITY = "authority"   # itens de Autoridade do cla (ex.: Hokuto Sphere I): levados ao Altar da Casa do Cla
     TOOL = "tool"             # ferramentas (picareta, vara de pesca...): categoria propria no catalogo de itens
     SCROLL = "scroll"         # pergaminhos e manuais (ex.: "... Manual"): categoria propria no catalogo de itens
+    RECIPE = "recipe"         # receitas (itens que ensinam a fabricar algo)
+    OTHER = "other"           # outros: o que nao cabe nas demais categorias do catalogo
+    FURNITURE = "furniture"   # moveis
+    FOOD = "food"             # comidas
+    TROPHY = "trophy"         # trofeus
 
 
 class ContentStatus(str, enum.Enum):

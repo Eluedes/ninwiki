@@ -527,6 +527,11 @@ export function bulkUpdateContentStatus(ids: string[], status: 'draft' | 'publis
   return apiFetch('/content-items/bulk-status', { method: 'PATCH', body: JSON.stringify({ ids, status }) });
 }
 
+/** Muda o Item type de varios itens de uma vez (so' S.Adm); devolve os que mudaram (entries que nao sao da categoria Items sao ignoradas). */
+export function bulkUpdateItemType(ids: string[], itemType: ItemType): Promise<ApiContentItemSummary[]> {
+  return apiFetch('/content-items/bulk-item-type', { method: 'PATCH', body: JSON.stringify({ ids, itemType }) });
+}
+
 /** Apaga varias entries de uma vez. */
 export function bulkDeleteContentItems(ids: string[]): Promise<void> {
   return apiFetch('/content-items/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) });
@@ -886,7 +891,7 @@ export type StaffRole = 'super_admin' | 'admin' | 'creator';
 
 // Nomes das permissoes - espelham app/core/permissions.py::Permission no backend.
 export type PermissionName =
-  | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
+  | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import' | 'content.bulk_type'
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'volunteers.manage' | 'tournaments.manage' | 'discord.links' | 'translation.import'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'

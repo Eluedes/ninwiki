@@ -117,7 +117,7 @@ export interface Dictionary {
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string; official: string };
   report: { button: string; title: string; subtitle: string; kindLabel: string; outdated: string; translation: string; other: string; messageLabel: string; placeholder: string; send: string; sending: string; cancel: string; thanks: string; close: string; tooShort: string; error: string };
-  catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterTool: string; itemsFilterScroll: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
+  catalog: { level: string; levelRange: string; results: string; search: string; noResults: string; itemsFilterConsumables: string; itemsFilterMaterials: string; itemsFilterWardrobe: string; itemsFilterTool: string; itemsFilterScroll: string; itemsFilterFood: string; itemsFilterRecipe: string; itemsFilterFurniture: string; itemsFilterTrophy: string; itemsFilterOther: string; itemsFilterRings: string; itemsFilterPack: string; itemsFilterSpecial: string };
   detail: { itemDetails: string; itemType: string; attributes: string; drops: string; lore: string; synergy: string; copied: string; back: string; level: string; noDrops: string; droppedBy: string; crafted: string; updatedOn: string; autoTranslated: string; autoTranslatedHint: string; relatedEntries: string; spawnLocation: string; zones: Record<string, string>; soldAt: string; forQty: string; free: string; attacks: string; noAttacks: string; maxStack: string; castVillage: string; speed: string; requirement: string; requirementsSection: string; acquisitionSection: string; weaponDetailsSection: string; battleDataSection: string; levelReq: string; statReq: string; npc: string; weaponClass: string; weaponType: string; baseDamage: string; specialAbility: string; attackSpeed: string; statBonus: string; knockbackDistance: string; mobHealth: string; mobDamage: string; mobExperience: string; mobRange: string; mobRespawn: string; combatStats: string; rarities: Record<string, string> };
   masteryDetail: {
     notFound: string; elemental: string; nonElemental: string;
@@ -298,12 +298,12 @@ export interface Dictionary {
       colName: string; colCategory: string; colLevel: string; colRarity: string; colStatus: string;
       selectAll: string; selectRow: string; edit: string; delete: string; published: string; draft: string;
       deleteConfirm: string; deleteError: string; bulkStatusError: string;
-      bulkDeleteConfirm: string; bulkDeleteError: string; publish: string; markDraft: string;
+      bulkDeleteConfirm: string; bulkDeleteError: string; bulkItemType: string; bulkItemTypeApply: string; bulkItemTypeConfirm: string; bulkItemTypeError: string; publish: string; markDraft: string;
     };
     contentEditor: {
       catMobs: string; catItems: string; catWeapons: string; catMissions: string; catGuides: string;
       mobMonster: string; mobBoss: string; mobNpc: string; mobMount: string;
-      itemGeneral: string; itemRing: string; itemAccessory: string; itemShirt: string; itemVest: string; itemPant: string; itemHat: string; itemMask: string; itemShoe: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string; itemPack: string; itemTool: string; itemScroll: string; itemWardrobe: string; wardrobeKind: string;
+      itemGeneral: string; itemRing: string; itemAccessory: string; itemShirt: string; itemVest: string; itemPant: string; itemHat: string; itemMask: string; itemShoe: string; itemConsumable: string; itemMaterial: string; itemCurrency: string; itemCast: string; itemAuthority: string; itemPack: string; itemTool: string; itemScroll: string; itemRecipe: string; itemOther: string; itemFurniture: string; itemFood: string; itemTrophy: string; itemWardrobe: string; wardrobeKind: string;
       editTitle: string; newTitle: string;
       name: string; category: string; mobType: string; itemType: string; slugLabel: string; back: string; icon: string;
       speed: string; speedPlaceholder: string; requirement: string; requirementPlaceholder: string; addRequirement: string;
@@ -466,9 +466,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
       itemsFilterMaterials: 'Materiais',
       itemsFilterWardrobe: 'Gear',
       itemsFilterRings: 'Anéis',
-      itemsFilterPack: 'Pack',
-      itemsFilterTool: 'Ferramentas',
+      itemsFilterPack: 'Packs',
+      itemsFilterTool: 'Ferramentas / Pílulas',
       itemsFilterScroll: 'Pergaminhos / Manuais',
+      itemsFilterFood: 'Comidas',
+      itemsFilterRecipe: 'Receitas',
+      itemsFilterFurniture: 'Móveis',
+      itemsFilterTrophy: 'Troféus',
+      itemsFilterOther: 'Outros',
       itemsFilterSpecial: 'Itens Especiais',
     },
     detail: {
@@ -876,7 +881,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         saveError: 'Não foi possível salvar.', unsavedChanges: 'Alterações não salvas', alwaysAll: 'O S.Adm sempre tem todas as permissões.',
         groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', imagecats: 'Categorias do banco de imagens (desmarque para TRANCAR a categoria para este cargo)', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log', analytics: 'Acessos' },
         names: {
-          'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
+          'content.bulk_type': 'Mudar o tipo (Item type) de vários itens de uma vez', 'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
           'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes', 'volunteers.manage': 'Ver, avaliar e apagar as inscrições de voluntários', 'tournaments.manage': 'Moderar torneios dos jogadores (esconder, corrigir texto, apagar)', 'discord.links': 'Ligar servidores e cargos do Discord à vila e ao rank do perfil dos jogadores',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
@@ -1111,7 +1116,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         deleteConfirm: 'Apagar "{name}"? Essa ação não pode ser desfeita.',
         deleteError: 'Erro ao apagar.',
         bulkStatusError: 'Erro ao atualizar em massa.',
-        bulkDeleteConfirm: 'Apagar {count} entries selecionadas? Essa ação não pode ser desfeita.',
+        bulkItemType: 'Mudar o tipo do item...', bulkItemTypeApply: 'Aplicar tipo', bulkItemTypeConfirm: 'Mudar o tipo de {count} itens para "{type}"?', bulkItemTypeError: 'Não foi possível mudar o tipo dos itens.', bulkDeleteConfirm: 'Apagar {count} entries selecionadas? Essa ação não pode ser desfeita.',
         bulkDeleteError: 'Erro ao apagar em massa.',
         publish: 'Publicar', markDraft: 'Marcar rascunho',
       },
@@ -1119,7 +1124,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         catMobs: 'Mobs', catItems: 'Itens', catWeapons: 'Armas', catMissions: 'Missões', catGuides: 'Guias',
         mobMonster: 'Monstro', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Montaria',
         itemGeneral: 'Geral', itemRing: 'Ring', itemAccessory: 'Acessório', itemShirt: 'Camisa', itemVest: 'Colete', itemPant: 'Calça', itemHat: 'Chapéu', itemMask: 'Máscara', itemShoe: 'Sapato', itemConsumable: 'Consumível', itemMaterial: 'Material',
-        itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade', itemPack: 'Pack', itemTool: 'Ferramenta', itemScroll: 'Pergaminho / Manual', itemWardrobe: 'Gear', wardrobeKind: 'Tipo de peça',
+        itemCurrency: 'Moeda', itemCast: 'Cast', itemAuthority: 'Autoridade', itemPack: 'Packs', itemTool: 'Ferramentas / Pílulas', itemScroll: 'Pergaminhos / Manuais', itemRecipe: 'Receitas', itemOther: 'Outros', itemFurniture: 'Móveis', itemFood: 'Comidas', itemTrophy: 'Troféus', itemWardrobe: 'Gear', wardrobeKind: 'Tipo de peça',
         editTitle: 'Editar entry', newTitle: 'Nova entry',
         name: 'Nome', category: 'Categoria', mobType: 'Tipo de mob', itemType: 'Tipo de item',
         slugLabel: 'Slug (identificador na URL)',
@@ -1306,9 +1311,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
       itemsFilterMaterials: 'Materials',
       itemsFilterWardrobe: 'Gear',
       itemsFilterRings: 'Rings',
-      itemsFilterPack: 'Pack',
-      itemsFilterTool: 'Tools',
+      itemsFilterPack: 'Packs',
+      itemsFilterTool: 'Tools / Pills',
       itemsFilterScroll: 'Scrolls / Manuals',
+      itemsFilterFood: 'Food',
+      itemsFilterRecipe: 'Recipes',
+      itemsFilterFurniture: 'Furniture',
+      itemsFilterTrophy: 'Trophies',
+      itemsFilterOther: 'Others',
       itemsFilterSpecial: 'Special Items',
     },
     detail: {
@@ -1716,7 +1726,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         saveError: 'Could not save.', unsavedChanges: 'Unsaved changes', alwaysAll: 'S.Adm always has every permission.',
         groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', imagecats: 'Image library categories (untick to LOCK a category for this role)', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log', analytics: 'Traffic' },
         names: {
-          'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
+          'content.bulk_type': 'Change the type (Item type) of several items at once', 'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
           'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports', 'volunteers.manage': 'View, review and delete volunteer applications', 'tournaments.manage': 'Moderate player tournaments (hide, fix text, delete)', 'discord.links': 'Link Discord servers and roles to the player profile village and rank',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
@@ -1951,7 +1961,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         deleteConfirm: 'Delete "{name}"? This action cannot be undone.',
         deleteError: 'Error deleting.',
         bulkStatusError: 'Error bulk updating.',
-        bulkDeleteConfirm: 'Delete {count} selected entries? This action cannot be undone.',
+        bulkItemType: 'Change item type...', bulkItemTypeApply: 'Apply type', bulkItemTypeConfirm: 'Change the type of {count} items to "{type}"?', bulkItemTypeError: 'Could not change the item type.', bulkDeleteConfirm: 'Delete {count} selected entries? This action cannot be undone.',
         bulkDeleteError: 'Error bulk deleting.',
         publish: 'Publish', markDraft: 'Mark as draft',
       },
@@ -1959,7 +1969,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         catMobs: 'Mobs', catItems: 'Items', catWeapons: 'Weapons', catMissions: 'Missions', catGuides: 'Guides',
         mobMonster: 'Monster', mobBoss: 'Boss', mobNpc: 'NPC', mobMount: 'Mount',
         itemGeneral: 'General', itemRing: 'Ring', itemAccessory: 'Accessory', itemShirt: 'Shirt', itemVest: 'Vest', itemPant: 'Pant', itemHat: 'Hat', itemMask: 'Mask', itemShoe: 'Shoe', itemConsumable: 'Consumable', itemMaterial: 'Material',
-        itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority', itemPack: 'Pack', itemTool: 'Tool', itemScroll: 'Scroll / Manual', itemWardrobe: 'Gear', wardrobeKind: 'Piece type',
+        itemCurrency: 'Currency', itemCast: 'Cast', itemAuthority: 'Authority', itemPack: 'Packs', itemTool: 'Tools / Pills', itemScroll: 'Scrolls / Manuals', itemRecipe: 'Recipes', itemOther: 'Others', itemFurniture: 'Furniture', itemFood: 'Food', itemTrophy: 'Trophies', itemWardrobe: 'Gear', wardrobeKind: 'Piece type',
         editTitle: 'Edit entry', newTitle: 'New entry',
         name: 'Name', category: 'Category', mobType: 'Mob type', itemType: 'Item type',
         slugLabel: 'Slug (URL identifier)',

@@ -8,6 +8,7 @@ Rotas (todas sob o prefixo /content-items, definido no main.py):
   PUT    /content-items/{id}         atualiza uma entry existente
   DELETE /content-items/{id}         apaga uma entry
   PATCH  /content-items/bulk-status  muda o status de VARIAS entries de uma vez
+  PATCH  /content-items/bulk-item-type  muda o Item type de VARIOS itens de uma vez (so' S.Adm: content.bulk_type)
   POST   /content-items/bulk-delete  apaga VARIAS entries de uma vez
   POST   /content-items/bulk-import  cria VARIAS entries em rascunho a partir de uma lista de nomes
 
@@ -46,6 +47,12 @@ class BulkStatusUpdate(CamelModel):
     """Corpo de mudar o status (rascunho/publicado) de varias entries de uma vez."""
     ids: list[UUID] = Field(min_length=1)
     status: ContentStatus
+
+
+class BulkItemType(CamelModel):
+    """Corpo de mudar o Item type de varios itens de uma vez (so' vale para entries da categoria Items)."""
+    ids: list[UUID] = Field(min_length=1, max_length=1000)
+    item_type: ItemType
 
 
 class BulkDelete(CamelModel):
@@ -89,6 +96,31 @@ async def bulk_update_status(
     for item in items:
         await db.refresh(item)
     return items
+
+
+@router.patch("/bulk-item-type", response_model=list[ContentItemSummary])
+async def bulk_item_type(
+    payload: BulkItemType,
+    staff: User = Depends(require_permission(Permission.CONTENT_BULK_TYPE)),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Muda o Item type de VARIOS itens de uma vez (botao da barra de selecao da lista de Itens). So' S.Adm (permissao exclusiva; os outros recebem 404).
+    Entries que nao sao da categoria Items (mob, arma, missao, guia) sao ignoradas; a resposta traz so' as que mudaram de fato.
+    """
+    rows = (await db.execute(select(ContentItem).where(ContentItem.id.in_(payload.ids), ContentItem.category == ContentCategory.ITEMS))).scalars().all()
+    changed = [i for i in rows if i.item_type != payload.item_type]
+    for item in changed:
+        item.item_type = payload.item_type
+    if changed:
+        await log_action(
+            db, actor=staff, action="bulk-item-type", entity_type="content_item", entity_id=f"{len(changed)} itens",
+            diff={"itemType": payload.item_type.value, "ids": [str(i.id) for i in changed]},
+        )
+    await db.commit()
+    for item in changed:
+        await db.refresh(item)
+    return changed
 
 
 @router.post("/bulk-delete", status_code=204)

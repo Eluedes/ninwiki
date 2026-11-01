@@ -27,6 +27,6 @@ export function itemTypeLabels(ce: Dictionary['admin']['contentEditor']): Record
   return {
     general: ce.itemGeneral, ring: ce.itemRing, accessory: ce.itemAccessory, shirt: ce.itemShirt, vest: ce.itemVest, pant: ce.itemPant,
     hat: ce.itemHat, mask: ce.itemMask, shoe: ce.itemShoe, consumable: ce.itemConsumable, material: ce.itemMaterial,
-    currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority, pack: ce.itemPack, tool: ce.itemTool, scroll: ce.itemScroll,
+    currency: ce.itemCurrency, cast: ce.itemCast, authority: ce.itemAuthority, pack: ce.itemPack, tool: ce.itemTool, scroll: ce.itemScroll, recipe: ce.itemRecipe, other: ce.itemOther, furniture: ce.itemFurniture, food: ce.itemFood, trophy: ce.itemTrophy,
   };
 }

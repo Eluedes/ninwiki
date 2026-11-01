@@ -30,17 +30,23 @@ import type { Category } from '@/lib/types';
 // o estado null already mostra tudo sem filtro nenhum (usado so' como
 // valor inicial e quando a pessoa clica de novo no filtro ja' ativo,
 // pra' "desligar" ele), mas nao existe um botao VISIVEL com esse nome.
-type ItemsFilterKey = 'consumables' | 'materials' | 'wardrobe' | 'ring' | 'pack' | 'tool' | 'scroll' | 'special';
+type ItemsFilterKey = 'consumables' | 'food' | 'materials' | 'wardrobe' | 'ring' | 'tool' | 'scroll' | 'recipe' | 'furniture' | 'trophy' | 'pack' | 'special' | 'other';
 
+// A ORDEM das chaves e' a ordem dos botoes de filtro E das secoes da pagina (os botoes saem destas chaves: categoria nova = acrescentar aqui).
 const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   consumables: ['consumable'],
+  food: ['food'],                    // Comidas
   materials: ['currency', 'material'],   // Moeda (currency) fica em Materials; 'material' so' existe em itens antigos
-  wardrobe: [...WARDROBE_TYPES],     // Accessory e as pecas de roupa ficam juntos (Guarda-roupa)
+  wardrobe: [...WARDROBE_TYPES],     // Accessory e as pecas de roupa ficam juntos (Gear)
   ring: ['ring'],                    // Ring tem categoria propria
-  pack: ['pack'],                    // catalogo Pack
-  tool: ['tool'],                    // Ferramentas
+  tool: ['tool'],                    // Tools / Pills
   scroll: ['scroll'],                // Pergaminhos / Manuais
+  recipe: ['recipe'],                // Receitas
+  furniture: ['furniture'],          // Moveis
+  trophy: ['trophy'],                // Trofeus
+  pack: ['pack'],                    // catalogo Pack
   special: ['general', 'cast', 'authority'],
+  other: ['other'],                  // Outros
 };
 
 interface EntryGroup {
@@ -140,6 +146,11 @@ export function CatalogPageClient({
       pack: dict.catalog.itemsFilterPack,
       tool: dict.catalog.itemsFilterTool,
       scroll: dict.catalog.itemsFilterScroll,
+      food: dict.catalog.itemsFilterFood,
+      recipe: dict.catalog.itemsFilterRecipe,
+      furniture: dict.catalog.itemsFilterFurniture,
+      trophy: dict.catalog.itemsFilterTrophy,
+      other: dict.catalog.itemsFilterOther,
       special: dict.catalog.itemsFilterSpecial,
     }),
     [dict]
@@ -219,7 +230,7 @@ export function CatalogPageClient({
           em vez de precisar de um botao separado pra isso. */}
       {category === 'items' && (
         <div className="mb-6 flex flex-wrap gap-1.5">
-          {(['consumables', 'materials', 'wardrobe', 'ring', 'pack', 'special'] as const).map((key) => {
+          {(Object.keys(ITEMS_FILTER_TYPES) as ItemsFilterKey[]).map((key) => {
             return (
               <button
                 key={key}

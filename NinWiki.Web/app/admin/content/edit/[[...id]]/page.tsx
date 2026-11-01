@@ -96,6 +96,11 @@ function getItemTypeOptions(t: Dictionary['admin']['contentEditor'], current?: I
     { value: 'pack', label: t.itemPack },
     { value: 'tool', label: t.itemTool },
     { value: 'scroll', label: t.itemScroll },
+    { value: 'recipe', label: t.itemRecipe },
+    { value: 'furniture', label: t.itemFurniture },
+    { value: 'food', label: t.itemFood },
+    { value: 'trophy', label: t.itemTrophy },
+    { value: 'other', label: t.itemOther },
   ];
   return all.filter((o) => o.value !== 'material' || current === 'material');
 }
