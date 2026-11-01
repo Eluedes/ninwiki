@@ -164,6 +164,9 @@ export interface ApiContentItemSummary {
   description: string;
   namePt: string | null;
   descriptionPt: string | null;
+  spawnLocation?: string | null;      // so' mobs: onde aparece (texto livre antigo)
+  spawnLocationPt?: string | null;
+  spawnLocations?: LocationEntry[];   // so' mobs: lista de lugares com zona (vazia = usa o texto)
 }
 // controla os dois: id e' gerado, status so' muda explicitamente no
 // PUT, nunca no POST, que sempre nasce "draft").
