@@ -8,6 +8,8 @@ import json
 import re
 from typing import Any
 
+from app.core.text import limpar_marcacao_campo
+
 # Tipos de no' e de marca que o editor Tiptap (e o StarterKit) realmente gera. Qualquer outro tipo
 # num documento enviado direto pela API e' recusado: assim ninguem injeta estrutura que o site
 # nao saiba renderizar (nem tente esconder algo estranho dentro do JSON).
@@ -97,6 +99,7 @@ def validate_rich_content(value: str | None) -> str | None:
     """
     if not value:
         return value
+    value = limpar_marcacao_campo(value)   # marcacao do cliente do jogo (<color=..>) nunca entra no texto do wiki
     stripped = value.strip()
     if stripped.startswith("{"):
         try:

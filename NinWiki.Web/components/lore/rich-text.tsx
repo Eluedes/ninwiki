@@ -74,6 +74,19 @@ const extensions = [
   PublicDetailsContent,
 ];
 
+/**
+ * Rede de seguranca de LEITURA: tira a marcacao do cliente do jogo (<color=yellow>X</color>, <b>, <size=..>, <br>...) que ainda
+ * esteja no banco. Espelha app/core/text.py::limpar_marcacao_jogo; so' casa tags conhecidas (um "<" de comparacao fica).
+ * Funciona direto no JSON do Tiptap porque a tag aparece literal dentro do texto.
+ */
+export function stripGameMarkup(value: string): string {
+  if (!value || !value.includes('<')) return value;
+  // <br> vira espaco (uma quebra real quebraria o JSON do Tiptap); as outras tags somem e o texto de dentro fica
+  return value
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/?(?:color|b|i|u|s|size|sprite|link|material|quad|align|mark|style|font|sup|sub|nobr|indent|line-height)\b(?:=[^<>\n]*)?\s*\/?>/gi, '');
+}
+
 /** True se o texto e' um documento Tiptap (JSON) e nao texto simples antigo. */
 function isTiptapJson(value: string): boolean {
   const trimmed = value.trim();
@@ -91,8 +104,9 @@ function isTiptapJson(value: string): boolean {
 // line-clamp-2) onde nao faz sentido nenhum renderizar HTML de
 // verdade (negrito/cor no meio de um resumo cortado no meio da frase
 // fica estranho, e quebraria o corte visual do line-clamp).
-export function extractPlainText(content: string): string {
-  if (!content) return '';
+export function extractPlainText(raw: string): string {
+  if (!raw) return '';
+  const content = stripGameMarkup(raw);
   if (!isTiptapJson(content)) return content;
 
   try {
@@ -110,8 +124,9 @@ export function extractPlainText(content: string): string {
 }
 
 /** Mostra um campo de texto rico: converte o JSON do Tiptap em HTML (ou mostra texto simples). */
-export function RichText({ content, className = 'prose-shinobi' }: { content: string; className?: string }) {
-  if (!content) return null;
+export function RichText({ content: bruto, className = 'prose-shinobi' }: { content: string; className?: string }) {
+  if (!bruto) return null;
+  const content = stripGameMarkup(bruto);
 
   if (isTiptapJson(content)) {
     let html: string;
