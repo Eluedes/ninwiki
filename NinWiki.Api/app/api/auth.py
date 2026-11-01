@@ -37,7 +37,6 @@ from app.core.security import (
     create_reader_token, create_session_token, ensure_same_origin, safe_return_path, set_reader_cookie,
     set_return_cookie, set_session_cookie, set_state_cookie,
 )
-from app.models.enums import StaffRole
 from app.models.readers import Reader
 from app.models.users import User
 from app.schemas.posts import ReaderMe
@@ -244,11 +243,11 @@ async def dev_login(payload: DevLogin, request: Request, response: Response, db:
 
 @router.get("/reader/me", response_model=ReaderMe | None)
 async def reader_me(reader: Reader | None = Depends(get_optional_reader), db: AsyncSession = Depends(get_db)):
-    """O leitor logado agora (ou null) - o site usa para mostrar 'Entrar com Discord' ou o avatar. `isSuperAdmin` = o Discord dele e' de um S.Adm ativo (atalho para o painel)."""
+    """O leitor logado agora (ou null) - o site usa para mostrar 'Entrar com Discord' ou o avatar. `isStaff` = o Discord dele e' de alguem da equipe ativa (atalho para o painel)."""
     if reader is None:
         return None
     me = _reader_me(reader)
-    me.is_super_admin = (await db.execute(select(User.id).where(User.discord_id == reader.discord_id, User.is_active.is_(True), User.role == StaffRole.SUPER_ADMIN).limit(1))).first() is not None
+    me.is_staff = (await db.execute(select(User.id).where(User.discord_id == reader.discord_id, User.is_active.is_(True)).limit(1))).first() is not None
     return me
 
 

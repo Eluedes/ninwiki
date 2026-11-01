@@ -1547,12 +1547,9 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     await c.post("/auth/reader/dev-login", json={"discordId": str(IDS["inativo"])})
     RI_ = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
     c.cookies.clear()
-    await c.post("/auth/reader/dev-login", json={"discordId": str(IDS["sadm"])})
-    RSA_ = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
-    c.cookies.clear()
-    check("/auth/reader/me: isSuperAdmin e' true so' para o S.Adm ATIVO (Adm, leitor comum e S.Adm desativado = false; o atalho nao vira permissao)",
-          (await c.get("/auth/reader/me", headers=RSA_)).json()["isSuperAdmin"] is True and (await c.get("/auth/reader/me", headers=RS_)).json()["isSuperAdmin"] is False
-          and (await c.get("/auth/reader/me", headers=RA)).json()["isSuperAdmin"] is False and (await c.get("/auth/reader/me", headers=RI_)).json()["isSuperAdmin"] is False)
+    check("/auth/reader/me: isStaff e' true so' para a equipe ATIVA (leitor comum e staff desativado = false; o atalho nao vira permissao)",
+          (await c.get("/auth/reader/me", headers=RS_)).json()["isStaff"] is True and (await c.get("/auth/reader/me", headers=RA)).json()["isStaff"] is False
+          and (await c.get("/auth/reader/me", headers=RI_)).json()["isStaff"] is False)
     check("o leitor-equipe NAO ganha acesso ao painel so' por isso (cookie de leitor nao vale como sessao da equipe: 401)", (await c.get("/staff", headers=RS_)).status_code == 401)
     tok_leitor = RA["Cookie"].split("=", 1)[1]
     check("token de LEITOR nao vale como sessao da equipe", (await c.get("/auth/me", headers={"Cookie": f"{SESSION_COOKIE}={tok_leitor}"})).status_code == 401)
@@ -3276,13 +3273,16 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
           await perfil(L35) == ("takumi", R_GEN, "Servidor A TESTE"), str(await perfil(L35)))
     # --- painel: so' discord.links ---
     corpo = {"villageId": V_MIST, "roles": [{"roleId": "12", "ninjaRankId": R_CHU}]}
-    check("painel: anonimo 401, leitor 401, Creator 403", (await api("GET", "/discord-links")).status_code == 401 and (await api("GET", "/discord-links", L35)).status_code == 401
-          and (await api("GET", "/discord-links", C)).status_code == 403 and (await api("PUT", f"/discord-links/guilds/{G_A}", C, json=corpo)).status_code == 403)
+    check("painel do bot: anonimo 401, leitor 401; Adm e Creator recebem 404 (a categoria Bot e' so' do S.Adm: nem descobrem que a rota existe)",
+          (await api("GET", "/discord-links")).status_code == 401 and (await api("GET", "/discord-links", L35)).status_code == 401
+          and (await api("GET", "/discord-links", A)).status_code == 404 and (await api("GET", "/discord-links", C)).status_code == 404
+          and (await api("PUT", f"/discord-links/guilds/{G_A}", A, json=corpo)).status_code == 404 and (await api("PUT", f"/discord-links/guilds/{G_A}", C, json=corpo)).status_code == 404
+          and (await api("GET", f"/discord-links/guilds/{G_A}/members", A)).status_code == 404)
     perms_dl = True
-    for h, esperado in ((S, True), (A, True), (C, False)):
+    for h, esperado in ((S, True), (A, False), (C, False)):
         perms_dl = perms_dl and (("discord.links" in (await api("GET", "/auth/me", h)).json()["permissions"]) == esperado)
-    check("/auth/me inclui discord.links para S.Adm e Adm, nao para Creator", perms_dl)
-    lista = (await api("GET", "/discord-links", A)).json()
+    check("/auth/me inclui discord.links so' para o S.Adm (nao para Adm nem Creator)", perms_dl)
+    lista = (await api("GET", "/discord-links", S)).json()
     check("painel do bot: o servidor traz a quantidade de membros informada (e 0 quando o bot nao informou)",
           next(g for g in lista if g["guildId"] == G_A)["memberCount"] == 1234 and next(g for g in lista if g["guildId"] == G_C)["memberCount"] == 0)
     por_id = {x["id"]: x for x in (await api("GET", "/ninja-ranks")).json()}
@@ -3294,18 +3294,18 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     gA = next((g for g in lista if g["guildId"] == G_A), None)
     check("Adm lista os servidores do bot com cargos e leitores", gA is not None and gA["active"] and gA["readers"] == 1 and {x["roleId"] for x in gA["roles"]} == {"11", "12", "13"}, str(gA)[:200])
     check("vila inexistente / rank inexistente / cargo de outro servidor -> 422",
-          (await api("PUT", f"/discord-links/guilds/{G_A}", A, json={"villageId": "nao-existe-teste"})).status_code == 422
-          and (await api("PUT", f"/discord-links/guilds/{G_A}", A, json={"roles": [{"roleId": "12", "ninjaRankId": "nao-existe-teste"}]})).status_code == 422
-          and (await api("PUT", f"/discord-links/guilds/{G_A}", A, json={"roles": [{"roleId": "21", "ninjaRankId": R_GEN}]})).status_code == 422)
-    check("servidor desconhecido no PUT -> 404", (await api("PUT", f"/discord-links/guilds/{BASE + 555}", A, json={})).status_code == 404)
-    r = await api("PUT", f"/discord-links/guilds/{G_A}", A, json=corpo)
+          (await api("PUT", f"/discord-links/guilds/{G_A}", S, json={"villageId": "nao-existe-teste"})).status_code == 422
+          and (await api("PUT", f"/discord-links/guilds/{G_A}", S, json={"roles": [{"roleId": "12", "ninjaRankId": "nao-existe-teste"}]})).status_code == 422
+          and (await api("PUT", f"/discord-links/guilds/{G_A}", S, json={"roles": [{"roleId": "21", "ninjaRankId": R_GEN}]})).status_code == 422)
+    check("servidor desconhecido no PUT -> 404", (await api("PUT", f"/discord-links/guilds/{BASE + 555}", S, json={})).status_code == 404)
+    r = await api("PUT", f"/discord-links/guilds/{G_A}", S, json=corpo)
     check("Adm mapeia servidor -> vila e cargo -> rank", r.status_code == 200 and r.json()["villageId"] == V_MIST and next(x for x in r.json()["roles"] if x["roleId"] == "12")["ninjaRankId"] == R_CHU, r.text[:200])
     check("mudar o mapeamento recalcula o leitor na hora (vila Mist do servidor A, rank Genin pelo nome)", await perfil(L35) == (V_MIST, R_GEN, "Servidor A TESTE"), str(await perfil(L35)))
     # --- mapeamento explicito de cargo ---
     await empurrar(G_A, fato(ids_leitores[36], ("12", "Cargo qualquer")))
     check("cargo com mapeamento explicito (nome nao parece rank): rank Chunin", await perfil(L36) == (V_MIST, R_CHU, "Servidor A TESTE"), str(await perfil(L36)))
     # --- varios servidores: maior rank vence; empate = fica o servidor que ja valia (estavel) ---
-    await api("PUT", f"/discord-links/guilds/{G_B}", A, json={"villageId": V_SAND})
+    await api("PUT", f"/discord-links/guilds/{G_B}", S, json={"villageId": V_SAND})
     await empurrar(G_B, fato(ids_leitores[35], ("21", nome_chu)))
     check("dois servidores: vale o servidor onde o rank e' MAIOR (Chunin em B > Genin em A)", await perfil(L35) == (V_SAND, R_CHU, "Servidor B TESTE"), str(await perfil(L35)))
     await empurrar(G_B, fato(ids_leitores[36], ("21", nome_chu)))
@@ -3322,15 +3322,15 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("saiu do servidor B: volta para o A (Genin, Mist)", await perfil(L35) == (V_MIST, R_GEN, "Servidor A TESTE"), str(await perfil(L35)))
     await empurrar(G_A, fato(ids_leitores[35], ("13", "Membro")))
     check("perdeu o cargo de rank em A (so' ficou 'Membro'): servidor A com vila mapeada = vila de A + menor rank da hierarquia", await perfil(L35) == (V_MIST, R_LOW, "Servidor A TESTE"), str(await perfil(L35)))
-    await api("PUT", f"/discord-links/guilds/{G_A}", A, json={"villageId": None})
+    await api("PUT", f"/discord-links/guilds/{G_A}", S, json={"villageId": None})
     check("sem vila no servidor e sem cargo de rank: sem informacao -> padrao Takumi/Rogue", await perfil(L35) == ("takumi", "rogue", "default"), str(await perfil(L35)))
     # --- servidor com so' a vila; servidor que o bot deixou de informar ---
-    await api("PUT", f"/discord-links/guilds/{G_C}", A, json={"villageId": V_SAND})
+    await api("PUT", f"/discord-links/guilds/{G_C}", S, json={"villageId": V_SAND})
     await empurrar(G_C, fato(ids_leitores[37], ("31", "Visitante")))
     check("so' a vila mapeada e nenhum cargo de rank: vila do servidor + menor rank", await perfil(L37) == (V_SAND, R_LOW, "Servidor C TESTE"), str(await perfil(L37)))
     await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": G_A, "name": "Servidor A TESTE", "roles": cargos(("11", "x"), ("12", "Cargo qualquer"), ("13", "Membro"))}, {"id": G_B, "name": "Servidor B TESTE", "roles": []}]})
     check("servidor que o bot nao informa mais fica inativo: o leitor volta ao padrao", await perfil(L37) == ("takumi", "rogue", "default"), str(await perfil(L37)))
-    gC = next(g for g in (await api("GET", "/discord-links", A)).json() if g["guildId"] == G_C)
+    gC = next(g for g in (await api("GET", "/discord-links", S)).json() if g["guildId"] == G_C)
     check("o mapeamento do servidor inativo e' guardado (volta se o bot voltar)", gC["active"] is False and gC["villageId"] == V_SAND)
     await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": G_C, "name": "Servidor C TESTE", "roles": cargos(("31", "Visitante"))}]})
     check("bot voltou ao servidor: o perfil e' refeito sem novo aviso de membros", await perfil(L37) == (V_SAND, R_LOW, "Servidor C TESTE"), str(await perfil(L37)))
@@ -3355,31 +3355,31 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
           and (await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [mem(1, "x", ["12a"])]})).status_code == 422
           and (await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [{**mem(1, "x"), "displayName": "n" * 101}]})).status_code == 422)
     check("guild-members: final sem syncToken -> 422", (await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [], "final": True})).status_code == 422)
-    check("painel de membros: anonimo 401, leitor 401, Creator 403", (await api("GET", gm_url)).status_code == 401 and (await api("GET", gm_url, L35)).status_code == 401 and (await api("GET", gm_url, C)).status_code == 403)
-    check("membros de servidor desconhecido -> 404", (await api("GET", f"/discord-links/guilds/{BASE + 556}/members", A)).status_code == 404)
-    vazio = (await api("GET", gm_url, A)).json()
+    check("painel de membros: anonimo 401, leitor 401; Adm e Creator 404 (so' o S.Adm)", (await api("GET", gm_url)).status_code == 401 and (await api("GET", gm_url, L35)).status_code == 401 and (await api("GET", gm_url, C)).status_code == 404 and (await api("GET", gm_url, A)).status_code == 404)
+    check("membros de servidor desconhecido -> 404", (await api("GET", f"/discord-links/guilds/{BASE + 556}/members", S)).status_code == 404)
+    vazio = (await api("GET", gm_url, S)).json()
     check("antes da 1a sincronizacao: total 0 e sem data (o painel avisa 'ainda nao sincronizado')", vazio["total"] == 0 and vazio["syncedAt"] is None and vazio["items"] == [])
     lote1 = [mem(i, f"Zeta{i:03d}", ["12"] if i % 2 else []) for i in range(60)] + [mem(100, "Bot_Teste", bot=True), mem(101, "100%_Real")]
     r = await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t1", "members": lote1[:40]})
     r2 = await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t1", "members": lote1[40:], "final": True})
     check("guild-members guarda os lotes e fecha a sincronizacao", r.status_code == 200 and r.json()["stored"] == 40 and r2.status_code == 200 and r2.json()["stored"] == 22 and r2.json()["partial"] is False, r2.text[:200])
-    pag = (await api("GET", gm_url, A, params={"limit": 50})).json()
+    pag = (await api("GET", gm_url, S, params={"limit": 50})).json()
     check("painel lista membros paginado (50) com total, data e cargos por ID", pag["total"] == 62 and len(pag["items"]) == 50 and pag["syncedAt"] and pag["partial"] is False, str(pag["total"]))
-    pag2 = (await api("GET", gm_url, A, params={"limit": 50, "offset": 50})).json()
+    pag2 = (await api("GET", gm_url, S, params={"limit": 50, "offset": 50})).json()
     check("2a pagina traz o resto sem repetir", len(pag2["items"]) == 12 and not {m["discordId"] for m in pag["items"]} & {m["discordId"] for m in pag2["items"]})
-    check("limit acima de 100 -> 422", (await api("GET", gm_url, A, params={"limit": 101})).status_code == 422)
-    por_nome = (await api("GET", gm_url, A, params={"q": "zeta00"})).json()
+    check("limit acima de 100 -> 422", (await api("GET", gm_url, S, params={"limit": 101})).status_code == 422)
+    por_nome = (await api("GET", gm_url, S, params={"q": "zeta00"})).json()
     check("busca por nome (sem diferenciar maiusculas)", por_nome["total"] == 10, str(por_nome["total"]))
-    por_id = (await api("GET", gm_url, A, params={"q": str(BASE + 9005)})).json()
+    por_id = (await api("GET", gm_url, S, params={"q": str(BASE + 9005)})).json()
     check("busca por ID", por_id["total"] >= 1 and por_id["items"][0]["discordId"] == str(BASE + 9005) and por_id["items"][0]["roles"] == ["12"], str(por_id)[:200])
-    check("busca com % e _ e' literal (nao vira curinga)", (await api("GET", gm_url, A, params={"q": "100%_"})).json()["total"] == 1 and (await api("GET", gm_url, A, params={"q": "%"})).json()["total"] == 1)
-    check("membro Bot vem marcado", next(m for m in (await api("GET", gm_url, A, params={"q": "Bot_Teste"})).json()["items"])["isBot"] is True)
+    check("busca com % e _ e' literal (nao vira curinga)", (await api("GET", gm_url, S, params={"q": "100%_"})).json()["total"] == 1 and (await api("GET", gm_url, S, params={"q": "%"})).json()["total"] == 1)
+    check("membro Bot vem marcado", next(m for m in (await api("GET", gm_url, S, params={"q": "Bot_Teste"})).json()["items"])["isBot"] is True)
     # saiu do servidor: evento (remove) e sincronizacao completa (final apaga quem nao veio)
     await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [], "remove": [str(BASE + 9005)]})
-    check("evento de saida (remove) apaga o membro", (await api("GET", gm_url, A, params={"q": str(BASE + 9005)})).json()["total"] == 0)
+    check("evento de saida (remove) apaga o membro", (await api("GET", gm_url, S, params={"q": str(BASE + 9005)})).json()["total"] == 0)
     await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t2", "members": lote1[:5], "final": True})
-    check("nova sincronizacao completa apaga quem saiu", (await api("GET", gm_url, A)).json()["total"] == 5, str((await api("GET", gm_url, A)).json()["total"]))   # 62 guardados, so' 5 vieram
-    lista = {g["guildId"]: g for g in (await api("GET", "/discord-links", A)).json()}
+    check("nova sincronizacao completa apaga quem saiu", (await api("GET", gm_url, S)).json()["total"] == 5, str((await api("GET", gm_url, S)).json()["total"]))   # 62 guardados, so' 5 vieram
+    lista = {g["guildId"]: g for g in (await api("GET", "/discord-links", S)).json()}
     check("a listagem de servidores traz so' a contagem de membros (nao a lista)", lista[G_A]["membersStored"] == 5 and lista[G_A]["membersSyncedAt"] and "members" not in lista[G_A])
     # teto por servidor: acima dele guarda os primeiros e marca "lista parcial"
     import app.api.discord_links as _dl
@@ -3387,12 +3387,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     _dl.MEMBER_CAP = 6
     try:
         r = await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t3", "members": lote1[:10], "final": True})
-        pag = (await api("GET", gm_url, A)).json()
+        pag = (await api("GET", gm_url, S)).json()
         check("teto por servidor: guarda os primeiros e marca lista parcial", r.json()["partial"] is True and pag["total"] == 6 and pag["partial"] is True, r.text[:200])
     finally:
         _dl.MEMBER_CAP = teto
     r = await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t4", "members": lote1[:3], "final": True})
-    check("sincronizacao menor limpa o aviso de lista parcial", (await api("GET", gm_url, A)).json()["partial"] is False and (await api("GET", gm_url, A)).json()["total"] == 3)
+    check("sincronizacao menor limpa o aviso de lista parcial", (await api("GET", gm_url, S)).json()["partial"] is False and (await api("GET", gm_url, S)).json()["total"] == 3)
     async with AsyncSessionLocal() as db:
         cols = (await db.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'discord_guild_members'"))).scalars().all()
     check("privacidade: a tabela guarda so' id, nomes, bot, entrada, cargos e controle (sem e-mail)", not {"email", "message", "content"} & set(cols), str(cols))

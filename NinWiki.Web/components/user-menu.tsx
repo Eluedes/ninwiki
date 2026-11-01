@@ -81,7 +81,7 @@ export function UserMenu({ account }: { account: Account }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild><Link href="/profile"><UserRound className="mr-2 h-4 w-4" aria-hidden />{d.myProfile}</Link></DropdownMenuItem>
         <DropdownMenuItem asChild><Link href="/tournaments?mine=1"><Trophy className="mr-2 h-4 w-4" aria-hidden />{d.myTournaments}</Link></DropdownMenuItem>
-        {reader.isSuperAdmin && <DropdownMenuItem asChild><Link href="/admin"><LayoutDashboard className="mr-2 h-4 w-4" aria-hidden />{d.adminPanel}</Link></DropdownMenuItem>}
+        {reader.isStaff && <DropdownMenuItem asChild><Link href="/admin"><LayoutDashboard className="mr-2 h-4 w-4" aria-hidden />{d.adminPanel}</Link></DropdownMenuItem>}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => { void account.signOut(); }}><LogOut className="mr-2 h-4 w-4" aria-hidden />{d.signOut}</DropdownMenuItem>
         {account.error && <p role="alert" className="px-2 py-1.5 text-xs text-destructive">{d.signOutError}</p>}
@@ -102,7 +102,7 @@ export function UserMenuMobile({ account, onNavigate }: { account: Account; onNa
       <p className="mb-1 flex items-center gap-2 px-2 text-sm text-muted-foreground"><Avatar reader={reader} className="h-6 w-6 shrink-0" /><span className="truncate">{fill(d.signedInAs, { name: reader.username })}</span></p>
       <Link href="/profile" onClick={onNavigate}><Button variant="ghost" className="w-full justify-start gap-2.5 text-base"><UserRound className="h-[18px] w-[18px]" aria-hidden />{d.myProfile}</Button></Link>
       <Link href="/tournaments?mine=1" onClick={onNavigate}><Button variant="ghost" className="w-full justify-start gap-2.5 text-base"><Trophy className="h-[18px] w-[18px]" aria-hidden />{d.myTournaments}</Button></Link>
-      {reader.isSuperAdmin && <Link href="/admin" onClick={onNavigate}><Button variant="ghost" className="w-full justify-start gap-2.5 text-base"><LayoutDashboard className="h-[18px] w-[18px]" aria-hidden />{d.adminPanel}</Button></Link>}
+      {reader.isStaff && <Link href="/admin" onClick={onNavigate}><Button variant="ghost" className="w-full justify-start gap-2.5 text-base"><LayoutDashboard className="h-[18px] w-[18px]" aria-hidden />{d.adminPanel}</Button></Link>}
       <Button variant="ghost" className="w-full justify-start gap-2.5 text-base" onClick={() => { onNavigate(); void account.signOut(); }}><LogOut className="h-[18px] w-[18px]" aria-hidden />{d.signOut}</Button>
       {account.error && <p role="alert" className="px-2 text-xs text-destructive">{d.signOutError}</p>}
     </div>
