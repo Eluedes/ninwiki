@@ -35,7 +35,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (status === 'loading' || status === 'anonymous') {
     return (
-      <div className="flex min-h-screen items-center justify-center gap-2 text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center gap-2 bg-background text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
         {t.checkingSession}
       </div>
@@ -44,7 +44,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (status === 'error') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center">
         <AlertTriangle className="h-8 w-8 text-destructive" />
         <p className="max-w-sm text-sm text-muted-foreground">{t.apiUnreachable}</p>
         <Button variant="outline" onClick={() => refresh()}>
@@ -58,12 +58,11 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const blocked = required !== null && !can(required);
 
   return (
-    <div className="flex min-h-screen">   {/* sem fundo proprio: mostra o ceu do site (components/site-background.tsx) */}
+    <div className="flex min-h-screen bg-background">   {/* fundo proprio e opaco: o painel NAO mostra o ceu do site (components/site-background.tsx) */}
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminHeader />
         <div className="min-w-0 flex-1 p-3 sm:p-6">
-          <div className="min-h-full rounded-xl border border-border bg-background p-3 sm:p-6">   {/* painel solido: o conteudo do painel nao fica sobre as nuvens */}
           {blocked ? (
             <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-20 text-center">
               <ShieldAlert className="h-10 w-10 text-muted-foreground" />
@@ -76,7 +75,6 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           ) : (
             children
           )}
-          </div>
         </div>
       </div>
     </div>

@@ -37,12 +37,12 @@ export function PostPageClient({
 
   return (
     <article className="mx-auto max-w-6xl px-4 py-8 animate-fade-in">
-      <Link href="/blog" className="mb-4 inline-flex items-center gap-1 rounded-full bg-background px-3 py-1 text-sm text-muted-foreground hover:text-primary">
+      <Link href="/blog" className="mb-4 inline-flex items-center gap-1 rounded-full bg-background/75 backdrop-blur-md px-3 py-1 text-sm text-muted-foreground hover:text-primary">
         <ArrowLeft className="h-4 w-4" />
         {dict.blog.back}
       </Link>
       {/* painel solido: o texto do post nao fica direto sobre o ceu/nuvens do fundo do site */}
-      <div className="rounded-2xl border border-border bg-background p-4 sm:p-8">
+      <div className="rounded-2xl border border-border bg-background/75 backdrop-blur-md p-4 sm:p-8">
       {/* Capa grande no topo (estilo noticia da Steam): imagem larga com o titulo por cima de um degrade escuro */}
       {banner ? (
         <header className="relative mb-6 overflow-hidden rounded-2xl border border-border bg-black">
