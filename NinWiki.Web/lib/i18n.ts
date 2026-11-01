@@ -544,14 +544,16 @@ export const dictionaries: Record<Locale, Dictionary> = {
       madeWith: 'Feito pela comunidade',
     },
     invite: {
-      title: 'Leve o Nin Codex para o seu servidor', subtitle: 'Consulte itens, mobs, armas, jutsus e o mapa sem sair do Discord. Rápido, gratuito e no idioma do seu servidor.',
+      title: 'Leve o Nin Codex para o seu servidor', subtitle: 'Consulte itens, mobs, armas, jutsus e receitas sem sair do Discord. Rápido, gratuito e no idioma do seu servidor.',
       button: 'Convidar o bot para o seu servidor', buttonShort: 'Convidar o bot', perms: 'Pede só o essencial: ver canais, enviar mensagens, links incorporados, anexar arquivos e ler o histórico. Nunca pede administrador.',
       badge: 'Bot do Discord', examplesTitle: 'O que ele faz',
       examples: [
         { cmd: '/search', text: 'Procura qualquer coisa no wiki' },
+        { cmd: '/item · /mob · /jutsu · /mastery', text: 'Consulta uma coisa pelo nome' },
         { cmd: '/drop', text: 'Quem dropa o item e com que chance' },
+        { cmd: '/recipe', text: 'Como fazer um item: ingredientes, profissão e nível' },
         { cmd: '/compare', text: 'Dois itens lado a lado' },
-        { cmd: '/map', text: 'Zona, mobs e saídas de uma área' },
+        { cmd: '/patchnotes', text: 'Últimas notícias e patch notes' },
       ],
       stepsTitle: 'Como começar',
       steps: [
@@ -1379,12 +1381,14 @@ export const dictionaries: Record<Locale, Dictionary> = {
       madeWith: 'Made by the community',
     },
     invite: {
-      title: 'Bring Nin Codex to your server', subtitle: 'Look up items, mobs, weapons, jutsus and the map without leaving Discord. Fast, free and in your server\'s language.',
+      title: 'Bring Nin Codex to your server', subtitle: 'Look up items, mobs, weapons, jutsus and recipes without leaving Discord. Fast, free and in your server\'s language.',
       button: 'Invite the bot to your server', buttonShort: 'Invite the bot', perms: 'It only asks for the essentials: view channels, send messages, embed links, attach files and read history. Never administrator.',
       badge: 'Discord bot', examplesTitle: 'What it does',
       examples: [
         { cmd: '/search', text: 'Find anything on the wiki' },
+        { cmd: '/item · /mob · /jutsu · /mastery', text: 'Look up one thing by name' },
         { cmd: '/drop', text: 'Who drops an item, and how likely' },
+        { cmd: '/recipe', text: 'How to craft an item: ingredients, profession and level' },
         { cmd: '/compare', text: 'Two items side by side' },
         { cmd: '/patchnotes', text: 'Latest news and patch notes' },
       ],
