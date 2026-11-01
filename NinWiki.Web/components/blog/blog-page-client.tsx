@@ -22,8 +22,9 @@ export function BlogPageClient({
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 animate-fade-in">
       {/* painel solido: o texto nao fica direto sobre o ceu/nuvens do fundo do site */}
-      <div className="rounded-2xl border border-border bg-background p-4 sm:p-8">
+      <div className="rounded-2xl border border-border bg-background/75 backdrop-blur-md p-4 sm:p-8">
       <PageHeader
+        bare
         title={dict.blog.title}
         subtitle={dict.blog.subtitle}
         breadcrumbs={[{ label: dict.nav.home, href: '/' }, { label: dict.blog.title }]}
