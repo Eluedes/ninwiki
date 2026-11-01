@@ -518,6 +518,11 @@ async def testar() -> None:
         check("busca devolve imagem absoluta, dados da ficha e resumo com marcadores",
               blade["image"].endswith("/images/wiki/blade.png") and blade["image"].startswith("http")
               and {"label": "Type", "value": "Katana"} in blade["facts"] and "• Dropped by bandits" in blade["summary"], str(blade))
+        from app.api.bot import _plain, _summary   # rede de seguranca de leitura: marcacao do jogo que ainda esteja no banco nao aparece no Discord
+        sujo_doc = json.dumps({"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Deals 22 damage on hit. <color=yellow>Hand Weapon</color>"}]}]})
+        check("snippet/resumo do bot sem <color=..> (texto simples e documento rico)",
+              all("<" not in x for x in (_plain(sujo_doc), _summary(sujo_doc), _plain("Hit. <color=yellow>Hand Weapon</color>")))
+              and _plain(sujo_doc) == "Deals 22 damage on hit. Hand Weapon" and _plain("HP < 50") == "HP < 50", _plain(sujo_doc))
         achados_pt = await api.search(termo, "pt")
         blade_pt = next(h for h in achados_pt if h["href"] == f"/detail/{termo}-pub")
         check("busca em portugues: titulo, resumo e rotulos traduzidos",

@@ -13,20 +13,24 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
+from app.core.text import limpar_marcacao_jogo
+
 _ARQUIVO = Path(__file__).resolve().parent.parent / "data" / "game_pt.json"
 _PONTUACAO_FINAL = ".!:;"
 
 
 def norm(texto: str) -> str:
-    """Forma de comparacao: espacos colapsados e sem diferenciar maiusculas (igual ao script que gera o arquivo)."""
-    return " ".join(texto.split()).casefold()
+    """Forma de comparacao: sem marcacao do jogo (<color=..>), espacos colapsados e sem diferenciar maiusculas."""
+    return " ".join((limpar_marcacao_jogo(texto) or "").replace("\\n", " ").split()).casefold()
 
 
 @lru_cache(maxsize=1)
 def _dados() -> dict[str, str]:
     """Carrega o dicionario na 1a vez (lazy). Arquivo ausente/quebrado = dicionario vazio (a traducao segue para a DeepL)."""
     try:
-        return json.loads(_ARQUIVO.read_text(encoding="utf-8")).get("entries", {})
+        bruto = json.loads(_ARQUIVO.read_text(encoding="utf-8")).get("entries", {})
+        # chaves e traducoes do jogo trazem <color=..> (e "\n" literal): entram limpas, para a traducao automatica nao copiar a marcacao para o _pt
+        return {norm(en): (limpar_marcacao_jogo(pt) or "").replace("\\n", "\n") for en, pt in bruto.items()}
     except (OSError, ValueError):
         return {}
 

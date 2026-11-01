@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import backup
 from app.api.uploads import UPLOAD_DIR
+from app.core.text import limpar_marcacao_jogo
 from app.core.config import settings
 from app.core.translation import fill_missing_translations
 from app.core.database import get_db
@@ -279,6 +280,7 @@ def _blocks(value: str | None) -> list[str]:
     if not value:
         return []
     if not value.lstrip().startswith("{"):
+        value = limpar_marcacao_jogo(value) or ""   # rede de seguranca: marcacao do jogo nunca aparece no Discord
         return [" ".join(line.split()) for line in value.splitlines() if line.strip()]
     lines: list[str] = []
 
@@ -287,7 +289,7 @@ def _blocks(value: str | None) -> list[str]:
         if not isinstance(node, dict):
             return ""
         if isinstance(node.get("text"), str):
-            return node["text"]
+            return limpar_marcacao_jogo(node["text"]) or ""
         return "".join(text_of(c) for c in node.get("content") or [])
 
     def walk(node: object, bullet: bool = False) -> None:

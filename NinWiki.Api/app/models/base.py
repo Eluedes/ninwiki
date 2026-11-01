@@ -13,8 +13,10 @@ que o SQLAlchemy reconheça como "declarative base".
 """
 from datetime import datetime
 
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, event, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from app.core.text import limpar_marcacao_campo
 
 
 class Base(DeclarativeBase):
@@ -58,3 +60,27 @@ class TimestampMixin:
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+# ---------------------------------------------------------------------------
+# Rede de seguranca: texto de CONTEUDO nunca e' gravado com marcacao do cliente do jogo (<color=..>...</color>).
+# Vale para QUALQUER caminho de escrita (painel, bot, importadores, scripts), porque roda na hora de gravar no banco.
+# ---------------------------------------------------------------------------
+_TABELAS_DE_CONTEUDO = frozenset({
+    "content_items", "content_item_attributes", "jutsus", "masteries", "mastery_paths", "attributes", "villages", "clans",
+    "organizations", "professions", "ninja_ranks", "story_arcs", "summons", "guide_articles", "posts", "tags",
+})
+
+
+def _limpar_marcacao_antes_de_gravar(mapper, connection, target) -> None:
+    """Passa a limpeza de marcacao do jogo em todo campo de texto das tabelas de conteudo (so' troca o atributo se mudou)."""
+    if target.__table__.name not in _TABELAS_DE_CONTEUDO:
+        return
+    for attr in mapper.column_attrs:
+        valor = getattr(target, attr.key, None)
+        if isinstance(valor, str) and "<" in valor and (novo := limpar_marcacao_campo(valor)) != valor:
+            setattr(target, attr.key, novo)
+
+
+event.listen(Base, "before_insert", _limpar_marcacao_antes_de_gravar, propagate=True)
+event.listen(Base, "before_update", _limpar_marcacao_antes_de_gravar, propagate=True)

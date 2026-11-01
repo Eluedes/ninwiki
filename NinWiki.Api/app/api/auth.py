@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
-from sqlalchemy import update as sa_update
+from sqlalchemy import select, update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.discord_profile import apply_defaults
@@ -242,9 +242,13 @@ async def dev_login(payload: DevLogin, request: Request, response: Response, db:
 
 
 @router.get("/reader/me", response_model=ReaderMe | None)
-async def reader_me(reader: Reader | None = Depends(get_optional_reader)):
-    """O leitor logado agora (ou null) - o site usa para mostrar 'Entrar com Discord' ou o avatar."""
-    return _reader_me(reader) if reader else None
+async def reader_me(reader: Reader | None = Depends(get_optional_reader), db: AsyncSession = Depends(get_db)):
+    """O leitor logado agora (ou null) - o site usa para mostrar 'Entrar com Discord' ou o avatar. `isStaff` = o Discord dele e' de alguem da equipe ativa (atalho para o painel)."""
+    if reader is None:
+        return None
+    me = _reader_me(reader)
+    me.is_staff = (await db.execute(select(User.id).where(User.discord_id == reader.discord_id, User.is_active.is_(True)).limit(1))).first() is not None
+    return me
 
 
 @router.post("/reader/logout")

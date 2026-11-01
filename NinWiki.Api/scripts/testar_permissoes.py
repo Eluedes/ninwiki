@@ -1537,6 +1537,17 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.get("/auth/reader/me", headers=RA)
     check("/auth/reader/me devolve o leitor (sem Discord ID)", r.status_code == 200 and r.json()["username"].startswith("Reader") and "discordId" not in r.json())
     check("sem cookie /auth/reader/me devolve null", (await c.get("/auth/reader/me")).json() is None)
+    # atalho do painel no menu do usuario: isStaff = o Discord do leitor e' de alguem da equipe ATIVA
+    await c.post("/auth/reader/dev-login", json={"discordId": str(IDS["adm"])})
+    RS_ = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
+    c.cookies.clear()
+    await c.post("/auth/reader/dev-login", json={"discordId": str(IDS["inativo"])})
+    RI_ = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
+    c.cookies.clear()
+    check("/auth/reader/me: isStaff e' true so' para a equipe ATIVA (leitor comum e staff desativado = false; o atalho nao vira permissao)",
+          (await c.get("/auth/reader/me", headers=RS_)).json()["isStaff"] is True and (await c.get("/auth/reader/me", headers=RA)).json()["isStaff"] is False
+          and (await c.get("/auth/reader/me", headers=RI_)).json()["isStaff"] is False)
+    check("o leitor-equipe NAO ganha acesso ao painel so' por isso (cookie de leitor nao vale como sessao da equipe: 401)", (await c.get("/staff", headers=RS_)).status_code == 401)
     tok_leitor = RA["Cookie"].split("=", 1)[1]
     check("token de LEITOR nao vale como sessao da equipe", (await c.get("/auth/me", headers={"Cookie": f"{SESSION_COOKIE}={tok_leitor}"})).status_code == 401)
     check("token da EQUIPE nao vale como leitor", (await c.get("/auth/reader/me", headers={"Cookie": f"{READER_COOKIE}={create_session_token(adm)}"})).json() is None)
@@ -3380,6 +3391,30 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         cols = (await db.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'discord_guild_members'"))).scalars().all()
     check("privacidade: a tabela guarda so' id, nomes, bot, entrada, cargos e controle (sem e-mail)", not {"email", "message", "content"} & set(cols), str(cols))
     settings.dev_login_enabled = dev_antes
+
+    secao("38d) Marcacao do jogo (<color=..>) nunca entra no texto: funcao de limpeza e gravacao pela API")
+    from app.core.text import limpar_marcacao_campo, limpar_marcacao_jogo
+    casos = {
+        "Deals 22 damage. <color=yellow>Hand Weapon</color>": "Deals 22 damage. Hand Weapon",
+        "<COLOR=#ff0000>Red</COLOR> and <color=blue><b>bold</b></color>": "Red and bold",   # maiusculas e aninhado
+        "texto <color=red>sem fechar": "texto sem fechar",
+        "linha<br>dois<br/>tres": "linha\ndois\ntres",
+        "Plain text, nothing here": "Plain text, nothing here",
+        "HP < 50 and 3<5 or a <b2": "HP < 50 and 3<5 or a <b2",   # "<" de comparacao nao e' apagado
+        "<size=12>Big</size> <sprite=3>ok": "Big ok",
+    }
+    for entrada, esperado in casos.items():
+        check(f"limpar_marcacao_jogo({entrada[:36]!r})", limpar_marcacao_jogo(entrada) == esperado, repr(limpar_marcacao_jogo(entrada)))
+    check("limpar: None e vazio voltam iguais", limpar_marcacao_jogo(None) is None and limpar_marcacao_jogo("") == "")
+    doc_sujo = '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "marks": [{"type": "bold"}], "text": "A <color=yellow>Hand Weapon</color>"}]}]}'
+    doc_limpo = limpar_marcacao_campo(doc_sujo)
+    check("limpar campo rico: so' o no de texto muda, marcas ficam", json.loads(doc_limpo)["content"][0]["content"][0] == {"type": "text", "marks": [{"type": "bold"}], "text": "A Hand Weapon"}, doc_limpo)
+    check("limpar campo rico e' idempotente", limpar_marcacao_campo(doc_limpo) == doc_limpo)
+    r = await c.post("/content-items", json={**novo_conteudo("marcacao"), "description": "Deals 22 damage on hit.\n<color=yellow>Hand Weapon</color>", "lore": doc_sujo}, headers=C)
+    check("salvar item com <color=yellow>X</color> na descricao volta limpo", r.status_code == 201 and r.json().get("description") == "Deals 22 damage on hit.\nHand Weapon", r.text[:200])
+    check("salvar item com campo rico sujo (lore) volta limpo", "<color" not in r.json().get("lore", "<color"), r.text[:200])
+    r = await c.put(f"/content-items/{r.json()['id']}", json={**novo_conteudo("marcacao"), "description": "<b>Novo</b> texto"}, headers=A)
+    check("editar item com <b> na descricao tambem grava limpo", r.status_code == 200 and r.json().get("description") == "Novo texto", r.text[:200])
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []
