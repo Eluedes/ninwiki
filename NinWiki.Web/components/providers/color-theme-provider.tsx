@@ -3,8 +3,8 @@
 // Provider do TEMA DE CORES do site (diferente do provider claro/escuro
 // em theme-provider.tsx, que so' controla luminosidade). Isso controla
 // a PALETA de destaque (cor dos botoes, links, foco, e o anel do logo)
-// - cinco temas: "laranja" (a cor do logo original do jogo; e' o PADRAO), "blood" (vermelho),
-// "canarinho" (verde), "ouro" (amarelo) e "anil" (azul).
+// - cinco temas: "canarinho" ("Canary", verde; e' o PADRAO), "laranja" (a cor do logo original do jogo), "blood" (vermelho),
+// "ouro" (amarelo) e "anil" (azul).
 //
 // Funciona aplicando o atributo data-color-theme="..." no <html>. As
 // variaveis CSS (--primary, --ring) sao redefinidas em app/globals.css
@@ -13,7 +13,7 @@
 // em :root/.dark (e o "laranja" tem o seu bloco).
 //
 // A escolha fica guardada no localStorage e e' lida com useSyncExternalStore:
-// no servidor (e na hidratacao) o valor e' sempre o padrao ('laranja'); assim que o navegador
+// no servidor (e na hidratacao) o valor e' sempre o padrao ('canarinho'); assim que o navegador
 // assume, o React troca pro valor salvo SEM erro de hydration (o jeito que o React
 // recomenda pra ler uma fonte externa como o localStorage).
 
@@ -24,7 +24,7 @@ export type ColorTheme = 'laranja' | 'blood' | 'canarinho' | 'ouro' | 'anil';
 const VALID_THEMES: ColorTheme[] = ['laranja', 'blood', 'canarinho', 'ouro', 'anil'];
 
 /** Tema padrao (quem nunca escolheu um): laranja, a cor do logo original do jogo. */
-export const DEFAULT_COLOR_THEME: ColorTheme = 'laranja';
+export const DEFAULT_COLOR_THEME: ColorTheme = 'canarinho';
 
 const STORAGE_KEY = 'ninwiki-color-theme';
 

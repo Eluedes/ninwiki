@@ -143,16 +143,23 @@ def _suggest(phase: TournamentPhase, prev: TournamentPhase | None, entries: list
     """
     Sugestao de quem entra na fase: fase 1 = todos os inscritos (ordem de semente). Depois de uma fase de ELIMINATORIA = quem venceu
     pelo menos uma partida (ou teve folga); depois de TODOS-CONTRA-TODOS = a metade de cima da tabela. O organizador ajusta como quiser.
+    A ORDEM da sugestao e' o desempenho na fase anterior (campeao primeiro, depois quem foi mais longe; empate = a semente anterior), porque o construtor
+    usa essa ordem como sementes da fase seguinte: quem foi melhor entra como cabeca de chave mais alta. Os integrantes de cada equipe ficam juntos.
     """
     everyone = [e.id for e in entries]
     if prev is None or not comps.get(prev.id):
         return everyone
     if prev.format == PhaseFormat.SINGLE_ELIMINATION:
-        winners = {m.winner_id for m in matches.get(prev.id, []) if m.done and m.winner_id}
+        wins: dict[UUID, int] = {}
+        for m in matches.get(prev.id, []):
+            if m.done and m.winner_id:
+                wins[m.winner_id] = wins.get(m.winner_id, 0) + 1   # folga conta como vitoria
+        ordered = sorted((c for c in comps[prev.id] if c.id in wins), key=lambda c: (-wins[c.id], c.seed))
     else:
         table = stand.get(prev.id) or []
-        winners = {s.competitor_id for s in table[: (len(table) + 1) // 2]}
-    picked = [eid for c in comps[prev.id] if c.id in winners for eid in members.get(c.id, [])]
+        pos = {s.competitor_id: i for i, s in enumerate(table[: (len(table) + 1) // 2])}
+        ordered = sorted((c for c in comps[prev.id] if c.id in pos), key=lambda c: pos[c.id])
+    picked = [eid for c in ordered for eid in members.get(c.id, [])]
     return picked or everyone
 
 

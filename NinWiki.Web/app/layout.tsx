@@ -53,7 +53,7 @@ export default async function RootLayout({
     // React reclamaria (em desenvolvimento) que o HTML do servidor
     // nao bate com o do cliente - um aviso falso-positivo nesse caso
     // especifico, entao e' seguro suprimir so' aqui.
-    <html lang="en" suppressHydrationWarning className={fontVars} data-color-theme="laranja">
+    <html lang="en" suppressHydrationWarning className={fontVars} data-color-theme="canarinho">
       <body className={inter.className}>
         {/* Ordem dos providers importa: ThemeProvider por fora,
             LanguageProvider e ColorThemeProvider por dentro - nenhum

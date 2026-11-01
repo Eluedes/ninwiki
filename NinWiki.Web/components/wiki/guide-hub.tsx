@@ -17,9 +17,6 @@ import { topicHref } from '@/lib/guide-topics';
 const CARD = 'group flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/50 hover:bg-secondary/40';
 const ICON_BOX = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary';
 
-/** Quantos guias cada assunto mostra no indice; o resto fica na pagina do assunto. */
-const PREVIEW = 3;
-
 /** Cartao de um artigo do Guia (usado no hub, nos resultados da busca e nas paginas de assunto). */
 export function GuideArticleCard({ article: a }: { article: ApiGuideArticle }) {
   const { locale } = useLanguage();
@@ -118,13 +115,7 @@ export function GuideHub({ articles }: { articles: ApiGuideArticle[] }) {
             </section>
           )}
 
-          {sections.filter((s) => s !== 'new-player').map((s) => (   // 'Comece por aqui' ja' aparece em destaque acima
-            <section key={s}>
-              {/* sem botao "Ver todos": o proprio titulo leva a pagina do topico */}
-              <h2 className="mb-3 text-lg font-bold tracking-tight"><Link href={topicHref(s)} className="hover:text-primary hover:underline">{t.guideSections[s]}</Link></h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{(bySection.get(s) ?? []).slice(0, PREVIEW).map(articleCard)}</div>
-            </section>
-          ))}
+          {/* Os guias de cada topico ficam na PAGINA do topico (cartoes acima): repetir a lista aqui duplicava tudo. */}
 
           <section>
             <h2 className="mb-3 text-lg font-bold tracking-tight">{t.guideSections.systems}</h2>

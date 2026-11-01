@@ -3079,6 +3079,23 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     sug = (await api("GET", f"/tournaments/{T}", RO)).json()["phases"][1]["suggestedEntryIds"]
     check("sugestao da fase 2 = integrantes de quem venceu pelo menos uma partida (equipes 1 e 2)", set(sug) == {e_o, e_x, e_y, g1}, str(len(sug)))
     check("encerrar com a fase 2 sem chave -> 409", (await api("POST", f"/tournaments/{T}/finish", RO)).status_code == 409)
+    # --- sugestao da fase seguinte: ordem por DESEMPENHO (o campeao nao era a semente 1) ---
+    r = await api("POST", "/tournaments", RO, json={"name": "Sementes TESTE"})
+    TD = r.json()["id"]
+    r = await api("POST", f"/tournaments/{TD}/entries/bulk", RO, json={"names": ["P1", "P2", "P3", "P4"]})
+    pid_ = {e["displayName"]: e["id"] for e in r.json()["tournament"]["entries"]}
+    r = await api("POST", f"/tournaments/{TD}/phases", RO, json={"name": "F1", "teamSize": 1})
+    f1 = r.json()["phases"][0]["id"]
+    await api("POST", f"/tournaments/{TD}/phases", RO, json={"name": "F2", "teamSize": 1})
+    r = await api("POST", f"/tournaments/{TD}/phases/{f1}/start", RO, json={"competitors": [{"entryIds": [pid_[n]]} for n in ("P1", "P2", "P3", "P4")]})
+    md = {(x["round"], x["slot"]): x["id"] for x in r.json()["phases"][0]["matches"]}
+    await api("PUT", f"/tournaments/{TD}/matches/{md[(1, 0)]}/result", RO, json={"winner": "b"})   # P4 vence P1
+    await api("PUT", f"/tournaments/{TD}/matches/{md[(1, 1)]}/result", RO, json={"winner": "b"})   # P3 vence P2
+    await api("PUT", f"/tournaments/{TD}/matches/{md[(2, 0)]}/result", RO, json={"winner": "a"})   # P4 (semente 4) e' o campeao
+    await api("POST", f"/tournaments/{TD}/phases/{f1}/finish", RO)
+    sug2 = (await api("GET", f"/tournaments/{TD}", RO)).json()["phases"][1]["suggestedEntryIds"]
+    check("sugestao da fase seguinte vem ordenada pelo desempenho: campeao (P4) e vice (P3) na frente, nao pela semente antiga", sug2 == [pid_["P4"], pid_["P3"]], str(sug2))
+    await api("DELETE", f"/tournaments/{TD}", RO)
     r = await api("POST", f"/tournaments/{T}/phases/{p2}/start", RO, json={"competitors": [eq(e_o), eq(e_y)]})
     ph2 = r.json()["phases"][1]
     check("fase 2 (1v1) gerada; nome do competidor = nome do jogador", r.status_code == 200 and len(ph2["matches"]) == 1 and ph2["competitors"][0]["name"].startswith("Naruto"), r.text[:200])
