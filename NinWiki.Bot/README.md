@@ -29,7 +29,7 @@ Quem pode o quê é decidido pela API (`NinWiki.Api/app/core/permissions.py`): s
 
 ## Configurar (uma vez)
 1. **Bot no Discord:** https://discord.com/developers/applications → sua aplicação (pode ser a mesma do login
-   do painel) → **Bot** → **Reset Token** e copie. Não precisa ligar nenhuma "Privileged Intent".
+   do painel) → **Bot** → **Reset Token** e copie. Para os comandos não precisa de nenhuma "Privileged Intent"; só a função *vila/rank do perfil pelos cargos* pede a **SERVER MEMBERS INTENT** (veja "Vila e rank do perfil" abaixo).
 2. **Convidar o bot** (troque `SEU_CLIENT_ID`; ele não precisa de nenhuma permissão):
    `https://discord.com/oauth2/authorize?client_id=SEU_CLIENT_ID&scope=bot+applications.commands&permissions=0`
 3. **Senha entre bot e API:** gere um valor longo e coloque **o mesmo** nos dois `.env`:
@@ -61,7 +61,7 @@ direito no servidor → Copiar ID.
 - `DISCORD_BOT_TOKEN` idem. Se vazar: Developer Portal → Reset Token.
 - `ALLOWED_GUILD_IDS` (opcional, recomendado) limita os comandos aos seus servidores: eles só são registrados lá e o bot recusa os outros.
 - `BACKUP_CHANNEL_ID` + `BACKUP_PASSPHRASE` (na API): backup cifrado a cada 3 h no canal **privado**; `VERSION_WEBHOOK_URL` (segredo) para a mensagem de versão. Detalhes e passo a passo no README da raiz.
-- O bot não lê mensagens, não usa intents privilegiadas e responde só de forma efêmera.
+- O bot não lê mensagens e responde só de forma efêmera. A única intent privilegiada é a **Server Members Intent**, usada só para ler os cargos de quem é **leitor cadastrado no site** (opcional: sem ela o bot funciona igual).
 - Discord IDs sempre trafegam como **texto**.
 
 ## Testar (sem Discord)
@@ -116,3 +116,13 @@ estão no ar. Mensagens em inglês; um problema que se repete só gera novo avis
 
 
 > **Comando não aparece / `CommandNotFound: Application command 'status' not found`:** com versões antigas do bot e `DEV_GUILD_ID` preenchido os comandos eram registrados **só nesse servidor**; hoje o bot registra em todos os de `ALLOWED_GUILD_IDS` e apaga os globais. Se ainda ver o erro: confira o `ALLOWED_GUILD_IDS` e se o bot foi convidado com o escopo `applications.commands` (o log mostra "Nao consegui registrar os comandos no servidor ..."). Em qualquer outro servidor (ou com comandos antigos que sobraram) o Discord chama um comando que o bot não tem. Em produção deixe `DEV_GUILD_ID` **vazio**, reinicie o bot e aguarde até 1 h para os comandos globais aparecerem; use `ALLOWED_GUILD_IDS` para limitar os servidores.
+
+## Vila e rank do perfil pelos cargos do Discord
+
+O bot manda à API **fatos** (servidores onde está, cargos de cada servidor, cargos dos leitores do site); quem **decide** vila e rank é a API, pelo mapeamento do painel `/admin/discord-links` (o bot não tem regra nenhuma). Sem informação = vila Takumi + rank Rogue.
+
+1. **Você precisa LIGAR a intent:** Discord Developer Portal → seu app → **Bot** → *Privileged Gateway Intents* → **SERVER MEMBERS INTENT** → ligado → Save.
+2. Faça o **Deploy API** (roda a migração) e **reinicie o bot**.
+3. No painel, `/admin/discord-links`: ligue cada servidor a uma vila e, se o nome do cargo não for igual ao do rank (`Chunin`, `Genin`...), cada cargo a um rank.
+
+Sem a intent ligada o bot **sobe mesmo assim** e avisa no terminal ("A 'Server Members Intent' NÃO está ligada..."): só essa função fica desligada. `MEMBER_ROLES_SYNC=false` no `.env` desliga de propósito. O bot só consulta cargos de quem é leitor cadastrado (pede os IDs à API), refaz tudo ao ligar e a cada 30 min e reage na hora a mudança de cargo, entrada e saída de servidor.

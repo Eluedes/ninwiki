@@ -7,16 +7,17 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Copy, EyeOff, Loader2, UserRound } from 'lucide-react';
+import { CalendarDays, Copy, EyeOff, Loader2, Settings, Swords, Trophy, UserRound, Users } from 'lucide-react';
 import { PageHeader } from '@/components/lore/page-header';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ApiError, getTournament, joinTournament, leaveTournament, setMatchResult, type ApiMatch, type ApiTournament } from '@/lib/api-client';
+import { ApiError, getTournament, joinTournament, leaveTournament, listNinjaRanks, listVillages, setMatchResult, type ApiEntry, type ApiMatch, type ApiNinjaRank, type ApiTournament, type ApiVillage } from '@/lib/api-client';
 import { fill } from '@/lib/i18n-tournaments';
-import { formatDateTime } from '@/lib/utils';
+import { localizedName } from '@/lib/localized';
+import { cn, formatDateTime } from '@/lib/utils';
 import { BracketView } from './bracket-view';
 import { OrganizerPanel } from './organizer-panel';
 import { LoginButton, Section, StatusBadge, selectClass, teamModeLabel, useReader } from './shared';
@@ -97,6 +98,16 @@ export function TournamentPageClient({ id }: { id: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [villages, setVillages] = useState<ApiVillage[]>([]);
+  const [ranks, setRanks] = useState<ApiNinjaRank[]>([]);
+
+  // Nomes de vila/rank para os cartoes de inscritos e do campeao (falha = so' nao mostra).
+  useEffect(() => {
+    let alive = true;
+    listVillages().then((v) => alive && setVillages(v)).catch(() => {});
+    listNinjaRanks().then((r) => alive && setRanks(r)).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -130,49 +141,80 @@ export function TournamentPageClient({ id }: { id: string }) {
   }
   const fmt = (f: string) => (f === 'round_robin' ? d.formatRoundRobin : d.formatSingle);
   const activePhase = t.phases.find((p) => p.status === 'running') ?? t.phases[t.phases.length - 1];
-  const canScore = t.isOrganizer && !t.hidden && t.status !== 'finished';
+  // So' o organizador (confirmado pela API em `isOrganizer`) recebe controles de edicao; para os demais tudo e' somente leitura.
+  const isOrg = t.isOrganizer;
+  const canScore = isOrg && !t.hidden && t.status !== 'finished';
+  /** "Vila - Rank" da inscricao (vazio se o jogador nao preencheu o perfil). */
+  const detail = (e: ApiEntry) => {
+    const village = villages.find((v) => v.id === e.villageId);
+    const rank = ranks.find((r) => r.id === e.ninjaRankId);
+    return [village && localizedName(locale, village.name, village.namePt), rank && localizedName(locale, rank.name, rank.namePt)].filter(Boolean).join(' - ');
+  };
+  // Campeao: a inscricao com colocacao 1 (traz vila/rank); se nao houver (ex.: equipe), mostra so' o nome.
+  const champEntry = t.entries.find((e) => e.placement === 1);
+  const showChampion = t.status === 'finished' && !!t.championName;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <PageHeader title={t.name} subtitle={t.championName ? fill(d.champion, { name: t.championName }) : undefined} breadcrumbs={[{ label: d.title, href: '/tournaments' }, { label: t.name }]}
-        action={<Button variant="outline" size="sm" onClick={copyLink}><Copy className="mr-1 h-4 w-4" />{copied ? d.copied : d.share}</Button>} />
-      <div className="mb-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+      <PageHeader title={t.name} breadcrumbs={[{ label: d.title, href: '/tournaments' }, { label: t.name }]}
+        action={<Button variant="outline" size="sm" onClick={copyLink} aria-label={d.share}><Copy className="mr-1 h-4 w-4" aria-hidden />{copied ? d.copied : d.share}</Button>} />
+
+      {/* faixa de informacoes: estado, organizador, inscritos, data */}
+      <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm">
         <StatusBadge status={t.status} />
         {t.visibility === 'unlisted' && <span className="rounded-full border border-border px-2 py-0.5 text-xs">{d.unlistedBadge}</span>}
-        <span>{d.organizerLabel}: <Link href={`/players/${t.owner.id}`} className="font-medium text-foreground hover:underline">{t.owner.gameName || t.owner.username}</Link></span>
-        <span>{fill(d.entries, { n: t.entryCount })}</span>
-        {t.startsAt && <span>{fill(d.startsOn, { date: formatDateTime(t.startsAt, locale) })}</span>}
+        <span className="flex items-center gap-1.5"><UserRound className="h-4 w-4" aria-hidden />{d.organizerLabel}: <Link href={`/players/${t.owner.id}`} className="font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{t.owner.gameName || t.owner.username}</Link></span>
+        <span className="flex items-center gap-1.5"><Users className="h-4 w-4" aria-hidden />{fill(d.entries, { n: t.entryCount })}</span>
+        {t.startsAt && <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4" aria-hidden />{fill(d.startsOn, { date: formatDateTime(t.startsAt, locale) })}</span>}
       </div>
       {t.hidden && <p className="mb-4 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm"><EyeOff className="h-4 w-4" aria-hidden />{d.hiddenNotice}</p>}
+
+      {/* campeao em destaque */}
+      {showChampion && (
+        <div className="mb-6 flex items-center gap-4 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent p-4 shadow-sm">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-md"><Trophy className="h-7 w-7" aria-hidden /></span>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">{d.championTitle}</p>
+            <p className="truncate text-xl font-bold sm:text-2xl">{t.championName}</p>
+            {champEntry && detail(champEntry) && <p className="truncate text-sm text-muted-foreground">{detail(champEntry)}</p>}
+          </div>
+        </div>
+      )}
+
       {t.description && <p className="mb-6 whitespace-pre-line text-sm">{t.description}</p>}
 
+      {/* entrar/sair (leitor logado) ou convite (visitante deslogado) */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
         {!loaded ? null : !reader ? (
-          t.status === 'open' && <><span className="text-sm text-muted-foreground">{d.signInToJoin}</span><LoginButton /></>
+          t.status === 'open' && !t.hidden && <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3"><span className="text-sm">{d.inviteJoin}</span><LoginButton /></div>
         ) : t.status === 'open' && !t.hidden ? (
           <Button onClick={toggleJoin} disabled={busy} variant={t.myEntryId ? 'outline' : 'default'}>{t.myEntryId ? d.leave : d.join}</Button>
         ) : t.myEntryId ? <span className="text-sm text-muted-foreground">{d.joined}</span>
           : <span className="text-sm text-muted-foreground">{t.status === 'draft' ? d.registrationNotOpen : d.registrationClosed}</span>}
-        {reader && <Link href="/profile" className="text-sm text-primary hover:underline">{d.myProfile}</Link>}
+        {reader && <Link href="/profile" className="text-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{d.myProfile}</Link>}
         {actionError && <span role="alert" className="text-sm font-medium text-destructive">{actionError}</span>}
       </div>
 
       <Tabs defaultValue="bracket">
-        <TabsList>
-          <TabsTrigger value="bracket">{d.tabBracket}</TabsTrigger>
-          <TabsTrigger value="entries">{d.tabEntries}</TabsTrigger>
-          {t.isOrganizer && <TabsTrigger value="manage">{d.tabManage}</TabsTrigger>}
+        <TabsList className="h-auto w-full justify-start overflow-x-auto sm:w-auto">
+          <TabsTrigger value="bracket" className="gap-1.5"><Swords className="h-4 w-4" aria-hidden />{d.tabBracket}</TabsTrigger>
+          <TabsTrigger value="entries" className="gap-1.5"><Users className="h-4 w-4" aria-hidden />{d.tabEntries}<span className="rounded-full bg-muted px-1.5 text-xs tabular-nums">{t.entries.length}</span></TabsTrigger>
+          {isOrg && <TabsTrigger value="manage" className="gap-1.5"><Settings className="h-4 w-4" aria-hidden />{d.tabManage}</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="bracket" className="mt-5">
-          {t.phases.length === 0 ? <p className="text-muted-foreground">{d.noPhases}</p> : (
+          {t.phases.length === 0 ? <p className="rounded-xl border border-dashed border-border p-6 text-center text-muted-foreground">{d.noPhases}</p> : (
             <Tabs defaultValue={activePhase?.id} key={activePhase?.id}>
-              <TabsList className="h-auto flex-wrap">
+              <TabsList className="h-auto flex-wrap justify-start">
                 {t.phases.map((p) => <TabsTrigger key={p.id} value={p.id}>{p.position}. {p.name}</TabsTrigger>)}
               </TabsList>
               {t.phases.map((p) => (
                 <TabsContent key={p.id} value={p.id} className="mt-4 space-y-3">
-                  <p className="text-xs text-muted-foreground">{teamModeLabel(d, p.teamSize)} - {fmt(p.format)} - {p.status === 'setup' ? d.phaseSetup : p.status === 'running' ? d.phaseRunning : d.phaseFinished}</p>
+                  <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="rounded-full border border-border px-2 py-0.5 font-semibold text-foreground">{teamModeLabel(d, p.teamSize)}</span>
+                    <span>{fmt(p.format)}</span><span aria-hidden>-</span>
+                    <span>{p.status === 'setup' ? d.phaseSetup : p.status === 'running' ? d.phaseRunning : d.phaseFinished}</span>
+                  </p>
                   <BracketView phase={p} entries={t.entries} onSelectMatch={canScore && p.status === 'running' ? setSelected : undefined} />
                 </TabsContent>
               ))}
@@ -183,28 +225,41 @@ export function TournamentPageClient({ id }: { id: string }) {
         <TabsContent value="entries" className="mt-5">
           <Section title={fill(d.entriesTitle, { n: t.entries.length })}>
             {t.entries.length === 0 ? <p className="text-sm text-muted-foreground">{d.noEntries}</p> : (
-              <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {t.entries.map((e, i) => (
-                  <li key={e.id} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm">
-                    <span className="w-6 text-right text-xs tabular-nums text-muted-foreground">{i + 1}</span>
-                    {/* eslint-disable-next-line @next/next/no-img-element -- avatar externo do Discord */}
-                    {e.avatarUrl ? <img src={e.avatarUrl} alt="" className="h-6 w-6 rounded-full" /> : <UserRound className="h-5 w-5 text-muted-foreground" aria-hidden />}
-                    {e.readerId ? <Link href={`/players/${e.readerId}`} className="min-w-0 flex-1 truncate font-medium hover:underline">{e.displayName}</Link> : <span className="min-w-0 flex-1 truncate">{e.displayName} <span className="text-xs text-muted-foreground">({d.guest})</span></span>}
-                    {e.placement && <span className="text-xs font-semibold text-primary">{fill(d.place, { n: e.placement })}</span>}
-                  </li>
-                ))}
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {t.entries.map((e, i) => {
+                  const sub = detail(e);
+                  const name = e.readerId
+                    ? <Link href={`/players/${e.readerId}`} className="block truncate font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{e.displayName}</Link>
+                    : <span className="block truncate font-semibold">{e.displayName}</span>;
+                  return (
+                    <li key={e.id} className={cn('flex items-center gap-3 rounded-lg border bg-background px-3 py-2.5', e.placement === 1 ? 'border-amber-500/60' : 'border-border')}>
+                      {/* avatar (ou inicial do nome) */}
+                      {/* eslint-disable-next-line @next/next/no-img-element -- avatar externo do Discord */}
+                      {e.avatarUrl ? <img src={e.avatarUrl} alt="" className="h-10 w-10 shrink-0 rounded-full" /> : <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-base font-bold text-primary">{e.displayName.charAt(0).toUpperCase()}</span>}
+                      <div className="min-w-0 flex-1">
+                        {name}
+                        <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                          <span className="tabular-nums">{fill(d.seedN, { n: i + 1 })}</span>
+                          {!e.readerId && <span className="rounded-full border border-border px-1.5 py-px">{d.guest}</span>}
+                          {sub && <span className="truncate">{sub}</span>}
+                        </p>
+                      </div>
+                      {e.placement && <span className={cn('flex shrink-0 items-center gap-1 text-xs font-semibold', e.placement === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-primary')}>{e.placement === 1 && <Trophy className="h-3.5 w-3.5" aria-hidden />}{fill(d.place, { n: e.placement })}</span>}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Section>
         </TabsContent>
 
-        {t.isOrganizer && (
+        {isOrg && (
           <TabsContent value="manage" className="mt-5">
             {t.hidden ? <p className="text-sm text-muted-foreground">{d.hiddenNotice}</p> : <OrganizerPanel tournament={t} onChange={setT} onDeleted={() => router.push('/tournaments')} />}
           </TabsContent>
         )}
       </Tabs>
-      <ResultDialog t={t} match={selected} onClose={() => setSelected(null)} onSaved={setT} />
+      {canScore && <ResultDialog t={t} match={selected} onClose={() => setSelected(null)} onSaved={setT} />}
     </div>
   );
 }

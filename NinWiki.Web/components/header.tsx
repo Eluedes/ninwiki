@@ -25,6 +25,7 @@ import { Menu } from 'lucide-react';
 import { SteamIcon, DiscordIcon } from '@/components/icons/brand-icons';
 import { NinLockup } from '@/components/icons/nin-logo';
 import { isUnderMaintenance } from '@/lib/maintenance';
+import { UserMenu, UserMenuMobile, useAccount } from '@/components/user-menu';
 
 // Itens do menu principal. Por decisao do mantenedor, o NavMenu fica
 // enxuto de proposito: so' Home, Vilas e Mapa (+ os botoes de
@@ -76,6 +77,8 @@ export function Header() {
   // FECHAR o painel programaticamente quando o usuario clica em um
   // link (senao o painel ficaria aberto por cima da nova pagina).
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Leitor logado com o Discord (menu do usuario; nao e' o login da equipe do painel).
+  const account = useAccount();
 
   return (
     // sticky + backdrop-blur: o header fica fixo no topo ao rolar a
@@ -124,6 +127,9 @@ export function Header() {
           <ColorThemeToggle />
           <ThemeToggle />
 
+          {/* Menu do usuario (desktop): entrar com Discord, ou avatar + Meu perfil / Meus torneios / Sair. No celular fica dentro do painel abaixo. */}
+          <UserMenu account={account} />
+
           {/* Menu MOBILE: botao de hamburguer, so' visivel ABAIXO de
               md (o inverso do <nav> acima). Ao clicar, abre um Sheet
               (painel deslizante) vindo da direita com os mesmos links. */}
@@ -166,6 +172,9 @@ export function Header() {
                   </a>
                 ))}
               </div>
+
+              {/* Conta do leitor tambem no menu movel */}
+              <UserMenuMobile account={account} onNavigate={() => setMobileMenuOpen(false)} />
             </SheetContent>
           </Sheet>
         </div>

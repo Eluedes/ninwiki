@@ -30,6 +30,7 @@ from ninwiki_bot.error_feed import ErrorFeedStore, ServiceStatus, StatusMessageS
 from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_since
 from ninwiki_bot.guilds_feed import GuildsFeed
 from ninwiki_bot.language import LanguageStore
+from ninwiki_bot.member_sync import MemberSync, SYNC_MINUTES
 from ninwiki_bot.public_commands import register_public_commands
 from ninwiki_bot.version_feed import VersionStore, build_embed as build_version_embed, merge as merge_versions
 
@@ -63,10 +64,13 @@ async def _safe_call(fn, *args) -> None:
 class NinWikiBot(discord.Client):
     """O bot: busca publica (/search, /status, /language) + (opcional) feed do log geral num canal do Discord."""
 
-    def __init__(self, settings: BotSettings):
-        # Intents PADRAO (sem nenhuma privilegiada): so' usamos comandos de barra,
-        # nao precisamos ler mensagem nem lista de membros.
-        super().__init__(intents=discord.Intents.default())
+    def __init__(self, settings: BotSettings, members_intent: bool | None = None):
+        # Intents PADRAO (sem nenhuma privilegiada) + (opcional) a "Server Members Intent", privilegiada: so' para LER os cargos dos leitores
+        # do site e a API preencher vila/rank do perfil. Sem ela (members_intent=False) o resto do bot funciona igual.
+        intents = discord.Intents.default()
+        self.members_intent = settings.member_roles_sync if members_intent is None else members_intent
+        intents.members = self.members_intent
+        super().__init__(intents=intents)
         self.settings = settings
         self.tree = app_commands.CommandTree(self)
         self.api = NinWikiApi(settings.ninwiki_api_url, settings.bot_api_token)
@@ -99,6 +103,10 @@ class NinWikiBot(discord.Client):
         self.guilds_feed = GuildsFeed(self, settings.guilds_channel_id, settings.guilds_log_channel_id, STATE_DIR / "guilds_state.json") if settings.guilds_channel_id else None
         self.guilds_loop = tasks.loop(minutes=30)(_safe(self._guilds_tick))
         self.guilds_loop.before_loop(self.wait_until_ready)
+        # Cargos dos leitores -> API (vila/rank do perfil): sincronizacao completa ao ligar e a cada 30 min; o resto vem pelos eventos de membro.
+        self.member_sync = MemberSync(self, self.api) if self.members_intent else None
+        self.members_loop = tasks.loop(minutes=SYNC_MINUTES)(_safe(self._members_tick))
+        self.members_loop.before_loop(self.wait_until_ready)
 
         @self.tree.error
         async def on_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError) -> None:
@@ -304,8 +312,29 @@ class NinWikiBot(discord.Client):
         """A cada 30 min (e na 1a volta, ao ligar) confere os servidores; so' edita o painel se algo mudou."""
         await self.guilds_feed.tick()
 
+    async def _members_tick(self) -> None:
+        """A cada 30 min (e na 1a volta, ao ligar) manda a' API os servidores, os cargos e os cargos dos leitores."""
+        await self.member_sync.full_sync()
+
+    async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
+        """Cargos de um membro mudaram: se for leitor do site, a API recebe o fato na hora."""
+        if self.member_sync:
+            await _safe_call(self.member_sync.on_member_update, before, after)
+
+    async def on_member_join(self, member: discord.Member) -> None:
+        """Alguem entrou num servidor: se for leitor do site, a API recebe os cargos dele."""
+        if self.member_sync:
+            await _safe_call(self.member_sync.push_member, member)
+
+    async def on_member_remove(self, member: discord.Member) -> None:
+        """Alguem saiu de um servidor: a API tira a ligacao (o perfil volta ao padrao ou ao proximo servidor)."""
+        if self.member_sync:
+            await _safe_call(self.member_sync.on_member_remove, member)
+
     async def on_guild_join(self, guild: discord.Guild) -> None:
         """O bot entrou num servidor: avisa no canal de log do painel (protegido: erro aqui nao derruba o bot)."""
+        if self.member_sync:
+            await _safe_call(self.member_sync.on_guild_change, guild)
         if self.guilds_feed:
             await _safe_call(self.guilds_feed.on_join, guild)
 
@@ -390,6 +419,11 @@ class NinWikiBot(discord.Client):
         if self.guilds_feed:
             self.guilds_loop.start()
             log.info("Painel de servidores ligado: canal %s (log em %s)", self.settings.guilds_channel_id, self.guilds_feed.log_channel_id)
+        if self.member_sync:
+            self.members_loop.start()
+            log.info("Cargos dos leitores -> perfil (vila/rank): ligado, sincroniza a cada %s min e nos eventos de membro", SYNC_MINUTES)
+        else:
+            log.info("Cargos dos leitores -> perfil (vila/rank): DESLIGADO (MEMBER_ROLES_SYNC=false ou sem a Server Members Intent)")
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
@@ -427,7 +461,13 @@ def main() -> None:
         print(f"Configuração inválida no .env do bot: {e}", file=sys.stderr)
         sys.exit(1)
     # log_handler=None: ja configuramos o logging acima.
-    NinWikiBot(settings).run(settings.discord_bot_token, log_handler=None)
+    try:
+        NinWikiBot(settings).run(settings.discord_bot_token, log_handler=None)
+    except discord.PrivilegedIntentsRequired:
+        # A "Server Members Intent" nao esta' ligada no portal: religa o bot SEM ela (so' perde vila/rank automaticos do perfil; /search etc. seguem).
+        log.warning("A 'Server Members Intent' NAO esta' ligada no Discord Developer Portal (Bot > Privileged Gateway Intents > SERVER MEMBERS INTENT). "
+                    "Ligando o bot SEM ela: vila e rank do perfil dos leitores NAO serao preenchidos pelo Discord. Ligue a intent no portal e reinicie o bot para ativar.")
+        NinWikiBot(settings, members_intent=False).run(settings.discord_bot_token, log_handler=None)
 
 
 if __name__ == "__main__":

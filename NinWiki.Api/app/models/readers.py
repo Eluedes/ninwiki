@@ -26,10 +26,12 @@ class Reader(Base):
     banned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    # Perfil publico (editavel so' pelo proprio leitor): nome no jogo, vila e rank ninja. Nunca guarda dado privado.
+    # Perfil publico: nome no jogo (editavel pelo proprio leitor); vila e rank vem do Discord via bot (app/core/discord_profile.py). Nunca guarda dado privado.
     game_name: Mapped[str | None] = mapped_column(String(40), nullable=True)
     village_id: Mapped[str | None] = mapped_column(ForeignKey("villages.id", ondelete="SET NULL"), nullable=True)
     ninja_rank_id: Mapped[str | None] = mapped_column(ForeignKey("ninja_ranks.id", ondelete="SET NULL"), nullable=True)
+    # De onde vieram vila e rank: "discord:<id do servidor>" (cargo lido pelo bot) ou "default" (padrao Takumi/Rogue). Ninguem edita a mao.
+    profile_source: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class PostComment(Base):

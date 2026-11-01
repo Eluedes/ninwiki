@@ -22,7 +22,7 @@ Publico/leitor (prefixo /tournaments):
   POST   /tournaments/{id}/phases/{pid}/finish     conclui a fase;  .../reopen reabre (se a proxima ainda nao comecou)
   PUT    /tournaments/{id}/matches/{mid}/result    lanca ou corrige o placar
   POST   /tournaments/{id}/finish                  encerra (define campeao e colocacoes);  /reopen reabre
-Perfil (prefixo /players): GET /players/me, PUT /players/me (so' o proprio), GET /players/{id} (publico).
+Perfil (prefixo /players): GET /players/me, PUT /players/me (so' o proprio; so' o nome no jogo - vila e rank vem do Discord), GET /players/{id} (publico).
 Equipe (prefixo /tournaments-moderation, permissao tournaments.manage): lista, PATCH (esconder / corrigir texto), DELETE.
 
 REGRA DE CORRECAO DE PLACAR (decisao): corrigir uma partida cujo VENCEDOR muda e que ja' alimentou a proxima partida JA' JOGADA e'
@@ -48,6 +48,7 @@ from app.core.permissions import Permission
 from app.core.rate_limit import limiter, retry_message
 from app.core.reader_auth import get_current_reader, get_optional_reader
 from app.core.text import escape_like
+from app.models.discord_links import DiscordGuild
 from app.models.guide import NinjaRank
 from app.models.readers import Reader
 from app.models.tournaments import (
@@ -58,7 +59,7 @@ from app.models.users import User
 from app.models.villages import Village
 from app.schemas.tournaments import (
     CompetitorRead, EntryOrder, EntryRead, GuestWrite, HistoryItem, MatchRead, ModerationPatch, ModerationRow, PhaseRead, PhaseStart,
-    PhaseWrite, PlayerProfile, PlayerRef, PlayerStats, ProfileWrite, ResultWrite, StandingRead, TournamentDetail, TournamentList,
+    PhaseWrite, PlayerProfile, PlayerRef, PlayerStats, ProfileSource, ProfileWrite, ResultWrite, StandingRead, TournamentDetail, TournamentList,
     TournamentPatch, TournamentSummary, TournamentWrite, VillageRef,
 )
 
@@ -685,23 +686,27 @@ async def _profile(db: AsyncSession, r: Reader) -> PlayerProfile:
         history=history, trophies=[h for h in history if h.placement == 1])
 
 
+async def _my_profile(db: AsyncSession, r: Reader) -> PlayerProfile:
+    """Perfil + de onde vieram vila e rank ("discord:<servidor>" vira o nome do servidor; o resto e' o padrao)."""
+    p = await _profile(db, r)
+    guild = await db.get(DiscordGuild, r.profile_source.removeprefix("discord:")) if (r.profile_source or "").startswith("discord:") else None
+    p.source = ProfileSource(kind="discord", guild_name=guild.name) if guild else ProfileSource(kind="default")
+    return p
+
+
 @players_router.get("/me", response_model=PlayerProfile)
 async def my_profile(reader: Reader = Depends(get_current_reader), db: AsyncSession = Depends(get_db)):
-    """O perfil de quem esta' logado."""
-    return await _profile(db, reader)
+    """O perfil de quem esta' logado (com a origem de vila/rank)."""
+    return await _my_profile(db, reader)
 
 
 @players_router.put("/me", response_model=PlayerProfile)
 async def update_my_profile(payload: ProfileWrite, reader: Reader = Depends(get_current_reader), db: AsyncSession = Depends(get_db)):
-    """Edita o PROPRIO perfil (nome no jogo, vila, rank). Vila e rank precisam existir."""
+    """Edita o PROPRIO perfil: so' o nome no jogo. Vila e rank vem do Discord (cargo lido pelo bot) e o schema recusa esses campos."""
     _throttle(reader, "profile-write", 30, 60)
-    if payload.village_id and await db.get(Village, payload.village_id) is None:
-        raise HTTPException(status_code=422, detail="Unknown village")
-    if payload.ninja_rank_id and await db.get(NinjaRank, payload.ninja_rank_id) is None:
-        raise HTTPException(status_code=422, detail="Unknown ninja rank")
-    reader.game_name, reader.village_id, reader.ninja_rank_id = payload.game_name, payload.village_id, payload.ninja_rank_id
+    reader.game_name = payload.game_name
     await db.commit()
-    return await _profile(db, reader)
+    return await _my_profile(db, reader)
 
 
 @players_router.get("/{player_id}", response_model=PlayerProfile)

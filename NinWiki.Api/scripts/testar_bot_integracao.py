@@ -766,12 +766,135 @@ async def testar_painel_servidores() -> None:
         check("canal inexistente / sem permissao: so' registra no terminal, nao levanta erro", feed3.message_id is None)
 
 
+def _cargo(i: int, nome: str, padrao: bool = False) -> MagicMock:
+    """Cargo falso do Discord (id, nome e is_default() - o @everyone)."""
+    r = MagicMock()
+    r.id, r.name = i, nome
+    r.is_default.return_value = padrao
+    return r
+
+
+def _servidor(i: int, nome: str, cargos: list, membros: dict) -> MagicMock:
+    """Servidor falso com cargos e membros (get_member devolve o membro ou None); cada membro conhece o servidor."""
+    g = MagicMock()
+    g.id, g.name, g.roles = i, nome, [_cargo(i, "@everyone", True), *cargos]
+    g.get_member = lambda uid: membros.get(uid)
+    return g
+
+
+def _membro(uid: int, guild: MagicMock, cargos: list) -> MagicMock:
+    """Membro falso (id, cargos com o @everyone e o servidor)."""
+    m = MagicMock()
+    m.id, m.guild, m.roles = uid, guild, [_cargo(guild.id, "@everyone", True), *cargos]
+    return m
+
+
+async def testar_cargos_leitores() -> None:
+    """Cargos dos leitores -> API (vila/rank do perfil): o bot so' repassa FATOS; a API decide (ninwiki_bot/member_sync.py)."""
+    from sqlalchemy import text
+    from app.models.readers import Reader
+    from ninwiki_bot.member_sync import MemberSync, absent_fact, chunks, member_fact
+    secao("Cargos dos leitores -> vila e rank do perfil (sem Discord real)")
+    check("MEMBER_ROLES_SYNC liga por padrao e pode ser desligado no .env do bot",
+          BotSettings(_env_file=None, discord_bot_token="abc", bot_api_token=TOKEN).member_roles_sync is True
+          and BotSettings(_env_file=None, discord_bot_token="abc", bot_api_token=TOKEN, member_roles_sync="false").member_roles_sync is False)
+    check("fatos do bot: so' ids e nomes (texto), sem @everyone e sem nenhuma decisao de rank",
+          member_fact(_membro(5, _servidor(9, "S", [], {}), [_cargo(7, "Chunin")])) == {"discordId": "5", "present": True, "roles": [{"id": "7", "name": "Chunin"}]}
+          and absent_fact("5") == {"discordId": "5", "present": False, "roles": []})
+    check("lotes de 500 membros", [len(c) for c in chunks(list(range(1200)), 500)] == [500, 500, 200])
+
+    sufixo = BASE % 100000
+    vila, r_gen, r_chu = f"teste-bot-vila-{sufixo}", f"teste-bot-genin-{sufixo}", f"teste-bot-chunin-{sufixo}"
+    guilda_id, leitor_a, leitor_b, estranho = BASE + 201, BASE + 202, BASE + 203, BASE + 204
+    transport = httpx.ASGITransport(app=app, client=("203.0.113.7", 1234))
+    http = httpx.AsyncClient(transport=transport, base_url="http://test")
+    api = NinWikiApi("http://test", TOKEN, client=http)
+    settings.bot_api_token = TOKEN
+    try:
+        async with AsyncSessionLocal() as db:
+            await db.execute(text("INSERT INTO villages (id, name, element, motto, description, long_description, emblem, accent_color, climate, leader, map_x, map_y) "
+                                  "VALUES (:i, 'Teste', 'x', 'x', 'x', 'x', 'x', '#000000', 'x', 'x', 50, 50)"), {"i": vila})
+            for rid, ordem in ((r_gen, 2), (r_chu, 3)):
+                await db.execute(text("INSERT INTO ninja_ranks (id, name, \"order\", description) VALUES (:i, :n, :o, 'x')"), {"i": rid, "n": rid.replace("-", " "), "o": ordem})
+            for uid in (leitor_a, leitor_b):
+                db.add(Reader(discord_id=uid, username=f"TESTE_bot_{uid}", village_id=None, ninja_rank_id=None))
+            await db.commit()
+        ids = await api.reader_ids()
+        check("reader_ids do cliente traz os leitores (texto) e nao os estranhos", str(leitor_a) in ids and str(leitor_b) in ids and str(estranho) not in ids and all(isinstance(i, str) for i in ids))
+
+        membros: dict = {}
+        guilda = _servidor(guilda_id, "Servidor do Teste", [], membros)
+        cargo_gen, cargo_chu = _cargo(1001, r_gen.replace("-", " ").upper()), _cargo(1002, r_chu.replace("-", " "))
+        guilda.roles += [cargo_gen, cargo_chu]
+        membros[leitor_a] = _membro(leitor_a, guilda, [cargo_gen])
+        membros[estranho] = _membro(estranho, guilda, [cargo_chu])   # nao e' leitor: nunca e' enviado
+        cliente = MagicMock()
+        cliente.guilds = [guilda]
+        sync = MemberSync(cliente, api)
+
+        async def ler(uid: int) -> tuple:
+            """(vila, rank, origem) gravados no leitor."""
+            async with AsyncSessionLocal() as db:
+                rd = (await db.execute(select(Reader).where(Reader.discord_id == uid))).scalar_one()
+                return rd.village_id, rd.ninja_rank_id, rd.profile_source
+
+        await sync.full_sync()
+        async with AsyncSessionLocal() as db:
+            n_estranho = (await db.execute(text("SELECT count(*) FROM discord_member_roles WHERE discord_id = :i"), {"i": estranho})).scalar_one()
+        check("full_sync informa servidores/cargos e os cargos dos leitores (quem nao e' leitor nao vai)", n_estranho == 0)
+        # o mapeamento (vila do servidor) e' decisao do painel/API: o bot nao faz isso
+        async with AsyncSessionLocal() as db:
+            await db.execute(text("UPDATE discord_guilds SET village_id = :v WHERE guild_id = :g"), {"v": vila, "g": str(guilda_id)})
+            await db.commit()
+        await sync.full_sync()
+        check("a API decidiu: cargo com o nome do rank + vila do servidor", await ler(leitor_a) == (vila, r_gen, f"discord:{guilda_id}"), str(await ler(leitor_a)))
+        check("leitor que nao esta' no servidor continua no padrao (sem informacao)", (await ler(leitor_b))[2] in (None, "default"), str(await ler(leitor_b)))
+
+        antes = membros[leitor_a]
+        depois = _membro(leitor_a, guilda, [cargo_chu])
+        await sync.on_member_update(antes, depois)
+        check("on_member_update: cargo novo chega na hora e a API sobe o rank", (await ler(leitor_a))[1] == r_chu, str(await ler(leitor_a)))
+        n_chamadas = []
+        original = api.push_member_roles
+
+        async def espiao(*a, **k):
+            """Conta as chamadas e repassa para a API de verdade."""
+            n_chamadas.append(a)
+            return await original(*a, **k)
+
+        api.push_member_roles = espiao
+        await sync.on_member_update(depois, _membro(leitor_a, guilda, [cargo_chu]))
+        await sync.on_member_update(_membro(estranho, guilda, []), _membro(estranho, guilda, [cargo_gen]))
+        check("sem mudanca de cargo ou fora dos leitores: nada e' enviado", n_chamadas == [])
+        api.push_member_roles = original
+        await sync.on_member_remove(depois)
+        check("on_member_remove: saiu do servidor -> volta ao padrao (a API decide)", (await ler(leitor_a))[2] in (None, "default"), str(await ler(leitor_a)))
+        await sync.on_member_remove(_membro(estranho, guilda, []))
+        check("saida de quem nao e' leitor e' ignorada sem erro", True)
+        # servidor novo ainda desconhecido da API: o evento recebe 404 (o bot protege com _safe_call, aqui so' conferimos que o erro e' ApiError)
+        try:
+            await api.push_member_roles("123456789", [absent_fact(str(leitor_a))])
+            check("servidor desconhecido da API -> ApiError 404", False)
+        except ApiError as e:
+            check("servidor desconhecido da API -> ApiError 404", e.status_code == 404, e.detail)
+    finally:
+        await http.aclose()
+        async with AsyncSessionLocal() as db:
+            await db.execute(text("DELETE FROM discord_guilds WHERE guild_id = :g"), {"g": str(guilda_id)})
+            await db.execute(text("DELETE FROM readers WHERE discord_id = ANY(:i)"), {"i": [leitor_a, leitor_b]})
+            await db.execute(text("DELETE FROM ninja_ranks WHERE id LIKE :p"), {"p": f"teste-bot-%-{sufixo}"})
+            await db.execute(text("DELETE FROM villages WHERE id = :v"), {"v": vila})
+            await db.commit()
+
+
+
 async def main() -> None:
     """Prepara a configuracao, roda os testes e limpa os dados no final."""
     orig = settings.bot_api_token
     try:
         await testar()
         await testar_painel_servidores()
+        await testar_cargos_leitores()
     finally:
         settings.bot_api_token = orig
         await limpar()

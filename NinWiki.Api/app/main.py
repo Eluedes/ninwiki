@@ -43,6 +43,7 @@ from app.api.announcement import router as announcement_router
 from app.api.audit_log import router as audit_log_router
 from app.api.auth import router as auth_router
 from app.api.bot import router as bot_router
+from app.api.discord_links import bot_router as discord_bot_router, router as discord_links_router
 from app.api.content_items import router as content_items_router
 from app.api.engagement import moderation_router as comments_moderation_router, router as engagement_router
 from app.api.reports import router as reports_router
@@ -178,6 +179,8 @@ app.include_router(guide_router)
 app.include_router(auth_router)
 app.include_router(staff_router)
 app.include_router(bot_router)
+app.include_router(discord_bot_router)
+app.include_router(discord_links_router)
 app.include_router(roles_router)
 app.include_router(notices_router)
 app.include_router(errors_router)

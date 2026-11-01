@@ -35,6 +35,9 @@ class BotSettings(BaseSettings):
     # e posta um aviso novo a cada entrada/saida de servidor. GUILDS_LOG_CHANNEL_ID separa os avisos em outro canal (vazio = mesmo canal). Vazio = desligado.
     guilds_channel_id: int | None = None
     guilds_log_channel_id: int | None = None
+    # VILA/RANK DO PERFIL pelos cargos do Discord: o bot informa a' API os cargos dos leitores do site (a API decide). Exige ligar a "Server Members Intent"
+    # no Discord Developer Portal (Bot > Privileged Gateway Intents). false = desliga esta funcao de proposito (sem pedir a intent).
+    member_roles_sync: bool = True
     # Manda tambem uma mensagem NOVA a cada "caiu" / "voltou" (alem do painel que se edita sozinho). Padrao false: o painel basta e nao enche o canal.
     status_alerts: bool = False
     # Mantem UMA mensagem "Nin Codex status" no canal de erros, editada a cada checagem (estado ao vivo, tempo de resposta, uptime). false = so' avisa quando cai/volta.
