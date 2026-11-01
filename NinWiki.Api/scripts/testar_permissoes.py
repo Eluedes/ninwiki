@@ -207,6 +207,10 @@ async def limpar(inicio: datetime) -> None:
         await db.execute(text("DELETE FROM traffic_pages WHERE path LIKE :p"), {"p": f"/{SLUG}%"})
         await db.execute(text("DELETE FROM traffic_visitors WHERE visitor_hash = :h"), {"h": _hash_visitante_teste()})
         await db.execute(text("DELETE FROM readers WHERE discord_id BETWEEN :a AND :b"), {"a": BASE + 30, "b": BASE + 40})
+        guildas = [str(BASE + n) for n in (101, 102, 103)]   # servidores de teste do Discord (apagar leva cargos e cargos-de-membros junto)
+        await db.execute(text("DELETE FROM discord_guilds WHERE guild_id = ANY(:g)"), {"g": guildas})
+        await db.execute(text("DELETE FROM audit_log WHERE entity_type = 'discord_links' AND entity_id = ANY(:g)"), {"g": guildas})
+        await db.execute(text("DELETE FROM ninja_ranks WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM organizations WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM villages WHERE id LIKE :p"), {"p": f"{SLUG}%"})
         await db.execute(text("DELETE FROM notices WHERE title LIKE :p"), {"p": f"{SLUG}%"})
@@ -2876,14 +2880,11 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("'meus torneios' exige login e traz o meu", (await api("GET", "/tournaments?mine=true")).status_code == 401 and T in [i["id"] for i in (await api("GET", "/tournaments?mine=true", RO)).json()["items"]])
 
     # --- perfil ---
-    vilas = (await api("GET", "/villages")).json()
-    ranks = (await api("GET", "/ninja-ranks")).json()
     check("anonimo nao edita perfil (401)", (await api("PUT", "/players/me", json={"gameName": "x"})).status_code == 401)
-    r = await api("PUT", "/players/me", RO, json={"gameName": "  Naruto   TESTE ", "villageId": vilas[0]["id"] if vilas else None, "ninjaRankId": ranks[0]["id"] if ranks else None})
+    r = await api("PUT", "/players/me", RO, json={"gameName": "  Naruto   TESTE "})
     check("leitor edita o proprio perfil (nome limpo)", r.status_code == 200 and r.json()["gameName"] == "Naruto   TESTE", r.text[:200])
-    if vilas and ranks:
-        check("perfil mostra a vila e o rank escolhidos", r.json()["village"]["id"] == vilas[0]["id"] and r.json()["ninjaRank"]["id"] == ranks[0]["id"])
-    check("vila inexistente -> 422", (await api("PUT", "/players/me", RO, json={"villageId": "nao-existe-teste"})).status_code == 422)
+    check("vila e rank NAO se editam a mao (villageId/ninjaRankId -> 422)", (await api("PUT", "/players/me", RO, json={"villageId": "leaf"})).status_code == 422
+          and (await api("PUT", "/players/me", RO, json={"gameName": "x", "ninjaRankId": "kage"})).status_code == 422)
     check("o perfil de outro leitor nao mudou (so' edita o proprio)", (await api("GET", f"/players/{id_x}")).json()["gameName"] is None)
     pub = await api("GET", f"/players/{id_o}")
     check("perfil publico abre sem login e NAO expoe o Discord ID", pub.status_code == 200 and "discordid" not in pub.text.lower(), pub.text[:200])
@@ -3061,6 +3062,125 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         await db.execute(text("DELETE FROM audit_log WHERE entity_type = 'tournament' AND created_at >= :t"), {"t": inicio_torneios})
         await db.commit()
     check("criar / encerrar / esconder / apagar ficam no log de auditoria", n_log >= 6, str(n_log))
+    settings.dev_login_enabled = dev_antes
+
+    secao("38c) Discord -> perfil: vila e rank automaticos pelo bot (mapeamento do painel, varios servidores, padroes Takumi/Rogue)")
+    settings.dev_login_enabled = True
+    G_A, G_B, G_C = str(BASE + 101), str(BASE + 102), str(BASE + 103)
+    V_MIST, V_SAND = f"{SLUG}-mist", f"{SLUG}-sand"
+    R_LOW, R_GEN, R_CHU = f"{SLUG}-low", f"{SLUG}-genin", f"{SLUG}-chunin"
+    nome_gen, nome_chu = R_GEN.replace("-", " ").upper(), R_CHU.replace("-", " ").title()   # nome do cargo = nome do rank, com maiusculas diferentes
+    async with AsyncSessionLocal() as db:
+        for vid in (V_MIST, V_SAND):
+            await db.execute(text("INSERT INTO villages (id, name, element, motto, description, long_description, emblem, accent_color, climate, leader, map_x, map_y) "
+                                  "VALUES (:i, :n, 'x', 'x', 'x', 'x', 'x', '#000000', 'x', 'x', 50, 50)"), {"i": vid, "n": f"Teste {vid}"})
+        for rid, ordem in ((R_LOW, -5), (R_GEN, 2), (R_CHU, 3)):   # "low" (order -5) e' sempre o menor da hierarquia, mesmo se o banco ja tiver ranks reais
+            await db.execute(text("INSERT INTO ninja_ranks (id, name, \"order\", description) VALUES (:i, :n, :o, 'x')"), {"i": rid, "n": rid.replace("-", " ").title(), "o": ordem})
+        await db.commit()
+    BT = {"X-Bot-Token": settings.bot_api_token}
+    ids_leitores = {n: str(BASE + n) for n in (35, 36, 37)}
+    L35, pid35 = await entrar_leitor(35)
+    L36, pid36 = await entrar_leitor(36)
+    L37, pid37 = await entrar_leitor(37)
+    r = await api("GET", "/players/me", L35)
+    check("leitor novo ja' nasce com vila Takumi e rank Rogue (origem: padrao)", r.json()["village"]["id"] == "takumi" and r.json()["ninjaRank"]["id"] == "rogue" and r.json()["source"]["kind"] == "default", r.text[:200])
+    check("o perfil publico NAO mostra a origem (so' o /players/me)", (await api("GET", f"/players/{pid35}")).json().get("source") is None)
+
+    # --- rotas do bot: token, paginacao dos leitores, validacao e limite de tamanho ---
+    check("reader-ids sem token do bot -> 401", (await api("GET", "/bot/reader-ids")).status_code == 401)
+    r = await api("GET", "/bot/reader-ids", BT, params={"after": BASE + 34, "limit": 1})
+    check("reader-ids pagina por Discord ID (texto) e devolve `next`", r.status_code == 200 and r.json()["ids"] == [ids_leitores[35]] and r.json()["next"] == ids_leitores[35], r.text[:200])
+    r = await api("GET", "/bot/reader-ids", BT, params={"after": r.json()["next"], "limit": 1000})
+    check("segunda pagina traz o proximo leitor", ids_leitores[36] in r.json()["ids"] and all(isinstance(i, str) for i in r.json()["ids"]), r.text[:200])
+    check("guilds-sync e member-roles exigem o token do bot (401)", (await api("POST", "/bot/guilds-sync", json={"guilds": []})).status_code == 401
+          and (await api("POST", "/bot/member-roles", json={"guildId": G_A, "members": []})).status_code == 401)
+    check("member-roles de servidor desconhecido -> 404", (await api("POST", "/bot/member-roles", BT, json={"guildId": G_A, "members": []})).status_code == 404)
+    check("guilds-sync: id que nao e' numero -> 422", (await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": "abc", "name": "x", "roles": []}]})).status_code == 422)
+    check("member-roles: mais de 500 membros -> 422", (await api("POST", "/bot/member-roles", BT, json={"guildId": G_A, "members": [{"discordId": "1", "roles": []}] * 501})).status_code == 422)
+
+    def cargos(*pares):
+        """Lista de cargos {id, name} no formato que o bot manda."""
+        return [{"id": i, "name": n} for i, n in pares]
+
+    r = await api("POST", "/bot/guilds-sync", BT, json={"guilds": [
+        {"id": G_A, "name": "Servidor A TESTE", "roles": cargos(("11", nome_gen), ("12", "Cargo qualquer"), ("13", "Membro"))},
+        {"id": G_B, "name": "Servidor B TESTE", "roles": cargos(("21", nome_chu), ("22", "Outro"))},
+        {"id": G_C, "name": "Servidor C TESTE", "roles": cargos(("31", "Visitante"))}]})
+    check("guilds-sync guarda servidores e cargos", r.status_code == 200 and r.json()["guilds"] == 3, r.text[:200])
+
+    def fato(discord_id: str, *pares, presente: bool = True):
+        """Fato de um membro (cargos ou saida) no formato do bot."""
+        return {"discordId": discord_id, "present": presente, "roles": cargos(*pares)}
+
+    async def empurrar(guilda: str, *membros):
+        """O bot informa membros de um servidor."""
+        return await api("POST", "/bot/member-roles", BT, json={"guildId": guilda, "members": list(membros)})
+
+    async def perfil(h):
+        """(vila, rank, origem) do /players/me."""
+        j = (await api("GET", "/players/me", h)).json()
+        return j["village"]["id"], j["ninjaRank"]["id"], (j["source"].get("guildName") if j["source"]["kind"] == "discord" else "default")
+
+    # --- decisao: nome do cargo = nome do rank (sem mapeamento), servidor sem vila -> vila padrao ---
+    r = await empurrar(G_A, fato(ids_leitores[35], ("11", nome_gen)), fato("99999999999", ("11", "x")))
+    check("member-roles guarda quem e' leitor e ignora quem nao e'", r.json()["stored"] == 1 and r.json()["ignored"] == 1 and r.json()["profilesChanged"] == 1, r.text[:200])
+    check("cargo com o NOME do rank (maiusculas diferentes): rank Genin; servidor sem vila -> vila padrao Takumi; origem = nome do servidor",
+          await perfil(L35) == ("takumi", R_GEN, "Servidor A TESTE"), str(await perfil(L35)))
+    # --- painel: so' discord.links ---
+    corpo = {"villageId": V_MIST, "roles": [{"roleId": "12", "ninjaRankId": R_CHU}]}
+    check("painel: anonimo 401, leitor 401, Creator 403", (await api("GET", "/discord-links")).status_code == 401 and (await api("GET", "/discord-links", L35)).status_code == 401
+          and (await api("GET", "/discord-links", C)).status_code == 403 and (await api("PUT", f"/discord-links/guilds/{G_A}", C, json=corpo)).status_code == 403)
+    perms_dl = True
+    for h, esperado in ((S, True), (A, True), (C, False)):
+        perms_dl = perms_dl and (("discord.links" in (await api("GET", "/auth/me", h)).json()["permissions"]) == esperado)
+    check("/auth/me inclui discord.links para S.Adm e Adm, nao para Creator", perms_dl)
+    lista = (await api("GET", "/discord-links", A)).json()
+    gA = next((g for g in lista if g["guildId"] == G_A), None)
+    check("Adm lista os servidores do bot com cargos e leitores", gA is not None and gA["active"] and gA["readers"] == 1 and {x["roleId"] for x in gA["roles"]} == {"11", "12", "13"}, str(gA)[:200])
+    check("vila inexistente / rank inexistente / cargo de outro servidor -> 422",
+          (await api("PUT", f"/discord-links/guilds/{G_A}", A, json={"villageId": "nao-existe-teste"})).status_code == 422
+          and (await api("PUT", f"/discord-links/guilds/{G_A}", A, json={"roles": [{"roleId": "12", "ninjaRankId": "nao-existe-teste"}]})).status_code == 422
+          and (await api("PUT", f"/discord-links/guilds/{G_A}", A, json={"roles": [{"roleId": "21", "ninjaRankId": R_GEN}]})).status_code == 422)
+    check("servidor desconhecido no PUT -> 404", (await api("PUT", f"/discord-links/guilds/{BASE + 555}", A, json={})).status_code == 404)
+    r = await api("PUT", f"/discord-links/guilds/{G_A}", A, json=corpo)
+    check("Adm mapeia servidor -> vila e cargo -> rank", r.status_code == 200 and r.json()["villageId"] == V_MIST and next(x for x in r.json()["roles"] if x["roleId"] == "12")["ninjaRankId"] == R_CHU, r.text[:200])
+    check("mudar o mapeamento recalcula o leitor na hora (vila Mist do servidor A, rank Genin pelo nome)", await perfil(L35) == (V_MIST, R_GEN, "Servidor A TESTE"), str(await perfil(L35)))
+    # --- mapeamento explicito de cargo ---
+    await empurrar(G_A, fato(ids_leitores[36], ("12", "Cargo qualquer")))
+    check("cargo com mapeamento explicito (nome nao parece rank): rank Chunin", await perfil(L36) == (V_MIST, R_CHU, "Servidor A TESTE"), str(await perfil(L36)))
+    # --- varios servidores: maior rank vence; empate = atualizado por ultimo ---
+    await api("PUT", f"/discord-links/guilds/{G_B}", A, json={"villageId": V_SAND})
+    await empurrar(G_B, fato(ids_leitores[35], ("21", nome_chu)))
+    check("dois servidores: vale o servidor onde o rank e' MAIOR (Chunin em B > Genin em A)", await perfil(L35) == (V_SAND, R_CHU, "Servidor B TESTE"), str(await perfil(L35)))
+    await empurrar(G_B, fato(ids_leitores[36], ("21", nome_chu)))
+    check("empate de rank (Chunin nos dois): vale o atualizado mais recentemente (B)", await perfil(L36) == (V_SAND, R_CHU, "Servidor B TESTE"), str(await perfil(L36)))
+    await empurrar(G_A, fato(ids_leitores[36], ("12", "Cargo qualquer")))
+    check("empate de novo, agora A foi atualizado por ultimo -> A", await perfil(L36) == (V_MIST, R_CHU, "Servidor A TESTE"), str(await perfil(L36)))
+    # --- sair / perder o cargo: volta para o proximo servidor ou para o padrao ---
+    await empurrar(G_B, fato(ids_leitores[35], presente=False))
+    check("saiu do servidor B: volta para o A (Genin, Mist)", await perfil(L35) == (V_MIST, R_GEN, "Servidor A TESTE"), str(await perfil(L35)))
+    await empurrar(G_A, fato(ids_leitores[35], ("13", "Membro")))
+    check("perdeu o cargo de rank em A (so' ficou 'Membro'): servidor A com vila mapeada = vila de A + menor rank da hierarquia", await perfil(L35) == (V_MIST, R_LOW, "Servidor A TESTE"), str(await perfil(L35)))
+    await api("PUT", f"/discord-links/guilds/{G_A}", A, json={"villageId": None})
+    check("sem vila no servidor e sem cargo de rank: sem informacao -> padrao Takumi/Rogue", await perfil(L35) == ("takumi", "rogue", "default"), str(await perfil(L35)))
+    # --- servidor com so' a vila; servidor que o bot deixou de informar ---
+    await api("PUT", f"/discord-links/guilds/{G_C}", A, json={"villageId": V_SAND})
+    await empurrar(G_C, fato(ids_leitores[37], ("31", "Visitante")))
+    check("so' a vila mapeada e nenhum cargo de rank: vila do servidor + menor rank", await perfil(L37) == (V_SAND, R_LOW, "Servidor C TESTE"), str(await perfil(L37)))
+    await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": G_A, "name": "Servidor A TESTE", "roles": cargos(("11", "x"), ("12", "Cargo qualquer"), ("13", "Membro"))}, {"id": G_B, "name": "Servidor B TESTE", "roles": []}]})
+    check("servidor que o bot nao informa mais fica inativo: o leitor volta ao padrao", await perfil(L37) == ("takumi", "rogue", "default"), str(await perfil(L37)))
+    gC = next(g for g in (await api("GET", "/discord-links", A)).json() if g["guildId"] == G_C)
+    check("o mapeamento do servidor inativo e' guardado (volta se o bot voltar)", gC["active"] is False and gC["villageId"] == V_SAND)
+    await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": G_C, "name": "Servidor C TESTE", "roles": cargos(("31", "Visitante"))}]})
+    check("bot voltou ao servidor: o perfil e' refeito sem novo aviso de membros", await perfil(L37) == (V_SAND, R_LOW, "Servidor C TESTE"), str(await perfil(L37)))
+    # --- vila/rank aparecem no perfil publico; edicao manual segue recusada; auditoria ---
+    pub = (await api("GET", f"/players/{pid37}")).json()
+    check("perfil publico mostra vila e rank do Discord", pub["village"]["id"] == V_SAND and pub["ninjaRank"]["id"] == R_LOW)
+    check("edicao manual de vila/rank recusada (422) e nada muda", (await api("PUT", "/players/me", L37, json={"villageId": V_MIST, "ninjaRankId": R_CHU})).status_code == 422
+          and await perfil(L37) == (V_SAND, R_LOW, "Servidor C TESTE"))
+    async with AsyncSessionLocal() as db:
+        n_log = (await db.execute(text("SELECT count(*) FROM audit_log WHERE entity_type = 'discord_links' AND entity_id = ANY(:g)"), {"g": [G_A, G_B, G_C]})).scalar_one()
+    check("salvar o mapeamento fica no log de auditoria", n_log >= 4, str(n_log))
     settings.dev_login_enabled = dev_antes
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")

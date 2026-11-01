@@ -281,8 +281,6 @@ export const phaseSchema = z.object({
 });
 
 export const profileSchema = z.object({
-  gameName: z.string().trim().max(40, 'tooLong'),
-  villageId: z.string(),
-  ninjaRankId: z.string(),
+  gameName: z.string().trim().max(40, 'tooLong'),   // vila e rank nao se editam: vem do Discord (via bot)
 });
 export type ProfileFormValues = z.infer<typeof profileSchema>;

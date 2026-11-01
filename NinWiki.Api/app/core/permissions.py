@@ -102,6 +102,9 @@ class Permission(str, Enum):
     # --- Torneios dos leitores: a equipe so' MODERA (esconder, apagar, corrigir texto); quem cria/administra e' o organizador (leitor) ---
     TOURNAMENTS_MANAGE = "tournaments.manage"
 
+    # --- Discord -> perfil: mapeia servidor -> vila e cargo -> rank ninja que o bot usa para preencher o perfil dos leitores ---
+    DISCORD_LINKS = "discord.links"
+
     # --- Erros do wiki (traceback, IPs - so' o S.Adm) ---
     ERRORS_VIEW = "errors.view"
 
@@ -159,6 +162,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.REPORTS_MANAGE,
     Permission.VOLUNTEERS_MANAGE,
     Permission.TOURNAMENTS_MANAGE,
+    Permission.DISCORD_LINKS,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,
 })

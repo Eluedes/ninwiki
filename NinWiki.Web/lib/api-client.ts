@@ -871,7 +871,7 @@ export type StaffRole = 'super_admin' | 'admin' | 'creator';
 // Nomes das permissoes - espelham app/core/permissions.py::Permission no backend.
 export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
-  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'volunteers.manage' | 'tournaments.manage' | 'translation.import'
+  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'volunteers.manage' | 'tournaments.manage' | 'discord.links' | 'translation.import'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.categorize' | 'site.maintenance' | 'media.upload' | 'media.reset_ids' | 'media.closed'
@@ -1830,6 +1830,8 @@ export interface ApiNamedRef { id: string; name: string; namePt: string | null }
 export interface ApiHistoryItem { tournamentId: string; name: string; status: TournamentStatus; placement: number | null; wins: number; losses: number; date: string }
 export interface ApiPlayerProfile {
   id: string; username: string; avatarUrl: string | null; gameName: string | null; village: ApiNamedRef | null; ninjaRank: ApiNamedRef | null;
+  /** So' em GET /players/me: de onde vieram vila e rank (cargo no servidor `guildName` do Discord ou o padrao). */
+  source?: { kind: 'discord' | 'default'; guildName: string | null } | null;
   stats: { tournaments: number; wins: number; losses: number; titles: number }; history: ApiHistoryItem[]; trophies: ApiHistoryItem[];
 }
 export interface TournamentInput { name: string; description: string; startsAt?: string | null; visibility: TournamentVisibility }
@@ -1874,7 +1876,18 @@ export function tournamentAction(id: string, action: 'finish' | 'reopen'): Promi
 export function getPlayer(id: string): Promise<ApiPlayerProfile> { return apiFetch(`/players/${id}`, { cache: 'no-store' }, true); }
 /** Meu perfil (leitor logado). */
 export function getMyProfile(): Promise<ApiPlayerProfile> { return apiFetch('/players/me', { cache: 'no-store' }, true); }
-export function updateMyProfile(input: { gameName: string | null; villageId: string | null; ninjaRankId: string | null }): Promise<ApiPlayerProfile> { return apiFetch('/players/me', jsonInit('PUT', input), true); }
+/** Edita o proprio perfil: so' o nome no jogo (vila e rank vem do Discord; a API recusa esses campos). */
+export function updateMyProfile(input: { gameName: string | null }): Promise<ApiPlayerProfile> { return apiFetch('/players/me', jsonInit('PUT', input), true); }
+
+// ---- Ligacao Discord -> perfil (painel; permissao discord.links) ----
+export interface ApiDiscordRole { roleId: string; name: string; ninjaRankId: string | null }
+export interface ApiDiscordGuild { guildId: string; name: string; active: boolean; villageId: string | null; readers: number; roles: ApiDiscordRole[] }
+/** Servidores que o bot informou, com a vila e o mapeamento cargo -> rank. */
+export function listDiscordLinks(): Promise<ApiDiscordGuild[]> { return apiFetch('/discord-links', { cache: 'no-store' }); }
+/** Salva a vila do servidor e os cargos -> rank (a API recalcula na hora o perfil dos jogadores do servidor). */
+export function saveDiscordLinks(guildId: string, input: { villageId: string | null; roles: { roleId: string; ninjaRankId: string | null }[] }): Promise<ApiDiscordGuild> {
+  return apiFetch(`/discord-links/guilds/${guildId}`, jsonInit('PUT', input));
+}
 /** Painel (tournaments.manage): todos os torneios, inclusive rascunhos, nao listados e escondidos. */
 export function listTournamentsForModeration(opts: { q?: string; hidden?: boolean; status?: TournamentStatus } = {}): Promise<ApiModerationTournament[]> {
   const params = new URLSearchParams();

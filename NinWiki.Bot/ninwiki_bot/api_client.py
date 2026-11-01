@@ -183,3 +183,22 @@ class NinWikiApi:
     async def delete_backup(self, backup_id: str) -> None:
         """Manda a API apagar o arquivo temporario do backup."""
         await self._request("DELETE", f"/bot/backup/{backup_id}")
+
+    async def reader_ids(self) -> list[str]:
+        """Discord IDs (texto) de TODOS os leitores do site, paginando de 1000 em 1000 (so' esses interessam ao bot)."""
+        out: list[str] = []
+        after = "0"
+        while True:
+            page = await self._request("GET", "/bot/reader-ids", params={"after": after, "limit": 1000})
+            out.extend(page["ids"])
+            if not page.get("next"):
+                return out
+            after = page["next"]
+
+    async def sync_guilds(self, guilds: list[dict]) -> dict:
+        """Informa os servidores onde o bot esta' e os cargos de cada um (a API guarda; o painel usa para mapear vila/rank)."""
+        return await self._request("POST", "/bot/guilds-sync", json={"guilds": guilds}, timeout=60.0)
+
+    async def push_member_roles(self, guild_id: str, members: list[dict]) -> dict:
+        """Informa os cargos de leitores num servidor (ate' 500 por chamada). A API decide vila/rank; o bot so' repassa fatos."""
+        return await self._request("POST", "/bot/member-roles", json={"guildId": guild_id, "members": members}, timeout=60.0)

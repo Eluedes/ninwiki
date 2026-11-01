@@ -5,6 +5,7 @@ import { TournamentsPageClient } from '@/components/tournaments/tournaments-page
 export const metadata: Metadata = { title: 'Tournaments' };
 
 /** Pagina /tournaments. */
-export default function TournamentsPage() {
-  return <TournamentsPageClient />;
+export default async function TournamentsPage({ searchParams }: { searchParams: Promise<{ mine?: string }> }) {
+  const { mine } = await searchParams;   // o link "Meus torneios" do menu do usuario abre /tournaments?mine=1
+  return <TournamentsPageClient initialMine={Boolean(mine)} />;
 }

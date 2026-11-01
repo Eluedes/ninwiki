@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from app.models.tournaments import PhaseFormat, PhaseStatus, TournamentStatus, TournamentVisibility
 from app.schemas.content import CamelModel
@@ -130,10 +130,9 @@ class ResultWrite(CamelModel):
 
 
 class ProfileWrite(CamelModel):
-    """Perfil do proprio leitor. Campo vazio = limpa."""
+    """Perfil do proprio leitor: so' o nome no jogo (campo vazio = limpa). Vila e rank vem do Discord (via bot) e mandar villageId/ninjaRankId e' recusado (422)."""
+    model_config = ConfigDict(alias_generator=CamelModel.model_config["alias_generator"], populate_by_name=True, extra="forbid")
     game_name: str | None = Field(default=None, max_length=40)
-    village_id: str | None = Field(default=None, max_length=50)
-    ninja_rank_id: str | None = Field(default=None, max_length=50)
 
     @field_validator("game_name", mode="after")
     @classmethod
@@ -141,12 +140,6 @@ class ProfileWrite(CamelModel):
         """Nome no jogo limpo (vazio vira None)."""
         v = _plain(v or "")
         return v or None
-
-    @field_validator("village_id", "ninja_rank_id", mode="after")
-    @classmethod
-    def _blank(cls, v: str | None) -> str | None:
-        """Texto vazio vira None."""
-        return (v or "").strip() or None
 
 
 class ModerationPatch(CamelModel):
@@ -273,6 +266,12 @@ class PlayerStats(CamelModel):
     titles: int
 
 
+class ProfileSource(CamelModel):
+    """De onde vieram vila e rank (so' no perfil do proprio leitor): kind = 'discord' (cargo no servidor guild_name) ou 'default' (padrao)."""
+    kind: Literal["discord", "default"]
+    guild_name: str | None = None
+
+
 class PlayerProfile(CamelModel):
     """Perfil publico de um jogador."""
     id: uuid.UUID
@@ -281,6 +280,7 @@ class PlayerProfile(CamelModel):
     game_name: str | None
     village: VillageRef | None
     ninja_rank: VillageRef | None
+    source: ProfileSource | None = None   # preenchido so' em GET /players/me
     stats: PlayerStats
     history: list[HistoryItem]
     trophies: list[HistoryItem]

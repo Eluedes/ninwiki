@@ -20,12 +20,12 @@ const PAGE = 20;
 const STRIPE: Record<TournamentStatus, string> = { draft: 'bg-muted-foreground/40', open: 'bg-emerald-500', running: 'bg-amber-500', finished: 'bg-sky-500' };
 
 /** Pagina /tournaments. */
-export function TournamentsPageClient() {
+export function TournamentsPageClient({ initialMine = false }: { initialMine?: boolean }) {
   const { dict, locale } = useLanguage();
   const d = dict.tournaments;
   const { reader, loaded } = useReader();
   const [status, setStatus] = useState<TournamentStatus | undefined>(undefined);
-  const [mine, setMine] = useState(false);
+  const [mine, setMine] = useState(initialMine);
   const [q, setQ] = useState('');
   const [search, setSearch] = useState('');
   const [offset, setOffset] = useState(0);

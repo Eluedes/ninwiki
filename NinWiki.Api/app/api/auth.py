@@ -23,6 +23,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.discord_profile import apply_defaults
 from app.core import discord, staff_service
 from app.core.audit import log_action
 from app.core.auth import get_current_user, get_optional_user
@@ -82,6 +83,7 @@ async def _upsert_reader(db: AsyncSession, profile: dict) -> Reader:
     reader = (await db.execute(select(Reader).where(Reader.discord_id == profile["id"]))).scalar_one_or_none()
     if reader is None:
         reader = Reader(discord_id=profile["id"], username=profile["username"], avatar_url=profile["avatar_url"])
+        await apply_defaults(db, reader)   # vila Takumi + rank Rogue ate' o bot ler os cargos do Discord
         db.add(reader)
     reader.username, reader.avatar_url = profile["username"], profile["avatar_url"]
     reader.last_login_at = datetime.now(timezone.utc)

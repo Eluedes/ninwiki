@@ -11,13 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/components/providers/language-provider';
 import {
-  ApiError, getMyProfile, getPlayer, listNinjaRanks, listVillages, updateMyProfile, type ApiHistoryItem, type ApiNinjaRank, type ApiPlayerProfile, type ApiVillage,
+  ApiError, getMyProfile, getPlayer, updateMyProfile, type ApiHistoryItem, type ApiPlayerProfile,
 } from '@/lib/api-client';
 import { fill } from '@/lib/i18n-tournaments';
 import { localizedName } from '@/lib/localized';
 import { profileSchema } from '@/lib/validation';
 import { formatDate } from '@/lib/utils';
-import { LoginButton, Section, StatusBadge, selectClass, useReader } from './shared';
+import { LoginButton, Section, StatusBadge, useReader } from './shared';
 
 /** Texto do resultado de uma participacao (campeao, "3o lugar" ou "participou"). */
 function resultLabel(d: ReturnType<typeof useLanguage>['dict']['tournaments'], h: ApiHistoryItem): string {
@@ -94,38 +94,36 @@ export function PlayerPageClient({ id }: { id: string }) {
   );
 }
 
-/** Pagina /profile: edita o proprio perfil (nome no jogo, vila, rank) e mostra como os outros veem. */
+/** Pagina /profile: edita so' o nome no jogo; vila e rank aparecem so' para leitura (o bot preenche pelos cargos do Discord) com a origem. */
 export function MyProfileClient() {
-  const { dict } = useLanguage();
+  const { dict, locale } = useLanguage();
   const d = dict.tournaments;
-  const { locale } = useLanguage();
+  const dd = dict.discord;
   const { reader, loaded } = useReader();
   const [p, setP] = useState<ApiPlayerProfile | null>(null);
-  const [villages, setVillages] = useState<ApiVillage[]>([]);
-  const [ranks, setRanks] = useState<ApiNinjaRank[]>([]);
-  const [form, setForm] = useState({ gameName: '', villageId: '', ninjaRankId: '' });
+  const [gameName, setGameName] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!reader) return;
     let alive = true;
-    Promise.all([getMyProfile(), listVillages().catch(() => []), listNinjaRanks().catch(() => [])]).then(([me, v, r]) => {
+    getMyProfile().then((me) => {
       if (!alive) return;
-      setP(me); setVillages(v); setRanks(r);
-      setForm({ gameName: me.gameName ?? '', villageId: me.village?.id ?? '', ninjaRankId: me.ninjaRank?.id ?? '' });
+      setP(me);
+      setGameName(me.gameName ?? '');
     }).catch(() => undefined);
     return () => { alive = false; };
   }, [reader]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const parsed = profileSchema.safeParse(form);
+    const parsed = profileSchema.safeParse({ gameName });
     if (!parsed.success) { setMsg({ ok: false, text: d.errTooLong }); return; }
     setBusy(true);
     setMsg(null);
     try {
-      const res = await updateMyProfile({ gameName: parsed.data.gameName || null, villageId: parsed.data.villageId || null, ninjaRankId: parsed.data.ninjaRankId || null });
+      const res = await updateMyProfile({ gameName: parsed.data.gameName || null });
       setP(res);
       setMsg({ ok: true, text: d.saved });
     } catch (err) {
@@ -134,6 +132,15 @@ export function MyProfileClient() {
       setBusy(false);
     }
   }
+
+  // Origem de vila/rank (so' vem no /players/me): cargo no servidor X do Discord ou o padrao.
+  const sourceText = p?.source?.kind === 'discord' && p.source.guildName ? fill(dd.sourceDiscord, { guild: p.source.guildName }) : dd.sourceDefault;
+  const readOnly = (label: string, ref: ApiPlayerProfile['village']) => (
+    <div className="space-y-1.5">
+      <span className="text-sm font-medium">{label}</span>
+      <p className="flex h-10 items-center rounded-md border border-input bg-muted/40 px-3 text-sm" aria-readonly="true">{ref ? localizedName(locale, ref.name, ref.namePt) : '-'}</p>
+    </div>
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -145,24 +152,13 @@ export function MyProfileClient() {
           <form onSubmit={save} className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
             <div className="space-y-1.5">
               <label htmlFor="p-name" className="text-sm font-medium">{d.gameNameLabel}</label>
-              <Input id="p-name" maxLength={40} value={form.gameName} placeholder={d.gameNamePlaceholder} onChange={(e) => setForm({ ...form, gameName: e.target.value })} />
+              <Input id="p-name" maxLength={40} value={gameName} placeholder={d.gameNamePlaceholder} onChange={(e) => setGameName(e.target.value)} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label htmlFor="p-village" className="text-sm font-medium">{d.villageLabel}</label>
-                <select id="p-village" className={selectClass} value={form.villageId} onChange={(e) => setForm({ ...form, villageId: e.target.value })}>
-                  <option value="">{d.noneOption}</option>
-                  {villages.map((v) => <option key={v.id} value={v.id}>{localizedName(locale, v.name, v.namePt)}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="p-rank" className="text-sm font-medium">{d.rankLabel}</label>
-                <select id="p-rank" className={selectClass} value={form.ninjaRankId} onChange={(e) => setForm({ ...form, ninjaRankId: e.target.value })}>
-                  <option value="">{d.noneOption}</option>
-                  {[...ranks].sort((a, b) => a.order - b.order).map((r) => <option key={r.id} value={r.id}>{localizedName(locale, r.name, r.namePt)}</option>)}
-                </select>
-              </div>
+              {readOnly(d.villageLabel, p?.village ?? null)}
+              {readOnly(d.rankLabel, p?.ninjaRank ?? null)}
             </div>
+            {p && <p className="text-xs text-muted-foreground">{sourceText} {dd.readOnlyHint} {dd.syncHint}</p>}
             <p className="text-xs text-muted-foreground">{d.privacyNote}</p>
             {msg && <p role="status" className={msg.ok ? 'text-sm font-medium text-emerald-500' : 'text-sm font-medium text-destructive'}>{msg.text}</p>}
             <div className="flex flex-wrap gap-2">
