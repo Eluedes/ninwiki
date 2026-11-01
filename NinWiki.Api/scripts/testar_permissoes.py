@@ -396,6 +396,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("/bot/latest-posts devolve lista (posts no ar)", r.status_code == 200 and isinstance(r.json(), list), r.text[:120])
     r = await c.get("/bot/drops", params={"q": item_nome})
     check("/bot/drops sem token do bot (401)", r.status_code == 401)
+    r = await c.get("/brand/nin-logo-laranja.png")
+    check("o logo do bot e' servido pela API (publico, imagem PNG)", r.status_code == 200 and r.headers.get("content-type") == "image/png" and r.content[1:4] == b"PNG", str(r.status_code))
     # /bot/recipe: profissao de teste com 1 receita (apagada no fim, mesmo se o teste falhar)
     from app.models.enums import ProfessionGroup
     from app.models.guide import Profession
@@ -3230,8 +3232,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
           next(g for g in lista if g["guildId"] == G_A)["memberCount"] == 1234 and next(g for g in lista if g["guildId"] == G_C)["memberCount"] == 0)
     por_id = {x["id"]: x for x in (await api("GET", "/ninja-ranks")).json()}
     # no banco de teste so' existem os ranks criados por migracao (os basicos vem dos dados reais): confere os novos e, se o Kage existir, o nome e a ordem dele
-    check("ranks: Jonin Special (5) e Conselho (6) existem e o antigo Kage se chama Kami, no topo (id continua kage)",
-          por_id.get("jonin-special", {}).get("order") == 5 and por_id.get("council", {}).get("order") == 6 and por_id.get("council", {}).get("namePt") == "Conselho"
+    check("ranks: Jonin Special (4, abaixo do Jonin) e Conselho (6) existem e o antigo Kage se chama Kami, no topo (id continua kage)",
+          por_id.get("jonin-special", {}).get("order") == 4 and por_id.get("council", {}).get("order") == 6 and por_id.get("council", {}).get("namePt") == "Conselho"
           and ("kage" not in por_id or (por_id["kage"]["name"] == "Kami" and por_id["kage"]["namePt"] == "Kami" and por_id["kage"]["order"] == 7)), str(sorted(por_id)))
     check("guilds-sync: quantidade de membros negativa -> 422", (await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": G_A, "name": "x", "memberCount": -1, "roles": []}]})).status_code == 422)
     gA = next((g for g in lista if g["guildId"] == G_A), None)
@@ -3247,14 +3249,19 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     # --- mapeamento explicito de cargo ---
     await empurrar(G_A, fato(ids_leitores[36], ("12", "Cargo qualquer")))
     check("cargo com mapeamento explicito (nome nao parece rank): rank Chunin", await perfil(L36) == (V_MIST, R_CHU, "Servidor A TESTE"), str(await perfil(L36)))
-    # --- varios servidores: maior rank vence; empate = atualizado por ultimo ---
+    # --- varios servidores: maior rank vence; empate = fica o servidor que ja valia (estavel) ---
     await api("PUT", f"/discord-links/guilds/{G_B}", A, json={"villageId": V_SAND})
     await empurrar(G_B, fato(ids_leitores[35], ("21", nome_chu)))
     check("dois servidores: vale o servidor onde o rank e' MAIOR (Chunin em B > Genin em A)", await perfil(L35) == (V_SAND, R_CHU, "Servidor B TESTE"), str(await perfil(L35)))
     await empurrar(G_B, fato(ids_leitores[36], ("21", nome_chu)))
-    check("empate de rank (Chunin nos dois): vale o atualizado mais recentemente (B)", await perfil(L36) == (V_SAND, R_CHU, "Servidor B TESTE"), str(await perfil(L36)))
+    check("empate de rank (Chunin nos dois): FICA o servidor que ja valia (A), sem trocar de vila", await perfil(L36) == (V_MIST, R_CHU, "Servidor A TESTE"), str(await perfil(L36)))
     await empurrar(G_A, fato(ids_leitores[36], ("12", "Cargo qualquer")))
-    check("empate de novo, agora A foi atualizado por ultimo -> A", await perfil(L36) == (V_MIST, R_CHU, "Servidor A TESTE"), str(await perfil(L36)))
+    check("empate de novo, mesmo apos A ser atualizado: continua A (nao oscila)", await perfil(L36) == (V_MIST, R_CHU, "Servidor A TESTE"), str(await perfil(L36)))
+    from app.core.discord_profile import pick_candidate
+    _t = datetime.now(timezone.utc)
+    check("pick_candidate: empate sem servidor atual -> menor ID; com servidor atual -> ele; rank maior sempre vence",
+          pick_candidate([(3, _t, "222", "a", "x"), (3, _t, "111", "b", "x")])[2] == "111" and pick_candidate([(3, _t, "222", "a", "x"), (3, _t, "111", "b", "x")], "discord:222")[2] == "222"
+          and pick_candidate([(3, _t, "222", "a", "x"), (4, _t, "999", "b", "y")], "discord:222")[2] == "999" and pick_candidate([]) is None)
     # --- sair / perder o cargo: volta para o proximo servidor ou para o padrao ---
     await empurrar(G_B, fato(ids_leitores[35], presente=False))
     check("saiu do servidor B: volta para o A (Genin, Mist)", await perfil(L35) == (V_MIST, R_GEN, "Servidor A TESTE"), str(await perfil(L35)))

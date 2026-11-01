@@ -31,7 +31,7 @@ from ninwiki_bot.log_feed import LogFeedStore, format_entry, pick_new, query_sin
 from ninwiki_bot.guilds_feed import GuildsFeed
 from ninwiki_bot.language import LanguageStore
 from ninwiki_bot.member_sync import MemberSync, SYNC_MINUTES
-from ninwiki_bot.public_commands import register_public_commands
+from ninwiki_bot.public_commands import register_public_commands, set_logo_url
 from ninwiki_bot.version_feed import VersionStore, build_embed as build_version_embed, merge as merge_versions
 
 # Pasta dos arquivos *_state.json. Padrao: ao lado do main.py (SquareCloud/local). No Docker/Azure: BOT_STATE_DIR=/data (volume), para o container poder ser read_only.
@@ -427,7 +427,11 @@ class NinWikiBot(discord.Client):
         if self.settings.log_channel_id:
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
-        register_public_commands(self.tree, self.api, self.settings.allowed_guilds, self.settings.site_url, self.check_now, bool(self.settings.site_url), self.languages)
+        # O logo das respostas vem da API (o Cloudflare do site barra o Discord e a imagem aparecia quebrada).
+        set_logo_url(f"{self.settings.ninwiki_api_url.rstrip('/')}/brand/nin-logo-laranja.png")
+        # Servidores com permissao para usar os comandos: ALLOWED_GUILD_IDS + o de testes (DEV_GUILD_ID), os mesmos onde os comandos sao registrados. Lista vazia = sem restricao.
+        allowed = set(target_guilds(self.settings.allowed_guilds, self.settings.dev_guild_id)) if self.settings.allowed_guilds else set()
+        register_public_commands(self.tree, self.api, allowed, self.settings.site_url, self.check_now, bool(self.settings.site_url), self.languages)
         # Comandos so' nos servidores escolhidos (ALLOWED_GUILD_IDS + DEV_GUILD_ID), na hora, e sem sobra de comandos globais antigos (ver ninwiki_bot/command_sync.py).
         result = await sync_commands(self.tree, target_guilds(self.settings.allowed_guilds, self.settings.dev_guild_id), lambda gid: discord.Object(id=gid))
         self.command_sync_result = result

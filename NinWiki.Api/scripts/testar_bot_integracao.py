@@ -236,7 +236,12 @@ async def testar() -> None:
     check("aviso de report: titulo com o tipo, link da pagina no site e aponta o painel",
           "Translation error" in f["title"] and "https://wiki.example/jutsus/fire-ball" in f["fields"][0][1] and "/admin/reports" in f["footer"], str(f))
     if TEM_DISCORD:
-        from ninwiki_bot.public_commands import build_drop_embed, build_posts_embed, build_recipe_embed
+        from ninwiki_bot.public_commands import build_drop_embed, build_posts_embed, build_recipe_embed, logo_for, set_logo_url
+        set_logo_url(None)
+        sem_api = logo_for("https://wiki.example/") == "https://wiki.example/images/logo/nin-logo-laranja.png" and logo_for("") is None
+        set_logo_url("https://api.example/brand/nin-logo-laranja.png")
+        check("logo das respostas: usa o da API quando definido (o site e' barrado pelo Cloudflare); senao o do site; sem nada, nenhum", sem_api and logo_for("https://wiki.example/") == "https://api.example/brand/nin-logo-laranja.png")
+        set_logo_url(None)
         e = build_drop_embed({"found": True, "title": "Ring of Vigor", "href": "/detail/ring", "image": None, "rarity": "rare",
                               "mobs": [{"name": "Larva", "href": "/detail/larva", "chance": 10, "chanceQualifier": "over"}, {"name": "Wolf", "href": "/detail/wolf", "chance": 2.5, "chanceQualifier": None}]},
                              "ring", "https://wiki.example/", "en")

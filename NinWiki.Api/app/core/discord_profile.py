@@ -8,7 +8,9 @@ REGRAS (so' aqui; o bot nunca decide nada, so' repassa fatos):
      - So' a vila mapeada e nenhum cargo de rank: vila do servidor + o MENOR rank da hierarquia (Academy Student).
      - So' o rank e servidor sem vila: rank do cargo + vila padrao.
      - Servidor sem vila e sem cargo de rank: nao conta (nao ha' informacao).
-  3. Varios servidores: vale a combinacao do servidor onde o leitor tem o MAIOR rank; empate -> a linha atualizada mais recentemente.
+  3. Varios servidores (ex.: o jogador esta nos servidores das 3 vilas): vale a combinacao do servidor onde o leitor tem o MAIOR rank
+     (Genin < Chunin < Jonin Special < Jonin < Conselho < Kami). Empate de rank: fica o servidor que JA valia no perfil (a vila nao troca
+     sozinha); se ele nao esta' entre os empatados, o de menor ID de servidor (estavel).
   4. Sem nenhum servidor que conte (saiu, perdeu o cargo, bot nao esta' la'): padrao = vila Takumi + rank Rogue, origem "default".
 Rogue (ninja sem vila) fica FORA da hierarquia academia -> kami (id `kage`; order 0) e nunca e' usado como "o menor rank".
 """
@@ -58,9 +60,17 @@ def best_rank_for_roles(roles: list[dict], explicit: dict[str, NinjaRank], by_na
     return best
 
 
-def pick_candidate(candidates: list[tuple[int, datetime, str, str | None, str | None]]) -> tuple[int, datetime, str, str | None, str | None] | None:
-    """Regra de varios servidores: candidato = (ordem do rank, atualizado_em, guild_id, village_id, rank_id); vence o maior rank e, no empate, o mais recente."""
-    return max(candidates, key=lambda c: (c[0], c[1]), default=None)
+def pick_candidate(candidates: list[tuple[int, datetime, str, str | None, str | None]], current_source: str | None = None) -> tuple[int, datetime, str, str | None, str | None] | None:
+    """Regra de varios servidores: candidato = (ordem do rank, atualizado_em, guild_id, village_id, rank_id); vence o maior rank.
+    Empate: o servidor que ja' valia (`current_source`, ex. "discord:123") continua; senao o de menor guild_id. Assim a vila nao fica trocando a cada atualizacao."""
+    if not candidates:
+        return None
+    top = max(c[0] for c in candidates)
+    tied = [c for c in candidates if c[0] == top]
+    for c in tied:
+        if current_source == source_for(c[2]):
+            return c
+    return min(tied, key=lambda c: (len(c[2]), c[2]))   # guild_id e' texto numerico: compara pelo tamanho e depois pelo texto = ordem numerica
 
 
 async def apply_defaults(db: AsyncSession, reader: Reader) -> None:
@@ -104,7 +114,7 @@ async def recompute_readers(db: AsyncSession, discord_ids: Iterable[int]) -> int
                 rank = rank or lowest
                 village_id = guild.village_id if guild.village_id in villages else None
                 candidates.append((rank.order if rank else 0, m.updated_at, m.guild_id, village_id, rank.id if rank else None))
-            best = pick_candidate(candidates)
+            best = pick_candidate(candidates, reader.profile_source)
             before = (reader.village_id, reader.ninja_rank_id, reader.profile_source)
             if best is None:
                 await apply_defaults(db, reader)

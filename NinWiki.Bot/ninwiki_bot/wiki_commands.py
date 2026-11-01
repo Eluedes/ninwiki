@@ -16,7 +16,7 @@ from discord import app_commands
 
 from ninwiki_bot.api_client import ApiError, NinWikiApi
 from ninwiki_bot.language import DEFAULT, LanguageStore, TEXT
-from ninwiki_bot.public_commands import KIND_COLOR, LOGO_PATH, NO_MENTIONS, _autocomplete_for, _clean, build_search_view
+from ninwiki_bot.public_commands import KIND_COLOR, NO_MENTIONS, _autocomplete_for, _clean, build_search_view, logo_for
 
 log = logging.getLogger("ninwiki_bot")
 
@@ -68,10 +68,10 @@ def build_help_embed(site_url: str, lang: str = DEFAULT) -> discord.Embed:
     embed = discord.Embed(title=t["help_title"], color=KIND_COLOR, description=t["help_site"].format(url=site_url.rstrip("/")) if site_url else None)
     for cmd, desc in t["help_lines"]:
         embed.add_field(name=cmd, value=desc, inline=False)
-    base = site_url.rstrip("/")
+    logo = logo_for(site_url)
     embed.set_footer(text=t["team"])
-    if base:
-        embed.set_thumbnail(url=f"{base}{LOGO_PATH}")
+    if logo:
+        embed.set_thumbnail(url=logo)
     return embed
 
 
