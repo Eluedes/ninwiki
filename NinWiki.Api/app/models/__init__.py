@@ -27,3 +27,4 @@ from app.models.announcement import SiteAnnouncement  # noqa: F401
 from app.models.media import MediaImage  # noqa: F401
 from app.models.reports import ContentReport  # noqa: F401
 from app.models.volunteers import VolunteerApplication, VolunteerSettings  # noqa: F401
+from app.models.tournaments import Tournament, TournamentCompetitor, TournamentEntry, TournamentMatch, TournamentPhase, TournamentTeamMember  # noqa: F401

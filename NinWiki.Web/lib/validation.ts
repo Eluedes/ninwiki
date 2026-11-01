@@ -264,3 +264,25 @@ export const volunteerSchema = z.object({
 });
 
 export type VolunteerFormValues = z.infer<typeof volunteerSchema>;
+
+// ---- Torneios e perfil do jogador. Espelham app/schemas/tournaments.py. As mensagens sao CHAVES (required, tooShort, tooLong): a tela traduz com dict.tournaments (errRequired...). ----
+export const tournamentSchema = z.object({
+  name: z.string().trim().min(1, 'required').min(3, 'tooShort').max(80, 'tooLong'),
+  description: z.string().max(2000, 'tooLong'),
+  startsAt: z.string(),   // valor do <input type="datetime-local"> ou vazio
+  visibility: z.enum(['public', 'unlisted']),
+});
+export type TournamentFormValues = z.infer<typeof tournamentSchema>;
+
+export const phaseSchema = z.object({
+  name: z.string().trim().min(1, 'required').max(60, 'tooLong'),
+  teamSize: z.number().int().min(1, 'required').max(10, 'tooLong'),
+  format: z.enum(['single_elimination', 'round_robin']),
+});
+
+export const profileSchema = z.object({
+  gameName: z.string().trim().max(40, 'tooLong'),
+  villageId: z.string(),
+  ninjaRankId: z.string(),
+});
+export type ProfileFormValues = z.infer<typeof profileSchema>;

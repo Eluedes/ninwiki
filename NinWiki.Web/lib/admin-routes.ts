@@ -20,6 +20,7 @@ export const ROUTE_PERMISSIONS: { prefix: string; permission: PermissionName }[]
   { prefix: '/admin/comments', permission: 'comments.moderate' },
   { prefix: '/admin/reports', permission: 'reports.manage' },
   { prefix: '/admin/volunteers', permission: 'volunteers.manage' },
+  { prefix: '/admin/tournaments', permission: 'tournaments.manage' },
   { prefix: '/admin/translations', permission: 'translation.import' },
   { prefix: '/admin/media', permission: 'uploads.create' },
   { prefix: '/admin/announcement', permission: 'announcement.manage' },

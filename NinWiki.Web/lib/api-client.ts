@@ -871,7 +871,7 @@ export type StaffRole = 'super_admin' | 'admin' | 'creator';
 // Nomes das permissoes - espelham app/core/permissions.py::Permission no backend.
 export type PermissionName =
   | 'content.create' | 'content.edit' | 'content.publish' | 'content.delete' | 'content.import'
-  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'volunteers.manage' | 'translation.import'
+  | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'volunteers.manage' | 'tournaments.manage' | 'translation.import'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
   | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.categorize' | 'site.maintenance' | 'media.upload' | 'media.reset_ids' | 'media.closed'
@@ -1793,3 +1793,97 @@ export interface ApiNewNamesResult { totalStrings: number; nameLike: number; alr
 export function findNewGameNames(english: Record<string, string>, portuguese: Record<string, string> | null): Promise<ApiNewNamesResult> {
   return apiFetch('/translations/new-names', { method: 'POST', body: JSON.stringify({ english, portuguese }) });
 }
+
+// ---- Torneios (publico + organizador logado com o Discord) e perfis de jogadores ----
+// Espelham app/schemas/tournaments.py. Quem cria o torneio e' o ORGANIZADOR (leitor logado); a equipe so' modera.
+export type TournamentStatus = 'draft' | 'open' | 'running' | 'finished';
+export type TournamentVisibility = 'public' | 'unlisted';
+export type PhaseFormat = 'single_elimination' | 'round_robin';
+export type PhaseStatus = 'setup' | 'running' | 'finished';
+export const TOURNAMENT_STATUSES: TournamentStatus[] = ['draft', 'open', 'running', 'finished'];
+
+/** Dono do torneio / do perfil (so' dados publicos; nunca o Discord ID). */
+export interface ApiPlayerRef { id: string; username: string; avatarUrl: string | null; gameName: string | null }
+
+export interface ApiTournamentSummary {
+  id: string; name: string; status: TournamentStatus; visibility: TournamentVisibility; startsAt: string | null; createdAt: string;
+  championName: string | null; hidden: boolean; owner: ApiPlayerRef; entryCount: number; phaseCount: number;
+}
+export interface ApiEntry {
+  id: string; displayName: string; seed: number; readerId: string | null; avatarUrl: string | null;
+  villageId: string | null; ninjaRankId: string | null; placement: number | null;
+}
+export interface ApiCompetitor { id: string; name: string; seed: number; entryIds: string[] }
+export interface ApiMatch {
+  id: string; round: number; slot: number; competitorAId: string | null; competitorBId: string | null;
+  scoreA: number | null; scoreB: number | null; winnerId: string | null; done: boolean;
+}
+export interface ApiStanding { competitorId: string; played: number; wins: number; draws: number; losses: number; pointsFor: number; pointsAgainst: number; points: number }
+export interface ApiPhase {
+  id: string; position: number; name: string; teamSize: number; format: PhaseFormat; status: PhaseStatus;
+  competitors: ApiCompetitor[]; matches: ApiMatch[]; standings: ApiStanding[] | null; suggestedEntryIds: string[] | null;
+}
+export interface ApiTournament extends ApiTournamentSummary {
+  description: string; isOrganizer: boolean; myEntryId: string | null; entries: ApiEntry[]; phases: ApiPhase[];
+}
+export interface ApiNamedRef { id: string; name: string; namePt: string | null }
+export interface ApiHistoryItem { tournamentId: string; name: string; status: TournamentStatus; placement: number | null; wins: number; losses: number; date: string }
+export interface ApiPlayerProfile {
+  id: string; username: string; avatarUrl: string | null; gameName: string | null; village: ApiNamedRef | null; ninjaRank: ApiNamedRef | null;
+  stats: { tournaments: number; wins: number; losses: number; titles: number }; history: ApiHistoryItem[]; trophies: ApiHistoryItem[];
+}
+export interface TournamentInput { name: string; description: string; startsAt?: string | null; visibility: TournamentVisibility }
+export interface PhaseInput { name: string; teamSize: number; format: PhaseFormat }
+export interface ApiModerationTournament {
+  id: string; name: string; status: TournamentStatus; visibility: TournamentVisibility; hidden: boolean; hiddenBy: string | null;
+  createdAt: string; ownerId: string; ownerName: string; ownerBanned: boolean; entryCount: number;
+}
+
+const tPath = (id: string) => `/tournaments/${id}`;
+const jsonInit = (method: string, body?: unknown): RequestInit => ({ method, body: body === undefined ? undefined : JSON.stringify(body) });
+
+/** Lista publica de torneios (filtro de status, busca). `mine`: os meus (exige login de leitor). */
+export function listTournaments(opts: { status?: TournamentStatus; q?: string; mine?: boolean; limit?: number; offset?: number } = {}): Promise<{ items: ApiTournamentSummary[]; total: number }> {
+  const params = new URLSearchParams();
+  if (opts.status) params.set('status', opts.status);
+  if (opts.q) params.set('q', opts.q);
+  if (opts.mine) params.set('mine', 'true');
+  params.set('limit', String(opts.limit ?? 20));
+  params.set('offset', String(opts.offset ?? 0));
+  return apiFetch(`/tournaments?${params}`, { cache: 'no-store' }, true);
+}
+/** Torneio completo (a resposta depende de quem esta' logado: isOrganizer, myEntryId...). */
+export function getTournament(id: string): Promise<ApiTournament> { return apiFetch(tPath(id), { cache: 'no-store' }, true); }
+export function createTournament(input: TournamentInput): Promise<ApiTournament> { return apiFetch('/tournaments', jsonInit('POST', input), true); }
+export function updateTournament(id: string, patch: Partial<TournamentInput> & { status?: 'draft' | 'open' | 'running'; clearStartsAt?: boolean }): Promise<ApiTournament> { return apiFetch(tPath(id), jsonInit('PATCH', patch), true); }
+export function deleteTournament(id: string): Promise<void> { return apiFetch(tPath(id), jsonInit('DELETE'), true); }
+export function joinTournament(id: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/join`, jsonInit('POST'), true); }
+export function leaveTournament(id: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/join`, jsonInit('DELETE'), true); }
+export function addGuestEntry(id: string, displayName: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries`, jsonInit('POST', { displayName }), true); }
+export function removeEntry(id: string, entryId: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries/${entryId}`, jsonInit('DELETE'), true); }
+export function reorderEntries(id: string, ids: string[]): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries/order`, jsonInit('PUT', { ids }), true); }
+export function createPhase(id: string, input: PhaseInput): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/phases`, jsonInit('POST', input), true); }
+export function updatePhase(id: string, phaseId: string, input: PhaseInput): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/phases/${phaseId}`, jsonInit('PATCH', input), true); }
+export function deletePhase(id: string, phaseId: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/phases/${phaseId}`, jsonInit('DELETE'), true); }
+/** Monta a chave da fase com os competidores (na ordem de semente); cada um com os ids dos inscritos que o formam. */
+export function startPhase(id: string, phaseId: string, competitors: { name?: string; entryIds: string[] }[]): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/phases/${phaseId}/start`, jsonInit('POST', { competitors }), true); }
+export function phaseAction(id: string, phaseId: string, action: 'reset' | 'finish' | 'reopen'): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/phases/${phaseId}/${action}`, jsonInit('POST'), true); }
+export function setMatchResult(id: string, matchId: string, result: { scoreA?: number | null; scoreB?: number | null; winner?: 'a' | 'b' | null }): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/matches/${matchId}/result`, jsonInit('PUT', result), true); }
+export function tournamentAction(id: string, action: 'finish' | 'reopen'): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/${action}`, jsonInit('POST'), true); }
+/** Perfil publico de um jogador. */
+export function getPlayer(id: string): Promise<ApiPlayerProfile> { return apiFetch(`/players/${id}`, { cache: 'no-store' }, true); }
+/** Meu perfil (leitor logado). */
+export function getMyProfile(): Promise<ApiPlayerProfile> { return apiFetch('/players/me', { cache: 'no-store' }, true); }
+export function updateMyProfile(input: { gameName: string | null; villageId: string | null; ninjaRankId: string | null }): Promise<ApiPlayerProfile> { return apiFetch('/players/me', jsonInit('PUT', input), true); }
+/** Painel (tournaments.manage): todos os torneios, inclusive rascunhos, nao listados e escondidos. */
+export function listTournamentsForModeration(opts: { q?: string; hidden?: boolean; status?: TournamentStatus } = {}): Promise<ApiModerationTournament[]> {
+  const params = new URLSearchParams();
+  if (opts.q) params.set('q', opts.q);
+  if (opts.hidden !== undefined) params.set('hidden', String(opts.hidden));
+  if (opts.status) params.set('status', opts.status);
+  return apiFetch(`/tournaments-moderation?${params}`);
+}
+export function moderateTournament(id: string, patch: { hidden?: boolean; name?: string; description?: string }): Promise<void> { return apiFetch(`/tournaments-moderation/${id}`, jsonInit('PATCH', patch)); }
+export function deleteTournamentModeration(id: string): Promise<void> { return apiFetch(`/tournaments-moderation/${id}`, jsonInit('DELETE')); }
+/** Ranks ninja (Genin ate' Kage) - usados no perfil do jogador. */
+export function listNinjaRanks(): Promise<ApiNinjaRank[]> { return apiFetch('/ninja-ranks'); }

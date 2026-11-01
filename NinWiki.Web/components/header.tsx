@@ -38,9 +38,10 @@ import { isUnderMaintenance } from '@/lib/maintenance';
 // idiomas pt e en). A ordem aqui e' a ordem em que os itens aparecem,
 // tanto no menu de desktop quanto no menu mobile - os dois usam o
 // MESMO array, entao so' precisa editar em um lugar.
-const allNavItems: { key: 'home' | 'blog' | 'village' | 'map'; href: string }[] = [
+const allNavItems: { key: 'home' | 'blog' | 'tournaments' | 'village' | 'map'; href: string }[] = [
   { key: 'home', href: '/' },
   { key: 'blog', href: '/blog' },
+  { key: 'tournaments', href: '/tournaments' },
   { key: 'village', href: '/village' },
   { key: 'map', href: '/map' },
 ];

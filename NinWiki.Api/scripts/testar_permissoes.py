@@ -136,6 +136,16 @@ ROTAS_PUBLICAS = {
     ("GET", "/volunteers/status"),  # leitura publica: o formulario /volunteer esta' aberto?
     ("POST", "/volunteers/apply"),  # visitante se inscreve como voluntario (origem + limite por IP + isca + consentimento + teto diario)
     ("POST", "/client-errors"),    # o navegador do visitante avisa que o site quebrou (origem + limite por IP + teto por hora)
+    # torneios e perfis: leitura publica; escrita exige LEITOR logado (organizador, cookie proprio) + origem + limites por pessoa/dia (ver app/api/tournaments.py)
+    ("GET", "/tournaments"), ("GET", "/tournaments/{tournament_id}"), ("POST", "/tournaments"),
+    ("PATCH", "/tournaments/{tournament_id}"), ("DELETE", "/tournaments/{tournament_id}"),
+    ("POST", "/tournaments/{tournament_id}/join"), ("DELETE", "/tournaments/{tournament_id}/join"),
+    ("POST", "/tournaments/{tournament_id}/entries"), ("DELETE", "/tournaments/{tournament_id}/entries/{entry_id}"), ("PUT", "/tournaments/{tournament_id}/entries/order"),
+    ("POST", "/tournaments/{tournament_id}/phases"), ("PATCH", "/tournaments/{tournament_id}/phases/{phase_id}"), ("DELETE", "/tournaments/{tournament_id}/phases/{phase_id}"),
+    ("POST", "/tournaments/{tournament_id}/phases/{phase_id}/start"), ("POST", "/tournaments/{tournament_id}/phases/{phase_id}/reset"),
+    ("POST", "/tournaments/{tournament_id}/phases/{phase_id}/finish"), ("POST", "/tournaments/{tournament_id}/phases/{phase_id}/reopen"),
+    ("PUT", "/tournaments/{tournament_id}/matches/{match_id}/result"), ("POST", "/tournaments/{tournament_id}/finish"), ("POST", "/tournaments/{tournament_id}/reopen"),
+    ("GET", "/players/me"), ("PUT", "/players/me"), ("GET", "/players/{player_id}"),
 }
 
 
@@ -2770,6 +2780,288 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     async with _SessV() as db:
         await db.execute(text("DELETE FROM volunteer_applications WHERE discord LIKE 'flood_teste_perm_%' OR discord IN ('voluntario_teste_perm', 'robo_isca_perm')"))
         await db.commit()
+
+    secao("38) Torneios: logica das chaves (byes, avancar, todos-contra-todos, tabela)")
+    from app.core import brackets as _bk
+    check("tamanho da chave: 2->2, 3->4, 5->8, 8->8, 9->16", [_bk.bracket_size(n) for n in (2, 3, 5, 8, 9)] == [2, 4, 8, 8, 16])
+    check("semeadura de 8 lugares: 1x8, 4x5, 2x7, 3x6", _bk.seed_positions(8) == [1, 8, 4, 5, 2, 7, 3, 6])
+    chaves_ok, erro_chave = True, ""
+    for n in range(2, 65):
+        specs = _bk.single_elimination(n)
+        size = _bk.bracket_size(n)
+        r1 = [s for s in specs if s.round == 1]
+        folgas = [s for s in r1 if (s.seed_a is None) != (s.seed_b is None)]
+        vazias = [s for s in r1 if s.seed_a is None and s.seed_b is None]
+        sementes = sorted(x for s in r1 for x in (s.seed_a, s.seed_b) if x)
+        if len(specs) != size - 1 or len(folgas) != size - n or vazias or sementes != list(range(1, n + 1)) or max(s.round for s in specs) != _bk.rounds_count(n):
+            chaves_ok, erro_chave = False, f"n={n}"
+            break
+    check("eliminatoria simples de 2 a 64: size-1 partidas, size-n folgas, nenhuma partida vazia, todas as sementes uma vez", chaves_ok, erro_chave)
+    check("sem folga quando o numero e' potencia de 2 (8 competidores)", not any((s.seed_a is None) != (s.seed_b is None) for s in _bk.single_elimination(8) if s.round == 1))
+    r1_3 = [s for s in _bk.single_elimination(3) if s.round == 1]
+    check("com 3 competidores o cabeca 1 pega a folga e o 2 enfrenta o 3", (r1_3[0].seed_a, r1_3[0].seed_b) == (1, None) and (r1_3[1].seed_a, r1_3[1].seed_b) == (2, 3))
+    check("o vencedor avanca: (1,0)->(2,0,'a') e (1,3)->(2,1,'b')", _bk.next_match(1, 0) == (2, 0, "a") and _bk.next_match(1, 3) == (2, 1, "b"))
+    rr_ok = True
+    for n in range(2, 12):
+        specs = _bk.round_robin(n)
+        pares = {frozenset((s.seed_a, s.seed_b)) for s in specs}
+        mesma_rodada = {(s.round, x) for s in specs for x in (s.seed_a, s.seed_b)}
+        if len(specs) != n * (n - 1) // 2 or len(pares) != len(specs) or len(mesma_rodada) != 2 * len(specs):
+            rr_ok = False
+    check("todos-contra-todos de 2 a 11: n(n-1)/2 partidas, cada par uma vez, ninguem joga 2x na mesma rodada", rr_ok)
+    check("resolve_winner: placar decide; empate sem vencedor so' no todos-contra-todos",
+          _bk.resolve_winner(2, 1, None, False) == "a" and _bk.resolve_winner(None, None, "b", False) == "b" and _bk.resolve_winner(1, 1, None, True) is None)
+    for rotulo, args in (("empate na eliminatoria", (1, 1, None, False)), ("sem nada", (None, None, None, False)), ("vencedor contra o placar", (3, 1, "b", False))):
+        try:
+            _bk.resolve_winner(*args)
+            check(f"resolve_winner recusa {rotulo}", False)
+        except ValueError:
+            check(f"resolve_winner recusa {rotulo}", True)
+    check("colocacao: campeao 1, final 2, semi 3, quartas 5, oitavas 9", [_bk.elimination_placement(4, x) for x in (None, 4, 3, 2, 1)] == [1, 2, 3, 5, 9])
+    tabela = _bk.standings(["a", "b", "c"], [("a", "b", 2, 0), ("b", "c", 1, 1), ("a", "c", 0, 1)])
+    check("tabela: c (4 pts) > a (3) > b (1); saldo e pontos conferem", [r["competitorId"] for r in tabela] == ["c", "a", "b"] and tabela[0]["points"] == 4 and tabela[1]["pointsFor"] == 2 and tabela[2]["points"] == 1)
+
+    secao("38b) Torneios: perfil do leitor, so' o organizador administra, fases, chave, placar, limites e moderacao")
+    import uuid
+    from app.core.security import READER_COOKIE
+    from app.api import tournaments as _tm
+    inicio_torneios = datetime.now(timezone.utc) - timedelta(minutes=1)
+    dev_antes = settings.dev_login_enabled
+    settings.dev_login_enabled = True
+
+    async def entrar_leitor(n: int) -> tuple[dict, str]:
+        """Entra como o leitor BASE+n (dev-login) e devolve (cabecalho Cookie, id publico do leitor)."""
+        c.cookies.clear()
+        r = await c.post("/auth/reader/dev-login", json={"discordId": str(BASE + n)})
+        h = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
+        c.cookies.clear()
+        return h, r.json()["id"]
+
+    async def api(metodo: str, url: str, h: dict | None = None, **kw):
+        """Chamada com o limite por IP zerado (esta secao faz muitas escritas seguidas)."""
+        limiter.reset()
+        return await c.request(metodo, url, headers=h, **kw)
+
+    def eq(*ids):
+        """Um competidor com estes inscritos."""
+        return {"entryIds": list(ids)}
+
+    RO, id_o = await entrar_leitor(32)     # organizador
+    RX, id_x = await entrar_leitor(33)     # outro leitor
+    RY, id_y = await entrar_leitor(34)
+    corpo = {"name": "Chunin Exam TESTE", "description": "texto simples", "visibility": "public"}
+    check("anonimo nao cria torneio (401)", (await api("POST", "/tournaments", json=corpo)).status_code == 401)
+    check("anonimo le a lista publica (200)", (await api("GET", "/tournaments")).status_code == 200)
+    check("cookie da EQUIPE nao cria torneio (401: so' leitor logado)", (await api("POST", "/tournaments", A, json=corpo)).status_code == 401)
+    check("criar de outra origem -> 403 (CSRF)", (await api("POST", "/tournaments", {**RO, "Origin": "https://site-malicioso.example"}, json=corpo)).status_code == 403)
+    check("nome curto demais -> 422", (await api("POST", "/tournaments", RO, json={**corpo, "name": "ab"})).status_code == 422)
+    r = await api("POST", "/tournaments", RO, json=corpo)
+    check("leitor logado cria torneio: vira organizador, em rascunho", r.status_code == 201 and r.json()["isOrganizer"] is True and r.json()["status"] == "draft", r.text[:200])
+    T = r.json()["id"]
+    check("rascunho: anonimo e outro leitor recebem 404, o organizador ve'", (await api("GET", f"/tournaments/{T}")).status_code == 404
+          and (await api("GET", f"/tournaments/{T}", RX)).status_code == 404 and (await api("GET", f"/tournaments/{T}", RO)).status_code == 200)
+    check("rascunho fora da lista publica", T not in [i["id"] for i in (await api("GET", "/tournaments?limit=50")).json()["items"]])
+    check("outro leitor nao edita (rascunho -> 404)", (await api("PATCH", f"/tournaments/{T}", RX, json={"name": "Hack"})).status_code == 404)
+    check("anonimo nao edita (401)", (await api("PATCH", f"/tournaments/{T}", json={"name": "Hack"})).status_code == 401)
+    r = await api("PATCH", f"/tournaments/{T}", RO, json={"status": "open", "name": "  Chunin   Exam TESTE  "})
+    check("organizador abre as inscricoes e renomeia", r.status_code == 200 and r.json()["status"] == "open" and r.json()["name"].startswith("Chunin"), r.text[:200])
+    check("torneio aberto: outro leitor tentando editar -> 403", (await api("PATCH", f"/tournaments/{T}", RX, json={"name": "Hack"})).status_code == 403)
+    check("outro leitor nao apaga (403)", (await api("DELETE", f"/tournaments/{T}", RX)).status_code == 403)
+    check("outro leitor nao cria fase (403)", (await api("POST", f"/tournaments/{T}/phases", RX, json={"name": "x", "teamSize": 1})).status_code == 403)
+    check("aparece na lista publica e o anonimo abre pelo link (isOrganizer falso)",
+          T in [i["id"] for i in (await api("GET", "/tournaments?limit=50&status=open")).json()["items"]] and (await api("GET", f"/tournaments/{T}")).json()["isOrganizer"] is False)
+    await api("PATCH", f"/tournaments/{T}", RO, json={"visibility": "unlisted"})
+    check("nao listado: some da lista mas abre pelo link", T not in [i["id"] for i in (await api("GET", "/tournaments?limit=50")).json()["items"]] and (await api("GET", f"/tournaments/{T}")).status_code == 200)
+    await api("PATCH", f"/tournaments/{T}", RO, json={"visibility": "public"})
+    check("'meus torneios' exige login e traz o meu", (await api("GET", "/tournaments?mine=true")).status_code == 401 and T in [i["id"] for i in (await api("GET", "/tournaments?mine=true", RO)).json()["items"]])
+
+    # --- perfil ---
+    vilas = (await api("GET", "/villages")).json()
+    ranks = (await api("GET", "/ninja-ranks")).json()
+    check("anonimo nao edita perfil (401)", (await api("PUT", "/players/me", json={"gameName": "x"})).status_code == 401)
+    r = await api("PUT", "/players/me", RO, json={"gameName": "  Naruto   TESTE ", "villageId": vilas[0]["id"] if vilas else None, "ninjaRankId": ranks[0]["id"] if ranks else None})
+    check("leitor edita o proprio perfil (nome limpo)", r.status_code == 200 and r.json()["gameName"] == "Naruto   TESTE", r.text[:200])
+    if vilas and ranks:
+        check("perfil mostra a vila e o rank escolhidos", r.json()["village"]["id"] == vilas[0]["id"] and r.json()["ninjaRank"]["id"] == ranks[0]["id"])
+    check("vila inexistente -> 422", (await api("PUT", "/players/me", RO, json={"villageId": "nao-existe-teste"})).status_code == 422)
+    check("o perfil de outro leitor nao mudou (so' edita o proprio)", (await api("GET", f"/players/{id_x}")).json()["gameName"] is None)
+    pub = await api("GET", f"/players/{id_o}")
+    check("perfil publico abre sem login e NAO expoe o Discord ID", pub.status_code == 200 and "discordid" not in pub.text.lower(), pub.text[:200])
+    check("perfil inexistente -> 404", (await api("GET", f"/players/{uuid.uuid4()}")).status_code == 404)
+    check("/players/me exige login", (await api("GET", "/players/me")).status_code == 401 and (await api("GET", "/players/me", RO)).status_code == 200)
+
+    # --- inscritos ---
+    r = await api("POST", f"/tournaments/{T}/join", RO)
+    check("organizador tambem se inscreve (usa o nome do perfil)", r.status_code == 200 and r.json()["entries"][0]["displayName"].startswith("Naruto"), r.text[:200])
+    check("anonimo nao se inscreve (401)", (await api("POST", f"/tournaments/{T}/join")).status_code == 401)
+    r = await api("POST", f"/tournaments/{T}/join", RX)
+    check("outro leitor se inscreve", r.status_code == 200 and r.json()["myEntryId"] is not None, r.text[:200])
+    check("inscrever de novo nao duplica", len((await api("POST", f"/tournaments/{T}/join", RX)).json()["entries"]) == 2)
+    check("sair e voltar a entrar", len((await api("DELETE", f"/tournaments/{T}/join", RX)).json()["entries"]) == 1 and len((await api("POST", f"/tournaments/{T}/join", RX)).json()["entries"]) == 2)
+    await api("POST", f"/tournaments/{T}/join", RY)
+    check("so' o organizador adiciona convidado (outro leitor 403)", (await api("POST", f"/tournaments/{T}/entries", RX, json={"displayName": "Gx"})).status_code == 403)
+    for g in ("Guest1", "Guest2", "Guest3"):
+        r = await api("POST", f"/tournaments/{T}/entries", RO, json={"displayName": g})
+    det = r.json()
+    check("convidados entram (6 inscritos)", r.status_code == 201 and len(det["entries"]) == 6 and det["entries"][-1]["readerId"] is None, r.text[:200])
+    ent = {e["displayName"]: e["id"] for e in det["entries"]}
+    ids_ordem = [e["id"] for e in det["entries"]]
+    r = await api("PUT", f"/tournaments/{T}/entries/order", RO, json={"ids": list(reversed(ids_ordem))})
+    check("organizador reordena as sementes", r.status_code == 200 and [e["id"] for e in r.json()["entries"]] == list(reversed(ids_ordem)))
+    check("ordem incompleta -> 422", (await api("PUT", f"/tournaments/{T}/entries/order", RO, json={"ids": ids_ordem[:2]})).status_code == 422)
+    r = await api("POST", f"/tournaments/{T}/entries", RO, json={"displayName": "Removivel"})
+    rem = [e["id"] for e in r.json()["entries"] if e["displayName"] == "Removivel"][0]
+    check("organizador remove inscrito", len((await api("DELETE", f"/tournaments/{T}/entries/{rem}", RO)).json()["entries"]) == 6)
+    por_leitor = {e["readerId"]: e["id"] for e in det["entries"] if e["readerId"]}
+    e_o, e_x, e_y = por_leitor[id_o], por_leitor[id_x], por_leitor[id_y]
+    g1, g2, g3 = ent["Guest1"], ent["Guest2"], ent["Guest3"]
+
+    # --- fases e chave ---
+    r = await api("POST", f"/tournaments/{T}/phases", RO, json={"name": "Phase 1 - 2v2", "teamSize": 2, "format": "single_elimination"})
+    check("organizador cria fase 2v2", r.status_code == 201 and r.json()["phases"][0]["teamSize"] == 2, r.text[:200])
+    p1 = r.json()["phases"][0]["id"]
+    check("tamanho de equipe fora de 1-10 -> 422", (await api("POST", f"/tournaments/{T}/phases", RO, json={"name": "x", "teamSize": 11})).status_code == 422)
+    r = await api("POST", f"/tournaments/{T}/phases", RO, json={"name": "Phase 2 - 1v1", "teamSize": 1})
+    p2 = r.json()["phases"][1]["id"]
+    check("fase 2 criada; o organizador recebe a sugestao de quem entra", r.status_code == 201 and len(r.json()["phases"][0]["suggestedEntryIds"]) == 6)
+    check("visitante nao recebe a sugestao", (await api("GET", f"/tournaments/{T}")).json()["phases"][0]["suggestedEntryIds"] is None)
+    comp_ok = [eq(e_o, e_x), eq(e_y, g1), eq(g2, g3)]
+    check("equipe com tamanho errado -> 422", (await api("POST", f"/tournaments/{T}/phases/{p1}/start", RO, json={"competitors": [eq(e_o), eq(e_x, e_y)]})).status_code == 422)
+    check("pessoa repetida em duas equipes -> 422", (await api("POST", f"/tournaments/{T}/phases/{p1}/start", RO, json={"competitors": [eq(e_o, e_x), eq(e_o, g1)]})).status_code == 422)
+    check("inscrito desconhecido -> 422", (await api("POST", f"/tournaments/{T}/phases/{p1}/start", RO, json={"competitors": [eq(e_o, e_x), eq(str(uuid.uuid4()), g1)]})).status_code == 422)
+    check("so' 1 competidor -> 422", (await api("POST", f"/tournaments/{T}/phases/{p1}/start", RO, json={"competitors": [eq(e_o, e_x)]})).status_code == 422)
+    check("fase 2 nao inicia antes da 1 concluir (409)", (await api("POST", f"/tournaments/{T}/phases/{p2}/start", RO, json={"competitors": [eq(e_o), eq(e_x)]})).status_code == 409)
+    check("outro leitor nao inicia fase (403)", (await api("POST", f"/tournaments/{T}/phases/{p1}/start", RX, json={"competitors": comp_ok})).status_code == 403)
+    r = await api("POST", f"/tournaments/{T}/phases/{p1}/start", RO, json={"competitors": comp_ok})
+    check("chave 2v2 com 3 equipes gerada (3 partidas, torneio em andamento)", r.status_code == 200 and r.json()["status"] == "running" and len(r.json()["phases"][0]["matches"]) == 3, r.text[:200])
+    ph = r.json()["phases"][0]
+    cn = {c["name"]: c["id"] for c in ph["competitors"]}
+    t1, t2, t3 = cn["Team 1"], cn["Team 2"], cn["Team 3"]
+    m = {(x["round"], x["slot"]): x for x in ph["matches"]}
+    check("folga: cabeca 1 passa direto e ja' esta' na final", m[(1, 0)]["done"] and m[(1, 0)]["winnerId"] == t1 and m[(2, 0)]["competitorAId"] == t1)
+    check("inscricoes ja' fechadas: ninguem mais entra pela API (409)", (await api("POST", f"/tournaments/{T}/join", RX)).status_code == 409)
+
+    def mid(rd, sl):
+        """Id da partida (rodada, posicao) da fase 1."""
+        return m[(rd, sl)]["id"]
+
+    check("final sem adversario ainda -> 409", (await api("PUT", f"/tournaments/{T}/matches/{mid(2, 0)}/result", RO, json={"winner": "a"})).status_code == 409)
+    check("outro leitor nao lanca placar (403)", (await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", RX, json={"scoreA": 1, "scoreB": 0})).status_code == 403)
+    check("anonimo nao lanca placar (401)", (await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", json={"scoreA": 1, "scoreB": 0})).status_code == 401)
+    check("empate na eliminatoria sem vencedor -> 422", (await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", RO, json={"scoreA": 1, "scoreB": 1})).status_code == 422)
+    check("vencedor contra o placar -> 422", (await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", RO, json={"scoreA": 3, "scoreB": 1, "winner": "b"})).status_code == 422)
+    check("partida desconhecida -> 404", (await api("PUT", f"/tournaments/{T}/matches/{uuid.uuid4()}/result", RO, json={"winner": "a"})).status_code == 404)
+    r = await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", RO, json={"scoreA": 2, "scoreB": 1})
+    mm = {(x["round"], x["slot"]): x for x in r.json()["phases"][0]["matches"]}
+    check("placar lancado: o vencedor (equipe 2) avanca sozinho para a final", r.status_code == 200 and mm[(1, 1)]["winnerId"] == t2 and mm[(2, 0)]["competitorBId"] == t2, r.text[:200])
+    r = await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", RO, json={"scoreA": 0, "scoreB": 3})
+    mm = {(x["round"], x["slot"]): x for x in r.json()["phases"][0]["matches"]}
+    check("corrigir (vencedor muda) com a final ainda sem jogo: a final se refaz sozinha", r.status_code == 200 and mm[(2, 0)]["competitorBId"] == t3)
+    await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", RO, json={"scoreA": 2, "scoreB": 1})
+    check("fase nao conclui sem a final (409)", (await api("POST", f"/tournaments/{T}/phases/{p1}/finish", RO)).status_code == 409)
+    r = await api("PUT", f"/tournaments/{T}/matches/{mid(2, 0)}/result", RO, json={"winner": "a"})
+    check("final so' com o vencedor (sem placar)", r.status_code == 200, r.text[:200])
+    check("corrigir a semifinal mudando o vencedor com a final ja' jogada -> 409", (await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", RO, json={"scoreA": 0, "scoreB": 5})).status_code == 409)
+    check("corrigir so' o placar (mesmo vencedor) e' permitido", (await api("PUT", f"/tournaments/{T}/matches/{mid(1, 1)}/result", RO, json={"scoreA": 5, "scoreB": 4})).status_code == 200)
+    check("nao da' para desfazer a chave depois de jogar (409)", (await api("POST", f"/tournaments/{T}/phases/{p1}/reset", RO)).status_code == 409)
+    check("nao da' para editar a fase com chave (409)", (await api("PATCH", f"/tournaments/{T}/phases/{p1}", RO, json={"name": "x", "teamSize": 1})).status_code == 409)
+    r = await api("POST", f"/tournaments/{T}/phases/{p1}/finish", RO)
+    check("fase 1 concluida", r.status_code == 200 and r.json()["phases"][0]["status"] == "finished", r.text[:200])
+    sug = (await api("GET", f"/tournaments/{T}", RO)).json()["phases"][1]["suggestedEntryIds"]
+    check("sugestao da fase 2 = integrantes de quem venceu pelo menos uma partida (equipes 1 e 2)", set(sug) == {e_o, e_x, e_y, g1}, str(len(sug)))
+    check("encerrar com a fase 2 sem chave -> 409", (await api("POST", f"/tournaments/{T}/finish", RO)).status_code == 409)
+    r = await api("POST", f"/tournaments/{T}/phases/{p2}/start", RO, json={"competitors": [eq(e_o), eq(e_y)]})
+    ph2 = r.json()["phases"][1]
+    check("fase 2 (1v1) gerada; nome do competidor = nome do jogador", r.status_code == 200 and len(ph2["matches"]) == 1 and ph2["competitors"][0]["name"].startswith("Naruto"), r.text[:200])
+    r = await api("PUT", f"/tournaments/{T}/matches/{ph2['matches'][0]['id']}/result", RO, json={"scoreA": 3, "scoreB": 1})
+    check("final 1v1 lancada", r.status_code == 200)
+    await api("POST", f"/tournaments/{T}/phases/{p2}/finish", RO)
+    r = await api("POST", f"/tournaments/{T}/finish", RO)
+    ent_f = {e["id"]: e["placement"] for e in r.json()["entries"]}
+    check("torneio encerrado: campeao definido pela ultima fase", r.status_code == 200 and r.json()["status"] == "finished" and (r.json()["championName"] or "").startswith("Naruto"), r.text[:200])
+    check("colocacoes: campeao 1, finalista 2, quem nao chegou na ultima fase sem colocacao", ent_f[e_o] == 1 and ent_f[e_y] == 2 and ent_f[e_x] is None)
+    check("encerrado nao aceita mais placar (409)", (await api("PUT", f"/tournaments/{T}/matches/{ph2['matches'][0]['id']}/result", RO, json={"scoreA": 1, "scoreB": 0})).status_code == 409)
+    pf = (await api("GET", f"/players/{id_o}")).json()
+    check("perfil: historico, trofeu de campeao e vitorias (final 2v2 + final 1v1; a folga nao conta)",
+          pf["stats"]["tournaments"] == 1 and pf["stats"]["titles"] == 1 and len(pf["trophies"]) == 1 and pf["history"][0]["placement"] == 1 and pf["stats"]["wins"] == 2, str(pf["stats"]))
+    pf_y = (await api("GET", f"/players/{id_y}")).json()
+    check("perfil de quem foi finalista: sem trofeu, 1 torneio", pf_y["stats"]["titles"] == 0 and pf_y["stats"]["tournaments"] == 1)
+    rr = await api("POST", f"/tournaments/{T}/reopen", RO)
+    check("organizador reabre o torneio encerrado (campeao e colocacoes somem)", rr.status_code == 200 and rr.json()["status"] == "running" and rr.json()["championName"] is None)
+    await api("POST", f"/tournaments/{T}/finish", RO)
+
+    # --- todos-contra-todos ---
+    r = await api("POST", "/tournaments", RO, json={"name": "Liga TESTE", "description": ""})
+    T2 = r.json()["id"]
+    for g in ("A", "B", "C"):
+        await api("POST", f"/tournaments/{T2}/entries", RO, json={"displayName": g})
+    d = (await api("POST", f"/tournaments/{T2}/phases", RO, json={"name": "Liga", "teamSize": 1, "format": "round_robin"})).json()
+    es = [e["id"] for e in d["entries"]]
+    r = await api("POST", f"/tournaments/{T2}/phases/{d['phases'][0]['id']}/start", RO, json={"competitors": [eq(x) for x in es]})
+    ms = r.json()["phases"][0]["matches"]
+    check("todos-contra-todos com 3: 3 partidas e tabela com 3 linhas", r.status_code == 200 and len(ms) == 3 and len(r.json()["phases"][0]["standings"]) == 3)
+    await api("PUT", f"/tournaments/{T2}/matches/{ms[0]['id']}/result", RO, json={"scoreA": 1, "scoreB": 1})
+    r = await api("PUT", f"/tournaments/{T2}/matches/{ms[1]['id']}/result", RO, json={"winner": "a"})
+    check("empate aceito no todos-contra-todos; so' o vencedor conta 1 x 0", r.status_code == 200 and sorted(s["points"] for s in r.json()["phases"][0]["standings"]) == [1, 1, 3], r.text[:300])
+    await api("PUT", f"/tournaments/{T2}/matches/{ms[2]['id']}/result", RO, json={"scoreA": 0, "scoreB": 2})
+    check("concluir a fase e encerrar o todos-contra-todos (campeao = 1o da tabela)", (await api("POST", f"/tournaments/{T2}/phases/{d['phases'][0]['id']}/finish", RO)).status_code == 200
+          and (await api("POST", f"/tournaments/{T2}/finish", RO)).json()["championName"] is not None)
+
+    # --- limites anti-abuso ---
+    orig_lim = (_tm.MAX_CREATED_PER_DAY, _tm.MAX_ACTIVE_PER_READER, _tm.MAX_ENTRIES)
+    RZ, _ = await entrar_leitor(35)
+    _tm.MAX_CREATED_PER_DAY, _tm.MAX_ACTIVE_PER_READER = 2, 100
+    codigos = [(await api("POST", "/tournaments", RZ, json={"name": f"Limite TESTE {i}"})).status_code for i in range(3)]
+    check("limite de torneios criados por dia -> 429 no excedente", codigos == [201, 201, 429], str(codigos))
+    RW, _ = await entrar_leitor(36)
+    _tm.MAX_CREATED_PER_DAY, _tm.MAX_ACTIVE_PER_READER = 100, 1
+    codigos = [(await api("POST", "/tournaments", RW, json={"name": f"Ativo TESTE {i}"})).status_code for i in range(2)]
+    check("limite de torneios ativos por pessoa -> 429", codigos == [201, 429], str(codigos))
+    _tm.MAX_ENTRIES = 2
+    tw = (await api("GET", "/tournaments?mine=true", RW)).json()["items"][0]["id"]
+    await api("PATCH", f"/tournaments/{tw}", RW, json={"status": "open"})
+    await api("POST", f"/tournaments/{tw}/entries", RW, json={"displayName": "L1"})
+    await api("POST", f"/tournaments/{tw}/entries", RW, json={"displayName": "L2"})
+    check("limite de inscritos por torneio -> 409 (convidado e inscricao propria)", (await api("POST", f"/tournaments/{tw}/entries", RW, json={"displayName": "L3"})).status_code == 409
+          and (await api("POST", f"/tournaments/{tw}/join", RX)).status_code == 409)
+    _tm.MAX_CREATED_PER_DAY, _tm.MAX_ACTIVE_PER_READER, _tm.MAX_ENTRIES = orig_lim
+    falso = type("L", (), {"id": uuid.uuid4()})()
+    limiter.reset()
+    estourou = 0
+    try:
+        for _ in range(_tm.WRITES_PER_MINUTE + 1):
+            _tm._throttle(falso)
+    except Exception as e:  # HTTPException 429
+        estourou = getattr(e, "status_code", 0)
+    check("limite de escritas por minuto por leitor -> 429", estourou == 429, str(estourou))
+    limiter.reset()
+    check("nome so' com caracteres de controle -> 422", (await api("POST", f"/tournaments/{tw}/entries", RW, json={"displayName": "\u0000\u0007"})).status_code == 422)
+
+    # --- moderacao pela equipe ---
+    perms_ok = True
+    for h, esperado in ((S, True), (A, True), (C, False)):
+        perms_ok = perms_ok and (("tournaments.manage" in (await api("GET", "/auth/me", h)).json()["permissions"]) == esperado)
+    check("/auth/me inclui tournaments.manage para S.Adm e Adm, nao para Creator", perms_ok)
+    check("moderacao: anonimo 401, leitor 401, Creator 403", (await api("GET", "/tournaments-moderation")).status_code == 401
+          and (await api("GET", "/tournaments-moderation", RO)).status_code == 401 and (await api("GET", "/tournaments-moderation", C)).status_code == 403)
+    lista = (await api("GET", "/tournaments-moderation?q=Chunin", A)).json()
+    check("Adm lista os torneios (inclui o do teste, com o dono)", T in [x["id"] for x in lista] and lista[0]["ownerName"])
+    check("Creator nao esconde (403)", (await api("PATCH", f"/tournaments-moderation/{T}", C, json={"hidden": True})).status_code == 403)
+    check("Adm esconde: some da lista e do link publico", (await api("PATCH", f"/tournaments-moderation/{T}", A, json={"hidden": True})).status_code == 200
+          and (await api("GET", f"/tournaments/{T}")).status_code == 404 and T not in [i["id"] for i in (await api("GET", "/tournaments?limit=50")).json()["items"]])
+    check("escondido: o organizador ainda ve' mas nao consegue editar (403)", (await api("GET", f"/tournaments/{T}", RO)).status_code == 200
+          and (await api("PATCH", f"/tournaments/{T}", RO, json={"name": "Burlar"})).status_code == 403)
+    check("escondido nao conta no perfil publico", (await api("GET", f"/players/{id_o}")).json()["stats"]["tournaments"] == 0)
+    check("Adm corrige o nome e mostra de novo", (await api("PATCH", f"/tournaments-moderation/{T}", A, json={"hidden": False, "name": "Chunin Corrigido TESTE"})).status_code == 200
+          and (await api("GET", f"/tournaments/{T}")).json()["name"] == "Chunin Corrigido TESTE")
+    check("o organizador apaga o proprio torneio (204)", (await api("DELETE", f"/tournaments/{T2}", RO)).status_code == 204 and (await api("GET", f"/tournaments/{T2}", RO)).status_code == 404)
+    check("Adm apaga qualquer torneio (204) e o link morre", (await api("DELETE", f"/tournaments-moderation/{T}", A)).status_code == 204 and (await api("GET", f"/tournaments/{T}", RO)).status_code == 404)
+    async with AsyncSessionLocal() as db:
+        n_log = (await db.execute(text("SELECT count(*) FROM audit_log WHERE entity_type = 'tournament' AND created_at >= :t"), {"t": inicio_torneios})).scalar_one()
+        await db.execute(text("DELETE FROM audit_log WHERE entity_type = 'tournament' AND created_at >= :t"), {"t": inicio_torneios})
+        await db.commit()
+    check("criar / encerrar / esconder / apagar ficam no log de auditoria", n_log >= 6, str(n_log))
+    settings.dev_login_enabled = dev_antes
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")
     sem_protecao = []
