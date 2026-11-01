@@ -1,20 +1,22 @@
 'use client';
 
-// Fundo do site PUBLICO: NUVENS que passam devagar, em varias camadas (as de tras mais lentas), numa cor unica (nao muda com o tema de cores; so' tem
-// uma versao clara e uma escura, conforme o tema claro/escuro do visitante). Desenhadas aqui em SVG (nenhuma imagem baixada).
-// Todas as epocas usam essas nuvens de base e acrescentam o seu efeito:
-//   Ano Novo = fogos (canvas);  Natal = neve caindo + Papai Noel voando com as renas (canvas);
-//   Valentine's Day = baloes de coracao + fogos em formato de coracao (canvas);  Halloween = abobora com olhos que brilham forte e fraco;  Pascoa = ovos.
-// Canvas em components/season-canvas.tsx; animacoes CSS em app/globals.css (classes sb-*). Quem pede menos movimento ao aparelho ve tudo parado.
+// Fundo do site PUBLICO: um CEU com nuvens que passam devagar em varias camadas. O tema claro/escuro do visitante vira DIA e NOITE: de dia ceu azul com sol,
+// de noite ceu escuro com estrelas que brilham e lua. As nuvens e o ceu sao SVG/CSS feitos aqui (nenhuma imagem baixada para eles).
+// Cada epoca festiva acrescenta o seu efeito:
+//   Natal = neve (canvas) + sprites do jogo (arvores nevadas, arvore de Natal, boneco de neve, presentes, bengalas) + o NPC de Natal do jogo andando;
+//   Ano Novo = fogos (canvas);  Valentine's Day = baloes de coracao + fogos em formato de coracao (canvas) + cerejeiras rosa do jogo;
+//   Halloween = arvores de outono, arvore assombrada, abobora e teia do jogo, com brilho que oscila forte e fraco;  Pascoa = arvores verdes do jogo + ovos.
+// Os sprites (pixel art) vem do cliente do jogo e ficam em public/images/seasonal. Canvas em components/season-canvas.tsx; animacoes em app/globals.css (sb-*).
+// Quem pede menos movimento ao aparelho ve tudo parado (sem canvas, sem NPC andando).
 
 import { useEffect, useState } from 'react';
 import type { SeasonalTheme } from '@/lib/api-client';
 import { SeasonCanvas } from '@/components/season-canvas';
 
-/** Cores unicas do fundo: [claro, escuro]. `sky` = ceu (degrade de cima para baixo), `cloud` = nuvem, `op` = opacidade das 4 camadas (de longe para perto). */
+/** Cores do ceu: dia (tema claro) e noite (tema escuro). `op` = opacidade das 4 camadas de nuvens (de longe para perto). */
 const COLORS = {
-  light: { sky: ['#cfe1f1', '#eef5fb'], cloud: '#ffffff', op: [0.5, 0.6, 0.72, 0.6] },
-  dark: { sky: ['#0a1626', '#172e48'], cloud: '#a9c3dc', op: [0.08, 0.11, 0.15, 0.11] },
+  day: { sky: ['#6db3ea', '#d6ecfa'], cloud: '#ffffff', op: [0.55, 0.7, 0.85, 0.7] },
+  night: { sky: ['#0a1626', '#172e48'], cloud: '#a9c3dc', op: [0.08, 0.11, 0.15, 0.11] },
 } as const;
 
 /** Gerador pseudo-aleatorio deterministico (mesmo desenho a cada vez). */
@@ -45,28 +47,46 @@ const LAYERS: [number, number, number, number, number, number][] = [
   [51, 5, 0.9, 70, 375, 190],
 ];
 
-/** Abobora de Halloween com olhos, nariz e boca que brilham (forte e fraco). `delay` desencontra o brilho de uma para outra. */
-function Pumpkin({ left, bottom, top, size, delay, float }: { left?: string; bottom?: string; top?: string; size: number; delay: number; float?: boolean }) {
-  const face = 'M27 48L41 48L34 34Z M59 48L73 48L66 34Z M50 56L45 64L55 64Z M27 68L36 76L43 70L50 78L57 70L64 76L73 68Q50 90 27 68Z';
+/** Estrelas da noite: posicao (%), tamanho (px) e atraso do brilho. */
+const STARS = (() => { const q = rnd(7); return Array.from({ length: 70 }, () => ({ left: q() * 100, top: q() * 62, size: 1 + Math.floor(q() * 3), delay: q() * 6 })); })();
+
+/** Tamanho original (px) de cada sprite do jogo em public/images/seasonal: [largura, altura]. */
+const SPRITE_SIZE: Record<string, [number, number]> = {
+  'tree-spring': [157, 180], 'tree-winter': [157, 180], 'tree-autumn': [157, 180], 'tree-green': [157, 180],
+  'pumpkin-pole': [35, 54], 'pumpkin-desk': [32, 36], 'haunted-tree': [85, 87], 'cobweb': [28, 40],
+  'xmas-tree': [47, 61], 'candy-canes': [39, 54], 'gifts-a': [24, 30], 'gifts-b': [30, 25], 'snowman': [25, 47],
+};
+/** [sprite, esquerda (%), base (%), ampliacao (x), brilha?]. Pixel art: ampliacao inteira/grande, sem suavizar. */
+type Sprite = [keyof typeof SPRITE_SIZE, number, number, number, boolean?];
+const SCENES: Partial<Record<SeasonalTheme, Sprite[]>> = {
+  christmas: [['tree-winter', -2, 0, 1.5], ['tree-winter', 88, 0, 1.3], ['tree-winter', 17, -1, 0.9], ['xmas-tree', 27, 1, 4.2], ['gifts-a', 37, 1, 3.4], ['candy-canes', 46, 1, 2.6], ['gifts-b', 58, 1, 3.4], ['snowman', 68, 1, 4]],
+  halloween: [['tree-autumn', -2, 0, 1.5], ['tree-autumn', 88, 0, 1.3], ['haunted-tree', 14, 1, 4, true], ['pumpkin-desk', 33, 1, 4, true], ['pumpkin-pole', 46, 1, 3, true], ['pumpkin-desk', 60, 1, 3.2, true], ['cobweb', 70, 1, 3.5], ['pumpkin-pole', 79, 1, 3.4, true]],
+  valentine: [['tree-spring', -2, 0, 1.5], ['tree-spring', 88, 0, 1.3], ['tree-spring', 18, -1, 0.9], ['tree-spring', 76, -1, 0.9]],
+  easter: [['tree-green', -2, 0, 1.5], ['tree-green', 88, 0, 1.3]],
+};
+
+/** Um sprite do jogo no chao da tela. O tamanho segue --sb-k (menor no celular). `glow` = halo laranja + brilho que oscila forte e fraco (Halloween). */
+function SpriteImg({ s, i }: { s: Sprite; i: number }) {
+  const [name, left, bottom, scale, glow] = s;
+  const [w, h] = SPRITE_SIZE[name];
+  const px = (n: number) => `calc(${n * scale}px * var(--sb-k, 1))`;
   return (
-    <svg viewBox="0 0 100 90" width={size} height={size * 0.9} className={`absolute ${float ? 'sb-float' : ''}`} style={{ left, bottom, top, animationDelay: `${-delay}s` }}>
-      <ellipse cx="30" cy="52" rx="26" ry="34" fill="#d85f0c" /><ellipse cx="70" cy="52" rx="26" ry="34" fill="#d85f0c" /><ellipse cx="50" cy="52" rx="28" ry="36" fill="#f97316" />
-      <path d="M50 17Q40 52 50 88M34 22Q16 52 34 86M66 22Q84 52 66 86" fill="none" stroke="#b9470a" strokeWidth="1.6" opacity="0.7" />
-      <path d="M46 16Q48 4 57 6L54 17Z" fill="#3f7d2a" />
-      <path d={face} fill="#2a0f02" />
-      <g className="sb-eye" style={{ animationDelay: `${-delay}s` }}>
-        <path d={face} fill="#f59e0b" filter="url(#sbGlow)" />
-        <path d={face} fill="#fde047" />
-      </g>
-    </svg>
+    <div className="absolute" style={{ left: `${left}%`, bottom: `${bottom}%`, width: px(w), height: px(h) }}>
+      {glow && <div className="sb-halo absolute" style={{ inset: '-45%', background: 'radial-gradient(circle, rgba(255,150,30,0.55), transparent 65%)', animationDelay: `${-i * 1.7}s` }} />}
+      <div className={`absolute inset-0 ${glow ? 'sb-pump' : ''}`} style={{ backgroundImage: `url(/images/seasonal/${name}.png)`, backgroundSize: '100% 100%', imageRendering: 'pixelated', animationDelay: `${-i * 1.7}s` }} />
+    </div>
   );
 }
-/** Posicoes das abobora: algumas no chao e algumas flutuando nas laterais. */
-const PUMPKINS = [
-  { left: '3%', bottom: '2%', size: 96, delay: 0 }, { left: '15%', bottom: '-1%', size: 62, delay: 2.1 }, { left: '30%', bottom: '1%', size: 52, delay: 4.3 },
-  { left: '70%', bottom: '0%', size: 58, delay: 1.2 }, { left: '82%', bottom: '3%', size: 104, delay: 3.2 }, { left: '93%', bottom: '-1%', size: 60, delay: 5.1 },
-  { left: '2%', top: '30%', size: 56, delay: 2.7, float: true }, { left: '94%', top: '22%', size: 64, delay: 4.8, float: true },
-];
+
+/** O NPC de Natal do jogo andando pela parte de baixo da tela (um indo para a direita e outro para a esquerda, em tempos diferentes). */
+function Npc({ dir, delay }: { dir: 'right' | 'left'; delay: number }) {
+  const h = dir === 'right' ? 91 : 93, scale = 3;
+  return (
+    <div className={`sb-npc-walk-${dir} absolute`} style={{ left: 0, bottom: '1%', animationDelay: `${-delay}s` }}>
+      <div className="sb-npc" style={{ width: `calc(${54 * scale}px * var(--sb-k, 1))`, height: `calc(${h * scale}px * var(--sb-k, 1))`, backgroundImage: `url(/images/seasonal/npc-walk-${dir}.png)`, backgroundSize: '800% 100%', imageRendering: 'pixelated' }} />
+    </div>
+  );
+}
 
 /** Ovo de Pascoa de enfeite no chao, com uma faixa em ziguezague. */
 function Egg({ left, size, color, delay }: { left: string; size: number; color: string; delay: number }) {
@@ -78,11 +98,11 @@ function Egg({ left, size, color, delay }: { left: string; size: number; color: 
   );
 }
 const EGGS = [
-  { left: '6%', size: 44, color: '#f9a8d4' }, { left: '19%', size: 56, color: '#a7f3d0' }, { left: '34%', size: 40, color: '#fde68a' }, { left: '63%', size: 48, color: '#c4b5fd' },
-  { left: '77%', size: 60, color: '#93c5fd' }, { left: '90%', size: 42, color: '#fdba74' },
+  { left: '8%', size: 44, color: '#f9a8d4' }, { left: '21%', size: 56, color: '#a7f3d0' }, { left: '36%', size: 40, color: '#fde68a' }, { left: '63%', size: 48, color: '#c4b5fd' },
+  { left: '77%', size: 60, color: '#93c5fd' }, { left: '86%', size: 42, color: '#fdba74' },
 ];
 
-/** Fundo fixo atras do site; `season` 'none' = so' as nuvens. */
+/** Fundo fixo atras do site; `season` 'none' = so' o ceu com as nuvens. */
 export function SeasonalBackground({ season }: { season: SeasonalTheme }) {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));   // so' monta no navegador (SeasonalDecor espera a API)
   useEffect(() => {   // acompanha o botao claro/escuro (o <html> muda de classe)
@@ -94,25 +114,28 @@ export function SeasonalBackground({ season }: { season: SeasonalTheme }) {
     return () => mo.disconnect();
   }, []);
 
-  const c = dark ? COLORS.dark : COLORS.light;
+  const c = dark ? COLORS.night : COLORS.day;
+  const sprites = SCENES[season];
   return (
     <div aria-hidden data-sb={season} className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" style={{ background: `linear-gradient(${c.sky[0]}, ${c.sky[1]})` }}>
+      {dark
+        ? <>
+            {STARS.map((s, i) => <span key={i} className="sb-star absolute rounded-full bg-white" style={{ left: `${s.left}%`, top: `${s.top}%`, width: s.size, height: s.size, animationDelay: `${-s.delay}s` }} />)}
+            <div className="absolute rounded-full" style={{ right: '12%', top: '8%', width: 70, height: 70, background: 'radial-gradient(circle at 35% 35%, #ffffff, #dbe5f5 60%, #b9c8e0)', boxShadow: '0 0 70px 18px rgba(190,210,255,0.28)' }} />
+          </>
+        : <div className="sb-sun absolute rounded-full" style={{ right: '12%', top: '8%', width: 80, height: 80, background: 'radial-gradient(circle, #fff6c2, #ffd54a 65%)', boxShadow: '0 0 90px 36px rgba(255,225,110,0.5)' }} />}
       {LAYERS.map(([seed, count, scale, top, h, secs], i) => (
         <div key={i} className="sb-cloud absolute left-0 right-0" style={{
           top: `${top}%`, height: h, backgroundRepeat: 'repeat-x', animationDuration: `${secs}s`,
           backgroundImage: cloudTile(1000, 300, seed, count, scale, c.cloud, c.sky[0], c.op[i]), backgroundSize: `${(h / 300) * 1000}px ${h}px`, ['--sb-tile' as string]: `${(h / 300) * 1000}px`,
         }} />
       ))}
+      {sprites && <div className="absolute inset-0" style={{ filter: dark ? 'brightness(0.78)' : undefined }}>{sprites.map((s, i) => <SpriteImg key={i} s={s} i={i} />)}</div>}
+      {season === 'christmas' && <><Npc dir="right" delay={0} /><Npc dir="left" delay={50} /></>}
+      {season === 'easter' && EGGS.map((e, i) => <Egg key={i} {...e} delay={i * 1.3} />)}
       {season === 'newyear' && <SeasonCanvas kind="fireworks" dark={dark} />}
       {season === 'christmas' && <SeasonCanvas kind="christmas" dark={dark} />}
       {season === 'valentine' && <><SeasonCanvas kind="balloons" dark={dark} /><SeasonCanvas kind="heartworks" dark={dark} /></>}
-      {season === 'halloween' && (
-        <>
-          <svg width="0" height="0" className="absolute"><defs><filter id="sbGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" /></filter></defs></svg>
-          {PUMPKINS.map((p, i) => <Pumpkin key={i} {...p} />)}
-        </>
-      )}
-      {season === 'easter' && EGGS.map((e, i) => <Egg key={i} {...e} delay={i * 1.3} />)}
     </div>
   );
 }

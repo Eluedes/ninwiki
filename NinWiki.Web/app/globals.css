@@ -409,13 +409,31 @@
   .maint-ember { display: none; }
 }
 
-/* Fundo do site (components/seasonal-background.tsx): nuvens em camadas que passam devagar (cada camada com sua duracao, inline) e, no Halloween, abobora
-   com olhos que brilham forte e fraco; na Pascoa, ovos que balancam de leve. Os efeitos em canvas (fogos, neve, Papai Noel, baloes) ficam em components/season-canvas.tsx.
-   Sem movimento para quem pede menos movimento ao aparelho. */
+/* Fundo do site (components/seasonal-background.tsx): ceu com nuvens que passam devagar; de noite as estrelas brilham, de dia o sol pulsa de leve;
+   no Natal o NPC do jogo anda pela tela; no Halloween as aboboras brilham forte e fraco; na Pascoa os ovos balancam. Efeitos em canvas: components/season-canvas.tsx.
+   --sb-k e' a escala dos sprites (menor no celular). Sem movimento para quem pede menos movimento ao aparelho. */
+[data-sb] { --sb-k: 1; }
+@media (max-width: 700px) { [data-sb] { --sb-k: 0.55; } }
 @keyframes sb-flow { from { background-position-x: 0; } to { background-position-x: var(--sb-tile, 1000px); } }
 @keyframes sb-float { from { transform: translateY(-5px); } to { transform: translateY(5px); } }
-@keyframes sb-eye { 0%, 100% { opacity: 0.25; } 12% { opacity: 1; } 30% { opacity: 0.4; } 52% { opacity: 1; } 74% { opacity: 0.3; } }
+@keyframes sb-star { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes sb-sun { from { transform: scale(1); } to { transform: scale(1.06); } }
+@keyframes sb-pump { 0%, 100% { filter: brightness(0.7); } 12% { filter: brightness(1.7); } 30% { filter: brightness(0.85); } 52% { filter: brightness(1.6); } 74% { filter: brightness(0.75); } }
+@keyframes sb-halo { 0%, 100% { opacity: 0.15; } 12% { opacity: 1; } 30% { opacity: 0.3; } 52% { opacity: 0.9; } 74% { opacity: 0.2; } }
+@keyframes sb-npc-step { from { background-position-x: 0; } to { background-position-x: 114.2857%; } }   /* 8 quadros da tira de caminhada */
+@keyframes sb-walk-right { 0% { transform: translateX(-220px); } 62% { transform: translateX(calc(100vw + 220px)); } 100% { transform: translateX(calc(100vw + 220px)); } }
+@keyframes sb-walk-left { 0% { transform: translateX(calc(100vw + 220px)); } 62% { transform: translateX(-220px); } 100% { transform: translateX(-220px); } }
 .sb-cloud { animation: sb-flow 200s linear infinite; }
 .sb-float { animation: sb-float 7s ease-in-out infinite alternate; }
-.sb-eye { animation: sb-eye 4.5s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .sb-cloud, .sb-float, .sb-eye { animation: none !important; } .sb-eye { opacity: 0.85; } }
+.sb-star { animation: sb-star 4.5s ease-in-out infinite; }
+.sb-sun { animation: sb-sun 8s ease-in-out infinite alternate; }
+.sb-pump { animation: sb-pump 4.5s ease-in-out infinite; }
+.sb-halo { animation: sb-halo 4.5s ease-in-out infinite; }
+.sb-npc { animation: sb-npc-step 0.9s steps(8) infinite; }
+.sb-npc-walk-right { animation: sb-walk-right 95s linear infinite; }
+.sb-npc-walk-left { animation: sb-walk-left 120s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .sb-cloud, .sb-float, .sb-star, .sb-sun, .sb-pump, .sb-halo, .sb-npc { animation: none !important; }
+  .sb-npc-walk-right, .sb-npc-walk-left { display: none; }
+  .sb-pump { filter: brightness(1.2); }
+}
