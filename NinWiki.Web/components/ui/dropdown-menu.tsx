@@ -10,7 +10,8 @@ import { Check, ChevronRight, Circle } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-const DropdownMenu = DropdownMenuPrimitive.Root;
+// modal={false}: o modo padrao do Radix trava a rolagem da pagina e esconde a barra de rolagem enquanto o menu esta aberto (a pagina "pula").
+const DropdownMenu = (props: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) => <DropdownMenuPrimitive.Root modal={false} {...props} />;
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
