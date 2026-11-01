@@ -10,7 +10,7 @@ REGRAS (so' aqui; o bot nunca decide nada, so' repassa fatos):
      - Servidor sem vila e sem cargo de rank: nao conta (nao ha' informacao).
   3. Varios servidores: vale a combinacao do servidor onde o leitor tem o MAIOR rank; empate -> a linha atualizada mais recentemente.
   4. Sem nenhum servidor que conte (saiu, perdeu o cargo, bot nao esta' la'): padrao = vila Takumi + rank Rogue, origem "default".
-Rogue (ninja sem vila) fica FORA da hierarquia academia -> kage (order 0) e nunca e' usado como "o menor rank".
+Rogue (ninja sem vila) fica FORA da hierarquia academia -> kami (id `kage`; order 0) e nunca e' usado como "o menor rank".
 """
 from collections.abc import Iterable
 from datetime import datetime

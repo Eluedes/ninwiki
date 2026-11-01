@@ -3162,6 +3162,11 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     lista = (await api("GET", "/discord-links", A)).json()
     check("painel do bot: o servidor traz a quantidade de membros informada (e 0 quando o bot nao informou)",
           next(g for g in lista if g["guildId"] == G_A)["memberCount"] == 1234 and next(g for g in lista if g["guildId"] == G_C)["memberCount"] == 0)
+    por_id = {x["id"]: x for x in (await api("GET", "/ninja-ranks")).json()}
+    # no banco de teste so' existem os ranks criados por migracao (os basicos vem dos dados reais): confere os novos e, se o Kage existir, o nome e a ordem dele
+    check("ranks: Jonin Special (5) e Conselho (6) existem e o antigo Kage se chama Kami, no topo (id continua kage)",
+          por_id.get("jonin-special", {}).get("order") == 5 and por_id.get("council", {}).get("order") == 6 and por_id.get("council", {}).get("namePt") == "Conselho"
+          and ("kage" not in por_id or (por_id["kage"]["name"] == "Kami" and por_id["kage"]["namePt"] == "Kami" and por_id["kage"]["order"] == 7)), str(sorted(por_id)))
     check("guilds-sync: quantidade de membros negativa -> 422", (await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": G_A, "name": "x", "memberCount": -1, "roles": []}]})).status_code == 422)
     gA = next((g for g in lista if g["guildId"] == G_A), None)
     check("Adm lista os servidores do bot com cargos e leitores", gA is not None and gA["active"] and gA["readers"] == 1 and {x["roleId"] for x in gA["roles"]} == {"11", "12", "13"}, str(gA)[:200])
