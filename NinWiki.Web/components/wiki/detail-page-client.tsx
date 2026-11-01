@@ -14,7 +14,7 @@ import { WikiImage } from '@/components/wiki/wiki-image';
 import { RichText, extractPlainText } from '@/components/lore/rich-text';
 import { cn, itemHasStack, shouldShowLevel, levelText, signedValue, formatDate, formatNumber } from '@/lib/utils';
 import { rarityConfig } from '@/lib/data';
-import { itemTypeLabels } from '@/lib/item-types';
+import { isWardrobeType, itemTypeLabels } from '@/lib/item-types';
 import { ArrowLeft, Heart, Languages, Layers, Scale, Swords, Star, Zap, Sparkles, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem, ApiContentItemSummary } from '@/lib/api-client';
 
@@ -171,8 +171,9 @@ export function DetailPageClient({ entry, related }: { entry: ApiContentItem; re
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">{name}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {entry.category === 'items' && entry.itemType && (
-                    <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold uppercase text-card-foreground">{itemTypeLabel(entry.itemType)}</span>
+                  {/* Selo do tipo so' para as pecas do Gear (o slot que o item ocupa); Ring, Tool, Scroll... nao tem selo */}
+                  {entry.category === 'items' && isWardrobeType(entry.itemType) && (
+                    <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold uppercase text-card-foreground">{itemTypeLabel(entry.itemType as string)}</span>
                   )}
                   {entry.category === 'items' && (
                     <span className={cn('rounded-md border px-2 py-0.5 text-xs font-bold uppercase', rarityConfig[entry.rarity].chip)}>{dict.detail.rarities[entry.rarity]}</span>
