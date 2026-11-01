@@ -298,7 +298,7 @@ export interface Dictionary {
       colName: string; colCategory: string; colLevel: string; colRarity: string; colStatus: string;
       selectAll: string; selectRow: string; edit: string; delete: string; published: string; draft: string;
       deleteConfirm: string; deleteError: string; bulkStatusError: string;
-      bulkDeleteConfirm: string; bulkDeleteError: string; publish: string; markDraft: string;
+      bulkDeleteConfirm: string; bulkDeleteError: string; bulkItemType: string; bulkItemTypeApply: string; bulkItemTypeConfirm: string; bulkItemTypeError: string; publish: string; markDraft: string;
     };
     contentEditor: {
       catMobs: string; catItems: string; catWeapons: string; catMissions: string; catGuides: string;
@@ -876,7 +876,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         saveError: 'Não foi possível salvar.', unsavedChanges: 'Alterações não salvas', alwaysAll: 'O S.Adm sempre tem todas as permissões.',
         groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', imagecats: 'Categorias do banco de imagens (desmarque para TRANCAR a categoria para este cargo)', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log', analytics: 'Acessos' },
         names: {
-          'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
+          'content.bulk_type': 'Mudar o tipo (Item type) de vários itens de uma vez', 'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
           'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes', 'volunteers.manage': 'Ver, avaliar e apagar as inscrições de voluntários', 'tournaments.manage': 'Moderar torneios dos jogadores (esconder, corrigir texto, apagar)', 'discord.links': 'Ligar servidores e cargos do Discord à vila e ao rank do perfil dos jogadores',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
@@ -1111,7 +1111,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         deleteConfirm: 'Apagar "{name}"? Essa ação não pode ser desfeita.',
         deleteError: 'Erro ao apagar.',
         bulkStatusError: 'Erro ao atualizar em massa.',
-        bulkDeleteConfirm: 'Apagar {count} entries selecionadas? Essa ação não pode ser desfeita.',
+        bulkItemType: 'Mudar o tipo do item...', bulkItemTypeApply: 'Aplicar tipo', bulkItemTypeConfirm: 'Mudar o tipo de {count} itens para "{type}"?', bulkItemTypeError: 'Não foi possível mudar o tipo dos itens.', bulkDeleteConfirm: 'Apagar {count} entries selecionadas? Essa ação não pode ser desfeita.',
         bulkDeleteError: 'Erro ao apagar em massa.',
         publish: 'Publicar', markDraft: 'Marcar rascunho',
       },
@@ -1716,7 +1716,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         saveError: 'Could not save.', unsavedChanges: 'Unsaved changes', alwaysAll: 'S.Adm always has every permission.',
         groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', imagecats: 'Image library categories (untick to LOCK a category for this role)', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log', analytics: 'Traffic' },
         names: {
-          'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
+          'content.bulk_type': 'Change the type (Item type) of several items at once', 'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
           'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports', 'volunteers.manage': 'View, review and delete volunteer applications', 'tournaments.manage': 'Moderate player tournaments (hide, fix text, delete)', 'discord.links': 'Link Discord servers and roles to the player profile village and rank',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
@@ -1951,7 +1951,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         deleteConfirm: 'Delete "{name}"? This action cannot be undone.',
         deleteError: 'Error deleting.',
         bulkStatusError: 'Error bulk updating.',
-        bulkDeleteConfirm: 'Delete {count} selected entries? This action cannot be undone.',
+        bulkItemType: 'Change item type...', bulkItemTypeApply: 'Apply type', bulkItemTypeConfirm: 'Change the type of {count} items to "{type}"?', bulkItemTypeError: 'Could not change the item type.', bulkDeleteConfirm: 'Delete {count} selected entries? This action cannot be undone.',
         bulkDeleteError: 'Error bulk deleting.',
         publish: 'Publish', markDraft: 'Mark as draft',
       },

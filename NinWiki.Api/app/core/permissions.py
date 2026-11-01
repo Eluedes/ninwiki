@@ -31,6 +31,7 @@ class Permission(str, Enum):
     CONTENT_PUBLISH = "content.publish"   # colocar/tirar do ar (status published)
     CONTENT_DELETE = "content.delete"
     CONTENT_IMPORT = "content.import"     # importacao em massa (JSON)
+    CONTENT_BULK_TYPE = "content.bulk_type"   # mudar o TIPO (Item type) de varios itens de uma vez na lista do painel: so' o S.Adm
 
     # --- Blog (posts de noticia/atualizacao - editorial, separado do catalogo) ---
     POST_CREATE = "posts.create"
@@ -135,6 +136,7 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.MEDIA_RESET_IDS,
     Permission.MEDIA_CLOSED,
     Permission.MAINTENANCE_MANAGE,   # ligar/desligar o modo manutencao do site
+    Permission.CONTENT_BULK_TYPE,   # mudanca em massa do Item type
     # A categoria "Bot" do painel (servidores do bot, membros e cargos com IDs, ligacoes com o Discord) e' so' do S.Adm.
     Permission.DISCORD_LINKS,
 })

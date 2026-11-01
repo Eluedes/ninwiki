@@ -21,11 +21,33 @@ import {
   deleteContentItem,
   bulkUpdateContentStatus,
   bulkDeleteContentItems,
+  bulkUpdateItemType,
   ApiError,
   type ApiContentItemSummary,
 } from '@/lib/api-client';
-import type { Category } from '@/lib/types';
+import type { Category, ItemType } from '@/lib/types';
+import { itemTypeLabels } from '@/lib/item-types';
 import { TanstackDataTable } from '@/components/admin/tanstack-data-table';
+
+/** Todos os tipos de item que a mudanca em massa aceita (cada peca de roupa aparece como tipo proprio). */
+const BULK_ITEM_TYPES: ItemType[] = ['general', 'ring', 'accessory', 'shirt', 'vest', 'pant', 'hat', 'mask', 'shoe', 'consumable', 'material', 'currency', 'cast', 'authority', 'pack', 'tool', 'scroll'];
+
+/** Seletor "Mudar o tipo do item..." + botao Aplicar da barra de selecao (so' S.Adm; a lista e' a de itens selecionados). */
+function BulkItemTypePicker({ onApply }: { onApply: (type: ItemType) => void }) {
+  const { dict } = useLanguage();
+  const t = dict.admin.contentList;
+  const labels = itemTypeLabels(dict.admin.contentEditor);
+  const [type, setType] = useState<ItemType | ''>('');
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <select value={type} onChange={(e) => setType(e.target.value as ItemType | '')} aria-label={t.bulkItemType} className="h-8 rounded-md border border-input bg-background px-2 text-xs">
+        <option value="">{t.bulkItemType}</option>
+        {BULK_ITEM_TYPES.map((v) => <option key={v} value={v}>{labels[v] ?? v}</option>)}
+      </select>
+      <Button size="sm" variant="outline" disabled={!type} onClick={() => type && onApply(type)}>{t.bulkItemTypeApply}</Button>
+    </span>
+  );
+}
 
 /** Lista de entries do catalogo no painel (busca, filtro de situacao, acoes em massa); `category` fixa a categoria (vazio = todas). */
 export function ContentList({ category }: { category?: Category }) {
@@ -101,6 +123,21 @@ export function ContentList({ category }: { category?: Category }) {
       setTableKey((k) => k + 1);
     } catch (err) {
       alert(err instanceof ApiError ? err.message : t.bulkStatusError);
+    }
+  }
+
+  /** Muda o Item type dos itens selecionados (so' S.Adm; a API tambem confere). */
+  async function handleBulkItemType(rows: ApiContentItemSummary[], itemType: ItemType, clearSelection: () => void) {
+    const label = itemTypeLabels(dict.admin.contentEditor)[itemType] ?? itemType;
+    if (!confirm(t.bulkItemTypeConfirm.replace('{count}', String(rows.length)).replace('{type}', label))) return;
+    try {
+      const updated = await bulkUpdateItemType(rows.map((r) => r.id), itemType);
+      const updatedIds = new Set(updated.map((u) => u.id));
+      setItems((prev) => prev.map((i) => (updatedIds.has(i.id) ? { ...i, itemType } : i)));
+      clearSelection();
+      setTableKey((k) => k + 1);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : t.bulkItemTypeError);
     }
   }
 
@@ -277,6 +314,9 @@ export function ContentList({ category }: { category?: Category }) {
                     <FileEdit className="mr-1.5 h-3.5 w-3.5" /> {t.markDraft}
                   </Button>
                 </>
+              )}
+              {category === 'items' && can('content.bulk_type') && (
+                <BulkItemTypePicker onApply={(type) => handleBulkItemType(rows, type, clearSelection)} />
               )}
               {can('content.delete') && (
                 <Button size="sm" variant="outline" className="text-red-400 hover:text-red-400" onClick={() => handleBulkDelete(rows, clearSelection)}>

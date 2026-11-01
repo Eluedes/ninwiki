@@ -448,6 +448,31 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     for tipo_novo in ("tool", "scroll"):
         r = await c.post("/content-items", json={**novo_conteudo(f"tipo-{tipo_novo}"), "category": "items", "itemType": tipo_novo}, headers=C)
         check(f"item tipo {tipo_novo} e' criado e volta com o tipo certo", r.status_code == 201 and r.json()["itemType"] == tipo_novo, r.text[:160])
+    # --- mudanca em massa do Item type (so' S.Adm: permissao exclusiva content.bulk_type) ---
+    ids_bt = []
+    for suf in ("bt1", "bt2"):
+        r = await c.post("/content-items", json={**novo_conteudo(suf), "category": "items", "itemType": "general"}, headers=C)
+        ids_bt.append(r.json()["id"])
+    r = await c.post("/content-items", json={**novo_conteudo("bt-arma"), "category": "weapons"}, headers=C)
+    id_arma_bt = r.json()["id"]
+    corpo_bt = {"ids": ids_bt + [id_arma_bt], "itemType": "scroll"}
+    check("tipo em massa: anonimo 401; Creator e Adm 404 (so' o S.Adm; nem descobrem que a rota existe)",
+          (await c.patch("/content-items/bulk-item-type", json=corpo_bt)).status_code == 401
+          and (await c.patch("/content-items/bulk-item-type", json=corpo_bt, headers=C)).status_code == 404
+          and (await c.patch("/content-items/bulk-item-type", json=corpo_bt, headers=A)).status_code == 404)
+    perms_bt = True
+    for h, esperado in ((S, True), (A, False), (C, False)):
+        perms_bt = perms_bt and (("content.bulk_type" in (await c.get("/auth/me", headers=h)).json()["permissions"]) == esperado)
+    check("/auth/me inclui content.bulk_type so' para o S.Adm", perms_bt)
+    r = await c.patch("/content-items/bulk-item-type", json=corpo_bt, headers=S)
+    check("S.Adm muda o tipo de varios itens de uma vez; a ARMA da selecao e' ignorada",
+          r.status_code == 200 and sorted(x["id"] for x in r.json()) == sorted(ids_bt) and all(x["itemType"] == "scroll" for x in r.json()), r.text[:200])
+    check("a arma continua sem tipo de item", (await c.get(f"/content-items/{id_arma_bt}", headers=S)).json()["itemType"] is None)
+    check("repetir a mesma mudanca devolve lista vazia (nada mudou); tipo invalido -> 422",
+          (await c.patch("/content-items/bulk-item-type", json=corpo_bt, headers=S)).json() == []
+          and (await c.patch("/content-items/bulk-item-type", json={"ids": ids_bt, "itemType": "inventado"}, headers=S)).status_code == 422)
+    for i_ in [*ids_bt, id_arma_bt]:
+        await c.delete(f"/content-items/{i_}", headers=S)
     r = await c.post("/content-items", json={**novo_conteudo("unico"), "category": "weapons", "rarity": "unique"}, headers=C)
     check("raridade Unique e' aceita (arma com etiqueta vermelha Unique)", r.status_code == 201 and r.json()["rarity"] == "unique", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("req3"), "category": "weapons", "weaponRequirement": " 60 Agility \n\n 20   Chakra\n30 Strength "}, headers=C)
