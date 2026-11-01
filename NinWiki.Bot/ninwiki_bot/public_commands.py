@@ -28,7 +28,7 @@ log = logging.getLogger("ninwiki_bot")
 NO_MENTIONS = discord.AllowedMentions.none()
 KIND_ICON = {"item": "🎒", "mob": "👹", "weapon": "⚔️", "guide": "📘", "mission": "📜", "mastery": "✨", "jutsu": "🌀", "post": "📰"}
 KIND_COLOR = 0x38BDF8
-LOGO_PATH = "/images/logo/nin-logo-laranja.png"
+LOGO_PATH = "/images/logo/nin-codex-logo.png"
 LOGO_URL: str | None = None   # endereco completo do logo (main.py aponta para a API: o Cloudflare do site barra o Discord); sem ele usa SITE_URL + LOGO_PATH
 
 

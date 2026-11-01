@@ -396,7 +396,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("/bot/latest-posts devolve lista (posts no ar)", r.status_code == 200 and isinstance(r.json(), list), r.text[:120])
     r = await c.get("/bot/drops", params={"q": item_nome})
     check("/bot/drops sem token do bot (401)", r.status_code == 401)
-    r = await c.get("/brand/nin-logo-laranja.png")
+    r = await c.get("/brand/nin-codex-logo.png")
     check("o logo do bot e' servido pela API (publico, imagem PNG)", r.status_code == 200 and r.headers.get("content-type") == "image/png" and r.content[1:4] == b"PNG", str(r.status_code))
     # /bot/recipe: profissao de teste com 1 receita (apagada no fim, mesmo se o teste falhar)
     from app.models.enums import ProfessionGroup

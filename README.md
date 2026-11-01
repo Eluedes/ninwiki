@@ -765,7 +765,7 @@ Todos fazem **simulação por padrão** e só gravam com `--aplicar` (o detalhe 
 | `verificar_com_cliente.py` | corrige nomes e `name_pt` pelos textos do jogo (só banco local) |
 | `extrair_mapas_do_jogo.py` | gera os dados do mapa-mundi a partir do cliente do jogo |
 | `atualizar_retratos_lobos.py` | retratos novos dos 4 lobos (patch 6.0.2.4); não apaga a imagem antiga |
-| `gerar_logo.py` | gera logo, favicon e imagem de compartilhamento do **Nin Codex** a partir do emblema do jogo |
+| `gerar_logo.py` | gera favicon, logo do site, imagem de compartilhamento, avatar do bot e logo do bot do **Nin Codex** a partir da logo (`public/images/logo/nin-codex-logo.png`) |
 | `mesclar_producao.py` | junta o banco local com os dados vivos do backup da produção (só em bancos temporários `ninwiki_*`) |
 | `converter_urls_dump.py` | troca `localhost` pelo domínio público dentro de um dump |
 | `restaurar_backup.py` / `migrar_banco.py` | restaurar um backup `.nbk` / exportar e importar o banco (`pg_dump`/`pg_restore`) |
@@ -783,7 +783,7 @@ Nunca aponte esses scripts para o banco de produção sem backup e sem o `--perm
 O banco mesclado já foi gerado: `envio/ninwiki-codex-final.dump` (pg_dump `-Fc`, feito no Postgres 16; restaura no 17) e a lista das imagens novas `envio/imagens_novas.txt`
 (4.832 imagens de `uploads/`). **Leia `NinWiki.Api/envio/RUNBOOK_BANCO.md`** (passo a passo em português simples, conferências e rollback). Resumo: `converter_urls_dump.py`
 troca `http://localhost:8000` pelo domínio da API (precisa dar `SOBRARAM_LOCALHOST=0`) → copiar dump e imagens para a VM → backup do que existir → parar API/site/bot → `pg_restore` →
-conferir `alembic_version` = `c3f5a7b9d1e4` → subir API, site, bot. O `gerar_logo.py` (livro, favicon, ícones, imagem de compartilhamento e `NinWiki.Bot/assets/avatar.png`, a partir do emblema do jogo)
+conferir `alembic_version` = `c3f5a7b9d1e4` → subir API, site, bot. O `gerar_logo.py` (logo do site, favicon, ícones, imagem de compartilhamento, `NinWiki.Bot/assets/avatar.png` e o logo do bot em `NinWiki.Api/app/static/brand/`, a partir de `nin-codex-logo.png`)
 é idempotente: pode rodar de novo. A pasta `envio/` e os `.nbk` não vão para o Git.
 
 ### 3A.6 Segurança e backups no Azure

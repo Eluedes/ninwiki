@@ -428,7 +428,7 @@ class NinWikiBot(discord.Client):
             self.log_loop.start()
             log.info("Feed de log ligado: canal %s, a cada %ss", self.settings.log_channel_id, self.settings.log_poll_seconds)
         # O logo das respostas vem da API (o Cloudflare do site barra o Discord e a imagem aparecia quebrada).
-        set_logo_url(f"{self.settings.ninwiki_api_url.rstrip('/')}/brand/nin-logo-laranja.png")
+        set_logo_url(f"{self.settings.ninwiki_api_url.rstrip('/')}/brand/nin-codex-logo.png")
         # Servidores com permissao para usar os comandos: ALLOWED_GUILD_IDS + o de testes (DEV_GUILD_ID), os mesmos onde os comandos sao registrados. Lista vazia = sem restricao.
         allowed = set(target_guilds(self.settings.allowed_guilds, self.settings.dev_guild_id)) if self.settings.allowed_guilds else set()
         register_public_commands(self.tree, self.api, allowed, self.settings.site_url, self.check_now, bool(self.settings.site_url), self.languages)
