@@ -1537,6 +1537,17 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await c.get("/auth/reader/me", headers=RA)
     check("/auth/reader/me devolve o leitor (sem Discord ID)", r.status_code == 200 and r.json()["username"].startswith("Reader") and "discordId" not in r.json())
     check("sem cookie /auth/reader/me devolve null", (await c.get("/auth/reader/me")).json() is None)
+    # atalho do painel no menu do usuario: isStaff = o Discord do leitor e' de alguem da equipe ATIVA
+    await c.post("/auth/reader/dev-login", json={"discordId": str(IDS["adm"])})
+    RS_ = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
+    c.cookies.clear()
+    await c.post("/auth/reader/dev-login", json={"discordId": str(IDS["inativo"])})
+    RI_ = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
+    c.cookies.clear()
+    check("/auth/reader/me: isStaff e' true so' para a equipe ATIVA (leitor comum e staff desativado = false; o atalho nao vira permissao)",
+          (await c.get("/auth/reader/me", headers=RS_)).json()["isStaff"] is True and (await c.get("/auth/reader/me", headers=RA)).json()["isStaff"] is False
+          and (await c.get("/auth/reader/me", headers=RI_)).json()["isStaff"] is False)
+    check("o leitor-equipe NAO ganha acesso ao painel so' por isso (cookie de leitor nao vale como sessao da equipe: 401)", (await c.get("/staff", headers=RS_)).status_code == 401)
     tok_leitor = RA["Cookie"].split("=", 1)[1]
     check("token de LEITOR nao vale como sessao da equipe", (await c.get("/auth/me", headers={"Cookie": f"{SESSION_COOKIE}={tok_leitor}"})).status_code == 401)
     check("token da EQUIPE nao vale como leitor", (await c.get("/auth/reader/me", headers={"Cookie": f"{READER_COOKIE}={create_session_token(adm)}"})).json() is None)

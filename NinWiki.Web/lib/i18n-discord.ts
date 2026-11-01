@@ -4,7 +4,7 @@
 
 const en = {
   // menu do usuario (cabecalho)
-  signIn: 'Sign in with Discord', menuLabel: 'Account menu', myProfile: 'My profile', myTournaments: 'My tournaments', signOut: 'Sign out',
+  signIn: 'Sign in with Discord', menuLabel: 'Account menu', myProfile: 'My profile', myTournaments: 'My tournaments', adminPanel: 'Staff panel', signOut: 'Sign out',
   signingOut: 'Signing out...', signedInAs: 'Signed in as {name}', signOutError: 'Could not sign out. Try again.',
   // perfil: vila e rank somente leitura
   readOnlyHint: 'Village and rank are filled in automatically by the bot from your roles on Discord. You cannot edit them here; only your in-game name.',
@@ -34,7 +34,7 @@ export type DiscordDict = Record<keyof typeof en, string>;
 export const discordEn: DiscordDict = en;
 
 export const discordPt: DiscordDict = {
-  signIn: 'Entrar com Discord', menuLabel: 'Menu da conta', myProfile: 'Meu perfil', myTournaments: 'Meus torneios', signOut: 'Sair',
+  signIn: 'Entrar com Discord', menuLabel: 'Menu da conta', myProfile: 'Meu perfil', myTournaments: 'Meus torneios', adminPanel: 'Painel da equipe', signOut: 'Sair',
   signingOut: 'Saindo...', signedInAs: 'Conectado como {name}', signOutError: 'Não foi possível sair. Tente de novo.',
   readOnlyHint: 'A vila e o rank são preenchidos automaticamente pelo bot a partir dos seus cargos no Discord. Aqui você só edita o seu nome no jogo.',
   sourceDiscord: 'Definido pelo seu cargo no servidor "{guild}" do Discord.',

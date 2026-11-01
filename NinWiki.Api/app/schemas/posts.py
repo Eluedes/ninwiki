@@ -128,6 +128,7 @@ class ReaderPublic(CamelModel):
 class ReaderMe(ReaderPublic):
     """O leitor logado (resposta de /auth/reader/me)."""
     id: uuid.UUID
+    is_staff: bool = False   # o mesmo Discord e' de alguem da equipe ATIVA: o menu do usuario mostra o atalho para o painel (so' conforto; o painel tem login e permissoes proprios)
 
 
 class CommentRead(CamelModel):

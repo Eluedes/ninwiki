@@ -1097,6 +1097,7 @@ export interface ApiReader {
   id: string;
   username: string;
   avatarUrl: string | null;
+  isStaff?: boolean;   // o Discord e' de alguem da equipe ativa: o menu mostra o atalho para o painel
 }
 
 export interface ApiEngagement {
