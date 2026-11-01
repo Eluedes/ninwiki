@@ -40,7 +40,6 @@ from app.api.analytics import router as analytics_router
 from app.api.steam_news import router as steam_news_router
 from app.api.media import router as media_router
 from app.api.announcement import router as announcement_router
-from app.api.seasonal_theme import router as seasonal_theme_router
 from app.api.audit_log import router as audit_log_router
 from app.api.auth import router as auth_router
 from app.api.bot import router as bot_router
@@ -174,7 +173,6 @@ app.include_router(tags_router)
 app.include_router(analytics_router)
 app.include_router(media_router)
 app.include_router(announcement_router)
-app.include_router(seasonal_theme_router)
 app.include_router(search_router)
 app.include_router(organizations_router)
 app.include_router(guide_router)

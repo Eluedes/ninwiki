@@ -409,24 +409,12 @@
   .maint-ember { display: none; }
 }
 
-/* Fundo do site (components/seasonal-background.tsx): ceu com nuvens que passam devagar; de noite as estrelas brilham, de dia o sol pulsa de leve;
-   no Halloween as aboboras brilham forte e fraco; na Pascoa os ovos balancam. Efeitos em canvas: components/season-canvas.tsx.
-   --sb-k e' a escala dos sprites (menor no celular). Sem movimento para quem pede menos movimento ao aparelho. */
-[data-sb] { --sb-k: 1; --sb-g: calc(120px * var(--sb-k)); }   /* --sb-g = altura do chao */
-@media (max-width: 700px) { [data-sb] { --sb-k: 0.55; } }
+/* Fundo do site (components/site-background.tsx): ceu com nuvens que passam devagar; de noite as estrelas brilham, de dia o sol pulsa de leve.
+   Sem movimento para quem pede menos movimento ao aparelho. */
 @keyframes sb-flow { from { background-position-x: 0; } to { background-position-x: var(--sb-tile, 1000px); } }
-@keyframes sb-float { from { transform: translateY(-5px); } to { transform: translateY(5px); } }
 @keyframes sb-star { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 @keyframes sb-sun { from { transform: scale(1); } to { transform: scale(1.06); } }
-@keyframes sb-pump { 0%, 100% { filter: brightness(0.7); } 12% { filter: brightness(1.7); } 30% { filter: brightness(0.85); } 52% { filter: brightness(1.6); } 74% { filter: brightness(0.75); } }
-@keyframes sb-halo { 0%, 100% { opacity: 0.15; } 12% { opacity: 1; } 30% { opacity: 0.3; } 52% { opacity: 0.9; } 74% { opacity: 0.2; } }
 .sb-cloud { animation: sb-flow 200s linear infinite; }
-.sb-float { animation: sb-float 7s ease-in-out infinite alternate; }
 .sb-star { animation: sb-star 4.5s ease-in-out infinite; }
 .sb-sun { animation: sb-sun 8s ease-in-out infinite alternate; }
-.sb-pump { animation: sb-pump 4.5s ease-in-out infinite; }
-.sb-halo { animation: sb-halo 4.5s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) {
-  .sb-cloud, .sb-float, .sb-star, .sb-sun, .sb-pump, .sb-halo { animation: none !important; }
-  .sb-pump { filter: brightness(1.2); }
-}
+@media (prefers-reduced-motion: reduce) { .sb-cloud, .sb-star, .sb-sun { animation: none !important; } }

@@ -895,7 +895,7 @@ export type PermissionName =
   | 'posts.create' | 'posts.edit' | 'posts.publish' | 'posts.delete' | 'comments.moderate' | 'reports.manage' | 'volunteers.manage' | 'tournaments.manage' | 'discord.links' | 'translation.import'
   | 'lore.edit' | 'lore.delete' | 'uploads.create' | 'translation.retranslate'
   | 'staff.view' | 'staff.create' | 'staff.edit' | 'staff.deactivate' | 'staff.delete' | 'roles.manage' | 'errors.view'
-  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.categorize' | 'site.maintenance' | 'site.seasonal_theme' | 'media.upload' | 'media.reset_ids' | 'media.closed'
+  | 'notices.view' | 'notices.manage' | 'announcement.manage' | 'media.manage' | 'media.categorize' | 'site.maintenance' | 'media.upload' | 'media.reset_ids' | 'media.closed'
   | 'audit.view' | 'audit.view_all' | 'audit.clear' | 'analytics.view'
   | `media.cat.${string}`;   // ver uma categoria do banco de imagens (media.cat.weapon, media.cat.none = Sem categoria...)
 
@@ -1520,13 +1520,6 @@ export interface AnnouncementInput {
 }
 
 /** Anuncio atual da Home (publico). `active: false` = nada para mostrar. */
-/** Tema festivo do site (nada a ver com as cores): Natal, Ano Novo, Valentine's Day, Pascoa, Halloween ou nenhum. */
-export type SeasonalTheme = 'none' | 'christmas' | 'newyear' | 'valentine' | 'easter' | 'halloween';
-export interface ApiSeasonalTheme { theme: SeasonalTheme; updatedAt: string | null; updatedBy: string | null }
-/** Tema festivo ativo agora (publico). */
-export function getSeasonalTheme(): Promise<ApiSeasonalTheme> { return apiFetch('/seasonal-theme', { cache: 'no-store' }); }
-/** Troca o tema festivo padrao do site (so' S.Adm). */
-export function setSeasonalTheme(theme: SeasonalTheme): Promise<ApiSeasonalTheme> { return apiFetch('/seasonal-theme', { method: 'PUT', body: JSON.stringify({ theme }) }); }
 
 export function getAnnouncement(): Promise<ApiAnnouncement> {
   return apiFetch('/announcement');

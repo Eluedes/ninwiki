@@ -79,7 +79,7 @@ function LoginContent() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-4">
+    <div className="relative flex min-h-screen flex-col items-center justify-center px-4">
       <div className="absolute right-4 top-4 flex items-center gap-1">
         <LanguageSelector />
         <ThemeToggle />
@@ -88,7 +88,7 @@ function LoginContent() {
       {/* efeito decorativo de brilho no topo, so' visual */}
       <div className="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
 
-      <div className="relative w-full max-w-md space-y-8 text-center">
+      <div className="relative w-full max-w-md space-y-8 rounded-2xl border border-border bg-card p-8 text-center shadow-lg">
         <div className="flex flex-col items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center">
             <NinLogo className="h-14 w-14" />
