@@ -19,11 +19,9 @@ const mobTypeBadge: Record<string, { label: string; className: string }> = {
   mount: { label: 'Montaria', className: 'bg-amber-500/15 text-amber-500' },
 };
 
-// Mesma ideia, para o subtipo de item. 'general'/'consumable'/'material'
-// ficam de fora - 'ring' e' o unico que precisa se destacar visualmente
-// por enquanto (categoria nova, ainda pouco povoada).
+// Selo de PECA, so' para o Gear: Accessory, Shirt, Vest, Pant, Hat, Mask e Shoe (o "Piece type" diz em qual SLOT o item ocupa). Os demais tipos de item
+// (Ring, Tool, Scroll, Pack...) NAO tem selo: o grupo/filtro do catalogo ja' diz o tipo, entao o selo era so' ruido.
 const itemTypeBadge: Record<string, { label: string; className: string }> = {
-  ring: { label: 'Ring', className: 'bg-violet-500/15 text-violet-400' },
   accessory: { label: 'Accessory', className: 'bg-fuchsia-500/15 text-fuchsia-400' },
   shirt: { label: 'Shirt', className: 'bg-rose-500/15 text-rose-400' },
   vest: { label: 'Vest', className: 'bg-orange-500/15 text-orange-400' },
@@ -31,15 +29,6 @@ const itemTypeBadge: Record<string, { label: string; className: string }> = {
   hat: { label: 'Hat', className: 'bg-teal-500/15 text-teal-400' },
   mask: { label: 'Mask', className: 'bg-purple-500/15 text-purple-400' },
   shoe: { label: 'Shoe', className: 'bg-lime-500/15 text-lime-400' },
-  pack: { label: 'Pack', className: 'bg-amber-500/15 text-amber-400' },
-  authority: { label: 'Authority', className: 'bg-cyan-400/15 text-cyan-300' },
-  tool: { label: 'Tool', className: 'bg-orange-500/15 text-orange-400' },
-  scroll: { label: 'Scroll', className: 'bg-fuchsia-500/15 text-fuchsia-400' },
-  recipe: { label: 'Recipe', className: 'bg-yellow-500/15 text-yellow-400' },
-  furniture: { label: 'Furniture', className: 'bg-stone-500/15 text-stone-300' },
-  food: { label: 'Food', className: 'bg-red-400/15 text-red-300' },
-  trophy: { label: 'Trophy', className: 'bg-amber-400/15 text-amber-300' },
-  other: { label: 'Other', className: 'bg-slate-500/15 text-slate-300' },
 };
 
 interface CatalogCardProps {
