@@ -94,6 +94,8 @@ function getItemTypeOptions(t: Dictionary['admin']['contentEditor'], current?: I
     { value: 'cast', label: t.itemCast },
     { value: 'authority', label: t.itemAuthority },
     { value: 'pack', label: t.itemPack },
+    { value: 'tool', label: t.itemTool },
+    { value: 'scroll', label: t.itemScroll },
   ];
   return all.filter((o) => o.value !== 'material' || current === 'material');
 }

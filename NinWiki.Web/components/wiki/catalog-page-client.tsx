@@ -30,7 +30,7 @@ import type { Category } from '@/lib/types';
 // o estado null already mostra tudo sem filtro nenhum (usado so' como
 // valor inicial e quando a pessoa clica de novo no filtro ja' ativo,
 // pra' "desligar" ele), mas nao existe um botao VISIVEL com esse nome.
-type ItemsFilterKey = 'consumables' | 'materials' | 'wardrobe' | 'ring' | 'pack' | 'special';
+type ItemsFilterKey = 'consumables' | 'materials' | 'wardrobe' | 'ring' | 'pack' | 'tool' | 'scroll' | 'special';
 
 const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   consumables: ['consumable'],
@@ -38,6 +38,8 @@ const ITEMS_FILTER_TYPES: Record<ItemsFilterKey, string[]> = {
   wardrobe: [...WARDROBE_TYPES],     // Accessory e as pecas de roupa ficam juntos (Guarda-roupa)
   ring: ['ring'],                    // Ring tem categoria propria
   pack: ['pack'],                    // catalogo Pack
+  tool: ['tool'],                    // Ferramentas
+  scroll: ['scroll'],                // Pergaminhos / Manuais
   special: ['general', 'cast', 'authority'],
 };
 
@@ -136,6 +138,8 @@ export function CatalogPageClient({
       wardrobe: dict.catalog.itemsFilterWardrobe,
       ring: dict.catalog.itemsFilterRings,
       pack: dict.catalog.itemsFilterPack,
+      tool: dict.catalog.itemsFilterTool,
+      scroll: dict.catalog.itemsFilterScroll,
       special: dict.catalog.itemsFilterSpecial,
     }),
     [dict]

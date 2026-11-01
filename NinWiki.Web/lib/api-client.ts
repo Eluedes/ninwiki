@@ -1097,7 +1097,7 @@ export interface ApiReader {
   id: string;
   username: string;
   avatarUrl: string | null;
-  isStaff?: boolean;   // o Discord e' de alguem da equipe ativa: o menu mostra o atalho para o painel
+  isSuperAdmin?: boolean;   // o Discord e' de um S.Adm ativo: so' ele ve o atalho para o painel no menu
 }
 
 export interface ApiEngagement {

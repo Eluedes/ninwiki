@@ -65,6 +65,8 @@ class ItemType(str, enum.Enum):
     SHOE = "shoe"
     PACK = "pack"   # pacotes (catalogo "Pack" da pagina de itens)
     AUTHORITY = "authority"   # itens de Autoridade do cla (ex.: Hokuto Sphere I): levados ao Altar da Casa do Cla
+    TOOL = "tool"             # ferramentas (picareta, vara de pesca...): categoria propria no catalogo de itens
+    SCROLL = "scroll"         # pergaminhos e manuais (ex.: "... Manual"): categoria propria no catalogo de itens
 
 
 class ContentStatus(str, enum.Enum):

@@ -58,7 +58,7 @@ export const contentItemSchema = z.object({
   maxStack: z.coerce.number().int().min(0).nullable().optional(),
   castVillageId: z.string().nullable().optional(),
   mobType: z.enum(['monster', 'boss', 'npc', 'mount']).nullable().optional(),
-  itemType: z.enum(['general', 'ring', 'consumable', 'material', 'currency', 'cast', 'authority', 'accessory', 'shirt', 'vest', 'pant', 'hat', 'mask', 'shoe', 'pack']).nullable().optional(),
+  itemType: z.enum(['general', 'ring', 'consumable', 'material', 'currency', 'cast', 'authority', 'accessory', 'shirt', 'vest', 'pant', 'hat', 'mask', 'shoe', 'pack', 'tool', 'scroll']).nullable().optional(),
 }).superRefine((value, ctx) => {
   exigeUmDosDois(ctx, value.name, value.namePt, 'name');
   // Descricao e' obrigatoria em todas as categorias, exceto mobs (em ingles OU em portugues).

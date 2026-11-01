@@ -440,6 +440,9 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("/bot/recipe sem token do bot (401)", r.status_code == 401)
     r = await c.post("/content-items", json={**novo_conteudo("pack"), "category": "items", "itemType": "pack"}, headers=C)
     check("item tipo Pack (catalogo Pack) e' criado", r.status_code == 201 and r.json()["itemType"] == "pack", r.text[:160])
+    for tipo_novo in ("tool", "scroll"):
+        r = await c.post("/content-items", json={**novo_conteudo(f"tipo-{tipo_novo}"), "category": "items", "itemType": tipo_novo}, headers=C)
+        check(f"item tipo {tipo_novo} e' criado e volta com o tipo certo", r.status_code == 201 and r.json()["itemType"] == tipo_novo, r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("unico"), "category": "weapons", "rarity": "unique"}, headers=C)
     check("raridade Unique e' aceita (arma com etiqueta vermelha Unique)", r.status_code == 201 and r.json()["rarity"] == "unique", r.text[:160])
     r = await c.post("/content-items", json={**novo_conteudo("req3"), "category": "weapons", "weaponRequirement": " 60 Agility \n\n 20   Chakra\n30 Strength "}, headers=C)
@@ -1544,9 +1547,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     await c.post("/auth/reader/dev-login", json={"discordId": str(IDS["inativo"])})
     RI_ = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
     c.cookies.clear()
-    check("/auth/reader/me: isStaff e' true so' para a equipe ATIVA (leitor comum e staff desativado = false; o atalho nao vira permissao)",
-          (await c.get("/auth/reader/me", headers=RS_)).json()["isStaff"] is True and (await c.get("/auth/reader/me", headers=RA)).json()["isStaff"] is False
-          and (await c.get("/auth/reader/me", headers=RI_)).json()["isStaff"] is False)
+    await c.post("/auth/reader/dev-login", json={"discordId": str(IDS["sadm"])})
+    RSA_ = {"Cookie": f"{READER_COOKIE}={c.cookies.get(READER_COOKIE)}"}
+    c.cookies.clear()
+    check("/auth/reader/me: isSuperAdmin e' true so' para o S.Adm ATIVO (Adm, leitor comum e S.Adm desativado = false; o atalho nao vira permissao)",
+          (await c.get("/auth/reader/me", headers=RSA_)).json()["isSuperAdmin"] is True and (await c.get("/auth/reader/me", headers=RS_)).json()["isSuperAdmin"] is False
+          and (await c.get("/auth/reader/me", headers=RA)).json()["isSuperAdmin"] is False and (await c.get("/auth/reader/me", headers=RI_)).json()["isSuperAdmin"] is False)
     check("o leitor-equipe NAO ganha acesso ao painel so' por isso (cookie de leitor nao vale como sessao da equipe: 401)", (await c.get("/staff", headers=RS_)).status_code == 401)
     tok_leitor = RA["Cookie"].split("=", 1)[1]
     check("token de LEITOR nao vale como sessao da equipe", (await c.get("/auth/me", headers={"Cookie": f"{SESSION_COOKIE}={tok_leitor}"})).status_code == 401)
