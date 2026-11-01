@@ -1675,6 +1675,16 @@ export interface ApiReport {
   handledAt: string | null;
 }
 
+/** Publico: o formulario de voluntarios esta' aberto? (so' leitura) */
+export function getVolunteerFormStatus(): Promise<{ enabled: boolean }> {
+  return apiFetch('/volunteers/status', { cache: 'no-store' });
+}
+
+/** Painel (volunteers.manage): abre ou fecha o formulario de voluntarios. */
+export function setVolunteerFormStatus(enabled: boolean): Promise<{ enabled: boolean }> {
+  return apiFetch('/volunteers/status', { method: 'PUT', body: JSON.stringify({ enabled }) });
+}
+
 /** Visitante (sem login) envia um report sobre uma pagina. `website` e' a "isca" anti-robo e deve ir sempre vazia. */
 export function submitReport(input: { targetType: ReportTargetType; targetId: string; kind: ReportKind; message: string; locale: string; website: string }): Promise<void> {
   return apiFetch('/reports', { method: 'POST', body: JSON.stringify(input) }, true);
@@ -1699,21 +1709,21 @@ export function deleteReport(id: string): Promise<void> {
 
 // ---- Voluntarios (formulario publico /volunteer + painel /admin/volunteers) ----
 
-export const VOLUNTEER_AREAS = ['translation', 'wiki-editing', 'data-collection', 'mapping', 'bot-dev', 'art-graphics', 'moderation', 'other'] as const;
+export const VOLUNTEER_AREAS = ['translation', 'wiki-editing', 'data-collection', 'mapping', 'moderation', 'other'] as const;
 export type VolunteerArea = (typeof VOLUNTEER_AREAS)[number];
 export const VOLUNTEER_STATUSES = ['new', 'reviewing', 'approved', 'rejected', 'contacted'] as const;
 export type VolunteerStatus = (typeof VOLUNTEER_STATUSES)[number];
 
 /** O que o visitante envia (espelha VolunteerApply no backend). `website` e' a isca anti-robo e deve ir sempre vazia. */
 export interface VolunteerApplyInput {
-  name: string; discord: string; gameNick: string; languages: string; areas: VolunteerArea[];
-  availability: string; experience: string; motivation: string; contactEmail: string | null; consent: true; website: string;
+  discord: string; gameNick: string; languages: string; areas: VolunteerArea[];
+  availability: string; motivation: string; contactEmail: string | null; consent: true; website: string;
 }
 
 /** Uma inscricao como o painel ve' (espelha VolunteerRead). */
 export interface ApiVolunteer {
-  id: string; createdAt: string; name: string; discord: string; gameNick: string; languages: string; areas: string[];
-  availability: string; experience: string; motivation: string; contactEmail: string | null; status: VolunteerStatus;
+  id: string; createdAt: string; discord: string; gameNick: string; languages: string; areas: string[];
+  availability: string; motivation: string; contactEmail: string | null; status: VolunteerStatus;
   staffNotes: string | null; reviewedBy: string | null; reviewedAt: string | null;
 }
 

@@ -4,22 +4,22 @@
 // Acessibilidade: erros por campo com aria-invalid/aria-describedby e o resultado do envio num aviso aria-live.
 // O campo "website" e' uma ISCA anti-robo: escondido de pessoas (fora da tela, sem foco); se vier preenchido a API descarta.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, HeartHandshake, Loader2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Lock, HeartHandshake, Loader2, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/lore/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ApiError, applyAsVolunteer, VOLUNTEER_AREAS } from '@/lib/api-client';
+import { ApiError, applyAsVolunteer, getVolunteerFormStatus, VOLUNTEER_AREAS } from '@/lib/api-client';
 import { volunteerSchema, type VolunteerFormValues } from '@/lib/validation';
 import { cn } from '@/lib/utils';
 
 const EMPTY: VolunteerFormValues = {
-  name: '', discord: '', gameNick: '', languages: '', areas: [], availability: '', experience: '', motivation: '',
+  discord: '', gameNick: '', languages: '', areas: [], availability: '', motivation: '',
   contactEmail: '', consent: false, website: '',
 };
 
@@ -39,6 +39,11 @@ export function VolunteerForm() {
   const t = dict.volunteer;
   const [sent, setSent] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [open, setOpen] = useState<boolean | null>(null);   // null = ainda consultando; false = inscricoes fechadas pelo painel
+  useEffect(() => {
+    // Se a consulta falhar, mostra o formulario mesmo assim: a API e' quem recusa de verdade quando esta' fechado.
+    getVolunteerFormStatus().then((s) => setOpen(s.enabled)).catch(() => setOpen(true));
+  }, []);
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<VolunteerFormValues>({
     resolver: zodResolver(volunteerSchema), defaultValues: EMPTY,
   });
@@ -64,7 +69,7 @@ export function VolunteerForm() {
     const common = {
       id: `v-${name}`, placeholder: opts.ph, maxLength: opts.max, 'aria-invalid': !!msg,
       'aria-describedby': msg ? `v-${name}-err` : opts.hint ? `v-${name}-hint` : undefined,
-      ...register(name as 'name'),
+      ...register(name as 'discord'),
     };
     return (
       <div className="space-y-1.5">
@@ -100,11 +105,17 @@ export function VolunteerForm() {
         {Object.keys(errors).length > 0 && !sendError && <p className="mb-6 text-sm font-medium text-destructive">{t.fixErrors}</p>}
       </div>
 
-      {!sent && (
+      {open === false && (
+        <div role="status" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+          <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+          <div className="space-y-1"><p className="font-semibold">{t.closedTitle}</p><p className="text-muted-foreground">{t.closedText}</p></div>
+        </div>
+      )}
+
+      {!sent && open === true && (
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
           <Section title={t.sectionAbout}>
             <div className="grid gap-4 sm:grid-cols-2">
-              {field('name', t.name, { ph: t.namePh, max: 80 })}
               {field('discord', t.discord, { ph: t.discordPh, hint: t.discordHint, max: 64 })}
               {field('gameNick', t.gameNick, { ph: t.gameNickPh, max: 60 })}
               {field('languages', t.languages, { ph: t.languagesPh, max: 120 })}
@@ -142,7 +153,6 @@ export function VolunteerForm() {
           </Section>
 
           <Section title={t.sectionMotivation}>
-            {field('experience', t.experience, { ph: t.experiencePh, area: true, max: 1500 })}
             {field('motivation', t.motivation, { ph: t.motivationPh, area: true, max: 1500 })}
             {field('contactEmail', t.email, { hint: t.emailHint, type: 'email', max: 120 })}
           </Section>

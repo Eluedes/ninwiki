@@ -4,13 +4,13 @@
 // detalhes (texto completo), onde a equipe muda o status, escreve notas internas ou apaga (pedido de exclusao de dados).
 
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, ChevronDown, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Lock, LockOpen, Loader2, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/components/providers/language-provider';
 import {
-  ApiError, deleteVolunteer, listVolunteers, updateVolunteer, VOLUNTEER_STATUSES, type ApiVolunteer, type VolunteerStatus,
+  ApiError, deleteVolunteer, getVolunteerFormStatus, listVolunteers, setVolunteerFormStatus, updateVolunteer, VOLUNTEER_STATUSES, type ApiVolunteer, type VolunteerStatus,
 } from '@/lib/api-client';
 import { cn, formatDateTime } from '@/lib/utils';
 
@@ -40,6 +40,26 @@ export default function VolunteersPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState<boolean | null>(null);   // interruptor do formulario publico (null = carregando)
+  const [toggling, setToggling] = useState(false);
+
+  useEffect(() => {
+    getVolunteerFormStatus().then((s) => setFormOpen(s.enabled)).catch(() => setFormOpen(null));
+  }, []);
+
+  /** Abre ou fecha o formulario publico (fica no banco e no log). */
+  async function toggleForm() {
+    if (formOpen === null) return;
+    setToggling(true);
+    setError(null);
+    try {
+      setFormOpen((await setVolunteerFormStatus(!formOpen)).enabled);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : t.toggleError);
+    } finally {
+      setToggling(false);
+    }
+  }
 
   /** Recarrega a pagina atual com os filtros. */
   const load = useCallback(async () => {
@@ -101,6 +121,16 @@ export default function VolunteersPage() {
         </Button>
       </div>
 
+      {formOpen !== null && (
+        <div className={cn('flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4', formOpen ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-amber-500/40 bg-amber-500/10')}>
+          <div className="flex items-start gap-3 text-sm">
+            {formOpen ? <LockOpen className="mt-0.5 h-5 w-5 text-emerald-500" /> : <Lock className="mt-0.5 h-5 w-5 text-amber-500" />}
+            <div><p className="font-semibold">{formOpen ? t.formOpen : t.formClosed}</p><p className="text-muted-foreground">{formOpen ? t.formOpenHint : t.formClosedHint}</p></div>
+          </div>
+          <Button size="sm" variant="outline" disabled={toggling} onClick={toggleForm}>{formOpen ? t.closeForm : t.openForm}</Button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         {[undefined, ...VOLUNTEER_STATUSES].map((s) => (
           <button
@@ -132,8 +162,8 @@ export default function VolunteersPage() {
               <li key={v.id} className="rounded-xl border border-border bg-card shadow-sm">
                 <button type="button" aria-expanded={open} onClick={() => setOpenId(open ? null : v.id)} className="flex w-full flex-wrap items-center gap-2 p-4 text-left">
                   <span className={cn('rounded-full border px-2 py-0.5 text-xs font-semibold', STATUS_STYLE[v.status])}>{t.statuses[v.status]}</span>
-                  <span className="font-semibold">{v.name}</span>
-                  <span className="text-sm text-muted-foreground">· {v.discord} · {v.gameNick}</span>
+                  <span className="font-semibold">{v.discord}</span>
+                  <span className="text-sm text-muted-foreground">· {v.gameNick}</span>
                   <span className="ml-auto text-xs text-muted-foreground">{formatDateTime(v.createdAt, locale)}</span>
                   <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} />
                 </button>
@@ -144,7 +174,7 @@ export default function VolunteersPage() {
                         <div key={k}><dt className="text-xs font-semibold uppercase text-muted-foreground">{t[k]}</dt><dd className="break-words">{val}</dd></div>
                       ))}
                     </dl>
-                    {([['experience', v.experience], ['motivation', v.motivation]] as const).map(([k, val]) => (
+                    {([['motivation', v.motivation]] as const).map(([k, val]) => (
                       <div key={k}><p className="text-xs font-semibold uppercase text-muted-foreground">{t[k]}</p><p className="whitespace-pre-wrap break-words">{val}</p></div>
                     ))}
                     <div className="space-y-1.5">

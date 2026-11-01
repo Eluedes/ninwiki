@@ -133,6 +133,7 @@ ROTAS_PUBLICAS = {
     ("POST", "/auth/dev-login"),   # so' funciona em development + confere a origem
     ("POST", "/auth/logout"),      # sem sessao so' limpa o cookie
     ("POST", "/reports"),           # visitante avisa conteudo desatualizado / erro de traducao (origem + limites + isca + alvo conferido)
+    ("GET", "/volunteers/status"),  # leitura publica: o formulario /volunteer esta' aberto?
     ("POST", "/volunteers/apply"),  # visitante se inscreve como voluntario (origem + limite por IP + isca + consentimento + teto diario)
     ("POST", "/client-errors"),    # o navegador do visitante avisa que o site quebrou (origem + limite por IP + teto por hora)
 }
@@ -2681,9 +2682,8 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     from app.core.rate_limit import limiter as _limV
     from app.core.database import AsyncSessionLocal as _SessV
     ORIGEM = {"Origin": settings.frontend_origin}
-    vol = {"name": "Teste Perm Voluntario", "discord": "voluntario_teste_perm", "gameNick": "NickTeste", "languages": "Portuguese, English",
-           "areas": ["translation", "wiki-editing"], "availability": "5h por semana", "experience": "Ja traduzi jogos antes.",
-           "motivation": "Quero ajudar a manter o wiki completo.", "contactEmail": "teste@example.com", "consent": True, "website": ""}
+    vol = {"discord": "voluntario_teste_perm", "gameNick": "NickTeste", "languages": "Portuguese, English",
+           "areas": ["translation", "wiki-editing"], "availability": "5h por semana", "motivation": "Quero ajudar a manter o wiki completo.", "contactEmail": "teste@example.com", "consent": True, "website": ""}
     _limV._hits.clear()
     r = await c.post("/volunteers/apply", json=vol, headers=ORIGEM)
     check("visitante anonimo se inscreve (204, sem eco dos dados)", r.status_code == 204 and not r.content, f"veio {r.status_code} {r.text[:120]}")
@@ -2699,14 +2699,14 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("e-mail invalido = 422", r.status_code == 422, f"veio {r.status_code}")
     r = await c.post("/volunteers/apply", json=vol, headers={"Origin": "https://site-malicioso.example"})
     check("origem de outro site e' recusada (403)", r.status_code == 403, f"veio {r.status_code}")
-    r = await c.post("/volunteers/apply", json={**vol, "name": "Robo Isca", "website": "http://spam.example"}, headers=ORIGEM)
+    r = await c.post("/volunteers/apply", json={**vol, "discord": "robo_isca_perm", "website": "http://spam.example"}, headers=ORIGEM)
     check("isca preenchida: finge 204 mas descarta", r.status_code == 204, f"veio {r.status_code}")
     r = await c.get("/volunteers?limit=100", headers=A)
-    nomes = [x["name"] for x in r.json()["items"]] if r.status_code == 200 else []
-    check("Adm lista: a inscricao valida esta' la' e a do robo nao", "Teste Perm Voluntario" in nomes and "Robo Isca" not in nomes, str(nomes)[:200])
+    nomes = [x["discord"] for x in r.json()["items"]] if r.status_code == 200 else []
+    check("Adm lista: a inscricao valida esta' la' e a do robo nao", "voluntario_teste_perm" in nomes and "robo_isca_perm" not in nomes, str(nomes)[:200])
     check("lista traz status NEW (new), total e contador de novas", r.status_code == 200 and r.json()["total"] >= 1 and r.json()["newCount"] >= 1
-          and all(x["status"] == "new" for x in r.json()["items"] if x["name"] == "Teste Perm Voluntario"), r.text[:200])
-    vid = next((x["id"] for x in r.json()["items"] if x["name"] == "Teste Perm Voluntario"), "") if r.status_code == 200 else ""
+          and all(x["status"] == "new" for x in r.json()["items"] if x["discord"] == "voluntario_teste_perm"), r.text[:200])
+    vid = next((x["id"] for x in r.json()["items"] if x["discord"] == "voluntario_teste_perm"), "") if r.status_code == 200 else ""
     r = await c.get("/volunteers?q=voluntario_teste_perm&status=new", headers=A)
     check("busca por Discord + filtro de status acham a inscricao", r.status_code == 200 and r.json()["total"] >= 1, r.text[:160])
     r = await c.get("/volunteers?q=zzzz-ninguem-assim&status=new", headers=A)
@@ -2741,12 +2741,34 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("Adm apaga a inscricao (204)", r.status_code == 204, f"veio {r.status_code}")
     r = await c.get(f"/volunteers/{vid}", headers=A)
     check("depois de apagada, 404", r.status_code == 404, f"veio {r.status_code}")
+    r = await c.post("/volunteers/apply", json={**vol, "name": "Fulano", "experience": "Ja traduzi jogos antes."}, headers=ORIGEM)
+    check("campos antigos (name/experience) sao ignorados e a inscricao passa (204)", r.status_code == 204, f"veio {r.status_code}")
+    for area in ("bot-dev", "art-graphics"):
+        r = await c.post("/volunteers/apply", json={**vol, "areas": [area]}, headers=ORIGEM)
+        check(f"area removida '{area}' e' recusada (422)", r.status_code == 422, f"veio {r.status_code}")
+    # interruptor do formulario: leitura publica, escrita so' com volunteers.manage, fechado recusa o POST
+    r = await c.get("/volunteers/status")
+    check("anonimo le' o estado do formulario (aberto por padrao)", r.status_code == 200 and r.json() == {"enabled": True}, r.text[:100])
+    r = await c.put("/volunteers/status", json={"enabled": False})
+    check("anonimo NAO fecha o formulario (401)", r.status_code == 401, f"veio {r.status_code}")
+    r = await c.put("/volunteers/status", json={"enabled": False}, headers=C)
+    check("Creator NAO fecha o formulario (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.put("/volunteers/status", json={"enabled": False}, headers=A)
+    check("Adm fecha o formulario", r.status_code == 200 and r.json() == {"enabled": False}, r.text[:100])
+    check("estado publico passa a 'fechado'", (await c.get("/volunteers/status")).json() == {"enabled": False}, "continua aberto")
+    r = await c.post("/volunteers/apply", json=vol, headers=ORIGEM)
+    check("formulario fechado: a API recusa a inscricao (403)", r.status_code == 403, f"veio {r.status_code}")
+    r = await c.put("/volunteers/status", json={"enabled": True}, headers=A)
+    check("Adm reabre o formulario", r.status_code == 200 and r.json() == {"enabled": True}, r.text[:100])
     _limV._hits.clear()
-    codigos = [(await c.post("/volunteers/apply", json={**vol, "name": f"Flood Teste {i}"}, headers=ORIGEM)).status_code for i in range(7)]
+    r = await c.post("/volunteers/apply", json=vol, headers=ORIGEM)
+    check("reaberto: a inscricao volta a ser aceita (204)", r.status_code == 204, f"veio {r.status_code}")
+    _limV._hits.clear()
+    codigos = [(await c.post("/volunteers/apply", json={**vol, "discord": f"flood_teste_perm_{i}"}, headers=ORIGEM)).status_code for i in range(7)]
     check("limite por IP: depois de 5 por hora vem 429", codigos[:5] == [204] * 5 and 429 in codigos[5:], str(codigos))
     _limV._hits.clear()
     async with _SessV() as db:
-        await db.execute(text("DELETE FROM volunteer_applications WHERE name LIKE 'Flood Teste%' OR name LIKE '%Teste Perm Voluntario%' OR name = 'Robo Isca'"))
+        await db.execute(text("DELETE FROM volunteer_applications WHERE discord LIKE 'flood_teste_perm_%' OR discord IN ('voluntario_teste_perm', 'robo_isca_perm')"))
         await db.commit()
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")

@@ -18,9 +18,10 @@ import type { Locale } from './types';
 export interface VolunteerDict {
   title: string; subtitle: string; intro: string; home: string;
   sectionAbout: string; sectionHelp: string; sectionMotivation: string;
-  name: string; namePh: string; discord: string; discordPh: string; discordHint: string; gameNick: string; gameNickPh: string;
+  closedTitle: string; closedText: string;
+  discord: string; discordPh: string; discordHint: string; gameNick: string; gameNickPh: string;
   languages: string; languagesPh: string; areas: string; areasHint: string; areaNames: Record<string, string>;
-  availability: string; availabilityPh: string; experience: string; experiencePh: string; motivation: string; motivationPh: string;
+  availability: string; availabilityPh: string; motivation: string; motivationPh: string;
   email: string; emailHint: string; consent: string;
   privacyTitle: string; privacyPurpose: string; privacyWho: string; privacyDelete: string; privacyNoIp: string;
   send: string; sending: string; successTitle: string; successText: string; sendAnother: string; fixErrors: string; sendError: string;
@@ -31,8 +32,9 @@ export interface VolunteerDict {
 export interface VolunteersPageDict {
   title: string; subtitle: string; refresh: string; all: string; statuses: Record<string, string>; searchPh: string; empty: string;
   loadError: string; actionError: string; newCount: string; submittedOn: string; reviewedBy: string; discord: string; gameNick: string;
-  languages: string; areas: string; availability: string; experience: string; motivation: string; email: string; notes: string; notesPh: string;
+  languages: string; areas: string; availability: string; motivation: string; email: string; notes: string; notesPh: string;
   saveNotes: string; saved: string; setStatus: string; delete: string; confirmDelete: string; showing: string; prev: string; next: string; details: string; close: string;
+  formOpen: string; formClosed: string; formOpenHint: string; formClosedHint: string; closeForm: string; openForm: string; toggleError: string;
 }
 
 /** Textos das novidades do blog: editor, pagina do post, leitores (curtir/comentar) e moderacao. */
@@ -430,12 +432,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
     volunteer: {
       title: 'Seja voluntário', subtitle: 'Ajude a manter o Nin Codex completo e atualizado.',
       intro: 'O Nin Codex é feito por fãs, de graça. Se você quer ajudar (traduzir, editar, coletar dados...), conte um pouco sobre você. A equipe lê todas as inscrições e responde pelo Discord.',
-      home: 'Início', sectionAbout: 'Sobre você', sectionHelp: 'Como você quer ajudar', sectionMotivation: 'Experiência e motivação',
-      name: 'Nome ou apelido', namePh: 'Como podemos te chamar?', discord: 'Usuário do Discord', discordPh: 'ex.: usuario123', discordHint: 'É por aqui que a equipe vai te chamar.',
+      home: 'Início', sectionAbout: 'Sobre você', sectionHelp: 'Como você quer ajudar', sectionMotivation: 'Motivação',
+      closedTitle: 'Inscrições fechadas', closedText: 'No momento não estamos aceitando novos voluntários. Fique de olho nos avisos do site e do Discord: avisaremos quando reabrir.',
+      discord: 'Usuário do Discord', discordPh: 'ex.: usuario123', discordHint: 'É por aqui que a equipe vai te chamar.',
       gameNick: 'Nick no Nin Online', gameNickPh: 'Seu personagem principal', languages: 'Idiomas que você fala', languagesPh: 'ex.: Português, Inglês',
       areas: 'Áreas de interesse', areasHint: 'Marque pelo menos uma.',
-      areaNames: { translation: 'Tradução', 'wiki-editing': 'Edição do wiki', 'data-collection': 'Coleta de dados e prints', mapping: 'Mapas', 'bot-dev': 'Bot / programação', 'art-graphics': 'Arte e gráficos', moderation: 'Moderação', other: 'Outro' },
-      availability: 'Disponibilidade', availabilityPh: 'ex.: umas 5 horas por semana, à noite', experience: 'Experiência', experiencePh: 'Já ajudou em wikis, projetos ou comunidades? Conte.',
+      areaNames: { translation: 'Tradução', 'wiki-editing': 'Edição do wiki', 'data-collection': 'Coleta de dados e prints', mapping: 'Mapas', moderation: 'Moderação', other: 'Outro' },
+      availability: 'Disponibilidade', availabilityPh: 'ex.: umas 5 horas por semana, à noite',
       motivation: 'Por que você quer ajudar?', motivationPh: 'Escreva com suas palavras.',
       email: 'E-mail (opcional)', emailHint: 'Só se você preferir ser contatado por e-mail.',
       consent: 'Concordo que a equipe do Nin Codex guarde estes dados para avaliar minha inscrição.',
@@ -819,10 +822,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       volunteersPage: {
         title: 'Voluntários', subtitle: 'Inscrições enviadas pelo formulário /volunteer. Só a equipe vê.', refresh: 'Atualizar', all: 'Todos',
         statuses: { new: 'Nova', reviewing: 'Em avaliação', approved: 'Aprovada', rejected: 'Recusada', contacted: 'Contatada' },
-        searchPh: 'Buscar por nome, Discord ou nick', empty: 'Nenhuma inscrição por aqui.', loadError: 'Não foi possível carregar as inscrições.', actionError: 'Não foi possível concluir a ação.', newCount: 'novas', submittedOn: 'Enviada em', reviewedBy: 'Avaliada por',
-        discord: 'Discord', gameNick: 'Nick no jogo', languages: 'Idiomas', areas: 'Áreas', availability: 'Disponibilidade', experience: 'Experiência', motivation: 'Motivação', email: 'E-mail',
+        searchPh: 'Buscar por Discord ou nick', empty: 'Nenhuma inscrição por aqui.', loadError: 'Não foi possível carregar as inscrições.', actionError: 'Não foi possível concluir a ação.', newCount: 'novas', submittedOn: 'Enviada em', reviewedBy: 'Avaliada por',
+        discord: 'Discord', gameNick: 'Nick no jogo', languages: 'Idiomas', areas: 'Áreas', availability: 'Disponibilidade', motivation: 'Motivação', email: 'E-mail',
         notes: 'Notas internas (só a equipe vê)', notesPh: 'Anotações sobre esta pessoa…', saveNotes: 'Salvar notas', saved: 'Salvo', setStatus: 'Status', delete: 'Apagar', confirmDelete: 'Apagar esta inscrição e todos os dados dela? Não dá para desfazer.',
         showing: 'Mostrando', prev: 'Anterior', next: 'Próxima', details: 'Ver detalhes', close: 'Fechar',
+        formOpen: 'Formulário aberto', formClosed: 'Formulário fechado', formOpenHint: 'Qualquer pessoa pode se inscrever em /volunteer.', formClosedHint: 'A página /volunteer mostra "inscrições fechadas" e a API recusa novos envios.', closeForm: 'Fechar inscrições', openForm: 'Abrir inscrições', toggleError: 'Não foi possível mudar o formulário.',
       },
       errorsPage: {
         title: 'Erros e problemas', subtitle: 'Tudo que quebrou no wiki (API, site, tradução, ataques). O bot também avisa no Discord.',
@@ -1258,12 +1262,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
     volunteer: {
       title: 'Become a volunteer', subtitle: 'Help keep Nin Codex complete and up to date.',
       intro: 'Nin Codex is a free, fan-made project. If you want to help (translating, editing, collecting data...), tell us a bit about yourself. The team reads every application and replies on Discord.',
-      home: 'Home', sectionAbout: 'About you', sectionHelp: 'How you want to help', sectionMotivation: 'Experience and motivation',
-      name: 'Name or nickname', namePh: 'What should we call you?', discord: 'Discord username', discordPh: 'e.g. user123', discordHint: 'This is how the team will reach you.',
+      home: 'Home', sectionAbout: 'About you', sectionHelp: 'How you want to help', sectionMotivation: 'Motivation',
+      closedTitle: 'Applications closed', closedText: 'We are not accepting new volunteers right now. Keep an eye on the site and Discord announcements: we will say when it reopens.',
+      discord: 'Discord username', discordPh: 'e.g. user123', discordHint: 'This is how the team will reach you.',
       gameNick: 'Nin Online nickname', gameNickPh: 'Your main character', languages: 'Languages you speak', languagesPh: 'e.g. Portuguese, English',
       areas: 'Areas of interest', areasHint: 'Pick at least one.',
-      areaNames: { translation: 'Translation', 'wiki-editing': 'Wiki editing', 'data-collection': 'Data collection and screenshots', mapping: 'Mapping', 'bot-dev': 'Bot / programming', 'art-graphics': 'Art and graphics', moderation: 'Moderation', other: 'Other' },
-      availability: 'Availability', availabilityPh: 'e.g. about 5 hours a week, evenings', experience: 'Experience', experiencePh: 'Have you helped on wikis, projects or communities? Tell us.',
+      areaNames: { translation: 'Translation', 'wiki-editing': 'Wiki editing', 'data-collection': 'Data collection and screenshots', mapping: 'Mapping', moderation: 'Moderation', other: 'Other' },
+      availability: 'Availability', availabilityPh: 'e.g. about 5 hours a week, evenings',
       motivation: 'Why do you want to help?', motivationPh: 'Write in your own words.',
       email: 'E-mail (optional)', emailHint: 'Only if you prefer to be contacted by e-mail.',
       consent: 'I agree that the Nin Codex team stores this data to review my application.',
@@ -1647,10 +1652,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       volunteersPage: {
         title: 'Volunteers', subtitle: 'Applications sent through the /volunteer form. Staff only.', refresh: 'Refresh', all: 'All',
         statuses: { new: 'New', reviewing: 'Reviewing', approved: 'Approved', rejected: 'Rejected', contacted: 'Contacted' },
-        searchPh: 'Search by name, Discord or nickname', empty: 'No applications here.', loadError: 'Could not load the applications.', actionError: 'Could not complete the action.', newCount: 'new', submittedOn: 'Sent on', reviewedBy: 'Reviewed by',
-        discord: 'Discord', gameNick: 'Game nickname', languages: 'Languages', areas: 'Areas', availability: 'Availability', experience: 'Experience', motivation: 'Motivation', email: 'E-mail',
+        searchPh: 'Search by Discord or nickname', empty: 'No applications here.', loadError: 'Could not load the applications.', actionError: 'Could not complete the action.', newCount: 'new', submittedOn: 'Sent on', reviewedBy: 'Reviewed by',
+        discord: 'Discord', gameNick: 'Game nickname', languages: 'Languages', areas: 'Areas', availability: 'Availability', motivation: 'Motivation', email: 'E-mail',
         notes: 'Internal notes (staff only)', notesPh: 'Notes about this person…', saveNotes: 'Save notes', saved: 'Saved', setStatus: 'Status', delete: 'Delete', confirmDelete: 'Delete this application and all its data? This cannot be undone.',
         showing: 'Showing', prev: 'Previous', next: 'Next', details: 'View details', close: 'Close',
+        formOpen: 'Form open', formClosed: 'Form closed', formOpenHint: 'Anyone can apply at /volunteer.', formClosedHint: 'The /volunteer page shows "applications closed" and the API rejects new submissions.', closeForm: 'Close applications', openForm: 'Open applications', toggleError: 'Could not change the form.',
       },
       errorsPage: {
         title: 'Errors and problems', subtitle: 'Everything that broke in the wiki (API, website, translation, attacks). The bot also alerts on Discord.',
