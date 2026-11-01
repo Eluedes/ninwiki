@@ -135,6 +135,8 @@ SUPER_ONLY_PERMISSIONS: frozenset[Permission] = frozenset({
     Permission.MEDIA_RESET_IDS,
     Permission.MEDIA_CLOSED,
     Permission.MAINTENANCE_MANAGE,   # ligar/desligar o modo manutencao do site
+    # A categoria "Bot" do painel (servidores do bot, membros e cargos com IDs, ligacoes com o Discord) e' so' do S.Adm.
+    Permission.DISCORD_LINKS,
 })
 
 _CREATOR: frozenset[Permission] = frozenset({
@@ -163,7 +165,6 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.REPORTS_MANAGE,
     Permission.VOLUNTEERS_MANAGE,
     Permission.TOURNAMENTS_MANAGE,
-    Permission.DISCORD_LINKS,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,
 })

@@ -38,6 +38,11 @@ def set_logo_url(url: str | None) -> None:
     LOGO_URL = url
 
 
+def site_now(site_url) -> str:
+    """O endereco do site neste momento: `site_url` pode ser o texto ou uma funcao que o devolve (main.py passa uma funcao para acompanhar uma troca de dominio)."""
+    return str(site_url() if callable(site_url) else site_url)
+
+
 def logo_for(site_url: str) -> str | None:
     """Logo a mostrar: o da API (set_logo_url) ou, sem ele, o do site; None se nao ha nenhum."""
     base = site_url.rstrip("/")
@@ -317,7 +322,7 @@ def register_public_commands(
             await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
             return
         name = getattr(interaction.user, "display_name", None) or getattr(interaction.user, "name", None)
-        view = build_search_view(term, hits, site_url, owner_id=interaction.user.id, lang=lang, owner_name=name)
+        view = build_search_view(term, hits, site_now(site_url), owner_id=interaction.user.id, lang=lang, owner_name=name)
         view.message = await interaction.followup.send(view=view, allowed_mentions=NO_MENTIONS, wait=True)
 
     _autocomplete = _autocomplete_for(api, languages)
@@ -342,7 +347,7 @@ def register_public_commands(
         except ApiError:
             await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
             return
-        await interaction.followup.send(embed=build_drop_embed(result, item, site_url, lang), allowed_mentions=NO_MENTIONS)
+        await interaction.followup.send(embed=build_drop_embed(result, item, site_now(site_url), lang), allowed_mentions=NO_MENTIONS)
 
     drop.autocomplete("item")(_autocomplete_for(api, languages, "item"))   # /drop: so' itens e armas (mob nao dropa)
 
@@ -361,7 +366,7 @@ def register_public_commands(
         except ApiError:
             await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
             return
-        await interaction.followup.send(embed=build_recipe_embed(result, item, site_url, lang), allowed_mentions=NO_MENTIONS)
+        await interaction.followup.send(embed=build_recipe_embed(result, item, site_now(site_url), lang), allowed_mentions=NO_MENTIONS)
 
     recipe.autocomplete("item")(_autocomplete_for(api, languages, "recipe"))   # /recipe: so' itens que alguma profissao fabrica
 
@@ -379,7 +384,7 @@ def register_public_commands(
         except ApiError:
             await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
             return
-        await interaction.followup.send(embed=build_posts_embed(posts, site_url, lang), allowed_mentions=NO_MENTIONS)
+        await interaction.followup.send(embed=build_posts_embed(posts, site_now(site_url), lang), allowed_mentions=NO_MENTIONS)
 
     from ninwiki_bot.wiki_commands import register_wiki_commands   # import aqui dentro: wiki_commands importa deste arquivo (evita ciclo)
     register_wiki_commands(tree, api, site_url, languages, allowed)

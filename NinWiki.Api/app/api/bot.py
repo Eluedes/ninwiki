@@ -99,6 +99,17 @@ async def bot_audit_log(
     return [model.model_validate(row, from_attributes=True) for row in (await db.execute(stmt)).scalars().all()]
 
 
+class BotConfig(CamelModel):
+    """Configuracao que o bot le da API (fonte unica: numa troca de dominio so' a API muda)."""
+    site_url: str   # endereco publico do site (FRONTEND_ORIGIN): o bot usa nos links
+
+
+@router.get("/config", response_model=BotConfig)
+async def bot_config() -> BotConfig:
+    """Endereco do site para os links do bot. Vem do FRONTEND_ORIGIN da API, entao mudar de dominio nao exige mexer no SITE_URL do bot."""
+    return BotConfig(site_url=settings.frontend_origin.rstrip("/"))
+
+
 @router.get("/version")
 async def bot_version() -> dict:
     """A atualizacao publicada na API (sha, titulo e data do commit): o bot mostra no Discord e edita a mesma mensagem a cada deploy."""

@@ -26,7 +26,7 @@ export type MobType = 'monster' | 'boss' | 'npc' | 'mount';
 // (anel) ficaria indistinguível de uma poção ou material de crafting
 // na listagem - o valor por padrao (quando ausente) e' tratado como
 // 'general' no catalogo, entao entries antigas nao precisam de migracao.
-export type ItemType = 'general' | 'ring' | 'consumable' | 'material' | 'currency' | 'cast' | 'authority' | 'accessory' | 'shirt' | 'vest' | 'pant' | 'hat' | 'mask' | 'shoe' | 'pack';
+export type ItemType = 'general' | 'ring' | 'consumable' | 'material' | 'currency' | 'cast' | 'authority' | 'accessory' | 'shirt' | 'vest' | 'pant' | 'hat' | 'mask' | 'shoe' | 'pack' | 'tool' | 'scroll';
 
 // Um item que pode "dropar" (cair) de um mob ao ser derrotado.
 export interface DropEntry {

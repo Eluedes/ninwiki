@@ -112,6 +112,10 @@ class NinWikiApi:
         """Como fazer o item `query` ({found, title, href, image, recipes:[{profession, professionHref, level, workbench, learnedFrom, needs:[{name, href, qty}]}]})."""
         return await self._request("GET", "/bot/recipe", params={"q": query, "lang": lang})
 
+    async def bot_config(self) -> dict:
+        """Configuracao da API para o bot ({siteUrl}): o endereco do site vem daqui (fonte unica)."""
+        return await self._request("GET", "/bot/config")
+
     async def latest_posts(self, limit: int = 3, lang: str = "en") -> list[dict]:
         """Os posts do blog mais recentes que ja' estao no ar (para o /patchnotes)."""
         return await self._request("GET", "/bot/latest-posts", params={"limit": limit, "lang": lang})

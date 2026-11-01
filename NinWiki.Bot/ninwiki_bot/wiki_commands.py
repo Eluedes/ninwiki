@@ -16,7 +16,7 @@ from discord import app_commands
 
 from ninwiki_bot.api_client import ApiError, NinWikiApi
 from ninwiki_bot.language import DEFAULT, LanguageStore, TEXT
-from ninwiki_bot.public_commands import KIND_COLOR, NO_MENTIONS, _autocomplete_for, _clean, build_search_view, logo_for
+from ninwiki_bot.public_commands import KIND_COLOR, NO_MENTIONS, _autocomplete_for, _clean, build_search_view, logo_for, site_now
 
 log = logging.getLogger("ninwiki_bot")
 
@@ -105,7 +105,7 @@ def register_wiki_commands(
                 return
             who = getattr(interaction.user, "display_name", None) or getattr(interaction.user, "name", None)
             if hits:
-                view = build_search_view(q, hits, site_url, owner_id=interaction.user.id, lang=lang, owner_name=who)
+                view = build_search_view(q, hits, site_now(site_url), owner_id=interaction.user.id, lang=lang, owner_name=who)
             else:   # sem resultado do tipo: cartao com a dica (texto proprio do tipo)
                 view = discord.ui.LayoutView(timeout=None)
                 view.add_item(discord.ui.Container(discord.ui.TextDisplay(TEXT[lang]["pick_none"].format(kind=TEXT[lang]["kind_" + kind_key], q=_clean(q)[:60])), accent_colour=KIND_COLOR))
@@ -145,7 +145,7 @@ def register_wiki_commands(
             if not picked:
                 await interaction.followup.send(TEXT[lang]["cmp_missing"].format(q=_clean(q)[:60]), ephemeral=True)
                 return
-        await interaction.followup.send(embed=build_compare_embed(pa[0], pb[0], site_url, lang), allowed_mentions=NO_MENTIONS)
+        await interaction.followup.send(embed=build_compare_embed(pa[0], pb[0], site_now(site_url), lang), allowed_mentions=NO_MENTIONS)
 
     compare.autocomplete("first")(suggest)
     compare.autocomplete("second")(suggest)
@@ -157,4 +157,4 @@ def register_wiki_commands(
         """Lista os comandos no idioma do servidor (so' quem pediu ve': nao enche o canal)."""
         if not await allowed(interaction):
             return
-        await interaction.response.send_message(embed=build_help_embed(site_url, languages.get(interaction.guild_id)), ephemeral=True)
+        await interaction.response.send_message(embed=build_help_embed(site_now(site_url), languages.get(interaction.guild_id)), ephemeral=True)
