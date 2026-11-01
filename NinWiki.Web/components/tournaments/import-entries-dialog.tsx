@@ -13,6 +13,7 @@ import { ApiError, importEntries, type ApiTournament } from '@/lib/api-client';
 import { itemLabel, parseBulkNames, type BulkReason } from '@/lib/bulk-names';
 import { fill } from '@/lib/i18n-tournaments';
 
+const EXAMPLE_TEAM = 'Team Alpha: Sasuke, Kakashi';   // a mesma linha de exemplo nos dois idiomas (so' a explicacao muda)
 const MAX_FILE_BYTES = 1_000_000;   // arquivo maior que 1 MB nao e' uma lista de nomes
 
 /** Dialogo de importacao em lote. `onImported` recebe o torneio atualizado. */
@@ -66,6 +67,21 @@ export function ImportEntriesDialog({ t, open, onClose, onImported }: { t: ApiTo
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={onDrop}
             className={dragging ? 'border-primary ring-2 ring-primary/40' : undefined} />
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><FileUp className="h-3.5 w-3.5" aria-hidden />{d.importDropHint}</p>
+          {/* Exemplo sempre visivel (a dica dentro da caixa some quando a pessoa comeca a digitar) */}
+          <div className="space-y-2 rounded-md border border-dashed border-border p-3 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-semibold">{d.importExampleTitle}</p>
+              <Button type="button" size="sm" variant="outline" onClick={() => setText(d.importPlaceholder)}>{d.importExampleUse}</Button>
+            </div>
+            <dl className="grid gap-x-3 gap-y-1 sm:grid-cols-[auto_1fr]">
+              {([['Naruto', d.importExOne], ['Sakura;3', d.importExSeed], [EXAMPLE_TEAM, d.importExTeam], ['Itachi + Kisame', d.importExTeamNoName]] as const).map(([code, label]) => (
+                <div key={code} className="contents">
+                  <dt><code className="rounded bg-muted px-1.5 py-0.5 font-mono">{code}</code></dt>
+                  <dd className="text-muted-foreground">{label}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
           {text.trim() && (
             <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3 text-sm" aria-live="polite">
               <p className="font-medium">{fill(d.importPreview, { n: parsed.players, teams: parsed.teams, skipped: parsed.skipped.length, empty: parsed.empty })}</p>
