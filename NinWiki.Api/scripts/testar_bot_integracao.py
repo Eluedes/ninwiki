@@ -629,6 +629,28 @@ async def testar() -> None:
             register_public_commands(arvore2, api, {1}, "", _checar, False, idiomas)
             await arvore2.get_command("status").callback(i2)
             check("/status em servidor nao permitido e' recusado", i2.response.send_message.await_count == 1 and not i2.followup.send.await_count)
+            # ---- autocompletar: cada comando pede so' o seu tipo; /search e /compare ficam gerais ----
+            from unittest.mock import AsyncMock
+            esperado = {("item", "name"): "item", ("mob", "name"): "mob", ("jutsu", "name"): "jutsu", ("mastery", "name"): "mastery",
+                        ("drop", "item"): "item", ("recipe", "item"): "recipe", ("search", "term"): None, ("compare", "first"): None, ("compare", "second"): None}
+            obtido = {}
+            for (cmd_nome, param), _k in esperado.items():
+                with patch.object(api, "suggest", AsyncMock(return_value=["Zz"])) as sug:
+                    escolhas = await arvore.get_command(cmd_nome)._params[param].autocomplete(interacao(IDS["creator"]), "ta")
+                    obtido[(cmd_nome, param)] = sug.call_args.args[2] if len(sug.call_args.args) > 2 else sug.call_args.kwargs.get("kind")
+                    assert [e.value for e in escolhas] == ["Zz"]
+            check("autocompletar: /item /mob /jutsu /mastery /drop /recipe pedem so' o seu tipo; /search e /compare pedem tudo", obtido == esperado, str(obtido))
+            # o cliente manda o kind na URL e o cache separa tipos diferentes para o mesmo texto
+            pedidos = []
+            def _gravar(req: httpx.Request) -> httpx.Response:
+                """Guarda a URL pedida e responde uma lista vazia."""
+                pedidos.append(req.url.params.get("kind"))
+                return httpx.Response(200, json=[])
+            api_f = NinWikiApi("http://t", TOKEN, client=httpx.AsyncClient(transport=httpx.MockTransport(_gravar), base_url="http://t"))
+            await api_f.suggest("tail", "en", "mastery")
+            await api_f.suggest("tail", "en")
+            await api_f.suggest("tail", "en", "mastery")   # repetido: vem do cache
+            check("api.suggest manda kind (so' quando existe) e o cache separa por tipo", pedidos == ["mastery", None], str(pedidos))
             # ---- comandos de consulta novos (wiki_commands.py) ----
             nomes = {c.name for c in arvore.get_commands()}
             check("novos comandos registrados: item, mob, jutsu, mastery, compare, help (sem /map nem /random)", {"item", "mob", "jutsu", "mastery", "compare", "help"} <= nomes and not {"map", "random"} & nomes, str(nomes))

@@ -99,7 +99,7 @@ def register_wiki_commands(
                 return
             await interaction.response.defer(thinking=True)
             try:
-                hits = pick_hits(await api.search(q, lang), KINDS[kind_key], q)
+                hits = pick_hits(await api.search(q, lang, kind_key), KINDS[kind_key], q)
             except ApiError:
                 await interaction.followup.send(TEXT[lang]["wiki_down"], ephemeral=True)
                 return
@@ -111,7 +111,7 @@ def register_wiki_commands(
                 view.add_item(discord.ui.Container(discord.ui.TextDisplay(TEXT[lang]["pick_none"].format(kind=TEXT[lang]["kind_" + kind_key], q=_clean(q)[:60])), accent_colour=KIND_COLOR))
             view.message = await interaction.followup.send(view=view, allowed_mentions=NO_MENTIONS, wait=True)
 
-        _cmd.autocomplete("name")(suggest)
+        _cmd.autocomplete("name")(_autocomplete_for(api, languages, kind_key))   # sugere so' o tipo do comando
 
     lookup("item", "item", "Look up an item or weapon: stats, description and page link")
     lookup("mob", "mob", "Look up a mob: health, damage, XP, where it spawns")

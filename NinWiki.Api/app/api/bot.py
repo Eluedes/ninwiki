@@ -389,11 +389,12 @@ def _like(q: str) -> str:
     return "%" + escape_like(q) + "%"
 
 
-async def _search_catalog(db: AsyncSession, like: str, items_limit: int, masteries_limit: int, jutsus_limit: int):
-    """Itens, masteries e jutsus pelo nome (EN ou PT), ja' ordenados. Item e jutsu so' PUBLICADOS (rascunho nunca sai); mastery nao tem rascunho."""
-    items = (await db.execute(select(ContentItem).where(
-        ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\"))
-        .order_by(ContentItem.name).limit(items_limit))).scalars().all()
+async def _search_catalog(db: AsyncSession, like: str, items_limit: int, masteries_limit: int, jutsus_limit: int, categories: tuple[ContentCategory, ...] | None = None):
+    """Itens, masteries e jutsus pelo nome (EN ou PT), ja' ordenados. Item e jutsu so' PUBLICADOS (rascunho nunca sai); mastery nao tem rascunho. `categories` limita os itens (None = todas)."""
+    where_items = [ContentItem.status == ContentStatus.PUBLISHED, ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\")]
+    if categories is not None:
+        where_items.append(ContentItem.category.in_(categories))
+    items = (await db.execute(select(ContentItem).where(*where_items).order_by(ContentItem.name).limit(items_limit))).scalars().all()
     masteries = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
                                   .order_by(Mastery.name).limit(masteries_limit))).scalars().all()
     jutsus = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
@@ -444,12 +445,39 @@ async def _fill_pt(db: AsyncSession, rows: list) -> None:
 async def bot_suggest(
     q: str = Query(..., min_length=2, max_length=60),
     lang: str = Query("en", pattern="^(en|pt)$"),
+    kind: str | None = Query(None, pattern="^(item|weapon|mob|jutsu|mastery|recipe)$",
+                             description="So' sugere esse tipo (item = itens e armas; recipe = itens com receita); sem isso sugere de tudo (/search)"),
     db: AsyncSession = Depends(get_db),
 ) -> list[str]:
-    """Nomes para o autocompletar do Discord (itens/mobs/armas publicados, jutsus e masteries), ate' 20, sem repetir."""
-    like = _like(q.strip())
-    items, masteries, jutsus = await _search_catalog(db, like, items_limit=12, masteries_limit=4, jutsus_limit=6)
-    names = [_pick(lang, r.name, r.name_pt) for r in (*items, *jutsus, *masteries)]
+    """Nomes para o autocompletar do Discord, ate' 20, sem repetir. Sem `kind`: itens/mobs/armas publicados, jutsus e masteries (/search);
+    com `kind`: so' aquele tipo (cada comando sugere o proprio tipo)."""
+    q = q.strip()
+    like = _like(q)
+    if kind == "recipe":   # itens que sao resultado de alguma receita das profissoes (mesma leitura do /bot/recipe)
+        wanted = q.lower()
+        names = []
+        for prof in (await db.execute(select(Profession))).scalars().all():
+            for r in (prof.details or {}).get("recipes", []):
+                res = r.get("result") or {}
+                en, pt = str(res.get("name") or ""), str(res.get("namePt") or "")
+                if wanted in en.lower() or wanted in pt.lower():
+                    names.append(_pick(lang, en, pt))
+        return sorted(dict.fromkeys(n for n in names if n), key=str.lower)[:20]
+    if kind in ("item", "weapon", "mob"):   # so' content_items das categorias do tipo, publicados
+        cats = {"item": (ContentCategory.ITEMS, ContentCategory.WEAPONS), "weapon": (ContentCategory.WEAPONS,), "mob": (ContentCategory.MOBS,)}[kind]
+        rows = (await db.execute(select(ContentItem).where(
+            ContentItem.status == ContentStatus.PUBLISHED, ContentItem.category.in_(cats),
+            ContentItem.name.ilike(like, escape="\\") | ContentItem.name_pt.ilike(like, escape="\\")).order_by(ContentItem.name).limit(20))).scalars().all()
+    elif kind == "jutsu":
+        rows = (await db.execute(select(Jutsu).where(Jutsu.status == ContentStatus.PUBLISHED, Jutsu.name.ilike(like, escape="\\") | Jutsu.name_pt.ilike(like, escape="\\"))
+                                 .order_by(Jutsu.name).limit(20))).scalars().all()
+    elif kind == "mastery":
+        rows = (await db.execute(select(Mastery).where(Mastery.name.ilike(like, escape="\\") | Mastery.name_pt.ilike(like, escape="\\"))
+                                 .order_by(Mastery.name).limit(20))).scalars().all()
+    else:
+        items, masteries, jutsus = await _search_catalog(db, like, items_limit=12, masteries_limit=4, jutsus_limit=6)
+        rows = [*items, *jutsus, *masteries]
+    names = [_pick(lang, r.name, r.name_pt) for r in rows]
     return list(dict.fromkeys(n for n in names if n))[:20]
 
 
@@ -527,6 +555,7 @@ async def bot_latest_posts(
 async def bot_search(
     q: str = Query(..., min_length=2, max_length=60),
     lang: str = Query("en", pattern="^(en|pt)$", description="Idioma do resumo e dos rotulos (sem traducao cai para o ingles)"),
+    kind: str | None = Query(None, pattern="^(item|mob|jutsu|mastery)$", description="So' este tipo (comandos /item /mob /jutsu /mastery): ate' 10 resultados dele; sem kind = busca geral"),
     db: AsyncSession = Depends(get_db),
 ) -> list[BotSearchHit]:
     """Procura pelo nome (em ingles ou portugues) em itens/mobs/armas/guias/missoes publicados, jutsus, masteries e posts publicados (ate' 10), com resumo, imagem e dados."""
@@ -536,11 +565,17 @@ async def bot_search(
     like = _like(q)
     now = datetime.now(timezone.utc)
     hits: list[BotSearchHit] = []
-    items, masteries, jutsus = await _search_catalog(db, like, items_limit=6, masteries_limit=3, jutsus_limit=4)
-    posts = (await db.execute(
-        select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),
-                           Post.title.ilike(like, escape="\\") | Post.title_pt.ilike(like, escape="\\"))
-        .order_by(Post.published_at.desc()).limit(3))).scalars().all()
+    if kind:   # um tipo so': os outros nao ocupam as vagas (item = itens e armas, sem mobs/guias/missoes)
+        items, masteries, jutsus = await _search_catalog(
+            db, like, items_limit=10 if kind in ("item", "mob") else 0, masteries_limit=10 if kind == "mastery" else 0, jutsus_limit=10 if kind == "jutsu" else 0,
+            categories=(ContentCategory.MOBS,) if kind == "mob" else (ContentCategory.ITEMS, ContentCategory.WEAPONS))
+        posts = []
+    else:
+        items, masteries, jutsus = await _search_catalog(db, like, items_limit=6, masteries_limit=3, jutsus_limit=4)
+        posts = (await db.execute(
+            select(Post).where(Post.status == ContentStatus.PUBLISHED, (Post.published_at.is_(None)) | (Post.published_at <= now),
+                               Post.title.ilike(like, escape="\\") | Post.title_pt.ilike(like, escape="\\"))
+            .order_by(Post.published_at.desc()).limit(3))).scalars().all()
     if lang == "pt":
         await _fill_pt(db, [*items, *masteries, *jutsus, *posts])
     hits += [_item_hit(i, lang) for i in items]
