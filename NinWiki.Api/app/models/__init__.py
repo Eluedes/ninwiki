@@ -24,6 +24,7 @@ from app.models.posts import Tag, post_tag_links  # noqa: F401
 from app.models.readers import PostComment, PostLike, Reader  # noqa: F401
 from app.models.traffic import TrafficDaily, TrafficPage, TrafficPlace, TrafficVisitor  # noqa: F401
 from app.models.announcement import SiteAnnouncement  # noqa: F401
+from app.models.seasonal_theme import SiteSeasonalTheme  # noqa: F401
 from app.models.media import MediaImage  # noqa: F401
 from app.models.reports import ContentReport  # noqa: F401
 from app.models.volunteers import VolunteerApplication, VolunteerSettings  # noqa: F401

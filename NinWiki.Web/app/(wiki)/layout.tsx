@@ -9,6 +9,7 @@
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { PageHitBeacon } from '@/components/wiki/page-hit-beacon';
+import { SeasonalDecor } from '@/components/seasonal-decor';
 
 /** Layout do site publico: cabecalho, conteudo e rodape. */
 export default function WikiLayout({
@@ -23,6 +24,7 @@ export default function WikiLayout({
     // o espaco sobrando).
     <div className="flex min-h-screen flex-col">
       <PageHitBeacon />
+      <SeasonalDecor />   {/* enfeites da epoca festiva ativa (so' aparecem se o S.Adm ligou um tema) */}
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />

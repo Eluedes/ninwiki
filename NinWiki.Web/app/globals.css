@@ -408,3 +408,13 @@
   .maint-rise, .maint-float, .maint-glow, .maint-grid, .maint-ring, .maint-ring-2, .maint-halo, .maint-dot, .maint-ember, .maint-bar-fill { animation: none !important; }
   .maint-ember { display: none; }
 }
+
+/* Temas festivos (Natal, Ano Novo, Valentine's Day, Pascoa, Halloween): particulas leves por cima da pagina (components/seasonal-decor.tsx). */
+@keyframes season-fall {
+  from { transform: translate3d(0, -10vh, 0) rotate(0deg); }
+  to { transform: translate3d(var(--sway, 0px), 110vh, 0) rotate(360deg); }
+}
+.season-particle { position: absolute; top: 0; opacity: 0.75; user-select: none; animation-name: season-fall; animation-timing-function: linear; animation-iteration-count: infinite; will-change: transform; }
+.season-particle.season-rise { top: auto; bottom: 0; animation-direction: reverse; }
+@media (max-width: 640px) { .season-particle:nth-child(n + 13) { display: none; } }   /* celular: metade das particulas */
+@media (prefers-reduced-motion: reduce) { .season-particle { display: none; } }

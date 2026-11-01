@@ -121,7 +121,7 @@ ROTAS_PUBLICAS = {
     ("GET", "/guide-articles"), ("GET", "/guide-articles/{article_id}"),   # artigos do Guia (rascunho so' para a equipe)
     ("GET", "/villages"), ("GET", "/villages/{village_id}"), ("GET", "/organizations"),
     ("GET", "/posts"), ("GET", "/posts/{post_id}"), ("GET", "/posts/slug/{slug}"),
-    ("GET", "/tags"), ("GET", "/announcement"),   # anuncio da Home: leitura publica; escrever exige announcement.manage
+    ("GET", "/tags"), ("GET", "/announcement"), ("GET", "/seasonal-theme"),   # anuncio da Home: leitura publica; escrever exige announcement.manage
     ("POST", "/analytics/hit"),    # a visita avisa o site (origem + limite por IP + ignora robos; guarda so' contagens)
     # engajamento: leitura publica; escrita exige LEITOR logado (cookie proprio, ver reader_auth.py)
     ("GET", "/posts/{slug}/engagement"), ("GET", "/posts/{slug}/comments"),
@@ -1556,6 +1556,22 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("meta description > 200 -> 422", r.status_code == 422)
     r = await c.post("/posts", json=corpo_post("6", metaTitle="  Meu   titulo  ", metaDescription="curta"), headers=C)
     check("campos de SEO sao salvos e limpos", r.status_code == 201 and r.json()["metaTitle"] == "Meu titulo" and r.json()["metaDescription"] == "curta", r.text)
+
+    # --- tema festivo do site (so' o S.Adm troca; a leitura e' publica) ---
+    check("tema festivo: leitura publica (sem login) devolve um tema valido", (await c.get("/seasonal-theme")).json()["theme"] in ("none", "christmas", "newyear", "valentine", "easter", "halloween"))
+    check("tema festivo: anonimo 401; Creator e Adm 404 (so' o S.Adm; nem descobrem que a rota existe)",
+          (await c.put("/seasonal-theme", json={"theme": "halloween"})).status_code == 401
+          and (await c.put("/seasonal-theme", json={"theme": "halloween"}, headers=C)).status_code == 404
+          and (await c.put("/seasonal-theme", json={"theme": "halloween"}, headers=A)).status_code == 404)
+    r = await c.put("/seasonal-theme", json={"theme": "halloween"}, headers=S)
+    check("S.Adm troca o tema festivo e o site publico ja' le o novo", r.status_code == 200 and r.json()["theme"] == "halloween" and (await c.get("/seasonal-theme")).json()["theme"] == "halloween", r.text[:160])
+    check("tema invalido -> 422", (await c.put("/seasonal-theme", json={"theme": "carnaval"}, headers=S)).status_code == 422)
+    r = await c.put("/seasonal-theme", json={"theme": "none"}, headers=S)
+    check("voltar para 'none' (site normal)", r.status_code == 200 and (await c.get("/seasonal-theme")).json()["theme"] == "none")
+    perms_st = True
+    for h, esperado in ((S, True), (A, False), (C, False)):
+        perms_st = perms_st and (("site.seasonal_theme" in (await c.get("/auth/me", headers=h)).json()["permissions"]) == esperado)
+    check("/auth/me inclui site.seasonal_theme so' para o S.Adm", perms_st)
 
     # --- leitores: sessao separada da equipe ---
     settings.dev_login_enabled = True

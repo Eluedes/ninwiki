@@ -11,6 +11,7 @@
 import type { Locale } from './types';
 import { tournamentsEn, tournamentsPt, type TournamentsDict } from './i18n-tournaments';
 import { discordEn, discordPt, type DiscordDict } from './i18n-discord';
+import { seasonalEn, seasonalPt, type SeasonalDict } from './i18n-seasonal';
 
 // A interface Dictionary e' o "contrato": toda chave que existir aqui
 // tem que existir OBRIGATORIAMENTE nos dois idiomas abaixo (pt e en).
@@ -112,6 +113,7 @@ export interface Dictionary {
   blogx: BlogxDict;
   volunteer: VolunteerDict;
   tournaments: TournamentsDict;   // torneios e perfis (lib/i18n-tournaments.ts)
+  seasonal: SeasonalDict;   // temas festivos (tela /admin/seasonal-theme e saudacoes): lib/i18n-seasonal.ts
   discord: DiscordDict;   // menu do usuario, origem de vila/rank no perfil e painel Discord (lib/i18n-discord.ts)
   maintenance: { title: string; text: string; back: string; siteTitle: string; siteText: string; staffLogin: string; staffChecking: string; staffHint: string; badge: string };
   jutsuInfo: JutsuInfoDict;
@@ -199,7 +201,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; volunteers: string; tournaments: string; discordLinks: string; botServers: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; maintenance: string; backToSite: string; groups: { wiki: string; community: string; bot: string; world: string; system: string }; breadcrumbHome: string; viewSite: string; panelTitle: string; versionTitle: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; volunteers: string; tournaments: string; discordLinks: string; seasonalTheme: string; botServers: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; maintenance: string; backToSite: string; groups: { wiki: string; community: string; bot: string; world: string; system: string }; breadcrumbHome: string; viewSite: string; panelTitle: string; versionTitle: string };
     gameNames: { title: string; subtitle: string; chooseFiles: string; invalidFile: string; find: string; loadError: string; summary: string; truncated: string; search: string; hideJutsu: string; selectShown: string; clear: string; empty: string; moreHidden: string; createDrafts: string; confirm: string; created: string; note: string; categories: Record<string, string>; hints: Record<string, string> };
     translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
@@ -436,6 +438,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
     tournaments: tournamentsPt,
     discord: discordPt,
+    seasonal: seasonalPt,
     volunteer: {
       title: 'Seja voluntário', subtitle: 'Ajude a manter o Nin Codex completo e atualizado.',
       intro: 'O Nin Codex é feito por fãs, de graça. Se você quer ajudar (traduzir, editar, coletar dados...), conte um pouco sobre você. A equipe lê todas as inscrições e responde pelo Discord.',
@@ -792,7 +795,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         reports: 'Reports',
         volunteers: 'Voluntários',
         tournaments: 'Torneios',
-        discordLinks: 'Ligações com o Discord', botServers: 'Servidores do bot',
+        discordLinks: 'Ligações com o Discord', seasonalTheme: 'Tema festivo', botServers: 'Servidores do bot',
         translations: 'Traduções oficiais',
         villages: 'Vilas',
         organizations: 'Organizações',
@@ -881,7 +884,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         saveError: 'Não foi possível salvar.', unsavedChanges: 'Alterações não salvas', alwaysAll: 'O S.Adm sempre tem todas as permissões.',
         groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', imagecats: 'Categorias do banco de imagens (desmarque para TRANCAR a categoria para este cargo)', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log', analytics: 'Acessos' },
         names: {
-          'content.bulk_type': 'Mudar o tipo (Item type) de vários itens de uma vez', 'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
+          'content.bulk_type': 'Mudar o tipo (Item type) de vários itens de uma vez', 'site.seasonal_theme': 'Trocar o tema festivo do site (Natal, Páscoa...)', 'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
           'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes', 'volunteers.manage': 'Ver, avaliar e apagar as inscrições de voluntários', 'tournaments.manage': 'Moderar torneios dos jogadores (esconder, corrigir texto, apagar)', 'discord.links': 'Ligar servidores e cargos do Discord à vila e ao rank do perfil dos jogadores',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
@@ -1281,6 +1284,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
     tournaments: tournamentsEn,
     discord: discordEn,
+    seasonal: seasonalEn,
     volunteer: {
       title: 'Become a volunteer', subtitle: 'Help keep Nin Codex complete and up to date.',
       intro: 'Nin Codex is a free, fan-made project. If you want to help (translating, editing, collecting data...), tell us a bit about yourself. The team reads every application and replies on Discord.',
@@ -1637,7 +1641,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         reports: 'Reports',
         volunteers: 'Volunteers',
         tournaments: 'Tournaments',
-        discordLinks: 'Discord links', botServers: 'Bot servers',
+        discordLinks: 'Discord links', seasonalTheme: 'Festive theme', botServers: 'Bot servers',
         translations: 'Official translations',
         villages: 'Villages',
         organizations: 'Organizations',
@@ -1726,7 +1730,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         saveError: 'Could not save.', unsavedChanges: 'Unsaved changes', alwaysAll: 'S.Adm always has every permission.',
         groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', imagecats: 'Image library categories (untick to LOCK a category for this role)', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log', analytics: 'Traffic' },
         names: {
-          'content.bulk_type': 'Change the type (Item type) of several items at once', 'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
+          'content.bulk_type': 'Change the type (Item type) of several items at once', 'site.seasonal_theme': 'Change the festive theme of the site (Christmas, Easter...)', 'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
           'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports', 'volunteers.manage': 'View, review and delete volunteer applications', 'tournaments.manage': 'Moderate player tournaments (hide, fix text, delete)', 'discord.links': 'Link Discord servers and roles to the player profile village and rank',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
