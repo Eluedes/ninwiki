@@ -11,7 +11,7 @@ export function Footer() {
   const { dict } = useLanguage();
 
   return (
-    <footer className="mt-20 border-t border-border">
+    <footer className="mt-20 border-t border-border bg-background/95 backdrop-blur-sm">
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-center">
           <NinLockup size="sm" />

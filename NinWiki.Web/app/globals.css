@@ -408,3 +408,13 @@
   .maint-rise, .maint-float, .maint-glow, .maint-grid, .maint-ring, .maint-ring-2, .maint-halo, .maint-dot, .maint-ember, .maint-bar-fill { animation: none !important; }
   .maint-ember { display: none; }
 }
+
+/* Fundo do site (components/site-background.tsx): ceu com nuvens que passam devagar; de noite as estrelas brilham, de dia o sol pulsa de leve.
+   Sem movimento para quem pede menos movimento ao aparelho. */
+@keyframes sb-flow { from { background-position-x: 0; } to { background-position-x: var(--sb-tile, 1000px); } }
+@keyframes sb-star { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes sb-sun { from { transform: scale(1); } to { transform: scale(1.06); } }
+.sb-cloud { animation: sb-flow 200s linear infinite; }
+.sb-star { animation: sb-star 4.5s ease-in-out infinite; }
+.sb-sun { animation: sb-sun 8s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .sb-cloud, .sb-star, .sb-sun { animation: none !important; } }

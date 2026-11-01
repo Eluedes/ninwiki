@@ -49,7 +49,7 @@ export function BotInviteCard() {
   return (
     <section
       aria-labelledby="bot-invite-title"
-      className="mt-12 overflow-hidden rounded-2xl border border-[#5865F2]/30 bg-gradient-to-br from-[#5865F2]/15 via-card to-card"
+      className="mt-12 overflow-hidden rounded-2xl border border-[#5865F2]/30 bg-card bg-gradient-to-br from-[#5865F2]/15 via-card to-card"
     >
       <div className="grid gap-8 p-6 md:grid-cols-2 md:p-8">
         <div className="flex flex-col items-start gap-4">

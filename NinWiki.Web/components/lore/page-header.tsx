@@ -36,7 +36,8 @@ export function PageHeader({
   const accent = accentColor ?? '#0ea5e9';
 
   return (
-    <div className="mb-6">
+    // painel solido: titulo e trilha nao ficam direto sobre o ceu/nuvens do fundo do site
+    <div className="mb-6 rounded-xl border border-border bg-background p-4 sm:p-5">
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="mb-3 flex items-center gap-1.5 text-xs text-ink-400">
           {breadcrumbs.map((bc, i) => (

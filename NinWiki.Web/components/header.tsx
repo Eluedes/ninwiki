@@ -83,7 +83,7 @@ export function Header() {
   return (
     // sticky + backdrop-blur: o header fica fixo no topo ao rolar a
     // pagina, com um leve efeito de "vidro fosco" sobre o conteudo por baixo.
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 md:h-20 max-w-6xl items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">

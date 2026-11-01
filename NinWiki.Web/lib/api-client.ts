@@ -1520,6 +1520,7 @@ export interface AnnouncementInput {
 }
 
 /** Anuncio atual da Home (publico). `active: false` = nada para mostrar. */
+
 export function getAnnouncement(): Promise<ApiAnnouncement> {
   return apiFetch('/announcement');
 }

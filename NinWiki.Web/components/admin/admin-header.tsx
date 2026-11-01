@@ -45,7 +45,7 @@ export function AdminHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-2 border-b border-border bg-card/80 px-3 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-2 border-b border-border bg-card px-3 sm:px-6">
       {/* Celular/tablet: botao que abre o menu (a barra lateral fixa so' existe em telas grandes). */}
       <AdminMobileNav />
       <nav aria-label="breadcrumb" className="hidden min-w-0 items-center gap-1.5 text-sm lg:flex">

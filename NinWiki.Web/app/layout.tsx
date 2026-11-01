@@ -11,6 +11,7 @@ import { LanguageProvider } from '@/components/providers/language-provider';
 import { ColorThemeProvider } from '@/components/providers/color-theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { ErrorReporter } from '@/components/error-reporter';
+import { SiteBackground } from '@/components/site-background';
 
 // next/font/google baixa e otimiza a fonte Inter no momento do build,
 // evitando uma requisicao externa ao Google Fonts no navegador do usuario.
@@ -63,6 +64,8 @@ export default async function RootLayout({
         <ThemeProvider nonce={nonce}>
           <ColorThemeProvider>
             <LanguageProvider>
+              {/* Fundo de todas as paginas: ceu com nuvens (dia/noite conforme o tema claro/escuro) */}
+              <SiteBackground />
               {children}
               {/* Reporta erros de JavaScript nao tratados para a equipe (nao desenha nada) */}
               <ErrorReporter />
