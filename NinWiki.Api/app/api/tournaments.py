@@ -60,7 +60,7 @@ from app.models.tournaments import (
 from app.models.users import User
 from app.models.villages import Village
 from app.schemas.tournaments import (
-    BulkEntriesResult, BulkEntriesWrite, BulkSkipped, CompetitorRead, EntryOrder, EntryRead, GuestWrite, HistoryItem, MatchRead, ModerationPatch, ModerationRow, PhaseRead, PhaseStart,
+    BulkEntriesResult, BulkEntriesWrite, BulkSkipped, BulkTeam, CompetitorRead, EntryOrder, EntryRead, GuestWrite, HistoryItem, MatchRead, ModerationPatch, ModerationRow, PhaseRead, PhaseStart,
     PhaseWrite, PlayerProfile, PlayerRef, PlayerStats, ProfileSource, ProfileWrite, ResultWrite, StandingRead, TournamentDetail, TournamentList,
     TournamentPatch, TournamentSummary, TournamentWrite, VillageRef,
 )
@@ -143,16 +143,23 @@ def _suggest(phase: TournamentPhase, prev: TournamentPhase | None, entries: list
     """
     Sugestao de quem entra na fase: fase 1 = todos os inscritos (ordem de semente). Depois de uma fase de ELIMINATORIA = quem venceu
     pelo menos uma partida (ou teve folga); depois de TODOS-CONTRA-TODOS = a metade de cima da tabela. O organizador ajusta como quiser.
+    A ORDEM da sugestao e' o desempenho na fase anterior (campeao primeiro, depois quem foi mais longe; empate = a semente anterior), porque o construtor
+    usa essa ordem como sementes da fase seguinte: quem foi melhor entra como cabeca de chave mais alta. Os integrantes de cada equipe ficam juntos.
     """
     everyone = [e.id for e in entries]
     if prev is None or not comps.get(prev.id):
         return everyone
     if prev.format == PhaseFormat.SINGLE_ELIMINATION:
-        winners = {m.winner_id for m in matches.get(prev.id, []) if m.done and m.winner_id}
+        wins: dict[UUID, int] = {}
+        for m in matches.get(prev.id, []):
+            if m.done and m.winner_id:
+                wins[m.winner_id] = wins.get(m.winner_id, 0) + 1   # folga conta como vitoria
+        ordered = sorted((c for c in comps[prev.id] if c.id in wins), key=lambda c: (-wins[c.id], c.seed))
     else:
         table = stand.get(prev.id) or []
-        winners = {s.competitor_id for s in table[: (len(table) + 1) // 2]}
-    picked = [eid for c in comps[prev.id] if c.id in winners for eid in members.get(c.id, [])]
+        pos = {s.competitor_id: i for i, s in enumerate(table[: (len(table) + 1) // 2])}
+        ordered = sorted((c for c in comps[prev.id] if c.id in pos), key=lambda c: pos[c.id])
+    picked = [eid for c in ordered for eid in members.get(c.id, [])]
     return picked or everyone
 
 
@@ -163,7 +170,8 @@ async def _detail(db: AsyncSession, t: Tournament, reader: Reader | None) -> Tou
         select(TournamentEntry, Reader).outerjoin(Reader, Reader.id == TournamentEntry.reader_id)
         .where(TournamentEntry.tournament_id == t.id).order_by(TournamentEntry.seed, TournamentEntry.created_at))).all()
     entries = [EntryRead(id=e.id, display_name=e.display_name, seed=e.seed, reader_id=e.reader_id, avatar_url=r.avatar_url if r else None,
-                         village_id=r.village_id if r else None, ninja_rank_id=r.ninja_rank_id if r else None, placement=e.placement) for e, r in rows]
+                         village_id=r.village_id if r else None, ninja_rank_id=r.ninja_rank_id if r else None, placement=e.placement,
+                         team_name=e.team_name, team_group=e.team_group) for e, r in rows]
     phases = (await db.execute(select(TournamentPhase).where(TournamentPhase.tournament_id == t.id).order_by(TournamentPhase.position))).scalars().all()
     pids = [p.id for p in phases]
     comps: dict[UUID, list[TournamentCompetitor]] = {}
@@ -371,7 +379,9 @@ def _name_key(name: str) -> str:
 @router.post("/{tournament_id}/entries/bulk", response_model=BulkEntriesResult, status_code=201)
 async def add_guests_bulk(tournament_id: UUID, payload: BulkEntriesWrite, reader: Reader = Depends(get_current_reader), db: AsyncSession = Depends(get_db)):
     """Organizador importa varios convidados de uma vez (mesma regra de estado do add_guest), numa transacao so'.
-    Linhas vazias sao ignoradas; duplicados (dentro da lista ou ja' inscritos), nomes longos/invalidos e excesso alem de MAX_ENTRIES voltam em `skipped`."""
+    Linhas vazias sao ignoradas; duplicados (dentro da lista ou ja' inscritos), nomes longos/invalidos e excesso alem de MAX_ENTRIES voltam em `skipped`.
+    Equipes (`teams`): os integrantes viram inscritos com o mesmo `team_group` (e o `team_name` opcional); equipe que ficou com menos de 2 integrantes
+    (por duplicados/invalidos) e sem nome volta a ser inscrito individual."""
     _throttle(reader)
     _throttle(reader, "tournament-bulk", 10, 60)
     t = await _owned(db, tournament_id, reader)
@@ -379,27 +389,39 @@ async def add_guests_bulk(tournament_id: UUID, payload: BulkEntriesWrite, reader
     current = await _entries(db, t)
     seen = {_name_key(e.display_name) for e in current}
     room = MAX_ENTRIES - len(current)
-    new: list[str] = []
+    new: list[tuple[str, str | None, int | None]] = []   # (nome, nome da equipe, grupo da equipe)
     skipped: list[BulkSkipped] = []
-    for raw in payload.names:
-        name = " ".join(raw.split())          # tira controles/quebras e espacos repetidos
-        if not name:
+    next_group = max((e.team_group or 0 for e in current), default=0) + 1
+    # individuais (`names`) primeiro; depois as equipes/individuais de `teams`, na ordem da lista
+    items = [BulkTeam(name=None, members=[n]) for n in payload.names if n.strip()] + list(payload.teams)
+    for item in items:
+        team_name = ("".join(ch for ch in (item.name or "") if ch.isprintable()).strip())[:60] or None
+        ok: list[str] = []
+        for raw in item.members:
+            name = " ".join(raw.split())          # tira controles/quebras e espacos repetidos
+            if not name:
+                continue
+            reason = "too_long" if len(name) > 60 else "invalid" if not name.isprintable() or not any(c.isalnum() for c in name) else None
+            if reason is None:
+                key = _name_key(name)
+                reason = "duplicate" if key in seen else "full" if len(new) + len(ok) >= room else None
+            if reason:
+                skipped.append(BulkSkipped(name=name[:80], reason=reason))
+                continue
+            seen.add(key)
+            ok.append(name)
+        if not ok:
             continue
-        reason = "too_long" if len(name) > 60 else "invalid" if not name.isprintable() or not any(c.isalnum() for c in name) else None
-        if reason is None:
-            key = _name_key(name)
-            reason = "duplicate" if key in seen else "full" if len(new) >= room else None
-        if reason:
-            skipped.append(BulkSkipped(name=name[:80], reason=reason))
-            continue
-        seen.add(key)
-        new.append(name)
+        is_team = len(ok) >= 2 or (team_name is not None and len(item.members) >= 2)
+        group = next_group if is_team else None
+        next_group += 1 if is_team else 0
+        new.extend((n, team_name if is_team else None, group) for n in ok)
     if new:
         if payload.position == "start":
             for e in current:
                 e.seed += len(new)
         base = 0 if payload.position == "start" else len(current)
-        db.add_all(TournamentEntry(tournament_id=t.id, reader_id=None, display_name=n, seed=base + i) for i, n in enumerate(new))
+        db.add_all(TournamentEntry(tournament_id=t.id, reader_id=None, display_name=n, seed=base + i, team_name=tn, team_group=g) for i, (n, tn, g) in enumerate(new))
         await log_action(db, action="update", entity_type="tournament", entity_id=str(t.id), diff={"reader": reader.username, "bulkEntries": len(new)}, source=SOURCE)
     await db.commit()
     return BulkEntriesResult(added=len(new), skipped=skipped, tournament=await _detail(db, t, reader))
@@ -523,7 +545,9 @@ async def start_phase(tournament_id: UUID, phase_id: UUID, payload: PhaseStart, 
             used.add(eid)
     comps: list[TournamentCompetitor] = []
     for i, c in enumerate(payload.competitors):
-        name = ("".join(ch for ch in (c.name or "") if ch.isprintable()).strip())[:60] or (entry_name[c.entry_ids[0]] if p.team_size == 1 else f"Team {i + 1}")
+        # Sem nome de equipe aparecem os nomes dos integrantes ("A & B & C"); passando de 60 caracteres corta com reticencias.
+        joined = " & ".join(entry_name[eid] for eid in c.entry_ids)
+        name = ("".join(ch for ch in (c.name or "") if ch.isprintable()).strip())[:60] or (joined if len(joined) <= 60 else joined[:59].rstrip() + "…")
         comps.append(TournamentCompetitor(id=uuid.uuid4(), phase_id=p.id, name=name, seed=i + 1))
     db.add_all(comps)
     await db.flush()

@@ -78,6 +78,10 @@ class TournamentEntry(Base):
     display_name: Mapped[str] = mapped_column(String(60))   # nome no jogo (ou Discord) na hora da inscricao
     seed: Mapped[int] = mapped_column(Integer, default=0)   # ordem de semente (0 = primeiro)
     placement: Mapped[int | None] = mapped_column(Integer, nullable=True)   # 1 = campeao
+    # Equipe vinda da IMPORTACAO da lista: inscritos com o mesmo `team_group` formam uma equipe (o construtor da fase ja' a sugere pronta) e `team_name` e' o nome
+    # dela (opcional: sem nome a equipe aparece com o nome dos integrantes). Ambos vazios = inscrito individual.
+    team_name: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    team_group: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

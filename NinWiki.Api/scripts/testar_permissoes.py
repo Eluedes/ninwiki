@@ -2966,6 +2966,25 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("importar: torneio inexistente -> 404", (await api("POST", f"/tournaments/{uuid.uuid4()}/entries/bulk", RO, json={"names": ["a1"]})).status_code == 404)
     await api("DELETE", f"/tournaments/{TB}", RO)
 
+    # --- importacao com EQUIPES (nome da equipe opcional) ---
+    r = await api("POST", "/tournaments", RO, json={"name": "Equipes TESTE"})
+    TC = r.json()["id"]
+    r = await api("POST", f"/tournaments/{TC}/entries/bulk", RO, json={"teams": [
+        {"name": "Alpha", "members": ["Aa", "Ab"]}, {"members": ["Ba", "Bb"]}, {"members": ["Solo"]}, {"members": ["aa", "Cc"]}]})
+    por_nome = {e["displayName"]: e for e in (r.json()["tournament"]["entries"] if r.status_code == 201 else [])}
+    check("importar equipes: com nome e sem nome ficam agrupadas, o individual fica sem grupo, o duplicado sai e a sobra sem nome vira individual",
+          r.status_code == 201 and r.json()["added"] == 6 and [s["reason"] for s in r.json()["skipped"]] == ["duplicate"]
+          and por_nome["Aa"]["teamName"] == "Alpha" and por_nome["Aa"]["teamGroup"] == por_nome["Ab"]["teamGroup"] is not None
+          and por_nome["Ba"]["teamName"] is None and por_nome["Ba"]["teamGroup"] == por_nome["Bb"]["teamGroup"] not in (None, por_nome["Aa"]["teamGroup"])
+          and por_nome["Solo"]["teamGroup"] is None and por_nome["Cc"]["teamGroup"] is None, r.text[:300])
+    check("importar: equipe com mais de 10 integrantes -> 422", (await api("POST", f"/tournaments/{TC}/entries/bulk", RO, json={"teams": [{"members": [f"M{i}" for i in range(11)]}]})).status_code == 422)
+    r = await api("POST", f"/tournaments/{TC}/phases", RO, json={"name": "F1", "teamSize": 2})
+    pid = r.json()["phases"][0]["id"]
+    r = await api("POST", f"/tournaments/{TC}/phases/{pid}/start", RO, json={"competitors": [
+        {"name": "Alpha", "entryIds": [por_nome["Aa"]["id"], por_nome["Ab"]["id"]]}, {"entryIds": [por_nome["Ba"]["id"], por_nome["Bb"]["id"]]}]})
+    check("equipe com nome mantem o nome; sem nome mostra os integrantes (Ba & Bb)", r.status_code == 200 and sorted(c["name"] for c in r.json()["phases"][0]["competitors"]) == ["Alpha", "Ba & Bb"], r.text[:300])
+    await api("DELETE", f"/tournaments/{TC}", RO)
+
     # --- perfil ---
     check("anonimo nao edita perfil (401)", (await api("PUT", "/players/me", json={"gameName": "x"})).status_code == 401)
     r = await api("PUT", "/players/me", RO, json={"gameName": "  Naruto   TESTE "})
@@ -3023,8 +3042,10 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await api("POST", f"/tournaments/{T}/phases/{p1}/start", RO, json={"competitors": comp_ok})
     check("chave 2v2 com 3 equipes gerada (3 partidas, torneio em andamento)", r.status_code == 200 and r.json()["status"] == "running" and len(r.json()["phases"][0]["matches"]) == 3, r.text[:200])
     ph = r.json()["phases"][0]
-    cn = {c["name"]: c["id"] for c in ph["competitors"]}
-    t1, t2, t3 = cn["Team 1"], cn["Team 2"], cn["Team 3"]
+    nome_de = {e["id"]: e["displayName"] for e in r.json()["entries"]}
+    comps = sorted(ph["competitors"], key=lambda c: c["seed"])
+    check("equipe sem nome aparece com o nome dos integrantes (nao mais 'Team N')", [c["name"] for c in comps] == [f"{nome_de[e_o]} & {nome_de[e_x]}", f"{nome_de[e_y]} & {nome_de[g1]}", f"{nome_de[g2]} & {nome_de[g3]}"], str([c["name"] for c in comps]))
+    t1, t2, t3 = comps[0]["id"], comps[1]["id"], comps[2]["id"]
     m = {(x["round"], x["slot"]): x for x in ph["matches"]}
     check("folga: cabeca 1 passa direto e ja' esta' na final", m[(1, 0)]["done"] and m[(1, 0)]["winnerId"] == t1 and m[(2, 0)]["competitorAId"] == t1)
     check("inscricoes ja' fechadas: ninguem mais entra pela API (409)", (await api("POST", f"/tournaments/{T}/join", RX)).status_code == 409)
@@ -3058,6 +3079,23 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     sug = (await api("GET", f"/tournaments/{T}", RO)).json()["phases"][1]["suggestedEntryIds"]
     check("sugestao da fase 2 = integrantes de quem venceu pelo menos uma partida (equipes 1 e 2)", set(sug) == {e_o, e_x, e_y, g1}, str(len(sug)))
     check("encerrar com a fase 2 sem chave -> 409", (await api("POST", f"/tournaments/{T}/finish", RO)).status_code == 409)
+    # --- sugestao da fase seguinte: ordem por DESEMPENHO (o campeao nao era a semente 1) ---
+    r = await api("POST", "/tournaments", RO, json={"name": "Sementes TESTE"})
+    TD = r.json()["id"]
+    r = await api("POST", f"/tournaments/{TD}/entries/bulk", RO, json={"names": ["P1", "P2", "P3", "P4"]})
+    pid_ = {e["displayName"]: e["id"] for e in r.json()["tournament"]["entries"]}
+    r = await api("POST", f"/tournaments/{TD}/phases", RO, json={"name": "F1", "teamSize": 1})
+    f1 = r.json()["phases"][0]["id"]
+    await api("POST", f"/tournaments/{TD}/phases", RO, json={"name": "F2", "teamSize": 1})
+    r = await api("POST", f"/tournaments/{TD}/phases/{f1}/start", RO, json={"competitors": [{"entryIds": [pid_[n]]} for n in ("P1", "P2", "P3", "P4")]})
+    md = {(x["round"], x["slot"]): x["id"] for x in r.json()["phases"][0]["matches"]}
+    await api("PUT", f"/tournaments/{TD}/matches/{md[(1, 0)]}/result", RO, json={"winner": "b"})   # P4 vence P1
+    await api("PUT", f"/tournaments/{TD}/matches/{md[(1, 1)]}/result", RO, json={"winner": "b"})   # P3 vence P2
+    await api("PUT", f"/tournaments/{TD}/matches/{md[(2, 0)]}/result", RO, json={"winner": "a"})   # P4 (semente 4) e' o campeao
+    await api("POST", f"/tournaments/{TD}/phases/{f1}/finish", RO)
+    sug2 = (await api("GET", f"/tournaments/{TD}", RO)).json()["phases"][1]["suggestedEntryIds"]
+    check("sugestao da fase seguinte vem ordenada pelo desempenho: campeao (P4) e vice (P3) na frente, nao pela semente antiga", sug2 == [pid_["P4"], pid_["P3"]], str(sug2))
+    await api("DELETE", f"/tournaments/{TD}", RO)
     r = await api("POST", f"/tournaments/{T}/phases/{p2}/start", RO, json={"competitors": [eq(e_o), eq(e_y)]})
     ph2 = r.json()["phases"][1]
     check("fase 2 (1v1) gerada; nome do competidor = nome do jogador", r.status_code == 200 and len(ph2["matches"]) == 1 and ph2["competitors"][0]["name"].startswith("Naruto"), r.text[:200])

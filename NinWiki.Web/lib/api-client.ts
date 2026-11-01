@@ -1828,6 +1828,7 @@ export interface ApiTournamentSummary {
 export interface ApiEntry {
   id: string; displayName: string; seed: number; readerId: string | null; avatarUrl: string | null;
   villageId: string | null; ninjaRankId: string | null; placement: number | null;
+  teamName?: string | null; teamGroup?: number | null;   // equipe vinda da importacao da lista (vazio = individual)
 }
 export interface ApiCompetitor { id: string; name: string; seed: number; entryIds: string[] }
 export interface ApiMatch {
@@ -1878,8 +1879,8 @@ export function deleteTournament(id: string): Promise<void> { return apiFetch(tP
 export function joinTournament(id: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/join`, jsonInit('POST'), true); }
 export function leaveTournament(id: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/join`, jsonInit('DELETE'), true); }
 export function addGuestEntry(id: string, displayName: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries`, jsonInit('POST', { displayName }), true); }
-/** Importa uma lista de nomes de uma vez; `skipped` traz os que a API recusou (duplicate, too_long, invalid, full). */
-export function importEntries(id: string, names: string[], position: 'end' | 'start' = 'end'): Promise<{ added: number; skipped: { name: string; reason: string }[]; tournament: ApiTournament }> { return apiFetch(`${tPath(id)}/entries/bulk`, jsonInit('POST', { names, position }), true); }
+/** Importa uma lista de uma vez: cada item e' um inscrito individual ou uma equipe (nome opcional + integrantes); `skipped` traz os nomes que a API recusou (duplicate, too_long, invalid, full). */
+export function importEntries(id: string, teams: { name: string | null; members: string[] }[], position: 'end' | 'start' = 'end'): Promise<{ added: number; skipped: { name: string; reason: string }[]; tournament: ApiTournament }> { return apiFetch(`${tPath(id)}/entries/bulk`, jsonInit('POST', { teams, position }), true); }
 export function removeEntry(id: string, entryId: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries/${entryId}`, jsonInit('DELETE'), true); }
 export function reorderEntries(id: string, ids: string[]): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries/order`, jsonInit('PUT', { ids }), true); }
 export function createPhase(id: string, input: PhaseInput): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/phases`, jsonInit('POST', input), true); }

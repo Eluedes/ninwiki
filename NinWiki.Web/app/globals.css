@@ -83,7 +83,7 @@
      E' o valor padrao ja' definido em :root/.dark acima - so' precisa
      de uma regra quando o usuario escolhe outro tema.
      ========================================================================== */
-  /* "laranja" = a cor do anel do logo original do jogo (e' o tema padrao). */
+  /* "laranja" = a cor do anel do logo original do jogo (o tema padrao e' o "canarinho"/Canary, definido em color-theme-provider.tsx e app/layout.tsx). */
   :root[data-color-theme='laranja'],
   .dark[data-color-theme='laranja'] {
     --primary: 17 92% 44%;

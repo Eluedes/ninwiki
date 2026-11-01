@@ -48,7 +48,7 @@ const en = {
   formatLabel: 'Bracket format', createPhase: 'Add phase', deletePhase: 'Delete phase', confirmDeletePhase: 'Delete this phase?',
   buildTitle: 'Build the bracket', buildHint: 'Pick who plays this phase. The order is the seeding (first = seed 1). With a number of competitors that is not a power of 2, the top seeds get a bye.',
   suggestFill: 'Fill with suggested', suggestHint: 'Suggested: winners of the previous phase (everyone in the first one). You can change it.', shuffle: 'Shuffle',
-  addTeam: 'Add team', teamName: 'Team name (optional)', pickMember: 'Pick a member', needMembers: 'Each team needs exactly {n} member(s), without repeats.',
+  addTeam: 'Add team', teamN: 'Team {n}', teamName: 'Team name (optional; empty shows the player names)', pickMember: 'Pick a member', needMembers: 'Each team needs exactly {n} member(s), without repeats.',
   needTwo: 'At least 2 competitors.', startPhase: 'Generate bracket', previousFirst: 'Finish the previous phase first.', resetBracket: 'Undo bracket',
   confirmReset: 'Undo this bracket and go back to building it?', finishPhase: 'Finish phase', reopenPhase: 'Reopen phase', finishTournament: 'Finish tournament and crown the champion',
   confirmFinishTournament: 'Finish the tournament? The champion goes to the player profiles.', reopenTournament: 'Reopen tournament', removeFromList: 'Remove from list',
@@ -73,9 +73,9 @@ const en = {
   hiddenByYouBadge: 'Hidden', newHiddenNotice: 'Nobody but you sees this tournament until you make it visible.', newPublishNow: 'Make it visible to everyone right away',
   visibleHint: 'Hide it while you are still setting up phases and entries; publish when it is ready.', staffLockedNotice: 'The moderators hid this tournament, so you cannot change its visibility.',
   // importar lista de inscritos
-  importList: 'Import list', importTitle: 'Import entries', importHint: 'Paste one name per line. Names separated by comma or semicolon and simple CSV lines (name or name;seed) also work. Nothing is added until you confirm.',
-  importPlaceholder: 'Naruto\nSasuke\nSakura;3', importDropHint: 'You can also drop a .txt or .csv file here (it is read in your browser).',
-  importPreview: '{n} to add, {skipped} skipped, {empty} empty ignored.', importConfirm: 'Import {n} names', importAtStart: 'Add at the start of the seeding (default: at the end)',
+  importList: 'Import list', importTitle: 'Import entries', importHint: 'One name per line. For a TEAM use "Team name: Player 1, Player 2" or, without a team name, "Player 1 + Player 2" (the team then shows its players\' names). Names separated by comma and CSV lines (name;seed) also work. Nothing is added until you confirm.',
+  importPlaceholder: 'Naruto\nSakura;3\nTeam Alpha: Sasuke, Kakashi\nItachi + Kisame', importDropHint: 'You can also drop a .txt or .csv file here (it is read in your browser).',
+  importPreview: '{n} players ({teams} teams) to add, {skipped} skipped, {empty} empty ignored.', importPreviewList: 'Preview of what will be added', importExampleTitle: 'Example of how the list should look', importExampleUse: 'Use this example', importExOne: 'one player', importExSeed: 'player with seed 3 (seed 1 plays first)', importExTeam: 'team with a name', importExTeamNoName: 'team without a name: it shows the player names', importTeamTooBig: 'team with more than 10 players', importConfirm: 'Import {n} players', importAtStart: 'Add at the start of the seeding (default: at the end)',
   importDuplicate: 'duplicate (same name ignoring case and accents)', importTooLong: 'name longer than 60 characters', importInvalid: 'invalid name', importFull: 'tournament is full (256 entries)',
   importFileTooBig: 'File too large (max 1 MB).',
 };
@@ -115,7 +115,7 @@ const pt: TournamentsDict = {
   formatLabel: 'Formato da chave', createPhase: 'Adicionar fase', deletePhase: 'Apagar fase', confirmDeletePhase: 'Apagar esta fase?',
   buildTitle: 'Montar a chave', buildHint: 'Escolha quem joga esta fase. A ordem é a semeadura (o primeiro é a semente 1). Se o número de competidores não for potência de 2, as melhores sementes ganham folga.',
   suggestFill: 'Preencher com os sugeridos', suggestHint: 'Sugestão: quem venceu a fase anterior (na primeira, todos). Você pode mudar.', shuffle: 'Embaralhar',
-  addTeam: 'Adicionar equipe', teamName: 'Nome da equipe (opcional)', pickMember: 'Escolha um integrante', needMembers: 'Cada equipe precisa de exatamente {n} integrante(s), sem repetir.',
+  addTeam: 'Adicionar equipe', teamN: 'Equipe {n}', teamName: 'Nome da equipe (opcional; vazio mostra o nome dos jogadores)', pickMember: 'Escolha um integrante', needMembers: 'Cada equipe precisa de exatamente {n} integrante(s), sem repetir.',
   needTwo: 'No mínimo 2 competidores.', startPhase: 'Gerar chave', previousFirst: 'Conclua a fase anterior primeiro.', resetBracket: 'Desfazer chave',
   confirmReset: 'Desfazer esta chave e voltar a montá-la?', finishPhase: 'Concluir fase', reopenPhase: 'Reabrir fase', finishTournament: 'Encerrar torneio e coroar o campeão',
   confirmFinishTournament: 'Encerrar o torneio? O campeão vai para os perfis dos jogadores.', reopenTournament: 'Reabrir torneio', removeFromList: 'Tirar da lista',
@@ -141,9 +141,9 @@ const pt: TournamentsDict = {
   hiddenByYouBadge: 'Oculto', newHiddenNotice: 'Ninguém além de você vê este torneio até você torná-lo visível.', newPublishNow: 'Deixar visível para todos já',
   visibleHint: 'Oculte enquanto ainda arruma fases e inscritos; publique quando estiver pronto.', staffLockedNotice: 'A moderação escondeu este torneio, então você não pode mudar a visibilidade.',
   // importar lista de inscritos
-  importList: 'Importar lista', importTitle: 'Importar inscritos', importHint: 'Cole um nome por linha. Nomes separados por vírgula ou ponto e vírgula e linhas CSV simples (nome ou nome;seed) também funcionam. Nada é adicionado até você confirmar.',
-  importPlaceholder: 'Naruto\nSasuke\nSakura;3', importDropHint: 'Você também pode soltar um arquivo .txt ou .csv aqui (ele é lido no seu navegador).',
-  importPreview: '{n} para adicionar, {skipped} ignorados, {empty} vazios descartados.', importConfirm: 'Importar {n} nomes', importAtStart: 'Adicionar no início das sementes (padrão: no fim)',
+  importList: 'Importar lista', importTitle: 'Importar inscritos', importHint: 'Um nome por linha. Para uma EQUIPE use "Nome da equipe: Jogador 1, Jogador 2" ou, sem nome de equipe, "Jogador 1 + Jogador 2" (a equipe então aparece com o nome dos jogadores). Nomes separados por vírgula e linhas CSV (nome;seed) também funcionam. Nada é adicionado até você confirmar.',
+  importPlaceholder: 'Naruto\nSakura;3\nEquipe Alfa: Sasuke, Kakashi\nItachi + Kisame', importDropHint: 'Você também pode soltar um arquivo .txt ou .csv aqui (ele é lido no seu navegador).',
+  importPreview: '{n} jogadores ({teams} equipes) para adicionar, {skipped} ignorados, {empty} vazios descartados.', importPreviewList: 'Prévia do que será adicionado', importExampleTitle: 'Exemplo de como a lista deve ficar', importExampleUse: 'Usar este exemplo', importExOne: 'um jogador', importExSeed: 'jogador com seed 3 (o seed 1 joga primeiro)', importExTeam: 'equipe com nome', importExTeamNoName: 'equipe sem nome: aparece com o nome dos jogadores', importTeamTooBig: 'equipe com mais de 10 jogadores', importConfirm: 'Importar {n} jogadores', importAtStart: 'Adicionar no início das sementes (padrão: no fim)',
   importDuplicate: 'duplicado (mesmo nome sem contar maiúsculas e acentos)', importTooLong: 'nome com mais de 60 caracteres', importInvalid: 'nome inválido', importFull: 'torneio lotado (256 inscritos)',
   importFileTooBig: 'Arquivo grande demais (máx. 1 MB).',
 };
