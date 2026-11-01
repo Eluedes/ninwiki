@@ -409,19 +409,18 @@
   .maint-ember { display: none; }
 }
 
-/* Temas festivos (Natal, Ano Novo, Valentine's Day, Pascoa, Halloween): particulas leves por cima da pagina (components/seasonal-decor.tsx). */
-@keyframes season-fall {
-  from { transform: translate3d(0, -10vh, 0) rotate(0deg); }
-  to { transform: translate3d(var(--sway, 0px), 110vh, 0) rotate(360deg); }
-}
-.season-particle { position: absolute; top: 0; opacity: 0.75; user-select: none; animation-name: season-fall; animation-timing-function: linear; animation-iteration-count: infinite; will-change: transform; }
-.season-particle.season-rise { top: auto; bottom: 0; animation-direction: reverse; }
-@media (max-width: 640px) { .season-particle:nth-child(n + 13) { display: none; } }   /* celular: metade das particulas */
-@media (prefers-reduced-motion: reduce) { .season-particle { display: none; } }
-
-/* Fundo ilustrado (components/seasonal-background.tsx): a nevoa anda devagar e as luzes/brilhos piscam de leve. Sem movimento para quem pede menos movimento. */
-@keyframes sb-drift { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
-@keyframes sb-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-.sb-mist { animation: sb-drift 40s ease-in-out infinite alternate; }
-.sb-twinkle { animation: sb-twinkle 2.6s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .sb-mist, .sb-twinkle { animation: none; } }
+/* Fundo do site (components/seasonal-background.tsx): ondas japonesas (seigaiha) que deslizam bem devagar, brilho que "respira" e uma faixa de luz que passa.
+   Cada epoca muda o jeito de se mexer (data-sb no container). NADA cai nem sobe na tela. Sem movimento para quem pede menos movimento ao aparelho. */
+@keyframes sb-flow { from { background-position-x: 0; } to { background-position-x: var(--sb-tile, 120px); } }
+@keyframes sb-breathe { from { opacity: 0.25; transform: scale(1); } to { opacity: 0.6; transform: scale(1.12); } }
+@keyframes sb-sweep { from { transform: translateX(-60%); } to { transform: translateX(160%); } }
+@keyframes sb-flicker { 0%, 100% { opacity: 0.5; } 8% { opacity: 0.3; } 14% { opacity: 0.6; } 33% { opacity: 0.35; } 47% { opacity: 0.55; } 71% { opacity: 0.3; } 86% { opacity: 0.58; } }
+@keyframes sb-hue { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
+.sb-waves { animation: sb-flow 110s linear infinite; }
+.sb-glow { animation: sb-breathe 9s ease-in-out infinite alternate; }
+.sb-sheen { animation: sb-sweep 18s ease-in-out infinite; }
+[data-sb='newyear'] .sb-sheen { animation-duration: 9s; }
+[data-sb='valentine'] .sb-glow { animation-duration: 3.6s; }          /* pulsa como batimento */
+[data-sb='halloween'] .sb-glow { animation: sb-flicker 7s linear infinite; }   /* tremula como vela */
+[data-sb='easter'] .sb-glow { animation: sb-breathe 9s ease-in-out infinite alternate, sb-hue 40s linear infinite; }   /* cores pastel que mudam devagar */
+@media (prefers-reduced-motion: reduce) { .sb-waves, .sb-glow, .sb-sheen { animation: none !important; } }
