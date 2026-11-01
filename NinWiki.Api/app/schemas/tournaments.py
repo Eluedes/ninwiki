@@ -92,9 +92,17 @@ class GuestWrite(CamelModel):
         return v
 
 
+class BulkTeam(CamelModel):
+    """Uma equipe da lista importada: nome OPCIONAL (sem nome, a equipe aparece com o nome dos integrantes) e os nomes dos integrantes. 1 integrante sem nome = inscrito individual."""
+    name: str | None = Field(default=None, max_length=60)
+    members: list[str] = Field(min_length=1, max_length=MAX_TEAM_SIZE)
+
+
 class BulkEntriesWrite(CamelModel):
-    """Importar varios inscritos de uma vez (so' nomes). Cada nome e' validado no servidor; os que nao entram voltam em `skipped`."""
-    names: list[str] = Field(max_length=2000)
+    """Importar varios inscritos de uma vez. `names` = individuais; `teams` = equipes e individuais NA ORDEM da lista (vem depois dos `names`).
+    Cada nome e' validado no servidor; os que nao entram voltam em `skipped`."""
+    names: list[str] = Field(default_factory=list, max_length=2000)
+    teams: list[BulkTeam] = Field(default_factory=list, max_length=1000)
     position: Literal["end", "start"] = "end"   # onde entram na ordem de sementes
 
 
@@ -175,6 +183,8 @@ class EntryRead(CamelModel):
     village_id: str | None
     ninja_rank_id: str | None
     placement: int | None
+    team_name: str | None = None    # equipe vinda da importacao da lista (vazio = individual)
+    team_group: int | None = None
 
 
 class CompetitorRead(CamelModel):

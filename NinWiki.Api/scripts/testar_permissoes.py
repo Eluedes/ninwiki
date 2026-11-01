@@ -2966,6 +2966,25 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("importar: torneio inexistente -> 404", (await api("POST", f"/tournaments/{uuid.uuid4()}/entries/bulk", RO, json={"names": ["a1"]})).status_code == 404)
     await api("DELETE", f"/tournaments/{TB}", RO)
 
+    # --- importacao com EQUIPES (nome da equipe opcional) ---
+    r = await api("POST", "/tournaments", RO, json={"name": "Equipes TESTE"})
+    TC = r.json()["id"]
+    r = await api("POST", f"/tournaments/{TC}/entries/bulk", RO, json={"teams": [
+        {"name": "Alpha", "members": ["Aa", "Ab"]}, {"members": ["Ba", "Bb"]}, {"members": ["Solo"]}, {"members": ["aa", "Cc"]}]})
+    por_nome = {e["displayName"]: e for e in (r.json()["tournament"]["entries"] if r.status_code == 201 else [])}
+    check("importar equipes: com nome e sem nome ficam agrupadas, o individual fica sem grupo, o duplicado sai e a sobra sem nome vira individual",
+          r.status_code == 201 and r.json()["added"] == 6 and [s["reason"] for s in r.json()["skipped"]] == ["duplicate"]
+          and por_nome["Aa"]["teamName"] == "Alpha" and por_nome["Aa"]["teamGroup"] == por_nome["Ab"]["teamGroup"] is not None
+          and por_nome["Ba"]["teamName"] is None and por_nome["Ba"]["teamGroup"] == por_nome["Bb"]["teamGroup"] not in (None, por_nome["Aa"]["teamGroup"])
+          and por_nome["Solo"]["teamGroup"] is None and por_nome["Cc"]["teamGroup"] is None, r.text[:300])
+    check("importar: equipe com mais de 10 integrantes -> 422", (await api("POST", f"/tournaments/{TC}/entries/bulk", RO, json={"teams": [{"members": [f"M{i}" for i in range(11)]}]})).status_code == 422)
+    r = await api("POST", f"/tournaments/{TC}/phases", RO, json={"name": "F1", "teamSize": 2})
+    pid = r.json()["phases"][0]["id"]
+    r = await api("POST", f"/tournaments/{TC}/phases/{pid}/start", RO, json={"competitors": [
+        {"name": "Alpha", "entryIds": [por_nome["Aa"]["id"], por_nome["Ab"]["id"]]}, {"entryIds": [por_nome["Ba"]["id"], por_nome["Bb"]["id"]]}]})
+    check("equipe com nome mantem o nome; sem nome mostra os integrantes (Ba & Bb)", r.status_code == 200 and sorted(c["name"] for c in r.json()["phases"][0]["competitors"]) == ["Alpha", "Ba & Bb"], r.text[:300])
+    await api("DELETE", f"/tournaments/{TC}", RO)
+
     # --- perfil ---
     check("anonimo nao edita perfil (401)", (await api("PUT", "/players/me", json={"gameName": "x"})).status_code == 401)
     r = await api("PUT", "/players/me", RO, json={"gameName": "  Naruto   TESTE "})
@@ -3023,8 +3042,10 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     r = await api("POST", f"/tournaments/{T}/phases/{p1}/start", RO, json={"competitors": comp_ok})
     check("chave 2v2 com 3 equipes gerada (3 partidas, torneio em andamento)", r.status_code == 200 and r.json()["status"] == "running" and len(r.json()["phases"][0]["matches"]) == 3, r.text[:200])
     ph = r.json()["phases"][0]
-    cn = {c["name"]: c["id"] for c in ph["competitors"]}
-    t1, t2, t3 = cn["Team 1"], cn["Team 2"], cn["Team 3"]
+    nome_de = {e["id"]: e["displayName"] for e in r.json()["entries"]}
+    comps = sorted(ph["competitors"], key=lambda c: c["seed"])
+    check("equipe sem nome aparece com o nome dos integrantes (nao mais 'Team N')", [c["name"] for c in comps] == [f"{nome_de[e_o]} & {nome_de[e_x]}", f"{nome_de[e_y]} & {nome_de[g1]}", f"{nome_de[g2]} & {nome_de[g3]}"], str([c["name"] for c in comps]))
+    t1, t2, t3 = comps[0]["id"], comps[1]["id"], comps[2]["id"]
     m = {(x["round"], x["slot"]): x for x in ph["matches"]}
     check("folga: cabeca 1 passa direto e ja' esta' na final", m[(1, 0)]["done"] and m[(1, 0)]["winnerId"] == t1 and m[(2, 0)]["competitorAId"] == t1)
     check("inscricoes ja' fechadas: ninguem mais entra pela API (409)", (await api("POST", f"/tournaments/{T}/join", RX)).status_code == 409)

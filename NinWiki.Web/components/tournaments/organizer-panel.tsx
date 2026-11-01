@@ -142,7 +142,7 @@ function Entries({ t, run, busy }: { t: ApiTournament; run: ReturnType<typeof us
         {t.entries.map((e, i) => (
           <li key={e.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1 text-sm">
             <span className="w-6 text-right tabular-nums text-muted-foreground">{i + 1}</span>
-            <span className="min-w-0 flex-1 truncate">{e.displayName}{!e.readerId && <span className="ml-2 text-xs text-muted-foreground">({d.guest})</span>}</span>
+            <span className="min-w-0 flex-1 truncate">{e.displayName}{!e.readerId && <span className="ml-2 text-xs text-muted-foreground">({d.guest})</span>}{e.teamGroup != null && <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">{e.teamName ?? fill(d.teamN, { n: e.teamGroup })}</span>}</span>
             {editable && (
               <>
                 <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={d.moveUp} disabled={busy || i === 0} onClick={() => move(i, -1)}><ArrowUp className="h-4 w-4" /></Button>
@@ -166,10 +166,26 @@ function Builder({ t, phase, blocked, run, busy }: { t: ApiTournament; phase: Ap
   const size = phase.teamSize;
   const [teams, setTeams] = useState<Draft[]>([]);
   const empty = () => ({ name: '', entryIds: Array<string>(size).fill('') });
-  /** Preenche com os sugeridos (vencedores da fase anterior; na primeira, todos), agrupados de `size` em `size`. */
+  const nameOf = (id: string) => t.entries.find((e) => e.id === id)?.displayName ?? '';
+  /** Preenche com os sugeridos (vencedores da fase anterior; na primeira, todos). As EQUIPES vindas da importacao da lista que tem exatamente `size` integrantes
+   *  ja' entram prontas (com o nome, se houver); o resto e' agrupado de `size` em `size`. */
   function suggest() {
-    const ids = phase.suggestedEntryIds && phase.suggestedEntryIds.length ? phase.suggestedEntryIds : t.entries.map((e) => e.id);
+    const all = phase.suggestedEntryIds && phase.suggestedEntryIds.length ? phase.suggestedEntryIds : t.entries.map((e) => e.id);
     const out: Draft[] = [];
+    const taken = new Set<string>();
+    if (size > 1) {
+      const groups = new Map<number, string[]>();
+      for (const id of all) {
+        const g = t.entries.find((e) => e.id === id)?.teamGroup;
+        if (g != null) groups.set(g, [...(groups.get(g) ?? []), id]);
+      }
+      for (const members of groups.values()) {
+        if (members.length !== size) continue;
+        out.push({ name: t.entries.find((e) => e.id === members[0])?.teamName ?? '', entryIds: members });
+        members.forEach((m) => taken.add(m));
+      }
+    }
+    const ids = all.filter((id) => !taken.has(id));
     for (let i = 0; i < ids.length; i += size) out.push({ name: '', entryIds: Array.from({ length: size }, (_, k) => ids[i + k] ?? '') });
     setTeams(out);
   }
@@ -196,7 +212,7 @@ function Builder({ t, phase, blocked, run, busy }: { t: ApiTournament; phase: Ap
           <li key={ti} className="space-y-1.5 rounded-md border border-border p-2">
             <div className="flex items-center gap-2">
               <span className="w-6 text-right text-xs tabular-nums text-muted-foreground">{ti + 1}</span>
-              {size > 1 && <Input value={tm.name} maxLength={60} placeholder={d.teamName} aria-label={d.teamName} onChange={(e) => setTeams(teams.map((x, i) => (i === ti ? { ...x, name: e.target.value } : x)))} />}
+              {size > 1 && <Input value={tm.name} maxLength={60} placeholder={tm.entryIds.filter(Boolean).map(nameOf).join(' & ') || d.teamName} aria-label={d.teamName} onChange={(e) => setTeams(teams.map((x, i) => (i === ti ? { ...x, name: e.target.value } : x)))} />}
               <Button size="icon" variant="ghost" className="ml-auto h-8 w-8 text-destructive" aria-label={d.removeFromList} onClick={() => setTeams(teams.filter((_, i) => i !== ti))}><Trash2 className="h-4 w-4" /></Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">

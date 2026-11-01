@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/components/providers/language-provider';
 import { ApiError, importEntries, type ApiTournament } from '@/lib/api-client';
-import { parseBulkNames, type BulkReason } from '@/lib/bulk-names';
+import { itemLabel, parseBulkNames, type BulkReason } from '@/lib/bulk-names';
 import { fill } from '@/lib/i18n-tournaments';
 
 const MAX_FILE_BYTES = 1_000_000;   // arquivo maior que 1 MB nao e' uma lista de nomes
@@ -25,7 +25,7 @@ export function ImportEntriesDialog({ t, open, onClose, onImported }: { t: ApiTo
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const parsed = useMemo(() => parseBulkNames(text, t.entries.map((e) => e.displayName)), [text, t.entries]);
-  const reasonText: Record<BulkReason, string> = { duplicate: d.importDuplicate, too_long: d.importTooLong, invalid: d.importInvalid, full: d.importFull };
+  const reasonText: Record<BulkReason, string> = { duplicate: d.importDuplicate, too_long: d.importTooLong, invalid: d.importInvalid, full: d.importFull, team_too_big: d.importTeamTooBig };
 
   /** Le o arquivo solto na caixa (texto puro, no navegador) e junta ao que ja' foi digitado. */
   async function onDrop(e: React.DragEvent) {
@@ -68,7 +68,17 @@ export function ImportEntriesDialog({ t, open, onClose, onImported }: { t: ApiTo
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><FileUp className="h-3.5 w-3.5" aria-hidden />{d.importDropHint}</p>
           {text.trim() && (
             <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3 text-sm" aria-live="polite">
-              <p className="font-medium">{fill(d.importPreview, { n: parsed.accepted.length, skipped: parsed.skipped.length, empty: parsed.empty })}</p>
+              <p className="font-medium">{fill(d.importPreview, { n: parsed.players, teams: parsed.teams, skipped: parsed.skipped.length, empty: parsed.empty })}</p>
+              {parsed.accepted.length > 0 && (
+                <ul className="max-h-40 space-y-0.5 overflow-y-auto text-xs" aria-label={d.importPreviewList}>
+                  {parsed.accepted.slice(0, 40).map((it, i) => (
+                    <li key={i} className="truncate">
+                      {it.members.length >= 2 ? <><span className="font-medium">{itemLabel(it)}</span>{it.name && <span className="text-muted-foreground"> — {it.members.join(' & ')}</span>}</> : <span>{it.members[0]}</span>}
+                    </li>
+                  ))}
+                  {parsed.accepted.length > 40 && <li className="text-muted-foreground">…</li>}
+                </ul>
+              )}
               {parsed.skipped.length > 0 && (
                 <ul className="max-h-32 space-y-0.5 overflow-y-auto text-xs text-muted-foreground">
                   {parsed.skipped.map((s, i) => <li key={i}><span className="font-medium text-foreground">{s.name}</span>: {reasonText[s.reason]}</li>)}
@@ -81,8 +91,8 @@ export function ImportEntriesDialog({ t, open, onClose, onImported }: { t: ApiTo
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={busy}>{d.cancel}</Button>
-          <Button onClick={confirm} disabled={busy || parsed.accepted.length === 0}>
-            {busy && <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden />}{fill(d.importConfirm, { n: parsed.accepted.length })}
+          <Button onClick={confirm} disabled={busy || parsed.players === 0}>
+            {busy && <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden />}{fill(d.importConfirm, { n: parsed.players })}
           </Button>
         </DialogFooter>
       </DialogContent>
