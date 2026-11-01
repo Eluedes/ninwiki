@@ -3,7 +3,7 @@ Da' NOME as imagens do banco de imagens que ainda estao SEM nome, usando o nome 
 (item/arma/mob publicado, mastery, clan, vila).
 
 Regras (so' o que da' para ter certeza):
-  - so' mexe em imagem com nome VAZIO ou com o nome-padrao do cliente (`N_item` / `N_fundo`); nome real digitado por voce nunca e' trocado;
+  - so' mexe em imagem com nome VAZIO ou com o nome-padrao do cliente (`N_item` / `N_fundo`) ou do Atlas (`mob_N`); nome real digitado por voce nunca e' trocado;
   - `N_fundo` herda o nome do `N_item` irmao (mesmo N) como `Nome_fundo`;
   - a imagem precisa ser o campo de imagem de paginas PUBLICADAS; se paginas com NOMES DIFERENTES dividem a mesma imagem (ex.: todos os "Manual"), pula (ambiguo);
   - 2o passo: imagem ainda sem nome com os MESMOS PIXELS de uma imagem que ja' tem nome (copia criada por importacao) herda esse nome, como `Nome [id]`
@@ -38,6 +38,7 @@ from scripts._guarda_banco import exigir_banco_local
 
 LIMITE = 80   # tamanho maximo de media_images.name
 PADRAO = re.compile(r"^(\d+)_(item|fundo)$")   # nome-padrao dado pelos importadores do cliente
+MOB = re.compile(r"^mob_\d+$")   # nome-padrao das imagens de monstros (importador do Atlas)
 ARQUIVO = re.compile(r"/uploads/([0-9a-f]{32}\.\w+)")
 
 
@@ -87,17 +88,18 @@ async def main() -> None:
     async with AsyncSessionLocal() as db:
         usos = await nomes_por_arquivo(db)
         imagens = (await db.execute(select(MediaImage).order_by(MediaImage.id))).scalars().all()
-        ocupados = {m.name for m in imagens if m.name and not PADRAO.match(m.name)}
+        ocupados = {m.name for m in imagens if m.name and not PADRAO.match(m.name) and not MOB.match(m.name)}
         nomeadas = ambiguas = sem_uso = copias = 0
         por_pixels = {}   # impressao -> nome da 1a imagem JA' nomeada com esses pixels
         for m in imagens:
-            if m.name and not PADRAO.match(m.name):
+            if m.name and not PADRAO.match(m.name) and not MOB.match(m.name):
                 por_pixels.setdefault(impressao(m.filename), m.name)
         exemplos: list[str] = []
         novo_por_n: dict[str, str] = {}   # N -> nome dado ao `N_item` (o `N_fundo` irmao herda)
         for m in sorted(imagens, key=lambda x: (not x.name.endswith("_item"), x.id)):
             achou = PADRAO.match(m.name or "")
-            if m.name and not achou:
+            mob = MOB.match(m.name or "")
+            if m.name and not achou and not mob:
                 continue
             if achou and achou.group(2) == "fundo":
                 base_item = novo_por_n.get(achou.group(1))
@@ -112,7 +114,7 @@ async def main() -> None:
                 continue
             nomes = usos.get(m.filename)
             if not nomes:
-                if achou:   # nome-padrao sem pagina que o use: sem informacao para nomear
+                if achou or mob:   # nome-padrao sem pagina que o use: sem informacao para nomear
                     sem_uso += 1
                     continue
                 original = por_pixels.get(impressao(m.filename))
@@ -130,7 +132,7 @@ async def main() -> None:
             if len(nomes) > 1:
                 ambiguas += 1
                 continue
-            if achou and achou.group(2) == "item" and len(nomes) > 1:
+            if (mob or (achou and achou.group(2) == "item")) and len(nomes) > 1:
                 ambiguas += 1
                 continue
             base = next(iter(nomes))[:LIMITE].rstrip()
