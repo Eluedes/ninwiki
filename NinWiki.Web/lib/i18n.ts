@@ -9,6 +9,7 @@
 // distribui esse dicionario pela arvore de componentes.
 
 import type { Locale } from './types';
+import { tournamentsEn, tournamentsPt, type TournamentsDict } from './i18n-tournaments';
 
 // A interface Dictionary e' o "contrato": toda chave que existir aqui
 // tem que existir OBRIGATORIAMENTE nos dois idiomas abaixo (pt e en).
@@ -82,7 +83,7 @@ export interface Dictionary {
   siteTagline: string;
   siteSubline: string;
   compare: { title: string; subtitle: string; search: string; noResults: string; change: string; pickBoth: string; button: string };
-  nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; proficiencies: string; map: string; blog: string; openMenu: string };
+  nav: { home: string; mobs: string; items: string; guides: string; masteries: string; weapons: string; missions: string; village: string; proficiencies: string; map: string; blog: string; tournaments: string; openMenu: string };
   home: { welcome: string; subtitle: string; };
   news: { title: string; subtitle: string; readMore: string; viewAll: string; empty: string };
   lore: {
@@ -109,6 +110,7 @@ export interface Dictionary {
   siteError: { title: string; text: string; retry: string; home: string };
   blogx: BlogxDict;
   volunteer: VolunteerDict;
+  tournaments: TournamentsDict;   // torneios e perfis (lib/i18n-tournaments.ts)
   maintenance: { title: string; text: string; back: string; siteTitle: string; siteText: string; staffLogin: string; staffChecking: string; staffHint: string; badge: string };
   jutsuInfo: JutsuInfoDict;
   blog: { title: string; subtitle: string; empty: string; loadError: string; notFound: string; back: string; by: string; updated: string; official: string };
@@ -195,7 +197,7 @@ export interface Dictionary {
       linkLabel: string; level: string; levels: Record<string, string>; preview: string; save: string; saving: string; saved: string; clear: string;
       confirmClear: string; none: string; loadError: string; saveError: string; updatedBy: string; counter: string;
     };
-    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; volunteers: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; maintenance: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string; panelTitle: string; versionTitle: string };
+    sidebar: { media: string; announcement: string; overview: string; blogPosts: string; comments: string; content: string; contentMobs: string; contentItems: string; contentWeapons: string; contentMissions: string; masteries: string; jutsus: string; bulkImport: string; auditLog: string; users: string; staff: string; permissions: string; errors: string; reports: string; volunteers: string; tournaments: string; translations: string; villages: string; organizations: string; guideArticles: string; professions: string; maintenance: string; backToSite: string; groups: { wiki: string; community: string; world: string; system: string }; breadcrumbHome: string; viewSite: string; panelTitle: string; versionTitle: string };
     gameNames: { title: string; subtitle: string; chooseFiles: string; invalidFile: string; find: string; loadError: string; summary: string; truncated: string; search: string; hideJutsu: string; selectShown: string; clear: string; empty: string; moreHidden: string; createDrafts: string; confirm: string; created: string; note: string; categories: Record<string, string>; hints: Record<string, string> };
     translationsPage: { title: string; subtitle: string; chooseFile: string; invalidFile: string; wrongLanguage: string; fileInfo: string; overwrite: string; overwriteHint: string; preview: string; apply: string; confirmApply: string; working: string; resultTitle: string; applied: string; nothing: string; colType: string; colRecords: string; colChanges: string; colNoMatch: string; types: Record<string, string>; fields: Record<string, string>; samples: string; noMatchNames: string; loadError: string; howTo: string };
     versionHistory: { title: string; hint: string; empty: string; restore: string; confirm: string; by: string; loadError: string; restoreError: string };
@@ -348,6 +350,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       home: 'Início',
       openMenu: 'Abrir menu',
       blog: 'Blog',
+      tournaments: 'Torneios',
       mobs: 'Monstros',
       items: 'Itens',
       guides: 'Guias',
@@ -429,6 +432,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       send: 'Enviar report', sending: 'Enviando…', cancel: 'Cancelar', thanks: 'Obrigado! Seu report foi enviado para a equipe.', close: 'Fechar',
       tooShort: 'Escreva pelo menos 10 caracteres.', error: 'Não foi possível enviar o report. Tente de novo daqui a pouco.',
     },
+    tournaments: tournamentsPt,
     volunteer: {
       title: 'Seja voluntário', subtitle: 'Ajude a manter o Nin Codex completo e atualizado.',
       intro: 'O Nin Codex é feito por fãs, de graça. Se você quer ajudar (traduzir, editar, coletar dados...), conte um pouco sobre você. A equipe lê todas as inscrições e responde pelo Discord.',
@@ -774,6 +778,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         errors: 'Erros',
         reports: 'Reports',
         volunteers: 'Voluntários',
+        tournaments: 'Torneios',
         translations: 'Traduções oficiais',
         villages: 'Vilas',
         organizations: 'Organizações',
@@ -863,7 +868,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Conteúdo', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Vilas)', tools: 'Ferramentas', imagecats: 'Categorias do banco de imagens (desmarque para TRANCAR a categoria para este cargo)', notices: 'Quadro de avisos', staff: 'Equipe e cargos', audit: 'Log', analytics: 'Acessos' },
         names: {
           'content.create': 'Criar conteúdo', 'content.edit': 'Editar conteúdo', 'content.publish': 'Publicar / despublicar conteúdo', 'content.delete': 'Apagar conteúdo', 'content.import': 'Importar conteúdo em massa',
-          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes', 'volunteers.manage': 'Ver, avaliar e apagar as inscrições de voluntários',
+          'posts.create': 'Criar posts', 'posts.edit': 'Editar posts', 'posts.publish': 'Publicar / despublicar posts', 'posts.delete': 'Apagar posts', 'comments.moderate': 'Moderar comentários e banir leitores', 'translation.import': 'Importar as traduções oficiais do jogo', 'reports.manage': 'Ver e tratar os reports dos visitantes', 'volunteers.manage': 'Ver, avaliar e apagar as inscrições de voluntários', 'tournaments.manage': 'Moderar torneios dos jogadores (esconder, corrigir texto, apagar)',
           'lore.edit': 'Editar Masteries, Jutsus, Vilas e Organizações', 'lore.delete': 'Apagar Jutsus, Vilas e Organizações',
           'uploads.create': 'Enviar imagens', 'translation.retranslate': 'Retraduzir conteúdo',
           'notices.view': 'Ver avisos e baixar arquivos', 'notices.manage': 'Postar, editar e apagar avisos', 'announcement.manage': 'Editar o anúncio da Home', 'media.manage': 'Renomear/apagar imagens do banco de imagens', 'media.categorize': 'Mudar a categoria das imagens do banco de imagens', 'site.maintenance': 'Ligar/desligar o modo manutenção do site', 'media.upload': 'Enviar imagens pelo banco de imagens (lote)', 'media.reset_ids': 'Renumerar os IDs do banco de imagens', 'media.closed': 'Ver a categoria fechada do banco de imagens', 'media.cat.weapon': 'Ver imagens: Armas', 'media.cat.gear': 'Ver imagens: Equipamentos', 'media.cat.consumable': 'Ver imagens: Consumíveis', 'media.cat.currency': 'Ver imagens: Moedas', 'media.cat.material': 'Ver imagens: Materiais', 'media.cat.ring': 'Ver imagens: Anéis', 'media.cat.scroll': 'Ver imagens: Pergaminhos', 'media.cat.npc': 'Ver imagens: NPCs', 'media.cat.monster': 'Ver imagens: Monstros', 'media.cat.furniture': 'Ver imagens: Móveis', 'media.cat.hair_beard': 'Ver imagens: Cabelo/Barba', 'media.cat.skin': 'Ver imagens: Skins', 'media.cat.tools': 'Ver imagens: Ferramentas', 'media.cat.other': 'Ver imagens: Outros', 'media.cat.none': 'Ver imagens: Sem categoria',
@@ -1178,6 +1183,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       home: 'Home',
       openMenu: 'Open menu',
       blog: 'Blog',
+      tournaments: 'Tournaments',
       mobs: 'Bestiary',
       items: 'Items',
       guides: 'Guides',
@@ -1259,6 +1265,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       send: 'Send report', sending: 'Sending…', cancel: 'Cancel', thanks: 'Thank you! Your report was sent to the team.', close: 'Close',
       tooShort: 'Please write at least 10 characters.', error: 'Could not send the report. Try again in a moment.',
     },
+    tournaments: tournamentsEn,
     volunteer: {
       title: 'Become a volunteer', subtitle: 'Help keep Nin Codex complete and up to date.',
       intro: 'Nin Codex is a free, fan-made project. If you want to help (translating, editing, collecting data...), tell us a bit about yourself. The team reads every application and replies on Discord.',
@@ -1604,6 +1611,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         errors: 'Errors',
         reports: 'Reports',
         volunteers: 'Volunteers',
+        tournaments: 'Tournaments',
         translations: 'Official translations',
         villages: 'Villages',
         organizations: 'Organizations',
@@ -1693,7 +1701,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         groups: { content: 'Content', posts: 'Blog', lore: 'Lore (Masteries, Jutsus, Villages)', tools: 'Tools', imagecats: 'Image library categories (untick to LOCK a category for this role)', notices: 'Notice board', staff: 'Staff and roles', audit: 'Log', analytics: 'Traffic' },
         names: {
           'content.create': 'Create content', 'content.edit': 'Edit content', 'content.publish': 'Publish / unpublish content', 'content.delete': 'Delete content', 'content.import': 'Bulk import content',
-          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports', 'volunteers.manage': 'View, review and delete volunteer applications',
+          'posts.create': 'Create posts', 'posts.edit': 'Edit posts', 'posts.publish': 'Publish / unpublish posts', 'posts.delete': 'Delete posts', 'comments.moderate': 'Moderate comments and ban readers', 'translation.import': 'Import the official game translations', 'reports.manage': 'View and handle visitor reports', 'volunteers.manage': 'View, review and delete volunteer applications', 'tournaments.manage': 'Moderate player tournaments (hide, fix text, delete)',
           'lore.edit': 'Edit Masteries, Jutsus, Villages and Organizations', 'lore.delete': 'Delete Jutsus, Villages and Organizations',
           'uploads.create': 'Upload images', 'translation.retranslate': 'Re-translate content',
           'notices.view': 'View notices and download files', 'notices.manage': 'Post, edit and delete notices', 'announcement.manage': 'Edit the Home announcement', 'media.manage': 'Rename/delete images in the image library', 'media.categorize': 'Change the category of images in the image library', 'site.maintenance': 'Turn the site maintenance mode on/off', 'media.upload': 'Upload images to the image library (bulk)', 'media.reset_ids': 'Renumber the image library IDs', 'media.closed': 'See the closed category of the image library', 'media.cat.weapon': 'See images: Weapons', 'media.cat.gear': 'See images: Gear', 'media.cat.consumable': 'See images: Consumables', 'media.cat.currency': 'See images: Currency', 'media.cat.material': 'See images: Materials', 'media.cat.ring': 'See images: Rings', 'media.cat.scroll': 'See images: Scrolls', 'media.cat.npc': 'See images: NPCs', 'media.cat.monster': 'See images: Monsters', 'media.cat.furniture': 'See images: Furniture', 'media.cat.hair_beard': 'See images: Hair/Beard', 'media.cat.skin': 'See images: Skins', 'media.cat.tools': 'See images: Tools', 'media.cat.other': 'See images: Other', 'media.cat.none': 'See images: Uncategorized',

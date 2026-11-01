@@ -26,6 +26,10 @@ class Reader(Base):
     banned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Perfil publico (editavel so' pelo proprio leitor): nome no jogo, vila e rank ninja. Nunca guarda dado privado.
+    game_name: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    village_id: Mapped[str | None] = mapped_column(ForeignKey("villages.id", ondelete="SET NULL"), nullable=True)
+    ninja_rank_id: Mapped[str | None] = mapped_column(ForeignKey("ninja_ranks.id", ondelete="SET NULL"), nullable=True)
 
 
 class PostComment(Base):

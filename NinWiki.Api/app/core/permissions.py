@@ -99,6 +99,9 @@ class Permission(str, Enum):
     # --- Inscricoes de voluntarios (formulario /volunteer): ver, avaliar, anotar e apagar (dados pessoais: o Creator nao tem) ---
     VOLUNTEERS_MANAGE = "volunteers.manage"
 
+    # --- Torneios dos leitores: a equipe so' MODERA (esconder, apagar, corrigir texto); quem cria/administra e' o organizador (leitor) ---
+    TOURNAMENTS_MANAGE = "tournaments.manage"
+
     # --- Erros do wiki (traceback, IPs - so' o S.Adm) ---
     ERRORS_VIEW = "errors.view"
 
@@ -155,6 +158,7 @@ _ADMIN: frozenset[Permission] = _CREATOR | frozenset({
     Permission.COMMENTS_MODERATE,
     Permission.REPORTS_MANAGE,
     Permission.VOLUNTEERS_MANAGE,
+    Permission.TOURNAMENTS_MANAGE,
     Permission.ANALYTICS_VIEW,
     Permission.AUDIT_VIEW,
 })
