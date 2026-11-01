@@ -104,7 +104,7 @@ class NinWikiBot(discord.Client):
         self.guilds_loop = tasks.loop(minutes=30)(_safe(self._guilds_tick))
         self.guilds_loop.before_loop(self.wait_until_ready)
         # Cargos dos leitores -> API (vila/rank do perfil): sincronizacao completa ao ligar e a cada 30 min; o resto vem pelos eventos de membro.
-        self.member_sync = MemberSync(self, self.api) if self.members_intent else None
+        self.member_sync = MemberSync(self, self.api, settings.member_list_sync) if self.members_intent else None
         self.members_loop = tasks.loop(minutes=SYNC_MINUTES)(_safe(self._members_tick))
         self.members_loop.before_loop(self.wait_until_ready)
 

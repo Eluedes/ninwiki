@@ -801,6 +801,7 @@ def _servidor(i: int, nome: str, cargos: list, membros: dict) -> MagicMock:
     g = MagicMock()
     g.id, g.name, g.roles = i, nome, [_cargo(i, "@everyone", True), *cargos]
     g.get_member = lambda uid: membros.get(uid)
+    g.members, g.chunked = [], True   # lista de membros (cache) - o teste da lista preenche
     return g
 
 
@@ -808,6 +809,7 @@ def _membro(uid: int, guild: MagicMock, cargos: list) -> MagicMock:
     """Membro falso (id, cargos com o @everyone e o servidor)."""
     m = MagicMock()
     m.id, m.guild, m.roles = uid, guild, [_cargo(guild.id, "@everyone", True), *cargos]
+    m.name, m.display_name, m.bot, m.joined_at = f"user{uid}", f"Apelido {uid}", False, None
     return m
 
 
@@ -910,6 +912,80 @@ async def testar_cargos_leitores() -> None:
 
 
 
+async def testar_lista_membros() -> None:
+    """Lista de membros dos servidores -> API (painel /admin/bot): o bot so' manda FATOS, em lotes de 500, e funciona sem leitores."""
+    from sqlalchemy import text
+    from ninwiki_bot.member_sync import MemberSync, listed_member
+    secao("Lista de membros dos servidores -> painel do bot (sem Discord real)")
+    check("MEMBER_LIST_SYNC liga por padrao e pode ser desligado",
+          BotSettings(_env_file=None, discord_bot_token="abc", bot_api_token=TOKEN).member_list_sync is True
+          and BotSettings(_env_file=None, discord_bot_token="abc", bot_api_token=TOKEN, member_list_sync="false").member_list_sync is False)
+    guilda_id = BASE + 301
+    guilda = _servidor(guilda_id, "Servidor Lista TESTE", [], {})
+    cargo = _cargo(7001, "Veterano")
+    membros = [_membro(BASE + 400 + i, guilda, [cargo] if i == 0 else []) for i in range(1200)]
+    fato = listed_member(membros[0])
+    check("fato do membro: so' id, nomes, bot?, entrada e ids de cargo (sem @everyone)",
+          fato == {"discordId": str(BASE + 400), "username": f"user{BASE + 400}", "displayName": f"Apelido {BASE + 400}", "isBot": False, "joinedAt": None, "roles": ["7001"]}, str(fato))
+    guilda.members = membros
+    cliente = MagicMock()
+    cliente.guilds = [guilda]
+    http = httpx.AsyncClient(transport=httpx.ASGITransport(app=app, client=("203.0.113.7", 1234)), base_url="http://test")
+    api = NinWikiApi("http://test", TOKEN, client=http)
+    settings.bot_api_token = TOKEN
+    lotes: list = []
+    original = api.push_guild_members
+
+    async def espiao(gid, itens, **k):
+        """Anota (tamanho do lote, final) e repassa para a API de verdade."""
+        lotes.append((len(itens), k.get("final", False)))
+        return await original(gid, itens, **k)
+
+    api.push_guild_members = espiao
+
+    async def contar() -> int:
+        """Membros guardados do servidor de teste."""
+        async with AsyncSessionLocal() as db:
+            return (await db.execute(text("SELECT count(*) FROM discord_guild_members WHERE guild_id = :g"), {"g": str(guilda_id)})).scalar_one()
+
+    try:
+        await api.sync_guilds([{"id": str(guilda_id), "name": "Servidor Lista TESTE", "memberCount": 1200, "roles": []}])
+        sync = MemberSync(cliente, api)
+        await sync.sync_member_list(guilda)
+        check("1200 membros saem em lotes de 500 e so' o ultimo e' 'final'", lotes == [(500, False), (500, False), (200, True)], str(lotes))
+        check("a API guardou os 1200 membros", await contar() == 1200)
+        lotes.clear()
+        guilda.members = membros[:10]
+        await sync.sync_member_list(guilda)
+        check("nova sincronizacao completa apaga quem saiu", await contar() == 10 and lotes == [(10, True)], f"{await contar()} {lotes}")
+        lotes.clear()
+        novo = _membro(BASE + 2000, guilda, [])
+        await sync.push_member(novo)
+        await sync.on_member_remove(membros[0])
+        check("on_member_join/remove atualizam so' um membro", await contar() == 10 and lotes == [(1, False), (0, False)], f"{await contar()} {lotes}")
+        lotes.clear()
+        antes, depois = _membro(BASE + 2000, guilda, []), _membro(BASE + 2000, guilda, [cargo])
+        await sync.on_member_update(antes, depois)
+        sem_mudanca = len(lotes)
+        await sync.on_member_update(depois, _membro(BASE + 2000, guilda, [cargo]))
+        check("on_member_update so' envia se cargo/nome mudou", sem_mudanca == 1 and len(lotes) == 1)
+        lotes.clear()
+        so_cargos = MemberSync(cliente, api, list_sync=False)
+        await so_cargos.push_member(novo)
+        await so_cargos.on_member_remove(novo)
+        check("com a lista desligada (MEMBER_LIST_SYNC=false) nada de membros e' enviado", lotes == [])
+        sem_cache = _servidor(guilda_id, "x", [], {})
+        sem_cache.chunked = False
+        sem_cache.chunk = AsyncMock()
+        await MemberSync(cliente, api).sync_member_list(sem_cache)
+        check("cache incompleto: o bot pede os membros (guild.chunk) antes de enviar", sem_cache.chunk.await_count == 1)
+    finally:
+        await http.aclose()
+        async with AsyncSessionLocal() as db:
+            await db.execute(text("DELETE FROM discord_guilds WHERE guild_id = :g"), {"g": str(guilda_id)})
+            await db.commit()
+
+
 async def main() -> None:
     """Prepara a configuracao, roda os testes e limpa os dados no final."""
     orig = settings.bot_api_token
@@ -917,6 +993,7 @@ async def main() -> None:
         await testar()
         await testar_painel_servidores()
         await testar_cargos_leitores()
+        await testar_lista_membros()
     finally:
         settings.bot_api_token = orig
         await limpar()

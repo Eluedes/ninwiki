@@ -5,14 +5,16 @@ BOT (token, require_bot - o bot so' informa FATOS, a API decide):
   GET  /bot/reader-ids      Discord IDs (texto) dos leitores, paginado (o bot so' consulta cargos de quem e' leitor)
   POST /bot/guilds-sync     servidores onde o bot esta' + cargos de cada um
   POST /bot/member-roles    cargos de leitores num servidor (ou que saiu dele)
+  POST /bot/guild-members   LISTA de membros de um servidor (lotes de ate' 500; `final` apaga quem saiu); teto de 20.000 por servidor
 PAINEL (permissao discord.links):
   GET  /discord-links                    servidores, vila e mapeamento de cargos
+  GET  /discord-links/guilds/{guild_id}/members?q=&limit=&offset=  membros do servidor (paginado, busca por nome ou ID)
   PUT  /discord-links/guilds/{guild_id}  define a vila do servidor e os cargos -> rank (recalcula os leitores do servidor)
 """
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,18 +25,19 @@ from app.core.database import get_db
 from app.core.discord_profile import recompute_readers
 from app.core.permissions import Permission
 from app.core.rate_limit import limiter, retry_message
-from app.models.discord_links import DiscordGuild, DiscordMemberRoles, DiscordRole
+from app.models.discord_links import DiscordGuild, DiscordGuildMember, DiscordMemberRoles, DiscordRole
 from app.models.guide import NinjaRank
 from app.models.readers import Reader
 from app.models.users import User
 from app.models.villages import Village
 from app.schemas.discord_links import (
-    GuildLinkRead, GuildLinkWrite, GuildsSync, MemberRolesPush, MemberRolesResult, ReaderIds, RoleLinkRead,
+    GuildLinkRead, GuildLinkWrite, GuildMemberRead, GuildMembersPage, GuildMembersPush, GuildMembersResult, GuildsSync, MemberRolesPush, MemberRolesResult, ReaderIds, RoleLinkRead,
 )
 
 bot_router = APIRouter(prefix="/bot", tags=["bot"], dependencies=[Depends(require_bot)])
 router = APIRouter(prefix="/discord-links", tags=["discord-links"])
 
+MEMBER_CAP = 20_000   # teto de membros guardados por servidor (acima disso guarda os primeiros e marca "lista parcial")
 BOT_CALLS_PER_MINUTE = 300   # teto de chamadas do bot a estas rotas (uma sincronizacao completa usa poucas dezenas)
 
 
@@ -113,13 +116,55 @@ async def bot_member_roles(payload: MemberRolesPush, db: AsyncSession = Depends(
     return MemberRolesResult(stored=len(stored), removed=len(gone), ignored=len(wanted) - len(known), profiles_changed=changed)
 
 
+@bot_router.post("/guild-members", response_model=GuildMembersResult)
+async def bot_guild_members(payload: GuildMembersPush, db: AsyncSession = Depends(get_db)) -> GuildMembersResult:
+    """Guarda um lote da lista de membros do servidor (so' para o painel do bot; nao muda vila/rank de ninguem).
+    `remove` apaga quem saiu; `final` (com `syncToken`) apaga quem nao foi visto nesta sincronizacao e fecha a data/"lista parcial"."""
+    _throttle()
+    guild = await db.get(DiscordGuild, payload.guild_id)
+    if guild is None:
+        raise HTTPException(status_code=404, detail="Unknown guild: send /bot/guilds-sync first")
+    if payload.final and not payload.sync_token:
+        raise HTTPException(status_code=422, detail="final needs syncToken")
+    now = datetime.now(timezone.utc)
+    gid = payload.guild_id
+    removed = 0
+    if payload.remove:
+        removed += (await db.execute(delete(DiscordGuildMember).where(DiscordGuildMember.guild_id == gid, DiscordGuildMember.discord_id.in_(payload.remove)))).rowcount or 0
+    wanted = {m.discord_id: m for m in payload.members}
+    dropped = 0
+    if wanted:
+        have = set((await db.execute(select(DiscordGuildMember.discord_id).where(DiscordGuildMember.guild_id == gid, DiscordGuildMember.discord_id.in_(list(wanted))))).scalars())
+        total = (await db.execute(select(func.count()).select_from(DiscordGuildMember).where(DiscordGuildMember.guild_id == gid))).scalar_one()
+        room = max(0, MEMBER_CAP - total)
+        keep = [m for i, m in wanted.items() if i in have]   # quem ja' esta' guardado sempre atualiza; so' os NOVOS respeitam o teto
+        fresh = [m for i, m in wanted.items() if i not in have]
+        keep += fresh[:room]
+        dropped = len(fresh) - len(fresh[:room])
+        if keep:
+            stmt = pg_insert(DiscordGuildMember).values([
+                {"guild_id": gid, "discord_id": m.discord_id, "username": m.username, "display_name": m.display_name, "is_bot": m.is_bot,
+                 "joined_at": m.joined_at, "roles": m.roles, "sync_token": payload.sync_token, "updated_at": now} for m in keep])
+            await db.execute(stmt.on_conflict_do_update(index_elements=["guild_id", "discord_id"], set_={
+                c: getattr(stmt.excluded, c) for c in ("username", "display_name", "is_bot", "joined_at", "roles", "sync_token", "updated_at")}))
+    if payload.final:
+        removed += (await db.execute(delete(DiscordGuildMember).where(DiscordGuildMember.guild_id == gid, DiscordGuildMember.sync_token != payload.sync_token))).rowcount or 0
+        stored = (await db.execute(select(func.count()).select_from(DiscordGuildMember).where(DiscordGuildMember.guild_id == gid))).scalar_one()
+        guild.members_synced_at = now
+        guild.members_partial = stored >= MEMBER_CAP and guild.member_count != stored   # chegou no teto e o servidor tem (ou nao informou) mais gente
+    await db.commit()
+    return GuildMembersResult(stored=len(wanted) - dropped, removed=removed, partial=dropped > 0 or guild.members_partial)
+
+
 # ---------------- painel ----------------
 
 async def _guild_view(db: AsyncSession, g: DiscordGuild) -> GuildLinkRead:
     """Servidor + cargos + quantos leitores tem cargos informados nele."""
     roles = (await db.execute(select(DiscordRole).where(DiscordRole.guild_id == g.guild_id).order_by(DiscordRole.name))).scalars().all()
     n = (await db.execute(select(func.count()).select_from(DiscordMemberRoles).where(DiscordMemberRoles.guild_id == g.guild_id))).scalar_one()
+    stored = (await db.execute(select(func.count()).select_from(DiscordGuildMember).where(DiscordGuildMember.guild_id == g.guild_id))).scalar_one()
     return GuildLinkRead(guild_id=g.guild_id, name=g.name, active=g.active, member_count=g.member_count, village_id=g.village_id, readers=n,
+                         members_stored=stored, members_synced_at=g.members_synced_at, members_partial=g.members_partial,
                          roles=[RoleLinkRead(role_id=r.role_id, name=r.name, ninja_rank_id=r.ninja_rank_id) for r in roles])
 
 
@@ -128,6 +173,26 @@ async def list_links(staff: User = Depends(require_permission(Permission.DISCORD
     """Servidores que o bot informou (ativos primeiro) com a vila e o mapeamento de cargos."""
     guilds = (await db.execute(select(DiscordGuild).order_by(DiscordGuild.active.desc(), DiscordGuild.name))).scalars().all()
     return [await _guild_view(db, g) for g in guilds]
+
+
+@router.get("/guilds/{guild_id}/members", response_model=GuildMembersPage)
+async def list_guild_members(guild_id: str, q: str = Query("", max_length=100), limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0),
+                             staff: User = Depends(require_permission(Permission.DISCORD_LINKS)), db: AsyncSession = Depends(get_db)):
+    """Membros do servidor (paginado). `q` busca por nome de usuario/exibicao (contem) ou por ID (comeca com)."""
+    guild = await db.get(DiscordGuild, guild_id)
+    if guild is None:
+        raise HTTPException(status_code=404, detail="Guild not found")
+    cond = [DiscordGuildMember.guild_id == guild_id]
+    term = q.strip()
+    if term:
+        like = "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"   # escapa % e _ digitados
+        cond.append(or_(DiscordGuildMember.username.ilike(like, escape="\\"), DiscordGuildMember.display_name.ilike(like, escape="\\"),
+                        DiscordGuildMember.discord_id.like(like.lstrip("%"), escape="\\")))
+    total = (await db.execute(select(func.count()).select_from(DiscordGuildMember).where(*cond))).scalar_one()
+    rows = (await db.execute(select(DiscordGuildMember).where(*cond).order_by(func.lower(func.coalesce(func.nullif(DiscordGuildMember.display_name, ""), DiscordGuildMember.username)), DiscordGuildMember.discord_id)
+                             .limit(limit).offset(offset))).scalars().all()
+    return GuildMembersPage(total=total, synced_at=guild.members_synced_at, partial=guild.members_partial, items=[
+        GuildMemberRead(discord_id=m.discord_id, username=m.username, display_name=m.display_name, is_bot=m.is_bot, joined_at=m.joined_at, roles=list(m.roles or [])) for m in rows])
 
 
 @router.put("/guilds/{guild_id}", response_model=GuildLinkRead)

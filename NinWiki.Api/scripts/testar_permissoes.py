@@ -140,7 +140,7 @@ ROTAS_PUBLICAS = {
     ("GET", "/tournaments"), ("GET", "/tournaments/{tournament_id}"), ("POST", "/tournaments"),
     ("PATCH", "/tournaments/{tournament_id}"), ("DELETE", "/tournaments/{tournament_id}"),
     ("POST", "/tournaments/{tournament_id}/join"), ("DELETE", "/tournaments/{tournament_id}/join"),
-    ("POST", "/tournaments/{tournament_id}/entries"), ("DELETE", "/tournaments/{tournament_id}/entries/{entry_id}"), ("PUT", "/tournaments/{tournament_id}/entries/order"),
+    ("POST", "/tournaments/{tournament_id}/entries"), ("POST", "/tournaments/{tournament_id}/entries/bulk"), ("DELETE", "/tournaments/{tournament_id}/entries/{entry_id}"), ("PUT", "/tournaments/{tournament_id}/entries/order"),
     ("POST", "/tournaments/{tournament_id}/phases"), ("PATCH", "/tournaments/{tournament_id}/phases/{phase_id}"), ("DELETE", "/tournaments/{tournament_id}/phases/{phase_id}"),
     ("POST", "/tournaments/{tournament_id}/phases/{phase_id}/start"), ("POST", "/tournaments/{tournament_id}/phases/{phase_id}/reset"),
     ("POST", "/tournaments/{tournament_id}/phases/{phase_id}/finish"), ("POST", "/tournaments/{tournament_id}/phases/{phase_id}/reopen"),
@@ -404,7 +404,9 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         db.add(Profession(id=prof_id, name="Testcraft", name_pt="Ofício", group=ProfessionGroup.CRAFTING, description="x", icon="🛠", details={"recipes": [
             {"level": 3, "workbench": True, "learnedFrom": {"name": "Zzrecipe Scroll", "namePt": "Pergaminho Zz"},
              "result": {"name": "Zzblade", "namePt": "Lâmina Zz", "slug": "zzblade", "image": None},
-             "needs": [{"qty": 5, "name": "Zzore", "namePt": "Minério Zz", "slug": "zzore"}]}]}))
+             "needs": [{"qty": 5, "name": "Zzore", "namePt": "Minério Zz", "slug": "zzore"}]},
+            # receita que produz o item de teste do drop: a ficha do item deve mostrar `craftedBy`
+            {"level": 7, "workbench": False, "result": {"name": "Zzdropcraft", "slug": f"{SLUG}-drop-item"}, "needs": [{"qty": 2, "name": "Zzore", "slug": "zzore"}]}]}))
         await db.commit()
     try:
         r = await c.get("/bot/recipe", params={"q": "zzblade"}, headers=BT)
@@ -415,6 +417,12 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         r = await c.get("/bot/recipe", params={"q": "lâmina zz", "lang": "pt"}, headers=BT)
         check("/bot/recipe em portugues: acha pelo nome PT e responde em PT", r.status_code == 200 and r.json()["found"] and r.json()["title"] == "Lâmina Zz"
               and r.json()["recipes"][0]["profession"] == "Ofício" and r.json()["recipes"][0]["needs"][0]["name"] == "Minério Zz", r.text[:300])
+        r = await c.get(f"/content-items/slug/{SLUG}-drop-item", headers=A)
+        cb = r.json().get("craftedBy", [])
+        check("ficha do item mostra 'Feito por craft' (profissao, nivel, bancada, ingredientes) a partir das receitas", r.status_code == 200 and len(cb) == 1
+              and cb[0]["professionId"] == prof_id and cb[0]["level"] == 7 and cb[0]["workbench"] is False and cb[0]["needs"][0]["qty"] == 2 and cb[0]["needs"][0]["slug"] == "zzore", r.text[:300])
+        r = await c.get(f"/content-items/slug/{SLUG}-lugares", headers=A)
+        check("ficha sem receita: craftedBy vazio", r.status_code == 200 and r.json().get("craftedBy") == [], r.text[:160])
         r = await c.get("/bot/suggest", params={"q": "zzbla", "kind": "recipe"}, headers=BT)
         r2 = await c.get("/bot/suggest", params={"q": "lâmina", "kind": "recipe", "lang": "pt"}, headers=BT)
         r3 = await c.get("/bot/suggest", params={"q": "zzbla", "kind": "item"}, headers=BT)
@@ -2885,6 +2893,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("criar de outra origem -> 403 (CSRF)", (await api("POST", "/tournaments", {**RO, "Origin": "https://site-malicioso.example"}, json=corpo)).status_code == 403)
     check("nome curto demais -> 422", (await api("POST", "/tournaments", RO, json={**corpo, "name": "ab"})).status_code == 422)
     r = await api("POST", "/tournaments", RO, json=corpo)
+    r_novo_oculto = r.status_code == 201 and r.json()["organizerHidden"] is True
     check("leitor logado cria torneio: vira organizador, em rascunho", r.status_code == 201 and r.json()["isOrganizer"] is True and r.json()["status"] == "draft", r.text[:200])
     T = r.json()["id"]
     check("rascunho: anonimo e outro leitor recebem 404, o organizador ve'", (await api("GET", f"/tournaments/{T}")).status_code == 404
@@ -2892,7 +2901,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("rascunho fora da lista publica", T not in [i["id"] for i in (await api("GET", "/tournaments?limit=50")).json()["items"]])
     check("outro leitor nao edita (rascunho -> 404)", (await api("PATCH", f"/tournaments/{T}", RX, json={"name": "Hack"})).status_code == 404)
     check("anonimo nao edita (401)", (await api("PATCH", f"/tournaments/{T}", json={"name": "Hack"})).status_code == 401)
-    r = await api("PATCH", f"/tournaments/{T}", RO, json={"status": "open", "name": "  Chunin   Exam TESTE  "})
+    r = await api("PATCH", f"/tournaments/{T}", RO, json={"status": "open", "organizerHidden": False, "name": "  Chunin   Exam TESTE  "})
     check("organizador abre as inscricoes e renomeia", r.status_code == 200 and r.json()["status"] == "open" and r.json()["name"].startswith("Chunin"), r.text[:200])
     check("torneio aberto: outro leitor tentando editar -> 403", (await api("PATCH", f"/tournaments/{T}", RX, json={"name": "Hack"})).status_code == 403)
     check("outro leitor nao apaga (403)", (await api("DELETE", f"/tournaments/{T}", RX)).status_code == 403)
@@ -2903,6 +2912,57 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("nao listado: some da lista mas abre pelo link", T not in [i["id"] for i in (await api("GET", "/tournaments?limit=50")).json()["items"]] and (await api("GET", f"/tournaments/{T}")).status_code == 200)
     await api("PATCH", f"/tournaments/{T}", RO, json={"visibility": "public"})
     check("'meus torneios' exige login e traz o meu", (await api("GET", "/tournaments?mine=true")).status_code == 401 and T in [i["id"] for i in (await api("GET", "/tournaments?mine=true", RO)).json()["items"]])
+
+    # --- visibilidade pelo organizador (organizerHidden) ---
+    check("torneio novo nasce OCULTO pelo organizador", r_novo_oculto)
+    check("anonimo (401) e outro leitor (403) nao mudam a visibilidade", (await api("PATCH", f"/tournaments/{T}", json={"organizerHidden": True})).status_code == 401
+          and (await api("PATCH", f"/tournaments/{T}", RX, json={"organizerHidden": True})).status_code == 403)
+    r = await api("PATCH", f"/tournaments/{T}", RO, json={"organizerHidden": True})
+    check("organizador oculta (mesmo aberto): resposta traz organizerHidden", r.status_code == 200 and r.json()["organizerHidden"] is True, r.text[:200])
+    check("oculto: some da lista e das buscas", T not in [i["id"] for i in (await api("GET", "/tournaments?limit=50")).json()["items"]]
+          and T not in [i["id"] for i in (await api("GET", "/tournaments?limit=50&q=Chunin")).json()["items"]])
+    check("oculto: 404 para anonimo e outro leitor (link nao revela nada); organizador ve'", (await api("GET", f"/tournaments/{T}")).status_code == 404
+          and (await api("GET", f"/tournaments/{T}", RX)).status_code == 404 and (await api("GET", f"/tournaments/{T}", RO)).json()["organizerHidden"] is True)
+    check("oculto: outro leitor nao entra pelo link (404)", (await api("POST", f"/tournaments/{T}/join", RX)).status_code == 404)
+    check("oculto: aparece em 'meus torneios' do organizador", T in [i["id"] for i in (await api("GET", "/tournaments?mine=true", RO)).json()["items"]])
+    ml = (await api("GET", "/tournaments-moderation?q=Chunin", A)).json()
+    check("oculto: a equipe (tournaments.manage) continua vendo e moderando", any(x["id"] == T and x["organizerHidden"] is True for x in ml))
+    r = await api("PATCH", f"/tournaments/{T}", RO, json={"organizerHidden": False})
+    check("organizador reexibe: volta para a lista e para o link", r.status_code == 200 and r.json()["organizerHidden"] is False
+          and T in [i["id"] for i in (await api("GET", "/tournaments?limit=50")).json()["items"]] and (await api("GET", f"/tournaments/{T}")).status_code == 200)
+
+    # --- importacao em lote de inscritos (POST /entries/bulk) ---
+    r = await api("POST", "/tournaments", RO, json={"name": "Importa TESTE"})
+    TB = r.json()["id"]
+    lote = {"names": ["Ana", "  bia  ", "", "ANA", "Bía", "x" * 61, "###", "Caio  Souza", "caio souza"]}
+    check("importar: visitante 401", (await api("POST", f"/tournaments/{TB}/entries/bulk", json=lote)).status_code == 401)
+    cods = [(await api("POST", f"/tournaments/{TB}/entries/bulk", RX, json=lote)).status_code,
+            (await api("PATCH", f"/tournaments/{TB}", RO, json={"organizerHidden": False, "status": "open"})).status_code,
+            (await api("POST", f"/tournaments/{TB}/entries/bulk", RX, json=lote)).status_code]
+    check("importar: outro leitor nao importa (404 enquanto oculto; 403 depois de publicado)", cods == [404, 200, 403], str(cods))
+    check("importar: de outra origem 403 (CSRF)", (await api("POST", f"/tournaments/{TB}/entries/bulk", {**RO, "Origin": "https://site-malicioso.example"}, json=lote)).status_code == 403)
+    check("importar: mais de 2000 nomes -> 422", (await api("POST", f"/tournaments/{TB}/entries/bulk", RO, json={"names": ["a"] * 2001})).status_code == 422)
+    r = await api("POST", f"/tournaments/{TB}/entries/bulk", RO, json=lote)
+    j = r.json()
+    motivos = sorted(x["reason"] for x in j["skipped"]) if r.status_code == 201 else []
+    check("importar: entram Ana, bia e Caio; vazias ignoradas; duplicados (maiuscula/acento/espaco), nome longo e invalido listados",
+          r.status_code == 201 and j["added"] == 3 and motivos == ["duplicate", "duplicate", "duplicate", "invalid", "too_long"]
+          and [e["displayName"] for e in j["tournament"]["entries"]] == ["Ana", "bia", "Caio Souza"], r.text[:300])
+    r = await api("POST", f"/tournaments/{TB}/entries/bulk", RO, json={"names": ["Dedé", "ana"], "position": "start"})
+    j = r.json()
+    check("importar de novo: duplicado de quem ja' esta' inscrito e' ignorado; 'start' poe no inicio e renumera as sementes",
+          r.status_code == 201 and j["added"] == 1 and [e["displayName"] for e in j["tournament"]["entries"]] == ["Dedé", "Ana", "bia", "Caio Souza"]
+          and [e["seed"] for e in j["tournament"]["entries"]] == [0, 1, 2, 3], r.text[:300])
+    for i in range(0, 252, 100):
+        await api("POST", f"/tournaments/{TB}/entries/bulk", RO, json={"names": [f"Bot {k}" for k in range(i, min(i + 100, 252))]})
+    r = await api("POST", f"/tournaments/{TB}/entries/bulk", RO, json={"names": ["Extra 1", "Extra 2", "Extra 3", "Extra 1"]})
+    j = r.json()
+    check("importar: respeita o teto de 256 inscritos (sobra vira 'full')", r.status_code == 201 and len(j["tournament"]["entries"]) == _tm.MAX_ENTRIES
+          and j["added"] == 0 and {x["reason"] for x in j["skipped"]} == {"full"}, r.text[:200])
+    await api("PATCH", f"/tournaments/{TB}", RO, json={"status": "running"})
+    check("importar: torneio em andamento -> 409", (await api("POST", f"/tournaments/{TB}/entries/bulk", RO, json={"names": ["Tarde"]})).status_code == 409)
+    check("importar: torneio inexistente -> 404", (await api("POST", f"/tournaments/{uuid.uuid4()}/entries/bulk", RO, json={"names": ["a1"]})).status_code == 404)
+    await api("DELETE", f"/tournaments/{TB}", RO)
 
     # --- perfil ---
     check("anonimo nao edita perfil (401)", (await api("PUT", "/players/me", json={"gameName": "x"})).status_code == 401)
@@ -3045,7 +3105,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("limite de torneios ativos por pessoa -> 429", codigos == [201, 429], str(codigos))
     _tm.MAX_ENTRIES = 2
     tw = (await api("GET", "/tournaments?mine=true", RW)).json()["items"][0]["id"]
-    await api("PATCH", f"/tournaments/{tw}", RW, json={"status": "open"})
+    await api("PATCH", f"/tournaments/{tw}", RW, json={"status": "open", "organizerHidden": False})
     await api("POST", f"/tournaments/{tw}/entries", RW, json={"displayName": "L1"})
     await api("POST", f"/tournaments/{tw}/entries", RW, json={"displayName": "L2"})
     check("limite de inscritos por torneio -> 409 (convidado e inscricao propria)", (await api("POST", f"/tournaments/{tw}/entries", RW, json={"displayName": "L3"})).status_code == 409
@@ -3078,8 +3138,14 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     check("escondido: o organizador ainda ve' mas nao consegue editar (403)", (await api("GET", f"/tournaments/{T}", RO)).status_code == 200
           and (await api("PATCH", f"/tournaments/{T}", RO, json={"name": "Burlar"})).status_code == 403)
     check("escondido nao conta no perfil publico", (await api("GET", f"/players/{id_o}")).json()["stats"]["tournaments"] == 0)
+    check("escondido pela EQUIPE: o organizador NAO reexibe nem oculta (403)", (await api("PATCH", f"/tournaments/{T}", RO, json={"organizerHidden": False})).status_code == 403)
     check("Adm corrige o nome e mostra de novo", (await api("PATCH", f"/tournaments-moderation/{T}", A, json={"hidden": False, "name": "Chunin Corrigido TESTE"})).status_code == 200
           and (await api("GET", f"/tournaments/{T}")).json()["name"] == "Chunin Corrigido TESTE")
+    n_antes = (await api("GET", f"/players/{id_o}")).json()["stats"]["tournaments"]
+    await api("PATCH", f"/tournaments/{T}", RO, json={"organizerHidden": True})
+    n_oculto = (await api("GET", f"/players/{id_o}")).json()["stats"]["tournaments"]
+    await api("PATCH", f"/tournaments/{T}", RO, json={"organizerHidden": False})
+    check("oculto pelo organizador nao conta no perfil publico", n_antes >= 1 and n_oculto == n_antes - 1, f"{n_antes} -> {n_oculto}")
     check("o organizador apaga o proprio torneio (204)", (await api("DELETE", f"/tournaments/{T2}", RO)).status_code == 204 and (await api("GET", f"/tournaments/{T2}", RO)).status_code == 404)
     check("Adm apaga qualquer torneio (204) e o link morre", (await api("DELETE", f"/tournaments-moderation/{T}", A)).status_code == 204 and (await api("GET", f"/tournaments/{T}", RO)).status_code == 404)
     async with AsyncSessionLocal() as db:
@@ -3214,6 +3280,60 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     async with AsyncSessionLocal() as db:
         n_log = (await db.execute(text("SELECT count(*) FROM audit_log WHERE entity_type = 'discord_links' AND entity_id = ANY(:g)"), {"g": [G_A, G_B, G_C]})).scalar_one()
     check("salvar o mapeamento fica no log de auditoria", n_log >= 4, str(n_log))
+    # --- lista de membros dos servidores (painel do bot): bot informa, painel le (discord.links) ---
+    def mem(i: int, nome: str, cargos_m: list[str] | None = None, bot: bool = False) -> dict:
+        """Membro no formato do bot."""
+        return {"discordId": str(BASE + 9000 + i), "username": f"u_{nome}", "displayName": nome, "isBot": bot, "roles": cargos_m or []}
+    gm_url = f"/discord-links/guilds/{G_A}/members"
+    check("guild-members exige o token do bot (401)", (await api("POST", "/bot/guild-members", json={"guildId": G_A, "members": []})).status_code == 401)
+    check("guild-members de servidor desconhecido -> 404", (await api("POST", "/bot/guild-members", BT, json={"guildId": str(BASE + 556), "members": []})).status_code == 404)
+    check("guild-members: mais de 500 membros -> 422", (await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [mem(1, "x")] * 501})).status_code == 422)
+    check("guild-members: id que nao e' numero / cargo invalido -> 422",
+          (await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [{**mem(1, "x"), "discordId": "abc"}]})).status_code == 422
+          and (await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [mem(1, "x", ["12a"])]})).status_code == 422
+          and (await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [{**mem(1, "x"), "displayName": "n" * 101}]})).status_code == 422)
+    check("guild-members: final sem syncToken -> 422", (await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [], "final": True})).status_code == 422)
+    check("painel de membros: anonimo 401, leitor 401, Creator 403", (await api("GET", gm_url)).status_code == 401 and (await api("GET", gm_url, L35)).status_code == 401 and (await api("GET", gm_url, C)).status_code == 403)
+    check("membros de servidor desconhecido -> 404", (await api("GET", f"/discord-links/guilds/{BASE + 556}/members", A)).status_code == 404)
+    vazio = (await api("GET", gm_url, A)).json()
+    check("antes da 1a sincronizacao: total 0 e sem data (o painel avisa 'ainda nao sincronizado')", vazio["total"] == 0 and vazio["syncedAt"] is None and vazio["items"] == [])
+    lote1 = [mem(i, f"Zeta{i:03d}", ["12"] if i % 2 else []) for i in range(60)] + [mem(100, "Bot_Teste", bot=True), mem(101, "100%_Real")]
+    r = await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t1", "members": lote1[:40]})
+    r2 = await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t1", "members": lote1[40:], "final": True})
+    check("guild-members guarda os lotes e fecha a sincronizacao", r.status_code == 200 and r.json()["stored"] == 40 and r2.status_code == 200 and r2.json()["stored"] == 22 and r2.json()["partial"] is False, r2.text[:200])
+    pag = (await api("GET", gm_url, A, params={"limit": 50})).json()
+    check("painel lista membros paginado (50) com total, data e cargos por ID", pag["total"] == 62 and len(pag["items"]) == 50 and pag["syncedAt"] and pag["partial"] is False, str(pag["total"]))
+    pag2 = (await api("GET", gm_url, A, params={"limit": 50, "offset": 50})).json()
+    check("2a pagina traz o resto sem repetir", len(pag2["items"]) == 12 and not {m["discordId"] for m in pag["items"]} & {m["discordId"] for m in pag2["items"]})
+    check("limit acima de 100 -> 422", (await api("GET", gm_url, A, params={"limit": 101})).status_code == 422)
+    por_nome = (await api("GET", gm_url, A, params={"q": "zeta00"})).json()
+    check("busca por nome (sem diferenciar maiusculas)", por_nome["total"] == 10, str(por_nome["total"]))
+    por_id = (await api("GET", gm_url, A, params={"q": str(BASE + 9005)})).json()
+    check("busca por ID", por_id["total"] >= 1 and por_id["items"][0]["discordId"] == str(BASE + 9005) and por_id["items"][0]["roles"] == ["12"], str(por_id)[:200])
+    check("busca com % e _ e' literal (nao vira curinga)", (await api("GET", gm_url, A, params={"q": "100%_"})).json()["total"] == 1 and (await api("GET", gm_url, A, params={"q": "%"})).json()["total"] == 1)
+    check("membro Bot vem marcado", next(m for m in (await api("GET", gm_url, A, params={"q": "Bot_Teste"})).json()["items"])["isBot"] is True)
+    # saiu do servidor: evento (remove) e sincronizacao completa (final apaga quem nao veio)
+    await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "members": [], "remove": [str(BASE + 9005)]})
+    check("evento de saida (remove) apaga o membro", (await api("GET", gm_url, A, params={"q": str(BASE + 9005)})).json()["total"] == 0)
+    await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t2", "members": lote1[:5], "final": True})
+    check("nova sincronizacao completa apaga quem saiu", (await api("GET", gm_url, A)).json()["total"] == 5, str((await api("GET", gm_url, A)).json()["total"]))   # 62 guardados, so' 5 vieram
+    lista = {g["guildId"]: g for g in (await api("GET", "/discord-links", A)).json()}
+    check("a listagem de servidores traz so' a contagem de membros (nao a lista)", lista[G_A]["membersStored"] == 5 and lista[G_A]["membersSyncedAt"] and "members" not in lista[G_A])
+    # teto por servidor: acima dele guarda os primeiros e marca "lista parcial"
+    import app.api.discord_links as _dl
+    teto = _dl.MEMBER_CAP
+    _dl.MEMBER_CAP = 6
+    try:
+        r = await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t3", "members": lote1[:10], "final": True})
+        pag = (await api("GET", gm_url, A)).json()
+        check("teto por servidor: guarda os primeiros e marca lista parcial", r.json()["partial"] is True and pag["total"] == 6 and pag["partial"] is True, r.text[:200])
+    finally:
+        _dl.MEMBER_CAP = teto
+    r = await api("POST", "/bot/guild-members", BT, json={"guildId": G_A, "syncToken": "t4", "members": lote1[:3], "final": True})
+    check("sincronizacao menor limpa o aviso de lista parcial", (await api("GET", gm_url, A)).json()["partial"] is False and (await api("GET", gm_url, A)).json()["total"] == 3)
+    async with AsyncSessionLocal() as db:
+        cols = (await db.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'discord_guild_members'"))).scalars().all()
+    check("privacidade: a tabela guarda so' id, nomes, bot, entrada, cargos e controle (sem e-mail)", not {"email", "message", "content"} & set(cols), str(cols))
     settings.dev_login_enabled = dev_antes
 
     secao("14) NENHUMA rota escapa: tudo que nao e' publico de proposito exige login")

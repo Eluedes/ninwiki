@@ -60,6 +60,8 @@ class Tournament(Base):
         Enum(TournamentVisibility, name="tournament_visibility"), default=TournamentVisibility.PUBLIC, server_default="PUBLIC")
     hidden: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     hidden_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # Oculto pelo ORGANIZADOR (ainda esta' arrumando): so' ele ve'. Independe do `hidden` da moderacao, que o organizador nao desfaz.
+    organizer_hidden: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     champion_name: Mapped[str | None] = mapped_column(String(120), nullable=True)   # preenchido ao encerrar
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

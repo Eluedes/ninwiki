@@ -32,6 +32,7 @@ class TournamentWrite(CamelModel):
     description: str = Field(default="", max_length=2000)
     starts_at: datetime | None = None
     visibility: TournamentVisibility = TournamentVisibility.PUBLIC
+    organizer_hidden: bool = True   # nasce oculto: o organizador publica quando terminar de arrumar
 
     @field_validator("name", mode="after")
     @classmethod
@@ -56,6 +57,7 @@ class TournamentPatch(CamelModel):
     starts_at: datetime | None = None
     clear_starts_at: bool = False
     visibility: TournamentVisibility | None = None
+    organizer_hidden: bool | None = None   # True = oculto (so' o organizador ve'); False = visivel ao publico
     status: Literal["draft", "open", "running"] | None = None
 
     @field_validator("name", mode="after")
@@ -88,6 +90,18 @@ class GuestWrite(CamelModel):
         if not v:
             raise ValueError("Required")
         return v
+
+
+class BulkEntriesWrite(CamelModel):
+    """Importar varios inscritos de uma vez (so' nomes). Cada nome e' validado no servidor; os que nao entram voltam em `skipped`."""
+    names: list[str] = Field(max_length=2000)
+    position: Literal["end", "start"] = "end"   # onde entram na ordem de sementes
+
+
+class BulkSkipped(CamelModel):
+    """Nome que nao entrou e o motivo."""
+    name: str
+    reason: Literal["duplicate", "too_long", "invalid", "full"]
 
 
 class EntryOrder(CamelModel):
@@ -220,6 +234,7 @@ class TournamentSummary(CamelModel):
     created_at: datetime
     champion_name: str | None
     hidden: bool
+    organizer_hidden: bool
     owner: PlayerRef
     entry_count: int
     phase_count: int
@@ -238,6 +253,13 @@ class TournamentDetail(TournamentSummary):
     my_entry_id: uuid.UUID | None
     entries: list[EntryRead]
     phases: list[PhaseRead]
+
+
+class BulkEntriesResult(CamelModel):
+    """Resultado da importacao em lote: quantos entraram, os que ficaram de fora e o torneio ja' atualizado."""
+    added: int
+    skipped: list[BulkSkipped]
+    tournament: TournamentDetail
 
 
 class VillageRef(CamelModel):
@@ -293,6 +315,7 @@ class ModerationRow(CamelModel):
     status: TournamentStatus
     visibility: TournamentVisibility
     hidden: bool
+    organizer_hidden: bool
     hidden_by: str | None
     created_at: datetime
     owner_id: uuid.UUID

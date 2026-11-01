@@ -163,12 +163,14 @@ export function TournamentPageClient({ id }: { id: string }) {
       {/* faixa de informacoes: estado, organizador, inscritos, data */}
       <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm">
         <StatusBadge status={t.status} />
+        {t.organizerHidden && <span className="rounded-full border border-amber-500/60 bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">{d.hiddenByYouBadge}</span>}
         {t.visibility === 'unlisted' && <span className="rounded-full border border-border px-2 py-0.5 text-xs">{d.unlistedBadge}</span>}
         <span className="flex items-center gap-1.5"><UserRound className="h-4 w-4" aria-hidden />{d.organizerLabel}: <Link href={`/players/${t.owner.id}`} className="font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{t.owner.gameName || t.owner.username}</Link></span>
         <span className="flex items-center gap-1.5"><Users className="h-4 w-4" aria-hidden />{fill(d.entries, { n: t.entryCount })}</span>
         {t.startsAt && <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4" aria-hidden />{fill(d.startsOn, { date: formatDateTime(t.startsAt, locale) })}</span>}
       </div>
-      {t.hidden && <p className="mb-4 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm"><EyeOff className="h-4 w-4" aria-hidden />{d.hiddenNotice}</p>}
+      {t.hidden && <p className="mb-4 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm"><EyeOff className="h-4 w-4 shrink-0" aria-hidden />{d.hiddenNotice} {d.staffLockedNotice}</p>}
+      {!t.hidden && t.organizerHidden && <p role="status" className="mb-4 flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-500/15 px-3 py-2 text-sm font-medium"><EyeOff className="h-4 w-4 shrink-0" aria-hidden />{d.hiddenByYouNotice}</p>}
 
       {/* campeao em destaque */}
       {showChampion && (

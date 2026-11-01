@@ -2,7 +2,7 @@
 Torneios (estilo Challonge) e perfis de jogadores.
 
 Quem faz o que:
-  - VISITANTE sem login so' LE (lista, torneio, perfil). Torneio em rascunho ou escondido pela equipe: 404 (so' o organizador ve').
+  - VISITANTE sem login so' LE (lista, torneio, perfil). Torneio em rascunho, oculto pelo organizador (`organizerHidden`, o padrao ao criar) ou escondido pela equipe: 404 (so' o organizador ve').
   - LEITOR logado com o Discord (cookie proprio, ver app/core/reader_auth.py) cria torneio e e' o ORGANIZADOR do que criou:
     so' ele edita, abre/fecha inscricao, monta fases/chaves, lanca placar e encerra (outro leitor recebe 403).
   - EQUIPE so' MODERA (permissao tournaments.manage): esconde, apaga e corrige nome/descricao. Nao joga nem lanca placar.
@@ -14,6 +14,7 @@ Publico/leitor (prefixo /tournaments):
   PATCH  /tournaments/{id}  DELETE /tournaments/{id}
   POST|DELETE /tournaments/{id}/join               o proprio leitor entra / sai (so' com inscricoes abertas)
   POST   /tournaments/{id}/entries                 organizador inscreve participante "sem conta" (so' nome)
+  POST   /tournaments/{id}/entries/bulk            organizador importa uma lista de nomes de uma vez (duplicados/invalidos voltam em `skipped`)
   DELETE /tournaments/{id}/entries/{entry_id}      organizador remove inscrito
   PUT    /tournaments/{id}/entries/order           organizador reordena as sementes
   POST   /tournaments/{id}/phases                  cria fase;  PATCH|DELETE .../phases/{pid} (so' fase ainda sem chave)
@@ -32,6 +33,7 @@ Defesas: origem/CSRF conferida em todo metodo que grava (get_optional_reader), l
 MAX_CREATED_PER_DAY torneios criados por dia e MAX_ACTIVE_PER_READER ativos por pessoa, MAX_ENTRIES inscritos e MAX_PHASES fases por
 torneio, textos curtos e em texto simples (o site os mostra escapados).
 """
+import unicodedata
 import uuid
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
@@ -58,7 +60,7 @@ from app.models.tournaments import (
 from app.models.users import User
 from app.models.villages import Village
 from app.schemas.tournaments import (
-    CompetitorRead, EntryOrder, EntryRead, GuestWrite, HistoryItem, MatchRead, ModerationPatch, ModerationRow, PhaseRead, PhaseStart,
+    BulkEntriesResult, BulkEntriesWrite, BulkSkipped, CompetitorRead, EntryOrder, EntryRead, GuestWrite, HistoryItem, MatchRead, ModerationPatch, ModerationRow, PhaseRead, PhaseStart,
     PhaseWrite, PlayerProfile, PlayerRef, PlayerStats, ProfileSource, ProfileWrite, ResultWrite, StandingRead, TournamentDetail, TournamentList,
     TournamentPatch, TournamentSummary, TournamentWrite, VillageRef,
 )
@@ -86,10 +88,10 @@ def _throttle(reader: Reader, bucket: str = "tournament-write", limit: int = WRI
 # ---------------- acesso ----------------
 
 async def _visible(db: AsyncSession, tid: UUID, reader: Reader | None) -> Tournament:
-    """Torneio que ESTE visitante pode ver: rascunho e escondido so' para o organizador; senao 404 (nao revela que existe)."""
+    """Torneio que ESTE visitante pode ver: rascunho, oculto pelo organizador e escondido pela equipe so' para o organizador; senao 404 (nao revela que existe)."""
     t = await db.get(Tournament, tid)
     mine = t is not None and reader is not None and t.owner_id == reader.id
-    if t is None or (not mine and (t.hidden or t.status == TournamentStatus.DRAFT)):
+    if t is None or (not mine and (t.hidden or t.organizer_hidden or t.status == TournamentStatus.DRAFT)):
         raise HTTPException(status_code=404, detail="Tournament not found")
     return t
 
@@ -132,7 +134,7 @@ async def _summaries(db: AsyncSession, rows: list[Tournament]) -> list[Tournamen
     phases = dict((await db.execute(select(TournamentPhase.tournament_id, func.count()).where(TournamentPhase.tournament_id.in_(ids)).group_by(TournamentPhase.tournament_id))).all()) if ids else {}
     return [TournamentSummary(
         id=t.id, name=t.name, status=t.status, visibility=t.visibility, starts_at=t.starts_at, created_at=t.created_at,
-        champion_name=t.champion_name, hidden=t.hidden, owner=_player_ref(owners[t.owner_id]),
+        champion_name=t.champion_name, hidden=t.hidden, organizer_hidden=t.organizer_hidden, owner=_player_ref(owners[t.owner_id]),
         entry_count=entries.get(t.id, 0), phase_count=phases.get(t.id, 0)) for t in rows]
 
 
@@ -217,9 +219,9 @@ async def list_tournaments(
         if reader is None:
             raise HTTPException(status_code=401, detail="Sign in with Discord to do this")
         joined = select(TournamentEntry.tournament_id).where(TournamentEntry.reader_id == reader.id)
-        where = [or_(Tournament.owner_id == reader.id, Tournament.id.in_(joined))]
+        where = [or_(Tournament.owner_id == reader.id, (Tournament.id.in_(joined) & Tournament.organizer_hidden.is_(False) & Tournament.hidden.is_(False)))]
     else:
-        where = [Tournament.visibility == TournamentVisibility.PUBLIC, Tournament.hidden.is_(False), Tournament.status != TournamentStatus.DRAFT]
+        where = [Tournament.visibility == TournamentVisibility.PUBLIC, Tournament.hidden.is_(False), Tournament.organizer_hidden.is_(False), Tournament.status != TournamentStatus.DRAFT]
     if status is not None:
         where.append(Tournament.status == status)
     if q and q.strip():
@@ -249,7 +251,8 @@ async def create_tournament(payload: TournamentWrite, reader: Reader = Depends(g
     active = (await db.execute(select(func.count()).select_from(Tournament).where(Tournament.owner_id == reader.id, Tournament.status != TournamentStatus.FINISHED))).scalar_one()
     if active >= MAX_ACTIVE_PER_READER:
         raise HTTPException(status_code=429, detail=f"You already have {MAX_ACTIVE_PER_READER} active tournaments. Finish or delete one first.")
-    t = Tournament(owner_id=reader.id, name=payload.name, description=payload.description, starts_at=payload.starts_at, visibility=payload.visibility)
+    t = Tournament(owner_id=reader.id, name=payload.name, description=payload.description, starts_at=payload.starts_at, visibility=payload.visibility,
+                   organizer_hidden=payload.organizer_hidden)   # padrao True: nasce OCULTO ate o organizador publicar
     db.add(t)
     await db.flush()
     await log_action(db, action="create", entity_type="tournament", entity_id=str(t.id), diff={"reader": reader.username, "name": t.name}, source=SOURCE)
@@ -272,6 +275,8 @@ async def update_tournament(tournament_id: UUID, payload: TournamentPatch, reade
         t.starts_at = payload.starts_at
     if payload.visibility is not None:
         t.visibility = payload.visibility
+    if payload.organizer_hidden is not None:
+        t.organizer_hidden = payload.organizer_hidden   # _owned ja' barra quando a EQUIPE escondeu (o organizador nao reexibe)
     if payload.status is not None:
         _need_not_finished(t)
         new = TournamentStatus(payload.status)
@@ -355,6 +360,49 @@ async def add_guest(tournament_id: UUID, payload: GuestWrite, reader: Reader = D
     db.add(TournamentEntry(tournament_id=t.id, reader_id=None, display_name=payload.display_name, seed=count))
     await db.commit()
     return await _detail(db, t, reader)
+
+
+def _name_key(name: str) -> str:
+    """Chave para comparar nomes sem diferenciar maiusculas, acentos nem espacos repetidos."""
+    base = "".join(c for c in unicodedata.normalize("NFKD", name) if not unicodedata.combining(c))
+    return " ".join(base.casefold().split())
+
+
+@router.post("/{tournament_id}/entries/bulk", response_model=BulkEntriesResult, status_code=201)
+async def add_guests_bulk(tournament_id: UUID, payload: BulkEntriesWrite, reader: Reader = Depends(get_current_reader), db: AsyncSession = Depends(get_db)):
+    """Organizador importa varios convidados de uma vez (mesma regra de estado do add_guest), numa transacao so'.
+    Linhas vazias sao ignoradas; duplicados (dentro da lista ou ja' inscritos), nomes longos/invalidos e excesso alem de MAX_ENTRIES voltam em `skipped`."""
+    _throttle(reader)
+    _throttle(reader, "tournament-bulk", 10, 60)
+    t = await _owned(db, tournament_id, reader)
+    _entries_editable(t)
+    current = await _entries(db, t)
+    seen = {_name_key(e.display_name) for e in current}
+    room = MAX_ENTRIES - len(current)
+    new: list[str] = []
+    skipped: list[BulkSkipped] = []
+    for raw in payload.names:
+        name = " ".join(raw.split())          # tira controles/quebras e espacos repetidos
+        if not name:
+            continue
+        reason = "too_long" if len(name) > 60 else "invalid" if not name.isprintable() or not any(c.isalnum() for c in name) else None
+        if reason is None:
+            key = _name_key(name)
+            reason = "duplicate" if key in seen else "full" if len(new) >= room else None
+        if reason:
+            skipped.append(BulkSkipped(name=name[:80], reason=reason))
+            continue
+        seen.add(key)
+        new.append(name)
+    if new:
+        if payload.position == "start":
+            for e in current:
+                e.seed += len(new)
+        base = 0 if payload.position == "start" else len(current)
+        db.add_all(TournamentEntry(tournament_id=t.id, reader_id=None, display_name=n, seed=base + i) for i, n in enumerate(new))
+        await log_action(db, action="update", entity_type="tournament", entity_id=str(t.id), diff={"reader": reader.username, "bulkEntries": len(new)}, source=SOURCE)
+    await db.commit()
+    return BulkEntriesResult(added=len(new), skipped=skipped, tournament=await _detail(db, t, reader))
 
 
 @router.delete("/{tournament_id}/entries/{entry_id}", response_model=TournamentDetail)
@@ -659,7 +707,7 @@ async def _profile(db: AsyncSession, r: Reader) -> PlayerProfile:
     """Perfil publico: dados do leitor + historico (so' torneios publicos ja' iniciados e nao escondidos) com vitorias/derrotas e trofeus."""
     rows = (await db.execute(
         select(TournamentEntry, Tournament).join(Tournament, Tournament.id == TournamentEntry.tournament_id)
-        .where(TournamentEntry.reader_id == r.id, Tournament.hidden.is_(False), Tournament.visibility == TournamentVisibility.PUBLIC,
+        .where(TournamentEntry.reader_id == r.id, Tournament.hidden.is_(False), Tournament.organizer_hidden.is_(False), Tournament.visibility == TournamentVisibility.PUBLIC,
                Tournament.status.in_([TournamentStatus.RUNNING, TournamentStatus.FINISHED]))
         .order_by(Tournament.created_at.desc()).limit(200))).all()
     entry_ids = [e.id for e, _ in rows]
@@ -737,7 +785,7 @@ async def list_for_moderation(
     rows = (await db.execute(stmt.order_by(Tournament.created_at.desc()).limit(200))).all()
     ids = [t.id for t, _ in rows]
     counts = dict((await db.execute(select(TournamentEntry.tournament_id, func.count()).where(TournamentEntry.tournament_id.in_(ids)).group_by(TournamentEntry.tournament_id))).all()) if ids else {}
-    return [ModerationRow(id=t.id, name=t.name, status=t.status, visibility=t.visibility, hidden=t.hidden, hidden_by=t.hidden_by, created_at=t.created_at,
+    return [ModerationRow(id=t.id, name=t.name, status=t.status, visibility=t.visibility, hidden=t.hidden, organizer_hidden=t.organizer_hidden, hidden_by=t.hidden_by, created_at=t.created_at,
                           owner_id=r.id, owner_name=r.game_name or r.username, owner_banned=r.banned, entry_count=counts.get(t.id, 0)) for t, r in rows]
 
 

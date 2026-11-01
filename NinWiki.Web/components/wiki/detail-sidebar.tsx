@@ -15,8 +15,11 @@ import { itemTypeLabels } from '@/lib/item-types';
 import { useLanguage } from '@/components/providers/language-provider';
 import { DropRow } from '@/components/wiki/drop-row';
 import { DroppedBy } from '@/components/wiki/dropped-by';
+import { CraftedBy } from '@/components/wiki/crafted-by';
+import { carregarIndiceAreas, linkDoLugar, type AreaIndice } from '@/components/map/area-lookup';
 import { WikiImage } from '@/components/wiki/wiki-image';
-import { Coins, Crosshair, Gem, Heart, Layers, MapPin, Skull, Star, Swords, Tag, Timer, type LucideIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Coins, Crosshair, Gem, Hammer, Heart, Layers, MapPin, Skull, Star, Swords, Tag, Timer, type LucideIcon } from 'lucide-react';
 import type { ApiContentItem, SaleEntry } from '@/lib/api-client';
 
 interface DetailSidebarProps {
@@ -96,6 +99,16 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
   const places: { name: string; zone: string | null }[] = (entry.spawnLocations ?? []).length > 0
     ? (entry.spawnLocations ?? []).map((l) => ({ name: isPt ? (l.namePt ?? l.name) : l.name, zone: l.zone ?? null }))
     : (spawnLocation ?? '').split(/[,;]/).map((p) => p.trim().replace(/\.$/, '')).filter(Boolean).map((name) => ({ name, zone: null }));
+  // Indice nome -> area do mapa (so' mob com lugares; carrega o json do mapa sob demanda). Sem ele os lugares ficam so' texto.
+  const [areas, setAreas] = useState<AreaIndice | null>(null);
+  const temLugares = entry.category === 'mobs' && places.length > 0;
+  useEffect(() => {
+    if (!temLugares) return;
+    let vivo = true;
+    carregarIndiceAreas().then((ind) => vivo && setAreas(ind));
+    return () => { vivo = false; };
+  }, [temLugares]);
+  const craftedBy = entry.craftedBy ?? [];   // receitas das profissoes que fazem esta entry (a API calcula; `?? []` cobre resposta antiga)
   const soldAt = entry.soldAt ?? [];   // lojas de NPC que vendem esta entry (`?? []` cobre resposta antiga durante o deploy)
   const droppedBy = entry.droppedBy ?? [];   // mobs que dropam esta entry (a API calcula; `?? []` cobre resposta antiga durante o deploy)
 
@@ -164,6 +177,14 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
             )}
           </div>
         ))}
+
+        {/* Feito por craft: receitas das profissoes que produzem esta arma (automatico) */}
+        {craftedBy.length > 0 && (
+          <>
+            <SectionTitle icon={Hammer}>{dict.detail.crafted}</SectionTitle>
+            <CraftedBy recipes={craftedBy} slug={entry.slug} />
+          </>
+        )}
 
         {/* Dropado por: automatico (mobs que ligam esta arma nos drops) */}
         {droppedBy.length > 0 && (
@@ -256,7 +277,13 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
               {places.map((p, i) => (
                 <li key={i} className="flex items-center gap-2.5 px-4 py-2 text-sm">
                   <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${ZONE_DOT[p.zone ?? 'none']}`} aria-hidden />
-                  <span className="min-w-0 flex-1 font-medium text-card-foreground">{p.name}</span>
+                  {/* o nome vira link para o mapa ja' focado na area (so' se casar com uma area; senao fica texto) */}
+                  {(() => {
+                    const href = linkDoLugar(areas, p.name);
+                    return href
+                      ? <Link href={href} className="min-w-0 flex-1 font-medium text-card-foreground underline-offset-2 hover:text-primary hover:underline">{p.name}</Link>
+                      : <span className="min-w-0 flex-1 font-medium text-card-foreground">{p.name}</span>;
+                  })()}
                   {p.zone && <span className="shrink-0 text-xs text-muted-foreground">{dict.detail.zones[p.zone] ?? p.zone}</span>}
                 </li>
               ))}
@@ -328,6 +355,14 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
         </>
       )}
 
+      {/* Feito por craft: receitas das profissoes que produzem este item (automatico); some se nenhuma. */}
+      {craftedBy.length > 0 && (
+        <>
+          <SectionTitle icon={Hammer}>{dict.detail.crafted}</SectionTitle>
+          <CraftedBy recipes={craftedBy} slug={entry.slug} />
+        </>
+      )}
+
       {/* Dropado por: automatico (mobs que ligam este item nos drops); some se nenhum mob dropa. */}
       {droppedBy.length > 0 && (
         <>
@@ -356,7 +391,7 @@ export function DetailSidebar({ entry }: DetailSidebarProps) {
         </>
       )}
 
-      {detailRows.length === 0 && entry.attributes.length === 0 && entry.drops.length === 0 && droppedBy.length === 0 && (
+      {detailRows.length === 0 && entry.attributes.length === 0 && entry.drops.length === 0 && droppedBy.length === 0 && craftedBy.length === 0 && (
         <p className="px-4 py-6 text-center text-sm text-muted-foreground">{name}</p>
       )}
     </div>

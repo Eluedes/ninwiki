@@ -126,3 +126,5 @@ O bot manda à API **fatos** (servidores onde está, cargos de cada servidor, ca
 3. No painel, `/admin/discord-links`: ligue cada servidor a uma vila e, se o nome do cargo não for igual ao do rank (`Chunin`, `Genin`...), cada cargo a um rank.
 
 Sem a intent ligada o bot **sobe mesmo assim** e avisa no terminal ("A 'Server Members Intent' NÃO está ligada..."): só essa função fica desligada. `MEMBER_ROLES_SYNC=false` no `.env` desliga de propósito. O bot só consulta cargos de quem é leitor cadastrado (pede os IDs à API), refaz tudo ao ligar e a cada 30 min e reage na hora a mudança de cargo, entrada e saída de servidor.
+
+**Lista de membros (painel `/admin/bot`):** com a mesma intent, o bot também manda a **lista de membros** de cada servidor (ID, nome de usuário, nome de exibição, bot?, entrada e IDs de cargo; nada de e-mail ou mensagens) em lotes de 500, ao ligar e a cada 30 min, e atualiza um membro nos eventos de entrada, saída e mudança. Teto de 20.000 por servidor. `MEMBER_LIST_SYNC=false` no `.env` desliga só a lista. Depois de atualizar, **faça o Deploy API e reinicie o bot**.

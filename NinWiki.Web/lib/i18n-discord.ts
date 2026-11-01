@@ -23,6 +23,11 @@ const en = {
   botTitle: 'Bot servers', botSubtitle: 'The Discord servers where the bot is, with the server ID, the number of members and the roles (with their IDs). Read-only: the bot reports this list on its own.',
   botEmpty: 'The bot has not reported any server yet.', serverId: 'Server ID', membersCount: '{n} members', membersUnknown: 'members: not reported yet (restart the bot)',
   rolesTitle: 'Roles ({n})', roleIdColumn: 'Role ID', copyId: 'Copy ID', copied: 'Copied', filterRoles: 'Filter roles by name or ID', noRoleMatch: 'No role matches.', activeBadge: 'Active', inactiveBadge: 'Inactive',
+  // lista de membros do servidor (/admin/bot)
+  membersTitle: 'Members ({n})', memberSearch: 'Search by name or ID', memberColumn: 'Member', memberIdColumn: 'Discord ID', memberRolesColumn: 'Roles', botTag: 'Bot', noMemberMatch: 'No member matches.',
+  membersPageInfo: '{from}-{to} of {total}', prevPage: 'Previous', nextPage: 'Next', membersLoadError: 'Could not load the members.',
+  membersNotSynced: 'Not synced yet. The bot is not reading the members: turn on the Server Members Intent in the Discord Developer Portal (Bot > Privileged Gateway Intents), make sure MEMBER_LIST_SYNC is not false, and restart the bot.',
+  membersPartial: 'Partial list: this server has more members than the limit ({n} stored).', membersSyncedAt: 'Last sync: {date}', membersNoRoles: 'no roles', membersOpen: 'Show members',
 };
 
 export type DiscordDict = Record<keyof typeof en, string>;
@@ -45,4 +50,9 @@ export const discordPt: DiscordDict = {
   botTitle: 'Servidores do bot', botSubtitle: 'Os servidores do Discord onde o bot está, com o ID do servidor, a quantidade de membros e os cargos (com os IDs). Só leitura: o próprio bot informa esta lista.',
   botEmpty: 'O bot ainda não informou nenhum servidor.', serverId: 'ID do servidor', membersCount: '{n} membros', membersUnknown: 'membros: ainda não informado (reinicie o bot)',
   rolesTitle: 'Cargos ({n})', roleIdColumn: 'ID do cargo', copyId: 'Copiar ID', copied: 'Copiado', filterRoles: 'Filtrar cargos por nome ou ID', noRoleMatch: 'Nenhum cargo encontrado.', activeBadge: 'Ativo', inactiveBadge: 'Inativo',
+  // lista de membros do servidor (/admin/bot)
+  membersTitle: 'Membros ({n})', memberSearch: 'Buscar por nome ou ID', memberColumn: 'Membro', memberIdColumn: 'ID do Discord', memberRolesColumn: 'Cargos', botTag: 'Bot', noMemberMatch: 'Nenhum membro encontrado.',
+  membersPageInfo: '{from}-{to} de {total}', prevPage: 'Anterior', nextPage: 'Próxima', membersLoadError: 'Não foi possível carregar os membros.',
+  membersNotSynced: 'Ainda não sincronizado. O bot não está lendo os membros: ligue a Server Members Intent no Discord Developer Portal (Bot > Privileged Gateway Intents), confira que MEMBER_LIST_SYNC não está false e reinicie o bot.',
+  membersPartial: 'Lista parcial: este servidor tem mais membros que o limite ({n} guardados).', membersSyncedAt: 'Última sincronização: {date}', membersNoRoles: 'sem cargos', membersOpen: 'Mostrar membros',
 };

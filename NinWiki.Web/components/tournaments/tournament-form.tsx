@@ -22,6 +22,7 @@ export function TournamentForm() {
   const router = useRouter();
   const { reader, loaded } = useReader();
   const [sendError, setSendError] = useState<string | null>(null);
+  const [publishNow, setPublishNow] = useState(false);   // por padrao o torneio nasce OCULTO ate o organizador publicar
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<TournamentFormValues>({
     resolver: zodResolver(tournamentSchema), defaultValues: { name: '', description: '', startsAt: '', visibility: 'public' },
   });
@@ -30,7 +31,7 @@ export function TournamentForm() {
   async function onSubmit(v: TournamentFormValues) {
     setSendError(null);
     try {
-      const t = await createTournament({ name: v.name, description: v.description, visibility: v.visibility, startsAt: v.startsAt ? new Date(v.startsAt).toISOString() : null });
+      const t = await createTournament({ name: v.name, description: v.description, visibility: v.visibility, organizerHidden: !publishNow, startsAt: v.startsAt ? new Date(v.startsAt).toISOString() : null });
       router.push(`/tournaments/${t.id}`);
     } catch (e) {
       setSendError(e instanceof ApiError ? e.message : d.createError);
@@ -70,6 +71,8 @@ export function TournamentForm() {
                 </select>
               </div>
             </div>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />{d.newPublishNow}</label>
+            {!publishNow && <p className="text-xs text-muted-foreground">{d.newHiddenNotice}</p>}
           </Section>
           {sendError && <p role="alert" className="text-sm font-medium text-destructive">{sendError}</p>}
           <div className="flex gap-2">

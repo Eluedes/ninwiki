@@ -93,6 +93,7 @@ export function TournamentsPageClient({ initialMine = false }: { initialMine?: b
                   <StatusBadge status={t.status} />
                   {t.visibility === 'unlisted' && <span className="text-xs text-muted-foreground">{d.unlistedBadge}</span>}
                   {t.hidden && <span className="text-xs text-amber-500">{d.hiddenBadge}</span>}
+                  {t.organizerHidden && <span className="text-xs text-amber-500">{d.hiddenByYouBadge}</span>}
                 </div>
                 <h3 className="text-lg font-semibold leading-snug group-hover:text-primary">{t.name}</h3>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
