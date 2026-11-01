@@ -1,111 +1,118 @@
 'use client';
 
-// Fundo do site PUBLICO: padrao japones repetido, no estilo do fundo da wiki do Fandom, desenhado aqui em SVG (nenhuma imagem baixada).
-// Fora de epoca: ondas (seigaiha) na COR DO TEMA DE CORES que o visitante escolheu (Canary, Orange, Blood, Gold, Indigo), lida de --primary.
-// Em cada epoca festiva o desenho e as cores sao proprios: Natal = flocos azul-gelo; Ano Novo = fogos (com foguetes de verdade subindo e estourando em
-// canvas); Valentine's Day = coracoes rosa (com baloes de coracao que enchem e estouram em canvas); Pascoa = ovos pastel; Halloween = teias roxo/laranja.
-// Os movimentos suaves do desenho estao em app/globals.css (classes sb-*, ligadas por data-sb). Quem pede menos movimento ao aparelho ve tudo parado.
+// Fundo do site PUBLICO: NUVENS que passam devagar, em varias camadas (as de tras mais lentas), numa cor unica (nao muda com o tema de cores; so' tem
+// uma versao clara e uma escura, conforme o tema claro/escuro do visitante). Desenhadas aqui em SVG (nenhuma imagem baixada).
+// Todas as epocas usam essas nuvens de base e acrescentam o seu efeito:
+//   Ano Novo = fogos (canvas);  Natal = neve caindo + Papai Noel voando com as renas (canvas);
+//   Valentine's Day = baloes de coracao + fogos em formato de coracao (canvas);  Halloween = abobora com olhos que brilham forte e fraco;  Pascoa = ovos.
+// Canvas em components/season-canvas.tsx; animacoes CSS em app/globals.css (classes sb-*). Quem pede menos movimento ao aparelho ve tudo parado.
 
 import { useEffect, useState } from 'react';
 import type { SeasonalTheme } from '@/lib/api-client';
 import { SeasonCanvas } from '@/components/season-canvas';
 
-interface Palette {
-  bg: string;     // cor do fundo
-  ring: string;   // cor das linhas do desenho
+/** Cores unicas do fundo: [claro, escuro]. `sky` = ceu (degrade de cima para baixo), `cloud` = nuvem, `op` = opacidade das 4 camadas (de longe para perto). */
+const COLORS = {
+  light: { sky: ['#cfe1f1', '#eef5fb'], cloud: '#ffffff', op: [0.5, 0.6, 0.72, 0.6] },
+  dark: { sky: ['#0a1626', '#172e48'], cloud: '#a9c3dc', op: [0.08, 0.11, 0.15, 0.11] },
+} as const;
+
+/** Gerador pseudo-aleatorio deterministico (mesmo desenho a cada vez). */
+const rnd = (seed: number) => { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; };
+
+/** Uma nuvem de contorno suave: circulos sobrepostos + base achatada + dois tracos por dentro (estilo das nuvens orientais). */
+function cloud(x: number, y: number, s: number, fill: string, cut: string, op: number) {
+  const c = (cx: number, cy: number, r: number) => `<circle cx="${cx}" cy="${cy}" r="${r}"/>`;
+  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(2)})"><g fill="${fill}" opacity="${op}">${c(0, 0, 22)}${c(-26, 6, 16)}${c(28, 7, 18)}${c(-10, -14, 18)}${c(12, -12, 15)}<ellipse cx="0" cy="14" rx="48" ry="10"/></g>`
+    + `<path d="M-30 8Q-12 -8 8 4M8 -16Q22 -24 36 -10" fill="none" stroke="${cut}" stroke-width="2" stroke-linecap="round" opacity="${(op * 0.9).toFixed(2)}"/></g>`;
 }
-/** Cores proprias de cada epoca: [claro, escuro]. ('none' nao entra aqui: usa a cor do tema de cores do visitante.) */
-const SEASON_COLORS: Record<Exclude<SeasonalTheme, 'none'>, [Palette, Palette]> = {
-  christmas: [{ bg: '#eaf1fb', ring: '#bfd2ee' }, { bg: '#0a1426', ring: '#213d73' }],
-  newyear: [{ bg: '#f6f1e3', ring: '#e2d3a3' }, { bg: '#0b0b1f', ring: '#2b2b61' }],
-  valentine: [{ bg: '#faeef2', ring: '#ecc6d3' }, { bg: '#1c0a16', ring: '#4f1f3a' }],
-  easter: [{ bg: '#f3f0fa', ring: '#d5cbeb' }, { bg: '#14112a', ring: '#302b68' }],
-  halloween: [{ bg: '#f8efe6', ring: '#e7cdb0' }, { bg: '#150b1c', ring: '#43203a' }],
-};
-
-/** O que o fundo padrao le da pagina: tema claro/escuro e as variaveis de cor (--primary e --background, no formato "H S% L%"). */
-interface Env { dark: boolean; primary: string; background: string }
-function readEnv(): Env {
-  const root = document.documentElement, cs = getComputedStyle(root);
-  return { dark: root.classList.contains('dark'), primary: cs.getPropertyValue('--primary').trim(), background: cs.getPropertyValue('--background').trim() };
-}
-
-const HEART = 'M0 6C-12 -4 -10 -14 -3 -13C0 -12 0 -9 0 -8C0 -9 0 -12 3 -13C10 -14 12 -4 0 6Z';
-const f = (n: number) => n.toFixed(1);
-
-/** Uma peca que se repete: tamanho e desenho (as linhas usam a cor `c`, o fundo `bg`). */
-interface Tile { w: number; h: number; draw: (c: string, bg: string) => string }
-
-/** Circulos de aneis (raio 40) em fileiras desencontradas; cada um tapa o de cima, como as escamas do seigaiha. `spokes` acrescenta raios (teia). */
-function scales(spokes: boolean): Tile['draw'] {
-  const centers: [number, number][] = [[40, -20], [0, 0], [80, 0], [40, 20], [0, 40], [80, 40], [40, 60]];   // de cima para baixo
-  return (c, bg) => centers.map(([x, y]) => {
-    const rings = [30, 20, 10].map((r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${c}" stroke-width="2"/>`).join('');
-    const web = spokes ? Array.from({ length: 8 }, (_, k) => `<line x1="${x}" y1="${y}" x2="${f(x + 40 * Math.cos(k * Math.PI / 4))}" y2="${f(y + 40 * Math.sin(k * Math.PI / 4))}" stroke="${c}" stroke-width="1.5"/>`).join('') : '';
-    return `<circle cx="${x}" cy="${y}" r="40" fill="${bg}" stroke="${c}" stroke-width="2"/>${rings}${web}`;
-  }).join('');
-}
-/** Floco de neve: tres tracos cruzados com pontinhas. */
-const flake = (x: number, y: number, r: number, c: string) => [0, 60, 120].map((a) => {
-  const dx = r * Math.cos(a * Math.PI / 180), dy = r * Math.sin(a * Math.PI / 180);
-  return `<line x1="${f(x - dx)}" y1="${f(y - dy)}" x2="${f(x + dx)}" y2="${f(y + dy)}" stroke="${c}" stroke-width="1.6" stroke-linecap="round"/>`
-    + `<circle cx="${f(x + dx)}" cy="${f(y + dy)}" r="1.6" fill="${c}"/><circle cx="${f(x - dx)}" cy="${f(y - dy)}" r="1.6" fill="${c}"/>`;
-}).join('');
-/** Fogo de artificio parado: raios saindo do centro com uma bolinha na ponta. */
-const burst = (x: number, y: number, r: number, c: string) => Array.from({ length: 12 }, (_, i) => {
-  const a = i * Math.PI / 6, c1 = Math.cos(a), s1 = Math.sin(a);
-  return `<line x1="${f(x + c1 * r * 0.35)}" y1="${f(y + s1 * r * 0.35)}" x2="${f(x + c1 * r)}" y2="${f(y + s1 * r)}" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/><circle cx="${f(x + c1 * (r + 2.5))}" cy="${f(y + s1 * (r + 2.5))}" r="1.3" fill="${c}"/>`;
-}).join('');
-/** Coracao de contorno (e outro menor dentro). */
-const heart = (x: number, y: number, c: string) => [1.2, 0.65].map((s) => `<path transform="translate(${x} ${y}) scale(${s})" d="${HEART}" fill="none" stroke="${c}" stroke-width="${f(1.6 / s)}"/>`).join('');
-/** Ovo de Pascoa de contorno com uma faixa em ziguezague. */
-const egg = (x: number, y: number, c: string) => `<g transform="translate(${x} ${y})" fill="none" stroke="${c}" stroke-width="1.6"><ellipse rx="9" ry="12"/><path d="M-8 2L-4 -2L0 2L4 -2L8 2"/><path d="M-8.5 7Q0 11 8.5 7"/></g>`;
-
-/** O desenho de cada epoca ('none' = ondas). */
-const TILES: Record<SeasonalTheme, Tile> = {
-  none: { w: 80, h: 40, draw: scales(false) },
-  christmas: { w: 60, h: 60, draw: (c) => flake(15, 15, 11, c) + flake(45, 45, 11, c) },
-  newyear: { w: 70, h: 70, draw: (c) => burst(35, 35, 15, c) + [[0, 0], [70, 0], [0, 70], [70, 70]].map(([x, y]) => burst(x, y, 8, c)).join('') },
-  valentine: { w: 48, h: 48, draw: (c) => heart(12, 12, c) + heart(36, 36, c) },
-  easter: { w: 60, h: 60, draw: (c) => egg(15, 16, c) + egg(45, 46, c) },
-  halloween: { w: 80, h: 40, draw: scales(true) },
-};
-const SCALE = 1.5;   // tamanho na tela = peca x 1.5
-
-/** Cores do fundo agora: da epoca, ou (sem tema) da cor escolhida pelo visitante. */
-function paletteFor(season: SeasonalTheme, env: Env): Palette {
-  if (season !== 'none') return SEASON_COLORS[season][env.dark ? 1 : 0];
-  if (!env.primary || !env.background) return SEASON_COLORS.christmas[env.dark ? 1 : 0];   // variaveis ainda nao lidas: nao acontece na pratica
-  return { bg: `hsl(${env.background})`, ring: `hsl(${env.primary} / ${env.dark ? 0.22 : 0.18})` };
+/** Faixa de nuvens que se repete na horizontal (cada nuvem e' desenhada tambem uma largura antes e depois, para a emenda sumir). */
+function cloudTile(w: number, h: number, seed: number, count: number, scale: number, fill: string, cut: string, op: number) {
+  const q = rnd(seed);
+  let body = '';
+  for (let i = 0; i < count; i++) {
+    const cx = q() * w, cy = h * (0.15 + q() * 0.6), s = scale * (0.8 + q() * 0.5);
+    for (const dx of [-w, 0, w]) body += cloud(cx + dx, cy, s, fill, cut, op);
+  }
+  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`)}")`;
 }
 
-/** Imagem de fundo (data URI) de uma epoca com uma paleta. */
-function tileUrl(t: Tile, p: Palette) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${t.w}" height="${t.h}" viewBox="0 0 ${t.w} ${t.h}"><rect width="${t.w}" height="${t.h}" fill="${p.bg}"/>${t.draw(p.ring, p.bg)}</svg>`;
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-}
+/** As 4 camadas de nuvens: [semente, quantidade, escala da nuvem, topo (%), altura da faixa (px), segundos por volta]. Quanto mais perto, maior e mais rapida. */
+const LAYERS: [number, number, number, number, number, number][] = [
+  [11, 7, 0.55, 2, 300, 260],
+  [23, 5, 0.9, 24, 375, 170],
+  [37, 3, 1.5, 46, 480, 110],
+  [51, 5, 0.9, 70, 375, 190],
+];
 
-/** Fundo fixo atras do site; `season` 'none' = fundo padrao (ondas na cor do tema de cores). */
+/** Abobora de Halloween com olhos, nariz e boca que brilham (forte e fraco). `delay` desencontra o brilho de uma para outra. */
+function Pumpkin({ left, bottom, top, size, delay, float }: { left?: string; bottom?: string; top?: string; size: number; delay: number; float?: boolean }) {
+  const face = 'M27 48L41 48L34 34Z M59 48L73 48L66 34Z M50 56L45 64L55 64Z M27 68L36 76L43 70L50 78L57 70L64 76L73 68Q50 90 27 68Z';
+  return (
+    <svg viewBox="0 0 100 90" width={size} height={size * 0.9} className={`absolute ${float ? 'sb-float' : ''}`} style={{ left, bottom, top, animationDelay: `${-delay}s` }}>
+      <ellipse cx="30" cy="52" rx="26" ry="34" fill="#d85f0c" /><ellipse cx="70" cy="52" rx="26" ry="34" fill="#d85f0c" /><ellipse cx="50" cy="52" rx="28" ry="36" fill="#f97316" />
+      <path d="M50 17Q40 52 50 88M34 22Q16 52 34 86M66 22Q84 52 66 86" fill="none" stroke="#b9470a" strokeWidth="1.6" opacity="0.7" />
+      <path d="M46 16Q48 4 57 6L54 17Z" fill="#3f7d2a" />
+      <path d={face} fill="#2a0f02" />
+      <g className="sb-eye" style={{ animationDelay: `${-delay}s` }}>
+        <path d={face} fill="#f59e0b" filter="url(#sbGlow)" />
+        <path d={face} fill="#fde047" />
+      </g>
+    </svg>
+  );
+}
+/** Posicoes das abobora: algumas no chao e algumas flutuando nas laterais. */
+const PUMPKINS = [
+  { left: '3%', bottom: '2%', size: 96, delay: 0 }, { left: '15%', bottom: '-1%', size: 62, delay: 2.1 }, { left: '30%', bottom: '1%', size: 52, delay: 4.3 },
+  { left: '70%', bottom: '0%', size: 58, delay: 1.2 }, { left: '82%', bottom: '3%', size: 104, delay: 3.2 }, { left: '93%', bottom: '-1%', size: 60, delay: 5.1 },
+  { left: '2%', top: '30%', size: 56, delay: 2.7, float: true }, { left: '94%', top: '22%', size: 64, delay: 4.8, float: true },
+];
+
+/** Ovo de Pascoa de enfeite no chao, com uma faixa em ziguezague. */
+function Egg({ left, size, color, delay }: { left: string; size: number; color: string; delay: number }) {
+  return (
+    <svg viewBox="0 0 30 38" width={size} height={size * 1.27} className="sb-float absolute" style={{ left, bottom: '1%', animationDelay: `${-delay}s` }}>
+      <ellipse cx="15" cy="20" rx="12" ry="16" fill={color} opacity="0.85" />
+      <path d="M4 20L9 15L15 20L21 15L26 20" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.7" /><path d="M4.5 27Q15 32 25.5 27" fill="none" stroke="#ffffff" strokeWidth="1.8" opacity="0.6" />
+    </svg>
+  );
+}
+const EGGS = [
+  { left: '6%', size: 44, color: '#f9a8d4' }, { left: '19%', size: 56, color: '#a7f3d0' }, { left: '34%', size: 40, color: '#fde68a' }, { left: '63%', size: 48, color: '#c4b5fd' },
+  { left: '77%', size: 60, color: '#93c5fd' }, { left: '90%', size: 42, color: '#fdba74' },
+];
+
+/** Fundo fixo atras do site; `season` 'none' = so' as nuvens. */
 export function SeasonalBackground({ season }: { season: SeasonalTheme }) {
-  const [env, setEnv] = useState<Env>(readEnv);   // so' monta no navegador (SeasonalDecor espera a API), por isso pode ler o documento ja' aqui
-
-  // Acompanha a troca de claro/escuro e de tema de cores (o <html> muda de classe / data-color-theme).
-  useEffect(() => {
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));   // so' monta no navegador (SeasonalDecor espera a API)
+  useEffect(() => {   // acompanha o botao claro/escuro (o <html> muda de classe)
     const root = document.documentElement;
-    const update = () => setEnv((old) => { const n = readEnv(); return n.dark === old.dark && n.primary === old.primary && n.background === old.background ? old : n; });
+    const update = () => setDark(root.classList.contains('dark'));
     update();
     const mo = new MutationObserver(update);
-    mo.observe(root, { attributes: true, attributeFilter: ['class', 'data-color-theme'] });
+    mo.observe(root, { attributes: true, attributeFilter: ['class'] });
     return () => mo.disconnect();
   }, []);
 
-  const t = TILES[season], p = paletteFor(season, env);
+  const c = dark ? COLORS.dark : COLORS.light;
   return (
-    <div aria-hidden data-sb={season} className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" style={{ background: p.bg }}>
-      {/* camada maior que a tela: o balanco/pulso nao mostra bordas */}
-      <div className="sb-waves absolute -inset-8" style={{ backgroundImage: tileUrl(t, p), backgroundSize: `${t.w * SCALE}px ${t.h * SCALE}px`, ['--sb-tile' as string]: `${t.w * SCALE}px` }} />
-      {season === 'newyear' && <SeasonCanvas kind="fireworks" dark={env.dark} />}
-      {season === 'valentine' && <SeasonCanvas kind="balloons" dark={env.dark} />}
+    <div aria-hidden data-sb={season} className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" style={{ background: `linear-gradient(${c.sky[0]}, ${c.sky[1]})` }}>
+      {LAYERS.map(([seed, count, scale, top, h, secs], i) => (
+        <div key={i} className="sb-cloud absolute left-0 right-0" style={{
+          top: `${top}%`, height: h, backgroundRepeat: 'repeat-x', animationDuration: `${secs}s`,
+          backgroundImage: cloudTile(1000, 300, seed, count, scale, c.cloud, c.sky[0], c.op[i]), backgroundSize: `${(h / 300) * 1000}px ${h}px`, ['--sb-tile' as string]: `${(h / 300) * 1000}px`,
+        }} />
+      ))}
+      {season === 'newyear' && <SeasonCanvas kind="fireworks" dark={dark} />}
+      {season === 'christmas' && <SeasonCanvas kind="christmas" dark={dark} />}
+      {season === 'valentine' && <><SeasonCanvas kind="balloons" dark={dark} /><SeasonCanvas kind="heartworks" dark={dark} /></>}
+      {season === 'halloween' && (
+        <>
+          <svg width="0" height="0" className="absolute"><defs><filter id="sbGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" /></filter></defs></svg>
+          {PUMPKINS.map((p, i) => <Pumpkin key={i} {...p} />)}
+        </>
+      )}
+      {season === 'easter' && EGGS.map((e, i) => <Egg key={i} {...e} delay={i * 1.3} />)}
     </div>
   );
 }

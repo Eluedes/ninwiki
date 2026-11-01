@@ -409,18 +409,13 @@
   .maint-ember { display: none; }
 }
 
-/* Fundo do site (components/seasonal-background.tsx): o desenho desliza bem devagar e cada epoca tem um movimento suave proprio (data-sb no container).
-   Ano Novo (foguetes) e Valentine's (baloes) tem ainda um canvas por cima (components/season-canvas.tsx). NADA cai nem sobe no desenho.
+/* Fundo do site (components/seasonal-background.tsx): nuvens em camadas que passam devagar (cada camada com sua duracao, inline) e, no Halloween, abobora
+   com olhos que brilham forte e fraco; na Pascoa, ovos que balancam de leve. Os efeitos em canvas (fogos, neve, Papai Noel, baloes) ficam em components/season-canvas.tsx.
    Sem movimento para quem pede menos movimento ao aparelho. */
-@keyframes sb-flow { from { background-position-x: 0; } to { background-position-x: var(--sb-tile, 120px); } }
-@keyframes sb-bob { from { transform: translateY(-6px); } to { transform: translateY(6px); } }
-@keyframes sb-sway { from { transform: translateX(-8px); } to { transform: translateX(8px); } }
-@keyframes sb-twinkle { from { opacity: 0.78; } to { opacity: 1; } }
-@keyframes sb-flick { 0%, 100% { opacity: 1; } 20% { opacity: 0.86; } 45% { opacity: 0.97; } 70% { opacity: 0.88; } }
-.sb-waves { animation: sb-flow 70s linear infinite, sb-bob 12s ease-in-out infinite alternate; }                           /* ondas: deslizam e balancam */
-[data-sb='christmas'] .sb-waves { animation: sb-flow 90s linear infinite, sb-twinkle 8s ease-in-out infinite alternate; }  /* flocos: brilham de leve */
-[data-sb='newyear'] .sb-waves { animation: sb-flow 90s linear infinite; }                                                  /* fogos de verdade vem do canvas */
-[data-sb='valentine'] .sb-waves { animation: sb-flow 90s linear infinite; }                                                /* baloes de verdade vem do canvas */
-[data-sb='easter'] .sb-waves { animation: sb-flow 80s linear infinite, sb-bob 9s ease-in-out infinite alternate; }         /* ovos: balancam de leve */
-[data-sb='halloween'] .sb-waves { animation: sb-sway 14s ease-in-out infinite alternate, sb-flick 11s ease-in-out infinite; }   /* teias: balancam e tremulam de leve */
-@media (prefers-reduced-motion: reduce) { .sb-waves { animation: none !important; } }
+@keyframes sb-flow { from { background-position-x: 0; } to { background-position-x: var(--sb-tile, 1000px); } }
+@keyframes sb-float { from { transform: translateY(-5px); } to { transform: translateY(5px); } }
+@keyframes sb-eye { 0%, 100% { opacity: 0.25; } 12% { opacity: 1; } 30% { opacity: 0.4; } 52% { opacity: 1; } 74% { opacity: 0.3; } }
+.sb-cloud { animation: sb-flow 200s linear infinite; }
+.sb-float { animation: sb-float 7s ease-in-out infinite alternate; }
+.sb-eye { animation: sb-eye 4.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .sb-cloud, .sb-float, .sb-eye { animation: none !important; } .sb-eye { opacity: 0.85; } }
