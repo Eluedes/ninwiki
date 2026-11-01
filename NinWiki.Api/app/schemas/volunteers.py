@@ -9,7 +9,7 @@ from pydantic import Field, field_validator
 from app.models.volunteers import VolunteerStatus
 from app.schemas.content import CamelModel
 
-AreaName = Literal["translation", "wiki-editing", "data-collection", "mapping", "bot-dev", "art-graphics", "moderation", "other"]
+AreaName = Literal["translation", "wiki-editing", "data-collection", "mapping", "moderation", "other"]
 _EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,60}\.[^@\s]{2,20}$")
 
 
@@ -20,19 +20,17 @@ def _plain(v: str) -> str:
 
 class VolunteerApply(CamelModel):
     """O que o visitante envia. Tamanhos maximos de tudo; consentimento obrigatorio (sem ele a API responde 422)."""
-    name: str = Field(min_length=2, max_length=80)
     discord: str = Field(min_length=2, max_length=64)
     game_nick: str = Field(min_length=1, max_length=60)
     languages: str = Field(min_length=2, max_length=120)
-    areas: list[AreaName] = Field(min_length=1, max_length=8)
+    areas: list[AreaName] = Field(min_length=1, max_length=6)
     availability: str = Field(min_length=2, max_length=200)
-    experience: str = Field(min_length=10, max_length=1500)
     motivation: str = Field(min_length=10, max_length=1500)
     contact_email: str | None = Field(default=None, max_length=120)
     consent: Literal[True]   # so' aceita true
     website: str = Field(default="", max_length=200)   # "isca" anti-robo: se vier preenchido, a inscricao e' descartada em silencio
 
-    @field_validator("name", "discord", "game_nick", "languages", "availability", "experience", "motivation", mode="after")
+    @field_validator("discord", "game_nick", "languages", "availability", "motivation", mode="after")
     @classmethod
     def _clean(cls, v: str) -> str:
         """Limpa o texto e recusa se ficar curto demais depois da limpeza (so' espacos)."""
@@ -57,13 +55,11 @@ class VolunteerRead(CamelModel):
     """Uma inscricao como o painel ve' (sem consentimento/IP: nem existe IP no banco)."""
     id: uuid.UUID
     created_at: datetime
-    name: str
     discord: str
     game_nick: str
     languages: str
     areas: list[str]
     availability: str
-    experience: str
     motivation: str
     contact_email: str | None
     status: VolunteerStatus
@@ -83,3 +79,13 @@ class VolunteerUpdate(CamelModel):
     """PATCH do painel: status e/ou notas internas (o que nao vier fica como esta')."""
     status: VolunteerStatus | None = None
     staff_notes: str | None = Field(default=None, max_length=2000)
+
+
+class VolunteerFormStatus(CamelModel):
+    """Se o formulario esta' aberto (leitura publica)."""
+    enabled: bool
+
+
+class VolunteerFormToggle(CamelModel):
+    """Corpo do PUT que abre/fecha o formulario."""
+    enabled: bool

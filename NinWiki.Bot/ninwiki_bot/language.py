@@ -26,6 +26,8 @@ TEXT = {
         "wrong_guild": "This command is not available on this server.", "slow": "⏳ Slow down - try again in {s}s.",
         "drop_none": "Nothing matched **{q}**. Try another name (the item must be published on the wiki).",
         "drop_title": "🎁 Where to get {item}", "drop_nobody": "No published mob drops this item yet.", "drop_chance": "chance",
+        "rec_none": "Nothing matched **{q}**. Try another name (the recipe must be on the wiki).", "rec_title": "🛠️ How to make {item}",
+        "rec_level": "level {n}", "rec_bench": "at a workbench", "rec_nobench": "no workbench", "rec_learn": "learned from {item}",
         "drop_footer": "Full details on the wiki", "posts_title": "📰 Latest patch notes / news", "posts_none": "No posts yet.",
         # --- comandos de consulta (wiki_commands.py) ---
         "pick_none": "## 🔎 No {kind} found\nNothing matched **{q}** here. Try /search for everything, or another spelling.",
@@ -38,6 +40,7 @@ TEXT = {
             ("/search", "Search items, mobs, weapons, jutsus, masteries and posts"),
             ("/item · /mob · /jutsu · /mastery", "Look up one thing by name (start typing for suggestions)"),
             ("/drop", "Which mobs drop an item, and how likely"),
+            ("/recipe", "How to craft an item: ingredients, profession and level"),
             ("/compare", "Two items, weapons or mobs side by side"),
             ("/patchnotes", "Latest news and patch notes"),
             ("/status", "Are the API, database and site up?"),
@@ -59,6 +62,8 @@ TEXT = {
         "wrong_guild": "Este comando não está disponível neste servidor.", "slow": "⏳ Calma - tente de novo em {s}s.",
         "drop_none": "Nada combinou com **{q}**. Tente outro nome (o item precisa estar publicado no wiki).",
         "drop_title": "🎁 Onde conseguir {item}", "drop_nobody": "Nenhum mob publicado dropa este item ainda.", "drop_chance": "chance",
+        "rec_none": "Nada combinou com **{q}**. Tente outro nome (a receita precisa estar no wiki).", "rec_title": "🛠️ Como fazer {item}",
+        "rec_level": "nível {n}", "rec_bench": "na bancada", "rec_nobench": "sem bancada", "rec_learn": "aprendida com {item}",
         "drop_footer": "Detalhes completos no wiki", "posts_title": "📰 Últimas notícias / patch notes", "posts_none": "Nenhum post ainda.",
         # --- comandos de consulta (wiki_commands.py) ---
         "pick_none": "## 🔎 Nenhum(a) {kind} encontrado(a)\nNada combinou com **{q}** aqui. Tente /search para tudo, ou outra grafia.",
@@ -71,6 +76,7 @@ TEXT = {
             ("/search", "Busca itens, mobs, armas, jutsus, maestrias e posts"),
             ("/item · /mob · /jutsu · /mastery", "Consulta uma coisa pelo nome (comece a digitar para ver sugestões)"),
             ("/drop", "Quais mobs dropam um item, e com que chance"),
+            ("/recipe", "Como fazer um item: ingredientes, profissão e nível"),
             ("/compare", "Dois itens, armas ou mobs lado a lado"),
             ("/patchnotes", "Últimas notícias e patch notes"),
             ("/status", "API, banco e site estão no ar?"),

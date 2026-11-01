@@ -3,7 +3,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, String, Text, func
+from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,13 +28,11 @@ class VolunteerApplication(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
-    name: Mapped[str] = mapped_column(String(80))                    # nome ou apelido
     discord: Mapped[str] = mapped_column(String(64))                 # texto livre (usuario ou ID)
     game_nick: Mapped[str] = mapped_column(String(60))               # nick no Nin Online
     languages: Mapped[str] = mapped_column(String(120))              # ex.: "Portuguese, English"
     areas: Mapped[list[str]] = mapped_column(ARRAY(String(30)))      # translation, wiki-editing, ...
     availability: Mapped[str] = mapped_column(String(200))
-    experience: Mapped[str] = mapped_column(Text)
     motivation: Mapped[str] = mapped_column(Text)
     contact_email: Mapped[str | None] = mapped_column(String(120), nullable=True)
     consent: Mapped[bool] = mapped_column(Boolean)                   # sempre True (sem consentimento nao grava)
@@ -43,3 +41,13 @@ class VolunteerApplication(Base):
     staff_notes: Mapped[str | None] = mapped_column(Text, nullable=True)   # notas internas, nunca saem para o publico
     reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class VolunteerSettings(Base):
+    """Interruptor do formulario de voluntarios (uma unica linha, id = 1). Sem a linha = ABERTO (padrao)."""
+    __tablename__ = "volunteer_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")   # true = aceitando inscricoes
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_by: Mapped[str | None] = mapped_column(String(100), nullable=True)

@@ -252,13 +252,11 @@ export type PostFormValues = z.infer<typeof postSchema>;
 const vText = (min: number, max: number) => z.string().trim().min(1, 'required').min(min, 'tooShort').max(max, 'tooLong');
 
 export const volunteerSchema = z.object({
-  name: vText(2, 80),
   discord: vText(2, 64),
   gameNick: vText(1, 60),
   languages: vText(2, 120),
-  areas: z.array(z.enum(['translation', 'wiki-editing', 'data-collection', 'mapping', 'bot-dev', 'art-graphics', 'moderation', 'other'])).min(1, 'pickArea'),
+  areas: z.array(z.enum(['translation', 'wiki-editing', 'data-collection', 'mapping', 'moderation', 'other'])).min(1, 'pickArea'),
   availability: vText(2, 200),
-  experience: vText(10, 1500),
   motivation: vText(10, 1500),
   contactEmail: z.string().trim().max(120, 'tooLong').refine((v) => v === '' || /^[^@\s]{1,64}@[^@\s]{1,60}\.[^@\s]{2,20}$/.test(v), 'invalidEmail'),
   consent: z.boolean().refine((v) => v === true, 'consentRequired'),

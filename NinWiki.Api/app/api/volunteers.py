@@ -2,9 +2,11 @@
 Inscricoes de voluntarios do projeto.
 
 Publico (sem login, com defesas):
-  POST   /volunteers/apply        envia uma inscricao (resposta generica, sem eco dos dados)
+  GET    /volunteers/status       informa se o formulario esta' aberto ({enabled}); so' leitura
+  POST   /volunteers/apply        envia uma inscricao (resposta generica, sem eco dos dados); 403 se o formulario estiver fechado
 
 Painel (permissao volunteers.manage):
+  PUT    /volunteers/status       abre/fecha o formulario (interruptor; vai para o log)
   GET    /volunteers              lista (filtros: status, busca q, paginacao limit/offset) + total + contador de novas
   GET    /volunteers/{id}         uma inscricao
   PATCH  /volunteers/{id}         muda status e/ou notas internas
@@ -27,8 +29,8 @@ from app.core.permissions import Permission
 from app.core.rate_limit import client_key, limiter, retry_message
 from app.core.security import ensure_same_origin
 from app.models.users import User
-from app.models.volunteers import VolunteerApplication, VolunteerStatus
-from app.schemas.volunteers import VolunteerApply, VolunteerListRead, VolunteerRead, VolunteerUpdate
+from app.models.volunteers import VolunteerApplication, VolunteerSettings, VolunteerStatus
+from app.schemas.volunteers import VolunteerApply, VolunteerFormStatus, VolunteerFormToggle, VolunteerListRead, VolunteerRead, VolunteerUpdate
 
 router = APIRouter(prefix="/volunteers", tags=["volunteers"])
 
@@ -37,10 +39,40 @@ APPLY_PER_DAY = 10       # por IP
 MAX_NEW_PER_DAY = 100    # no site todo (um ataque nao consegue encher o painel)
 
 
+async def _form_open(db: AsyncSession) -> bool:
+    """Formulario aberto? Sem a linha de configuracao = aberto (padrao)."""
+    row = await db.get(VolunteerSettings, 1)
+    return row is None or row.enabled
+
+
+@router.get("/status", response_model=VolunteerFormStatus)
+async def form_status(db: AsyncSession = Depends(get_db)):
+    """Publico (so' leitura): a pagina /volunteer usa para mostrar o aviso de 'inscricoes fechadas'."""
+    return VolunteerFormStatus(enabled=await _form_open(db))
+
+
+@router.put("/status", response_model=VolunteerFormStatus)
+async def set_form_status(
+    body: VolunteerFormToggle, staff: User = Depends(require_permission(Permission.VOLUNTEERS_MANAGE)), db: AsyncSession = Depends(get_db),
+):
+    """Painel: abre ou fecha o formulario. Fica no banco (vale para todo mundo) e no log de auditoria."""
+    row = await db.get(VolunteerSettings, 1)
+    before = row is None or row.enabled
+    if row is None:
+        row = VolunteerSettings(id=1, enabled=body.enabled)
+        db.add(row)
+    row.enabled, row.updated_by = body.enabled, staff.username
+    await log_action(db, action="update", entity_type="volunteer_form", entity_id="1", diff={"enabled": [before, body.enabled]}, actor=staff)
+    await db.commit()
+    return VolunteerFormStatus(enabled=body.enabled)
+
+
 @router.post("/apply", status_code=204)
 async def apply(payload: VolunteerApply, request: Request, db: AsyncSession = Depends(get_db)):
     """Visitante se inscreve como voluntario. Publico: com todas as defesas descritas no topo do arquivo. Responde 204 sem eco."""
     ensure_same_origin(request)
+    if not await _form_open(db):   # a regra e' da API, nao so' do front
+        raise HTTPException(status_code=403, detail="Volunteer applications are closed right now.")
     key = client_key()
     for bucket, limit, window in (("volunteers-hour", APPLY_PER_HOUR, 3600), ("volunteers-day", APPLY_PER_DAY, 86400)):
         wait = limiter.hit(bucket, key, limit, window)
@@ -53,8 +85,8 @@ async def apply(payload: VolunteerApply, request: Request, db: AsyncSession = De
     if recent >= MAX_NEW_PER_DAY:
         raise HTTPException(status_code=503, detail="Applications are temporarily closed. Please try again tomorrow.")
     db.add(VolunteerApplication(
-        name=payload.name, discord=payload.discord, game_nick=payload.game_nick, languages=payload.languages,
-        areas=list(dict.fromkeys(payload.areas)), availability=payload.availability, experience=payload.experience,
+        discord=payload.discord, game_nick=payload.game_nick, languages=payload.languages,
+        areas=list(dict.fromkeys(payload.areas)), availability=payload.availability,
         motivation=payload.motivation, contact_email=payload.contact_email, consent=True,
     ))
     await db.commit()
@@ -70,13 +102,13 @@ async def list_volunteers(
     staff: User = Depends(require_permission(Permission.VOLUNTEERS_MANAGE)),
     db: AsyncSession = Depends(get_db),
 ):
-    """Lista as inscricoes (mais recentes primeiro), com filtro de status e busca por nome / Discord / nick."""
+    """Lista as inscricoes (mais recentes primeiro), com filtro de status e busca por Discord / nick."""
     where = []
     if status is not None:
         where.append(VolunteerApplication.status == status)
     if q and q.strip():
         like = "%" + q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
-        where.append(or_(*(c.ilike(like, escape="\\") for c in (VolunteerApplication.name, VolunteerApplication.discord, VolunteerApplication.game_nick))))
+        where.append(or_(*(c.ilike(like, escape="\\") for c in (VolunteerApplication.discord, VolunteerApplication.game_nick))))
     total = (await db.execute(select(func.count()).select_from(VolunteerApplication).where(*where))).scalar_one()
     new_count = (await db.execute(select(func.count()).select_from(VolunteerApplication).where(VolunteerApplication.status == VolunteerStatus.NEW))).scalar_one()
     rows = (await db.execute(

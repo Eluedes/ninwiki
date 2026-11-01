@@ -34,6 +34,7 @@ from app.api.content_items import _dropped_by
 from app.models.content import ContentItem
 from app.models.enums import ContentCategory, ContentStatus
 from app.models.masteries import Jutsu, Mastery
+from app.models.guide import Profession
 from app.models.posts import Post
 from app.models.reports import ContentReport
 from app.models.errors import ErrorEvent
@@ -224,6 +225,32 @@ class BotDropResult(CamelModel):
     image: str | None = None
     rarity: str | None = None
     mobs: list[BotDropMob] = []
+
+
+class BotRecipeNeed(CamelModel):
+    """Um ingrediente de receita (resposta do /recipe)."""
+    name: str
+    href: str
+    qty: int
+
+
+class BotRecipe(CamelModel):
+    """Uma receita: a profissao que a faz, o nivel, onde e' feita, de onde se aprende e os ingredientes."""
+    profession: str
+    profession_href: str
+    level: int
+    workbench: bool
+    learned_from: str | None = None
+    needs: list[BotRecipeNeed] = []
+
+
+class BotRecipeResult(CamelModel):
+    """Resposta do /recipe: o item feito (ou nada) e as receitas que o produzem (pode haver em mais de uma profissao)."""
+    found: bool
+    title: str = ""
+    href: str = ""
+    image: str | None = None
+    recipes: list[BotRecipe] = []
 
 
 class BotPostEntry(CamelModel):
@@ -446,6 +473,39 @@ async def bot_drops(
         found=True, title=_pick(lang, item.name, item.name_pt), href=f"/detail/{item.slug}", image=_abs_image(item.image), rarity=item.rarity.value,
         mobs=[BotDropMob(name=_pick(lang, m.name, m.name_pt), href=f"/detail/{m.slug}", chance=m.chance,
                          chance_qualifier=m.chance_qualifier.value if m.chance_qualifier else None) for m in mobs],
+    )
+
+
+@router.get("/recipe", response_model=BotRecipeResult)
+async def bot_recipe(
+    q: str = Query(..., min_length=2, max_length=60),
+    lang: str = Query("en", pattern="^(en|pt)$"),
+    db: AsyncSession = Depends(get_db),
+) -> BotRecipeResult:
+    """Como fazer o item `q`: procura nas receitas das profissoes (nome exato primeiro, senao o primeiro que contem)."""
+    wanted = q.strip().lower()
+
+    def names(res: dict) -> tuple[str, str]:
+        """Nome EN e PT do item feito, em minusculas."""
+        return str(res.get("name") or "").lower(), str(res.get("namePt") or "").lower()
+
+    found: list[tuple[Profession, dict]] = []
+    for prof in (await db.execute(select(Profession).order_by(Profession.name))).scalars().all():
+        for r in (prof.details or {}).get("recipes", []):
+            if any(wanted in n for n in names(r.get("result") or {})):
+                found.append((prof, r))
+    if not found:
+        return BotRecipeResult(found=False)
+    exact = [f for f in found if wanted in names(f[1]["result"])]
+    first = (exact or found)[0][1]["result"]
+    mine = [f for f in (exact or found) if f[1]["result"].get("slug") == first.get("slug")][:5]   # so' o mesmo item (varias profissoes)
+    return BotRecipeResult(
+        found=True, title=_pick(lang, first.get("name"), first.get("namePt")), href=f"/detail/{first.get('slug')}", image=_abs_image(first.get("image")),
+        recipes=[BotRecipe(
+            profession=_pick(lang, p.name, p.name_pt), profession_href=f"/proficiencies/{p.id}", level=int(r.get("level") or 0), workbench=bool(r.get("workbench")),
+            learned_from=_pick(lang, (r.get("learnedFrom") or {}).get("name"), (r.get("learnedFrom") or {}).get("namePt")) or None,
+            needs=[BotRecipeNeed(name=_pick(lang, n.get("name"), n.get("namePt")), href=f"/detail/{n.get('slug')}", qty=int(n.get("qty") or 1)) for n in r.get("needs", [])],
+        ) for p, r in mine],
     )
 
 

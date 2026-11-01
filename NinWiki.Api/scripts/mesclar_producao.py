@@ -33,7 +33,7 @@ import asyncpg
 from app.core.config import settings
 
 # --- tabelas por estrategia (ordem = maes primeiro) ---
-SUBSTITUI_PROD = ["role_permissions", "site_maintenance", "site_announcement", "content_reports", "volunteer_applications", "notice_files", "notices", "post_comments", "post_likes"]
+SUBSTITUI_PROD = ["role_permissions", "site_maintenance", "site_announcement", "content_reports", "volunteer_applications", "volunteer_settings", "notice_files", "notices", "post_comments", "post_likes"]
 TRAFEGO = ["traffic_daily", "traffic_pages", "traffic_places"]
 UPSERT_PROD = ["custom_roles", "users", "readers"]       # prod vence nas linhas em comum; as so' do local ficam
 SO_NOVAS_PROD = ["audit_log", "content_versions", "tags", "posts", "post_tag_links"]   # insere so' o que falta

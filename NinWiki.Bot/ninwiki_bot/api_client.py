@@ -105,6 +105,10 @@ class NinWikiApi:
         """Quais mobs dropam o item `query` ({found, title, href, image, rarity, mobs:[{name, href, chance, chanceQualifier}]})."""
         return await self._request("GET", "/bot/drops", params={"q": query, "lang": lang})
 
+    async def recipe(self, query: str, lang: str = "en") -> dict:
+        """Como fazer o item `query` ({found, title, href, image, recipes:[{profession, professionHref, level, workbench, learnedFrom, needs:[{name, href, qty}]}]})."""
+        return await self._request("GET", "/bot/recipe", params={"q": query, "lang": lang})
+
     async def latest_posts(self, limit: int = 3, lang: str = "en") -> list[dict]:
         """Os posts do blog mais recentes que ja' estao no ar (para o /patchnotes)."""
         return await self._request("GET", "/bot/latest-posts", params={"limit": limit, "lang": lang})
