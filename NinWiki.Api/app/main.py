@@ -203,6 +203,9 @@ uploads_dir = Path(__file__).resolve().parent.parent / "uploads"
 uploads_dir.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
+# Marca do Nin Codex para o bot do Discord (rodape das respostas). Fica na API porque o Cloudflare do dominio do SITE barra quem nao e' navegador (o Discord nao consegue baixar la').
+app.mount("/brand", StaticFiles(directory=str(Path(__file__).resolve().parent / "static" / "brand")), name="brand")
+
 
 def _read_version() -> str:
     """Versao publicada (7 primeiros caracteres do commit): o workflow de deploy grava o arquivo VERSION; local = 'dev'."""

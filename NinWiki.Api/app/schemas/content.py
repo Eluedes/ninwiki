@@ -161,6 +161,28 @@ class DroppedByEntry(CamelModel):
     chance_qualifier: DropChanceQualifier | None = None
 
 
+class CraftedNeed(CamelModel):
+    """Um ingrediente da receita que faz o item (resumo do `CraftedByEntry`)."""
+    name: str
+    name_pt: str | None = None
+    slug: str | None = None
+    qty: int = 1
+
+
+class CraftedByEntry(CamelModel):
+    """
+    Uma receita das profissoes que PRODUZ este item (lado inverso de `Profession.details['recipes']`): calculado na leitura, somente leitura,
+    nada e' cadastrado a mao. O site mostra o selo "Feito por craft" com a profissao, o nivel, a bancada e os ingredientes.
+    """
+    profession_id: str
+    profession_name: str
+    profession_name_pt: str | None = None
+    profession_icon: str
+    level: int
+    workbench: bool
+    needs: list[CraftedNeed] = []
+
+
 class LocationEntrySchema(CamelModel):
     """
     Um lugar onde o mob aparece (ex.: "Larva Road", zona "safe"). A ficha mostra um lugar por linha, com um ponto na cor da zona e o nome da zona.
@@ -334,6 +356,8 @@ class ContentItemRead(ContentItemBase):
     weapon_npc_name_pt: str | None = None
     # Mobs que dropam este item (automatico, ver DroppedByEntry); preenchido pelos GETs de ficha - nas demais respostas fica [].
     dropped_by: list[DroppedByEntry] = []
+    # Receitas das profissoes que produzem este item (automatico, ver CraftedByEntry); preenchido pelos GETs de ficha - nas demais respostas fica [].
+    crafted_by: list[CraftedByEntry] = []
     updated_at: datetime | None = None    # ultima edicao (o site mostra 'Atualizado em')
     translation_auto: bool = False        # portugues veio da traducao automatica e ninguem revisou (ver ContentItem.translation_auto)
 
@@ -345,7 +369,7 @@ class ContentItemRead(ContentItemBase):
             village = data.cast_village
             npc = getattr(data, "weapon_npc_item", None)
             out = {
-                **{f: getattr(data, f, None) for f in cls.model_fields if f not in ("cast_village_name", "dropped_by", "weapon_npc_slug", "weapon_npc_name_pt")},
+                **{f: getattr(data, f, None) for f in cls.model_fields if f not in ("cast_village_name", "dropped_by", "crafted_by", "weapon_npc_slug", "weapon_npc_name_pt")},
                 "cast_village_name": village.name if village is not None else None,
                 "weapon_npc_slug": npc.slug if (npc is not None and npc.status == ContentStatus.PUBLISHED) else None,
                 "weapon_npc_name_pt": npc.name_pt if npc is not None else None,

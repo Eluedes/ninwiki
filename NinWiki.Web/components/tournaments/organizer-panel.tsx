@@ -4,7 +4,7 @@
 // encerramento. Toda acao chama a API, que devolve o torneio inteiro atualizado (onChange). A API e' quem nega de verdade; aqui e' so' conforto.
 
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, Loader2, Plus, Shuffle, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Eye, EyeOff, Loader2, Plus, Shuffle, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +15,7 @@ import {
 } from '@/lib/api-client';
 import { fill } from '@/lib/i18n-tournaments';
 import { phaseSchema, tournamentSchema } from '@/lib/validation';
+import { ImportEntriesDialog } from './import-entries-dialog';
 import { Section, selectClass, teamModeLabel } from './shared';
 
 /** Executa uma acao do organizador mostrando "ocupado" e o erro da API (se houver). */
@@ -97,11 +98,29 @@ function Details({ t, run, busy }: { t: ApiTournament; run: ReturnType<typeof us
   );
 }
 
-/** Inscritos: convidado sem conta, remover e ordem das sementes. */
+/** Interruptor "Visivel ao publico / Oculto": o organizador esconde o torneio enquanto ainda arruma fases e inscritos (a API grava na hora). */
+function VisibilitySwitch({ t, run, busy }: { t: ApiTournament; run: ReturnType<typeof useRunner>['run']; busy: boolean }) {
+  const { dict } = useLanguage();
+  const d = dict.tournaments;
+  const hidden = t.organizerHidden;
+  return (
+    <Section title={d.visibleLabel}>
+      <div className={`flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-sm ${hidden ? 'border-amber-500/40 bg-amber-500/10' : 'border-primary/30 bg-primary/5'}`}>
+        {hidden ? <EyeOff className="h-4 w-4 shrink-0" aria-hidden /> : <Eye className="h-4 w-4 shrink-0" aria-hidden />}
+        <span className="flex-1 font-medium">{hidden ? d.visibleOff : d.visibleOn}</span>
+        <Button size="sm" variant={hidden ? 'default' : 'outline'} disabled={busy} onClick={() => run(() => updateTournament(t.id, { organizerHidden: !hidden }))}>{hidden ? d.makeVisible : d.makeHidden}</Button>
+      </div>
+      <p className="text-xs text-muted-foreground">{hidden ? d.hiddenByYouNotice : d.visibleHint}</p>
+    </Section>
+  );
+}
+
+/** Inscritos: convidado sem conta, importar lista, remover e ordem das sementes. */
 function Entries({ t, run, busy }: { t: ApiTournament; run: ReturnType<typeof useRunner>['run']; busy: boolean }) {
   const { dict } = useLanguage();
   const d = dict.tournaments;
   const [guest, setGuest] = useState('');
+  const [importing, setImporting] = useState(false);
   const editable = t.status === 'draft' || t.status === 'open';
   function move(i: number, delta: number) {
     const ids = t.entries.map((e) => e.id);
@@ -115,8 +134,10 @@ function Entries({ t, run, busy }: { t: ApiTournament; run: ReturnType<typeof us
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (guest.trim()) run(() => addGuestEntry(t.id, guest.trim()), () => setGuest('')); }}>
           <Input value={guest} maxLength={60} placeholder={d.guestPlaceholder} aria-label={d.addGuest} onChange={(e) => setGuest(e.target.value)} />
           <Button type="submit" size="sm" disabled={busy || !guest.trim()}><Plus className="mr-1 h-4 w-4" />{d.add}</Button>
+          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => setImporting(true)}><Upload className="mr-1 h-4 w-4" />{d.importList}</Button>
         </form>
       )}
+      {editable && <ImportEntriesDialog t={t} open={importing} onClose={() => setImporting(false)} onImported={(res) => run(async () => res)} />}
       <ol className="space-y-1">
         {t.entries.map((e, i) => (
           <li key={e.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1 text-sm">
@@ -281,6 +302,7 @@ export function OrganizerPanel({ tournament: t, onChange, onDeleted }: { tournam
       </div>
       {error && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
       {busy && <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />}
+      <VisibilitySwitch t={t} run={run} busy={busy} />
       <Details t={t} run={run} busy={busy} />
       <Entries t={t} run={run} busy={busy} />
       <Phases t={t} run={run} busy={busy} />

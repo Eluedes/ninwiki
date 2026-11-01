@@ -120,10 +120,8 @@ export function GuideHub({ articles }: { articles: ApiGuideArticle[] }) {
 
           {sections.filter((s) => s !== 'new-player').map((s) => (   // 'Comece por aqui' ja' aparece em destaque acima
             <section key={s}>
-              <div className="mb-3 flex items-baseline justify-between gap-3">
-                <h2 className="text-lg font-bold tracking-tight">{t.guideSections[s]}</h2>
-                <Link href={topicHref(s)} className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline" aria-label={`${g.viewAll}: ${t.guideSections[s]}`}>{g.viewAll}<ArrowRight className="h-3.5 w-3.5" /></Link>
-              </div>
+              {/* sem botao "Ver todos": o proprio titulo leva a pagina do topico */}
+              <h2 className="mb-3 text-lg font-bold tracking-tight"><Link href={topicHref(s)} className="hover:text-primary hover:underline">{t.guideSections[s]}</Link></h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{(bySection.get(s) ?? []).slice(0, PREVIEW).map(articleCard)}</div>
             </section>
           ))}

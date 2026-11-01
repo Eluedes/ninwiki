@@ -153,9 +153,9 @@ def checar_migracoes(r: Resultado, readme: str) -> None:
         m = re.search(r"^revision[^=]*=\s*'([^']+)'", txt, re.M)
         if m:
             revs[m.group(1)] = f.name
-            d = re.search(r"^down_revision[^=]*=\s*(?:Union\[[^\]]*\]\s*=\s*)?'([^']+)'", txt, re.M)
+            d = re.search(r"^down_revision[^=\n]*=\s*(.+)$", txt, re.M)   # um id ('abc') ou uma tupla de ids (migracao de merge)
             if d:
-                down.add(d.group(1))
+                down.update(re.findall(r"'([^']+)'", d.group(1)))
     citadas = set(re.findall(r"`([0-9a-f]{12})`", readme))
     inexistentes = sorted(c for c in citadas if c not in revs)
     if inexistentes:

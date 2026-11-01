@@ -205,3 +205,8 @@ class NinWikiApi:
     async def push_member_roles(self, guild_id: str, members: list[dict]) -> dict:
         """Informa os cargos de leitores num servidor (ate' 500 por chamada). A API decide vila/rank; o bot so' repassa fatos."""
         return await self._request("POST", "/bot/member-roles", json={"guildId": guild_id, "members": members}, timeout=60.0)
+
+    async def push_guild_members(self, guild_id: str, members: list[dict], *, sync_token: str = "", final: bool = False, remove: list[str] | None = None) -> dict:
+        """Informa a LISTA de membros de um servidor (ate' 500 por chamada). `final` fecha a sincronizacao completa (a API apaga quem saiu)."""
+        return await self._request("POST", "/bot/guild-members", json={
+            "guildId": guild_id, "syncToken": sync_token, "members": members, "remove": remove or [], "final": final}, timeout=60.0)

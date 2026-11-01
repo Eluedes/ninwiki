@@ -33,10 +33,11 @@ from app.core.database import get_db
 from app.models.users import User
 from app.core.translation import fill_pair, is_empty, require_english, translate_field_source
 from app.models.enums import ContentStatus, ItemType, MobType, Rarity
+from app.models.guide import Profession
 from app.models.masteries import Jutsu
 from app.models.content import ContentItem, ContentItemAttribute, ContentItemAttack, ContentItemDrop, ContentVersion
 from app.models.enums import ContentCategory
-from app.schemas.content import CamelModel, ContentItemCreate, ContentItemRead, ContentVersionRead, DroppedByEntry, ContentItemSummary, ContentItemUpdate
+from app.schemas.content import CamelModel, ContentItemCreate, ContentItemRead, ContentVersionRead, CraftedByEntry, CraftedNeed, DroppedByEntry, ContentItemSummary, ContentItemUpdate
 
 router = APIRouter(prefix="/content-items", tags=["content-items"])
 
@@ -269,6 +270,26 @@ async def _dropped_by(item: ContentItem, db: AsyncSession) -> list[DroppedByEntr
     return list(best.values())
 
 
+async def _crafted_by(item: ContentItem, db: AsyncSession) -> list[CraftedByEntry]:
+    """
+    Receitas das profissoes cujo RESULTADO e' este item (casa pelo slug, igual ao /bot/recipe). So' itens e armas; calculado na hora,
+    sem migracao. Percorre as (poucas) profissoes e olha o JSON `details['recipes']`.
+    """
+    if item.category not in (ContentCategory.ITEMS, ContentCategory.WEAPONS):
+        return []
+    out: list[CraftedByEntry] = []
+    for prof in (await db.execute(select(Profession).order_by(Profession.name))).scalars().all():
+        for r in (prof.details or {}).get("recipes", []):
+            if (r.get("result") or {}).get("slug") != item.slug:
+                continue
+            out.append(CraftedByEntry(
+                profession_id=prof.id, profession_name=prof.name, profession_name_pt=prof.name_pt, profession_icon=prof.icon,
+                level=int(r.get("level") or 0), workbench=bool(r.get("workbench")),
+                needs=[CraftedNeed(name=n.get("name") or "", name_pt=n.get("namePt"), slug=n.get("slug"), qty=int(n.get("qty") or 1)) for n in r.get("needs", [])],
+            ))
+    return out
+
+
 @router.get("/{item_id}", response_model=ContentItemRead)
 async def get_content_item(
     item_id: UUID, user: User | None = Depends(get_optional_user), db: AsyncSession = Depends(get_db),
@@ -278,6 +299,7 @@ async def get_content_item(
     _hide_draft_from_public(item, user)
     read = ContentItemRead.model_validate(item)
     read.dropped_by = await _dropped_by(item, db)
+    read.crafted_by = await _crafted_by(item, db)
     return read
 
 
@@ -316,6 +338,7 @@ async def get_content_item_by_slug(
     _hide_draft_from_public(item, user)
     read = ContentItemRead.model_validate(item)
     read.dropped_by = await _dropped_by(item, db)
+    read.crafted_by = await _crafted_by(item, db)
     return read
 
 
@@ -516,7 +539,7 @@ async def update_content_item(
     # Historico: guarda o estado ATUAL (antes desta edicao) para poder desfazer; entra na mesma transacao da edicao.
     db.add(ContentVersion(
         content_item_id=item.id, saved_by=staff.username,
-        snapshot=ContentItemRead.model_validate(item).model_dump(mode="json", by_alias=True, exclude={"dropped_by"}),
+        snapshot=ContentItemRead.model_validate(item).model_dump(mode="json", by_alias=True, exclude={"dropped_by", "crafted_by"}),
     ))
 
     linked_rarities = await _drop_rarities(payload.drops, db)

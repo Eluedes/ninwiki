@@ -80,6 +80,20 @@ export function ProfessionPageClient({ profession }: { profession: ApiProfession
   const [bench, setBench] = useState<boolean | null>(null);       // precisa de bancada? (null = tanto faz)
   const [learn, setLearn] = useState<boolean | null>(null);       // precisa aprender com um item? (null = tanto faz)
   const [tab, setTab] = useState('overview');
+  const [destaque, setDestaque] = useState<string | null>(null);   // slug da receita vinda da ficha do item (#recipe-<slug>): abre a aba e rola ate' ela
+  // A hash e' lida no quadro seguinte (a navegacao do Next ja' atualizou a URL) e o setState fica fora do corpo do efeito.
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      const m = /^#recipe-(.+)$/.exec(window.location.hash);
+      if (!m) return;
+      setDestaque(decodeURIComponent(m[1]));
+      setTab('recipes');
+    });
+  }, []);
+  useEffect(() => {
+    if (tab !== 'recipes' || !destaque) return;
+    requestAnimationFrame(() => document.getElementById(`recipe-${destaque}`)?.scrollIntoView({ block: 'center' }));
+  }, [tab, destaque]);
   const name = localizedName(locale, profession.name, profession.namePt);
   const altName = alternateName(locale, profession.name, profession.namePt);
   const details = profession.details;
@@ -221,7 +235,8 @@ export function ProfessionPageClient({ profession }: { profession: ApiProfession
           ) : (
             <ul className="space-y-2">
               {shownRecipes.map((rec, i) => (
-                <li key={`${rec.result.name}-${i}`} className="dossier-panel flex flex-col gap-3 p-3 text-sm md:flex-row md:items-center">
+                <li key={`${rec.result.name}-${i}`} id={rec.result.slug ? `recipe-${rec.result.slug}` : undefined}
+                  className={cn('dossier-panel flex scroll-mt-24 flex-col gap-3 p-3 text-sm md:flex-row md:items-center', rec.result.slug && rec.result.slug === destaque && 'ring-2 ring-primary')}>
                   <div className="flex min-w-0 items-center gap-3 md:w-72 md:shrink-0">
                     <WikiImage
                       src={itemImageUrl(rec.result.image)}

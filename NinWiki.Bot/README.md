@@ -115,6 +115,10 @@ estão no ar. Mensagens em inglês; um problema que se repete só gera novo avis
 - Os comandos `/team ...` (gerir equipe e limpar o log pelo Discord) foram **removidos**: equipe, cargos e limpeza do log agora só pelo painel (`/admin/staff`, `/admin/audit-log`).
 
 
+> **"This command is not available on this server" no servidor de testes:** isso acontecia quando `ALLOWED_GUILD_IDS` estava preenchido sem o servidor de testes (a checagem ignorava o `DEV_GUILD_ID`). Hoje a lista de servidores permitidos é `ALLOWED_GUILD_IDS` **+ `DEV_GUILD_ID`**, os mesmos onde os comandos são registrados. Reinicie o bot depois de atualizar.
+>
+> **Logo quebrado no rodapé das respostas:** o Cloudflare do site barra quem não é navegador (inclusive o Discord), então o logo agora vem da API (`/brand/nin-codex-logo.png`, com o `NINWIKI_API_URL` do bot).
+
 > **Comando não aparece / `CommandNotFound: Application command 'status' not found`:** com versões antigas do bot e `DEV_GUILD_ID` preenchido os comandos eram registrados **só nesse servidor**; hoje o bot registra em todos os de `ALLOWED_GUILD_IDS` e apaga os globais. Se ainda ver o erro: confira o `ALLOWED_GUILD_IDS` e se o bot foi convidado com o escopo `applications.commands` (o log mostra "Nao consegui registrar os comandos no servidor ..."). Em qualquer outro servidor (ou com comandos antigos que sobraram) o Discord chama um comando que o bot não tem. Em produção deixe `DEV_GUILD_ID` **vazio**, reinicie o bot e aguarde até 1 h para os comandos globais aparecerem; use `ALLOWED_GUILD_IDS` para limitar os servidores.
 
 ## Vila e rank do perfil pelos cargos do Discord
@@ -126,3 +130,5 @@ O bot manda à API **fatos** (servidores onde está, cargos de cada servidor, ca
 3. No painel, `/admin/discord-links`: ligue cada servidor a uma vila e, se o nome do cargo não for igual ao do rank (`Chunin`, `Genin`...), cada cargo a um rank.
 
 Sem a intent ligada o bot **sobe mesmo assim** e avisa no terminal ("A 'Server Members Intent' NÃO está ligada..."): só essa função fica desligada. `MEMBER_ROLES_SYNC=false` no `.env` desliga de propósito. O bot só consulta cargos de quem é leitor cadastrado (pede os IDs à API), refaz tudo ao ligar e a cada 30 min e reage na hora a mudança de cargo, entrada e saída de servidor.
+
+**Lista de membros (painel `/admin/bot`):** com a mesma intent, o bot também manda a **lista de membros** de cada servidor (ID, nome de usuário, nome de exibição, bot?, entrada e IDs de cargo; nada de e-mail ou mensagens) em lotes de 500, ao ligar e a cada 30 min, e atualiza um membro nos eventos de entrada, saída e mudança. Teto de 20.000 por servidor. `MEMBER_LIST_SYNC=false` no `.env` desliga só a lista. Depois de atualizar, **faça o Deploy API e reinicie o bot**.

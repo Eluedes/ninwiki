@@ -1,13 +1,13 @@
 'use client';
 
 // Servidores do bot (painel; exige discord.links): so' LEITURA. Para cada servidor onde o bot esta' mostra o nome, o ID, a quantidade de membros
-// e os cargos com os IDs (copiaveis). Os dados vem do que o proprio bot informa a API (/bot/guilds-sync); nada aqui altera o bot.
+// e os cargos com os IDs (copiaveis) e, abrindo "Membros", a lista paginada de membros (nome, ID copiavel, cargos). Os dados vem do que o proprio bot informa a API (/bot/guilds-sync); nada aqui altera o bot.
 
 import { useEffect, useMemo, useState } from 'react';
 import { Check, Copy, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
-import { ApiError, listDiscordLinks, type ApiDiscordGuild } from '@/lib/api-client';
+import { ApiError, listDiscordGuildMembers, listDiscordLinks, type ApiDiscordGuild, type ApiDiscordMembersPage } from '@/lib/api-client';
 import { fill } from '@/lib/i18n-tournaments';
 
 /** Botao que copia um ID para a area de transferencia (e mostra "Copiado" por 1,5 s). */
@@ -29,6 +29,83 @@ function CopyId({ value }: { value: string }) {
       {done ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
       <span className="sr-only">{done ? d.copied : d.copyId}</span>
     </button>
+  );
+}
+
+const PAGE_SIZE = 50;
+
+/** Lista paginada dos membros de UM servidor (so' carrega ao abrir): busca por nome ou ID, ID copiavel, etiqueta Bot e cargos por nome. */
+function MembersList({ guild }: { guild: ApiDiscordGuild }) {
+  const { dict, locale } = useLanguage();
+  const d = dict.discord;
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [offset, setOffset] = useState(0);
+  const [result, setResult] = useState<{ key: string; page: ApiDiscordMembersPage } | null>(null);
+  const [error, setError] = useState(false);
+  const key = `${q}|${offset}`;
+  const roleNames = useMemo(() => new Map(guild.roles.map((r) => [r.roleId, r.name])), [guild.roles]);
+
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    // pequena espera para nao buscar a cada tecla
+    const timer = setTimeout(() => {
+      listDiscordGuildMembers(guild.guildId, { q: q.trim(), limit: PAGE_SIZE, offset })
+        .then((page) => { if (alive) { setResult({ key, page }); setError(false); } })
+        .catch(() => { if (alive) setError(true); });
+    }, 250);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [open, guild.guildId, q, offset, key]);
+
+  const page = result?.page ?? null;
+  const loading = open && !error && result?.key !== key;
+  const synced = page?.syncedAt ?? guild.membersSyncedAt;
+  const partial = page?.partial ?? guild.membersPartial;
+
+  return (
+    <details className="rounded-lg border border-border" onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
+      <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium">{fill(d.membersTitle, { n: guild.membersStored.toLocaleString() })}</summary>
+      <div className="space-y-2 p-3">
+        {!synced ? <p role="status" className="text-sm text-amber-500">{d.membersNotSynced}</p> : (
+          <p className="text-xs text-muted-foreground">{fill(d.membersSyncedAt, { date: new Date(synced).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US') })}</p>
+        )}
+        {partial && <p role="status" className="text-sm text-amber-500">{fill(d.membersPartial, { n: guild.membersStored.toLocaleString() })}</p>}
+        <input type="search" value={q} onChange={(e) => { setQ(e.target.value); setOffset(0); }} placeholder={d.memberSearch} aria-label={d.memberSearch} className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" />
+        {error && <p role="alert" className="text-sm text-destructive">{d.membersLoadError}</p>}
+        <div className="max-h-96 overflow-auto rounded-lg border border-border">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-muted text-left text-xs uppercase text-muted-foreground">
+              <tr><th className="px-3 py-2">{d.memberColumn}</th><th className="px-3 py-2">{d.memberIdColumn}</th><th className="px-3 py-2">{d.memberRolesColumn}</th></tr>
+            </thead>
+            <tbody>
+              {page?.items.map((m) => (
+                <tr key={m.discordId} className="border-t border-border align-top">
+                  <td className="px-3 py-1.5">
+                    <span className="font-medium">{m.displayName || m.username}</span>
+                    {m.isBot && <span className="ml-1 rounded border border-primary/50 px-1 text-[10px] uppercase text-primary">{d.botTag}</span>}
+                    {m.displayName && m.username && m.displayName !== m.username && <div className="text-xs text-muted-foreground">{m.username}</div>}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-1.5"><span className="font-mono">{m.discordId}</span> <CopyId value={m.discordId} /></td>
+                  <td className="px-3 py-1.5 text-xs">{m.roles.length === 0 ? <span className="text-muted-foreground">{d.membersNoRoles}</span> : m.roles.map((id) => roleNames.get(id) ?? id).join(', ')}</td>
+                </tr>
+              ))}
+              {page && page.items.length === 0 && <tr><td colSpan={3} className="px-3 py-3 text-muted-foreground">{d.noMemberMatch}</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        {loading && <Loader2 className="h-4 w-4 animate-spin text-primary" aria-label={d.loading} />}
+        {page && page.total > 0 && (
+          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span>{fill(d.membersPageInfo, { from: offset + 1, to: Math.min(offset + PAGE_SIZE, page.total), total: page.total.toLocaleString() })}</span>
+            <span className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>{d.prevPage}</Button>
+              <Button variant="outline" size="sm" disabled={offset + PAGE_SIZE >= page.total} onClick={() => setOffset(offset + PAGE_SIZE)}>{d.nextPage}</Button>
+            </span>
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
 
@@ -54,6 +131,7 @@ function GuildInfo({ guild }: { guild: ApiDiscordGuild }) {
         <div className="flex items-center gap-1"><dt className="text-muted-foreground">{d.serverId}:</dt><dd className="font-mono">{guild.guildId}</dd><CopyId value={guild.guildId} /></div>
         <div><dd>{guild.memberCount > 0 ? fill(d.membersCount, { n: guild.memberCount.toLocaleString() }) : <span className="text-muted-foreground">{d.membersUnknown}</span>}</dd></div>
       </dl>
+      <MembersList guild={guild} />
       <details className="rounded-lg border border-border">
         <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium">{fill(d.rolesTitle, { n: guild.roles.length })}</summary>
         <div className="space-y-2 p-3">

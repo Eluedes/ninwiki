@@ -30,7 +30,7 @@ export function HomeClient({ posts, announcement = null }: { posts: ApiPostSumma
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
         {/* Livro grande como elemento visual: a direita no desktop, pequeno acima do titulo no celular */}
         <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-10">
-          <NinLogo className="h-20 w-16 md:order-2 md:h-40 md:w-32 md:shrink-0 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]" />
+          <NinLogo className="h-20 w-20 md:order-2 md:h-40 md:w-40 md:shrink-0 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]" />
           <div className="md:order-1">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
             <Slash className="h-4 w-4" />

@@ -28,7 +28,20 @@ log = logging.getLogger("ninwiki_bot")
 NO_MENTIONS = discord.AllowedMentions.none()
 KIND_ICON = {"item": "🎒", "mob": "👹", "weapon": "⚔️", "guide": "📘", "mission": "📜", "mastery": "✨", "jutsu": "🌀", "post": "📰"}
 KIND_COLOR = 0x38BDF8
-LOGO_PATH = "/images/logo/nin-logo-laranja.png"
+LOGO_PATH = "/images/logo/nin-codex-logo.png"
+LOGO_URL: str | None = None   # endereco completo do logo (main.py aponta para a API: o Cloudflare do site barra o Discord); sem ele usa SITE_URL + LOGO_PATH
+
+
+def set_logo_url(url: str | None) -> None:
+    """Define o endereco do logo usado no rodape das respostas e na ajuda."""
+    global LOGO_URL
+    LOGO_URL = url
+
+
+def logo_for(site_url: str) -> str | None:
+    """Logo a mostrar: o da API (set_logo_url) ou, sem ele, o do site; None se nao ha nenhum."""
+    base = site_url.rstrip("/")
+    return LOGO_URL or (f"{base}{LOGO_PATH}" if base else None)
 
 
 def _clean(text: str) -> str:
@@ -107,9 +120,9 @@ def _footer(user_name: str | None, site_url: str, lang: str, when: datetime) -> 
     who = t["searched_by"].format(user=_clean(user_name)[:40]) if user_name else ""
     line = " · ".join(x for x in (f"🔎 {who}" if who else "", f"<t:{int(when.timestamp())}:R>") if x)
     text = f"-# {line}\n-# 📖 **{t['team']}**"
-    base = site_url.rstrip("/")
-    if base:
-        return [discord.ui.Separator(), discord.ui.Section(discord.ui.TextDisplay(text), accessory=discord.ui.Thumbnail(f"{base}{LOGO_PATH}", description=t["team"]))]
+    logo = logo_for(site_url)
+    if logo:
+        return [discord.ui.Separator(), discord.ui.Section(discord.ui.TextDisplay(text), accessory=discord.ui.Thumbnail(logo, description=t["team"]))]
     return [discord.ui.Separator(), discord.ui.TextDisplay(text)]
 
 

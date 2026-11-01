@@ -1,9 +1,7 @@
 'use client';
 
-// Logo do Nin Codex: um LIVRO de capa preto couro com filete dourado e o emblema do jogo na capa
-// (public/images/logo/nin-codex-livro.svg, gerado por NinWiki.Api/scripts/gerar_logo.py).
-// O livro nao muda de cor com o tema de cor do site (o dourado e' fixo), entao e' uma unica imagem.
-// O favicon e o avatar do bot usam so' o EMBLEMA do jogo (app/icon.png, app/favicon.ico).
+// Logo do Nin Codex: o LIVRO preto com o shuriken verde na capa (public/images/logo/nin-codex-livro.png, gerado de nin-codex-logo.png por NinWiki.Api/scripts/gerar_logo.py).
+// A logo nao muda de cor com o tema de cor do site, entao e' uma unica imagem. O favicon (app/icon.png, app/favicon.ico) e o avatar do bot usam a mesma logo.
 
 import { useLanguage } from '@/components/providers/language-provider';
 
@@ -11,8 +9,8 @@ import { useLanguage } from '@/components/providers/language-provider';
 export function NinLogo({ className }: { className?: string }) {
   return (
     <span className={className} style={{ display: 'inline-block', position: 'relative' }}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- SVG pequeno e fixo; next/image nao otimiza SVG e nao traria beneficio */}
-      <img src="/images/logo/nin-codex-livro.svg" alt="Nin Codex" className="block h-full w-full object-contain" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- PNG pequeno e fixo, ja' no tamanho certo; next/image nao traria beneficio */}
+      <img src="/images/logo/nin-codex-livro.png" alt="Nin Codex" className="block h-full w-full object-contain" />
     </span>
   );
 }
@@ -26,7 +24,7 @@ export function NinLockup({ size = 'lg' }: { size?: 'lg' | 'sm' }) {
   const big = size === 'lg';
   return (
     <span className={`flex items-center ${big ? 'gap-2.5 md:gap-3.5' : 'gap-2.5'}`}>
-      <NinLogo className={big ? 'h-9 w-7 md:h-12 md:w-10' : 'h-9 w-7'} />
+      <NinLogo className={big ? 'h-10 w-10 md:h-12 md:w-12' : 'h-10 w-10'} />   {/* a logo e' quase quadrada */}
       <span className="flex flex-col justify-center">
         <span className={`font-display font-extrabold uppercase leading-none ${big ? 'text-[15px] tracking-[0.1em] md:text-[22px] md:tracking-[0.12em]' : 'text-base tracking-[0.12em]'}`}>
           {dict.siteName}

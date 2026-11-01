@@ -67,6 +67,17 @@ const en = {
   adminSearch: 'Search by name or organizer...', adminFilterAll: 'All', adminFilterHidden: 'Hidden', adminRefresh: 'Refresh', adminOrganizer: 'Organizer',
   adminHide: 'Hide', adminShow: 'Show', adminDelete: 'Delete', adminConfirmDelete: 'Delete this tournament for good?', adminRename: 'Fix name', adminOpenPage: 'Open page',
   adminHiddenBy: 'hidden by {name}', adminBanned: 'organizer banned', adminEmpty: 'No tournaments found.', adminError: 'Could not complete the action.', adminSaved: 'Saved.',
+  // visibilidade pelo organizador
+  visibleLabel: 'Visibility to the public', visibleOn: 'Visible to the public', visibleOff: 'Hidden (only you can see it)', makeVisible: 'Make visible', makeHidden: 'Hide',
+  hiddenByYouNotice: 'Hidden: nobody but you can see this tournament. It is not listed and its link shows nothing to others until you make it visible.',
+  hiddenByYouBadge: 'Hidden', newHiddenNotice: 'Nobody but you sees this tournament until you make it visible.', newPublishNow: 'Make it visible to everyone right away',
+  visibleHint: 'Hide it while you are still setting up phases and entries; publish when it is ready.', staffLockedNotice: 'The moderators hid this tournament, so you cannot change its visibility.',
+  // importar lista de inscritos
+  importList: 'Import list', importTitle: 'Import entries', importHint: 'Paste one name per line. Names separated by comma or semicolon and simple CSV lines (name or name;seed) also work. Nothing is added until you confirm.',
+  importPlaceholder: 'Naruto\nSasuke\nSakura;3', importDropHint: 'You can also drop a .txt or .csv file here (it is read in your browser).',
+  importPreview: '{n} to add, {skipped} skipped, {empty} empty ignored.', importConfirm: 'Import {n} names', importAtStart: 'Add at the start of the seeding (default: at the end)',
+  importDuplicate: 'duplicate (same name ignoring case and accents)', importTooLong: 'name longer than 60 characters', importInvalid: 'invalid name', importFull: 'tournament is full (256 entries)',
+  importFileTooBig: 'File too large (max 1 MB).',
 };
 
 export type TournamentsDict = Record<keyof typeof en, string>;
@@ -124,6 +135,17 @@ const pt: TournamentsDict = {
   adminSearch: 'Buscar por nome ou organizador...', adminFilterAll: 'Todos', adminFilterHidden: 'Escondidos', adminRefresh: 'Atualizar', adminOrganizer: 'Organizador',
   adminHide: 'Esconder', adminShow: 'Mostrar', adminDelete: 'Apagar', adminConfirmDelete: 'Apagar este torneio de vez?', adminRename: 'Corrigir nome', adminOpenPage: 'Abrir página',
   adminHiddenBy: 'escondido por {name}', adminBanned: 'organizador banido', adminEmpty: 'Nenhum torneio encontrado.', adminError: 'Não foi possível concluir a ação.', adminSaved: 'Salvo.',
+  // visibilidade pelo organizador
+  visibleLabel: 'Visibilidade para o público', visibleOn: 'Visível ao público', visibleOff: 'Oculto (só você vê)', makeVisible: 'Tornar visível', makeHidden: 'Ocultar',
+  hiddenByYouNotice: 'Oculto: ninguém além de você vê este torneio. Ele não aparece na lista e o link não mostra nada para os outros até você torná-lo visível.',
+  hiddenByYouBadge: 'Oculto', newHiddenNotice: 'Ninguém além de você vê este torneio até você torná-lo visível.', newPublishNow: 'Deixar visível para todos já',
+  visibleHint: 'Oculte enquanto ainda arruma fases e inscritos; publique quando estiver pronto.', staffLockedNotice: 'A moderação escondeu este torneio, então você não pode mudar a visibilidade.',
+  // importar lista de inscritos
+  importList: 'Importar lista', importTitle: 'Importar inscritos', importHint: 'Cole um nome por linha. Nomes separados por vírgula ou ponto e vírgula e linhas CSV simples (nome ou nome;seed) também funcionam. Nada é adicionado até você confirmar.',
+  importPlaceholder: 'Naruto\nSasuke\nSakura;3', importDropHint: 'Você também pode soltar um arquivo .txt ou .csv aqui (ele é lido no seu navegador).',
+  importPreview: '{n} para adicionar, {skipped} ignorados, {empty} vazios descartados.', importConfirm: 'Importar {n} nomes', importAtStart: 'Adicionar no início das sementes (padrão: no fim)',
+  importDuplicate: 'duplicado (mesmo nome sem contar maiúsculas e acentos)', importTooLong: 'nome com mais de 60 caracteres', importInvalid: 'nome inválido', importFull: 'torneio lotado (256 inscritos)',
+  importFileTooBig: 'Arquivo grande demais (máx. 1 MB).',
 };
 
 export const tournamentsEn: TournamentsDict = en;

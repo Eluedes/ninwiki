@@ -30,7 +30,7 @@ class Profession(Base):
 
 
 class NinjaRank(Base):
-    """Rank ninja (Genin ate' Kage) - aba do Guia."""
+    """Rank ninja (Genin ate' Kami, antigo Kage; o id continua `kage`) - aba do Guia."""
     __tablename__ = "ninja_ranks"
 
     id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ex: "genin"

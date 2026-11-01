@@ -62,6 +62,7 @@ export default function TournamentsAdminPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{r.name}</span><StatusBadge status={r.status} />
                   {r.hidden && <span className="text-xs text-amber-500">{t.hiddenBadge}{r.hiddenBy ? ` (${fill(t.adminHiddenBy, { name: r.hiddenBy })})` : ''}</span>}
+                  {r.organizerHidden && <span className="text-xs text-muted-foreground">{t.hiddenByYouBadge}</span>}
                   {r.visibility === 'unlisted' && <span className="text-xs text-muted-foreground">{t.unlistedBadge}</span>}
                 </div>
                 <p className="text-xs text-muted-foreground">{t.adminOrganizer}: {r.ownerName}{r.ownerBanned ? ` (${t.adminBanned})` : ''} - {fill(t.entries, { n: r.entryCount })} - {formatDateTime(r.createdAt, locale)}</p>

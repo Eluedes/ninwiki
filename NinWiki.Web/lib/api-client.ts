@@ -129,9 +129,22 @@ export interface ApiContentItem {
   drops: ApiDropEntry[];
   // Mobs que dropam esta entry - calculado pela API a partir das paginas de mob (nunca cadastrado a mao).
   droppedBy: ApiDroppedBy[];
+  // Receitas das profissoes que produzem esta entry - calculado pela API a partir de Profession.details (somente leitura).
+  craftedBy?: ApiCraftedBy[];
   updatedAt?: string | null;       // ultima edicao ('Atualizado em')
   translationAuto?: boolean;       // portugues veio da traducao automatica e ninguem revisou (selo no site)
   status: 'draft' | 'published';
+}
+
+/** Uma receita das profissoes que produz a entry (espelha CraftedByEntry no backend). */
+export interface ApiCraftedBy {
+  professionId: string;
+  professionName: string;
+  professionNamePt: string | null;
+  professionIcon: string;
+  level: number;
+  workbench: boolean;
+  needs: { name: string; namePt: string | null; slug: string | null; qty: number }[];
 }
 
 /** Um mob que dropa a entry (espelha DroppedByEntry no backend). */
@@ -1810,7 +1823,7 @@ export interface ApiPlayerRef { id: string; username: string; avatarUrl: string 
 
 export interface ApiTournamentSummary {
   id: string; name: string; status: TournamentStatus; visibility: TournamentVisibility; startsAt: string | null; createdAt: string;
-  championName: string | null; hidden: boolean; owner: ApiPlayerRef; entryCount: number; phaseCount: number;
+  championName: string | null; hidden: boolean; organizerHidden: boolean; owner: ApiPlayerRef; entryCount: number; phaseCount: number;
 }
 export interface ApiEntry {
   id: string; displayName: string; seed: number; readerId: string | null; avatarUrl: string | null;
@@ -1837,10 +1850,10 @@ export interface ApiPlayerProfile {
   source?: { kind: 'discord' | 'default'; guildName: string | null } | null;
   stats: { tournaments: number; wins: number; losses: number; titles: number }; history: ApiHistoryItem[]; trophies: ApiHistoryItem[];
 }
-export interface TournamentInput { name: string; description: string; startsAt?: string | null; visibility: TournamentVisibility }
+export interface TournamentInput { name: string; description: string; startsAt?: string | null; visibility: TournamentVisibility; organizerHidden?: boolean }
 export interface PhaseInput { name: string; teamSize: number; format: PhaseFormat }
 export interface ApiModerationTournament {
-  id: string; name: string; status: TournamentStatus; visibility: TournamentVisibility; hidden: boolean; hiddenBy: string | null;
+  id: string; name: string; status: TournamentStatus; visibility: TournamentVisibility; hidden: boolean; organizerHidden: boolean; hiddenBy: string | null;
   createdAt: string; ownerId: string; ownerName: string; ownerBanned: boolean; entryCount: number;
 }
 
@@ -1865,6 +1878,8 @@ export function deleteTournament(id: string): Promise<void> { return apiFetch(tP
 export function joinTournament(id: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/join`, jsonInit('POST'), true); }
 export function leaveTournament(id: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/join`, jsonInit('DELETE'), true); }
 export function addGuestEntry(id: string, displayName: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries`, jsonInit('POST', { displayName }), true); }
+/** Importa uma lista de nomes de uma vez; `skipped` traz os que a API recusou (duplicate, too_long, invalid, full). */
+export function importEntries(id: string, names: string[], position: 'end' | 'start' = 'end'): Promise<{ added: number; skipped: { name: string; reason: string }[]; tournament: ApiTournament }> { return apiFetch(`${tPath(id)}/entries/bulk`, jsonInit('POST', { names, position }), true); }
 export function removeEntry(id: string, entryId: string): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries/${entryId}`, jsonInit('DELETE'), true); }
 export function reorderEntries(id: string, ids: string[]): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/entries/order`, jsonInit('PUT', { ids }), true); }
 export function createPhase(id: string, input: PhaseInput): Promise<ApiTournament> { return apiFetch(`${tPath(id)}/phases`, jsonInit('POST', input), true); }
@@ -1884,9 +1899,19 @@ export function updateMyProfile(input: { gameName: string | null }): Promise<Api
 
 // ---- Ligacao Discord -> perfil (painel; permissao discord.links) ----
 export interface ApiDiscordRole { roleId: string; name: string; ninjaRankId: string | null }
-export interface ApiDiscordGuild { guildId: string; name: string; active: boolean; memberCount: number; villageId: string | null; readers: number; roles: ApiDiscordRole[] }
+export interface ApiDiscordGuild { guildId: string; name: string; active: boolean; memberCount: number; villageId: string | null; readers: number; membersStored: number; membersSyncedAt: string | null; membersPartial: boolean; roles: ApiDiscordRole[] }
 /** Servidores que o bot informou, com a vila e o mapeamento cargo -> rank. */
 export function listDiscordLinks(): Promise<ApiDiscordGuild[]> { return apiFetch('/discord-links', { cache: 'no-store' }); }
+export interface ApiDiscordMember { discordId: string; username: string; displayName: string; isBot: boolean; joinedAt: string | null; roles: string[] }
+export interface ApiDiscordMembersPage { total: number; items: ApiDiscordMember[]; syncedAt: string | null; partial: boolean }
+/** Membros de um servidor (paginado; `q` busca por nome ou ID). So' quem tem discord.links. */
+export function listDiscordGuildMembers(guildId: string, opts: { q?: string; limit?: number; offset?: number } = {}): Promise<ApiDiscordMembersPage> {
+  const params = new URLSearchParams();
+  if (opts.q) params.set('q', opts.q);
+  params.set('limit', String(opts.limit ?? 50));
+  params.set('offset', String(opts.offset ?? 0));
+  return apiFetch(`/discord-links/guilds/${guildId}/members?${params}`, { cache: 'no-store' });
+}
 /** Salva a vila do servidor e os cargos -> rank (a API recalcula na hora o perfil dos jogadores do servidor). */
 export function saveDiscordLinks(guildId: string, input: { villageId: string | null; roles: { roleId: string; ninjaRankId: string | null }[] }): Promise<ApiDiscordGuild> {
   return apiFetch(`/discord-links/guilds/${guildId}`, jsonInit('PUT', input));
