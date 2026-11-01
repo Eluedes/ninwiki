@@ -2115,7 +2115,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     cc = r.json()
     r = await c.post("/media", files={"file": ("b.png", _png((3, 2, 1)), "image/png")}, data={"category": "inventada"}, headers=S)
     check("categoria desconhecida e' recusada (422)", r.status_code == 422)
-    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard", "skin", "tools"):
+    for nova in ("scroll", "npc", "monster", "furniture", "hair_beard", "skin", "vanity", "tools"):
         r = await c.post("/media", files={"file": (f"{nova}.png", _png((4, 4, len(nova))), "image/png")}, data={"category": nova}, headers=S)
         check(f"categoria nova '{nova}' existe", r.status_code == 201 and r.json()["category"] == nova, r.text[:100])
         if r.status_code == 201:
@@ -2211,7 +2211,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
     # TRANCAR categorias por cargo (permissao media.cat.<categoria>): igual a 'closed', mas escolhido pelo S.Adm
     r = await c.get("/roles/permissions", headers=S)
     nomes = {p["name"] for p in r.json()["permissions"]}
-    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.skin", "media.cat.tools", "media.cat.none"} <= nomes)
+    check("o catalogo de permissoes tem uma por categoria do banco de imagens (e 'Sem categoria')", {"media.cat.weapon", "media.cat.hair_beard", "media.cat.skin", "media.cat.vanity", "media.cat.tools", "media.cat.none"} <= nomes)
     me_cr = (await c.get("/auth/me", headers=Cm)).json()["permissions"]
     check("por padrao o Creator ve todas as categorias (menos closed)", "media.cat.weapon" in me_cr and "media.cat.none" in me_cr and "media.closed" not in me_cr)
     trancada = (await c.post("/media", files={"file": ("tr.png", _png((31, 3, 3)), "image/png")}, data={"name": f"{SLUG} trancada", "category": "weapon"}, headers=S)).json()
@@ -3103,7 +3103,7 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         return [{"id": i, "name": n} for i, n in pares]
 
     r = await api("POST", "/bot/guilds-sync", BT, json={"guilds": [
-        {"id": G_A, "name": "Servidor A TESTE", "roles": cargos(("11", nome_gen), ("12", "Cargo qualquer"), ("13", "Membro"))},
+        {"id": G_A, "name": "Servidor A TESTE", "memberCount": 1234, "roles": cargos(("11", nome_gen), ("12", "Cargo qualquer"), ("13", "Membro"))},
         {"id": G_B, "name": "Servidor B TESTE", "roles": cargos(("21", nome_chu), ("22", "Outro"))},
         {"id": G_C, "name": "Servidor C TESTE", "roles": cargos(("31", "Visitante"))}]})
     check("guilds-sync guarda servidores e cargos", r.status_code == 200 and r.json()["guilds"] == 3, r.text[:200])
@@ -3135,6 +3135,9 @@ async def rodar_testes(c: httpx.AsyncClient) -> None:
         perms_dl = perms_dl and (("discord.links" in (await api("GET", "/auth/me", h)).json()["permissions"]) == esperado)
     check("/auth/me inclui discord.links para S.Adm e Adm, nao para Creator", perms_dl)
     lista = (await api("GET", "/discord-links", A)).json()
+    check("painel do bot: o servidor traz a quantidade de membros informada (e 0 quando o bot nao informou)",
+          next(g for g in lista if g["guildId"] == G_A)["memberCount"] == 1234 and next(g for g in lista if g["guildId"] == G_C)["memberCount"] == 0)
+    check("guilds-sync: quantidade de membros negativa -> 422", (await api("POST", "/bot/guilds-sync", BT, json={"guilds": [{"id": G_A, "name": "x", "memberCount": -1, "roles": []}]})).status_code == 422)
     gA = next((g for g in lista if g["guildId"] == G_A), None)
     check("Adm lista os servidores do bot com cargos e leitores", gA is not None and gA["active"] and gA["readers"] == 1 and {x["roleId"] for x in gA["roles"]} == {"11", "12", "13"}, str(gA)[:200])
     check("vila inexistente / rank inexistente / cargo de outro servidor -> 422",

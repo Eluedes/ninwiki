@@ -29,7 +29,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-CATEGORIES = {"weapon", "gear", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "skin", "tools", "other"}   # as mesmas do painel
+CATEGORIES = {"weapon", "gear", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "skin", "vanity", "tools", "other"}   # as mesmas do painel
 EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 CELL = 112      # tamanho de cada icone na folha (ampliado)
 LABEL_H = 18    # faixa do numero embaixo do icone

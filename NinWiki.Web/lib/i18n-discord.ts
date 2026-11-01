@@ -19,6 +19,10 @@ const en = {
   guildVillage: 'Village of this server', noVillage: 'No village', roleColumn: 'Discord role', rankColumn: 'Ninja rank', byName: 'By role name (automatic)',
   readersCount: '{n} players with roles read here', inactive: 'The bot is no longer in this server (the mapping is kept).', noRoles: 'No roles reported for this server.',
   save: 'Save', saving: 'Saving...', loading: 'Loading',
+  // painel do bot (/admin/bot)
+  botTitle: 'Bot servers', botSubtitle: 'The Discord servers where the bot is, with the server ID, the number of members and the roles (with their IDs). Read-only: the bot reports this list on its own.',
+  botEmpty: 'The bot has not reported any server yet.', serverId: 'Server ID', membersCount: '{n} members', membersUnknown: 'members: not reported yet (restart the bot)',
+  rolesTitle: 'Roles ({n})', roleIdColumn: 'Role ID', copyId: 'Copy ID', copied: 'Copied', filterRoles: 'Filter roles by name or ID', noRoleMatch: 'No role matches.', activeBadge: 'Active', inactiveBadge: 'Inactive',
 };
 
 export type DiscordDict = Record<keyof typeof en, string>;
@@ -38,4 +42,7 @@ export const discordPt: DiscordDict = {
   guildVillage: 'Vila deste servidor', noVillage: 'Sem vila', roleColumn: 'Cargo do Discord', rankColumn: 'Rank ninja', byName: 'Pelo nome do cargo (automático)',
   readersCount: '{n} jogadores com cargos lidos aqui', inactive: 'O bot não está mais neste servidor (a ligação fica guardada).', noRoles: 'Nenhum cargo informado para este servidor.',
   save: 'Salvar', saving: 'Salvando...', loading: 'Carregando',
+  botTitle: 'Servidores do bot', botSubtitle: 'Os servidores do Discord onde o bot está, com o ID do servidor, a quantidade de membros e os cargos (com os IDs). Só leitura: o próprio bot informa esta lista.',
+  botEmpty: 'O bot ainda não informou nenhum servidor.', serverId: 'ID do servidor', membersCount: '{n} membros', membersUnknown: 'membros: ainda não informado (reinicie o bot)',
+  rolesTitle: 'Cargos ({n})', roleIdColumn: 'ID do cargo', copyId: 'Copiar ID', copied: 'Copiado', filterRoles: 'Filtrar cargos por nome ou ID', noRoleMatch: 'Nenhum cargo encontrado.', activeBadge: 'Ativo', inactiveBadge: 'Inativo',
 };

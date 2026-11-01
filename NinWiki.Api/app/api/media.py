@@ -52,7 +52,7 @@ def _apagar_arquivo(filename: str) -> None:
 
 
 # Categorias do banco de imagens ('' = sem categoria). Fixas de proposito: o filtro do painel fica pequeno e o nome nao vira lixo digitado.
-MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "gear", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "skin", "tools", "closed", "other")
+MEDIA_CATEGORIES: tuple[str, ...] = ("weapon", "gear", "consumable", "currency", "material", "ring", "scroll", "npc", "monster", "furniture", "hair_beard", "skin", "vanity", "tools", "closed", "other")
 CLOSED = "closed"   # categoria PRIVADA: so' S.Adm (media.closed). As demais podem ser TRANCADAS por cargo em /admin/permissions (media.cat.<categoria>)
 
 
