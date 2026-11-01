@@ -32,6 +32,7 @@ from ninwiki_bot.guilds_feed import GuildsFeed
 from ninwiki_bot.language import LanguageStore
 from ninwiki_bot.member_sync import MemberSync, SYNC_MINUTES
 from ninwiki_bot.public_commands import register_public_commands, set_logo_url
+from ninwiki_bot.site_url import escolher_site_url
 from ninwiki_bot.version_feed import VersionStore, build_embed as build_version_embed, merge as merge_versions
 
 # Pasta dos arquivos *_state.json. Padrao: ao lado do main.py (SquareCloud/local). No Docker/Azure: BOT_STATE_DIR=/data (volume), para o container poder ser read_only.
@@ -217,8 +218,21 @@ class NinWikiBot(discord.Client):
         msg = await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
         self.status_store.save(channel.id, msg.id)
 
+    async def _refresh_site_url(self) -> None:
+        """Atualiza o endereco do site com o que a API informa (FRONTEND_ORIGIN dela): numa troca de dominio o bot acompanha sozinho, sem mexer no SITE_URL do bot.
+        Se a API nao responde ou devolve algo invalido, fica o que ja' havia (SITE_URL do .env ou o ultimo bom)."""
+        try:
+            cfg = await self.api.bot_config()
+        except ApiError:
+            return
+        novo = escolher_site_url(self.settings.site_url, str(cfg.get("siteUrl") or ""))
+        if novo != self.settings.site_url:
+            log.warning("Endereco do site atualizado pela API: %s -> %s", self.settings.site_url or "(vazio)", novo)
+            self.settings.site_url = novo
+
     async def _check_services(self) -> tuple[dict[str, bool | None], dict[str, int | None]]:
         """Pergunta agora se API, banco e site respondem (e em quantos ms). None = nao da' pra saber (banco com a API fora)."""
+        await self._refresh_site_url()
         t0 = time.monotonic()
         api_up, db_up = await self.api.api_status()
         api_ms = int((time.monotonic() - t0) * 1000)
@@ -431,7 +445,9 @@ class NinWikiBot(discord.Client):
         set_logo_url(f"{self.settings.ninwiki_api_url.rstrip('/')}/brand/nin-codex-logo.png")
         # Servidores com permissao para usar os comandos: ALLOWED_GUILD_IDS + o de testes (DEV_GUILD_ID), os mesmos onde os comandos sao registrados. Lista vazia = sem restricao.
         allowed = set(target_guilds(self.settings.allowed_guilds, self.settings.dev_guild_id)) if self.settings.allowed_guilds else set()
-        register_public_commands(self.tree, self.api, allowed, self.settings.site_url, self.check_now, bool(self.settings.site_url), self.languages)
+        await self._refresh_site_url()   # antes de registrar: o endereco do site vem da API (o SITE_URL do .env e' so' reserva)
+        # `lambda`: os comandos leem o endereco NA HORA de responder (acompanham uma troca de dominio sem reiniciar o bot).
+        register_public_commands(self.tree, self.api, allowed, lambda: self.settings.site_url, self.check_now, bool(self.settings.site_url), self.languages)
         # Comandos so' nos servidores escolhidos (ALLOWED_GUILD_IDS + DEV_GUILD_ID), na hora, e sem sobra de comandos globais antigos (ver ninwiki_bot/command_sync.py).
         result = await sync_commands(self.tree, target_guilds(self.settings.allowed_guilds, self.settings.dev_guild_id), lambda gid: discord.Object(id=gid))
         self.command_sync_result = result

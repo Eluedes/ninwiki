@@ -16,7 +16,8 @@ class BotSettings(BaseSettings):
     error_channel_id: int | None = None
     # Canal SO' do monitor (painel "Nin Codex status" e avisos de API/banco/site caiu/voltou), para nao misturar com os erros do wiki. Vazio = usa o canal de erros.
     status_channel_id: int | None = None
-    # Endereco publico do site (ex: https://wiki.seudominio.com): o bot confere se esta' no ar. Vazio = nao vigia o site.
+    # RESERVA do endereco publico do site (ex: https://wiki.seudominio.com). O endereco verdadeiro vem da API (GET /bot/config = FRONTEND_ORIGIN dela, ver
+    # ninwiki_bot/site_url.py): numa troca de dominio o bot acompanha sozinho. Este valor so' vale se a API nao responder; o bot atualiza o campo em execucao.
     site_url: str = ""
     # (opcional) Endereco SO para a checagem de saude (ex: https://ninwiki.squareweb.app, o endereco direto da hospedagem, sem Cloudflare/cache na frente).
     # Vazio = checa o proprio SITE_URL. Os links dos botoes do /search continuam usando o SITE_URL.

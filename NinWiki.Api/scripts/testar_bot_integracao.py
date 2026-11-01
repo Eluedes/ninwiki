@@ -238,6 +238,15 @@ async def testar() -> None:
     if TEM_DISCORD:
         from ninwiki_bot.public_commands import build_drop_embed, build_posts_embed, build_recipe_embed, logo_for, set_logo_url
         set_logo_url(None)
+        from ninwiki_bot.public_commands import site_now
+        from ninwiki_bot.site_url import escolher_site_url
+        check("endereco do site: o da API vence o SITE_URL do .env; API vazia/invalida/fora = fica o reserva; barra no fim some",
+              escolher_site_url("https://antigo.example", "https://novo.example/") == "https://novo.example"
+              and escolher_site_url("https://reserva.example/", None) == "https://reserva.example" and escolher_site_url("https://reserva.example", "") == "https://reserva.example"
+              and escolher_site_url("https://reserva.example", "javascript:alert(1)") == "https://reserva.example" and escolher_site_url("", "nao e url") == "")
+        _vivo = {"u": "https://antigo.example"}
+        check("comandos leem o endereco na hora (funcao): acompanha a troca de dominio sem reiniciar; texto fixo tambem funciona",
+              site_now(lambda: _vivo["u"]) == "https://antigo.example" and not _vivo.update(u="https://novo.example") and site_now(lambda: _vivo["u"]) == "https://novo.example" and site_now("https://fixo.example") == "https://fixo.example")
         sem_api = logo_for("https://wiki.example/") == "https://wiki.example/images/logo/nin-codex-logo.png" and logo_for("") is None
         set_logo_url("https://api.example/brand/nin-codex-logo.png")
         check("logo das respostas: usa o da API quando definido (o site e' barrado pelo Cloudflare); senao o do site; sem nada, nenhum", sem_api and logo_for("https://wiki.example/") == "https://api.example/brand/nin-codex-logo.png")
@@ -511,6 +520,8 @@ async def testar() -> None:
         db.add(ContentItem(slug=f"{termo}-rascunho", category=ContentCategory.ITEMS, name=f"{termo} Secret", icon="🎒", rarity=Rarity.COMMON,
                            description="draft", status=ContentStatus.DRAFT))
         await db.commit()
+    cfg = await api.bot_config()
+    check("cliente do bot: /bot/config traz o endereco do site da API (fonte unica dos links)", cfg.get("siteUrl") == settings.frontend_origin.rstrip("/"), str(cfg))
     try:
         achados = await api.search(termo)
         check("busca acha o conteudo PUBLICADO", any(h["title"] == f"{termo} Blade" and h["href"] == f"/detail/{termo}-pub" and h["kind"] == "weapon" for h in achados), str(achados))

@@ -747,7 +747,7 @@ Endereço novo definido: `nincodex.guima.net` (o antigo é `ninwiki.guima.net`).
 - [ ] **Site (`WEB_ENV`/`.env`):** `NEXT_PUBLIC_SITE_URL=https://nincodex.guima.net` e `LEGACY_SITE_HOSTS=<endereço-antigo>` (sem `https://`); **reconstruir** o Web.
 - [ ] **API:** `FRONTEND_ORIGIN=https://nincodex.guima.net` e `FRONTEND_ORIGINS=https://<endereço-antigo>` durante a transição; depois apague o `FRONTEND_ORIGINS`. Se existir `COOKIE_DOMAIN` (ou o cookie for de um domínio), confira que cobre o host novo e a API.
 - [ ] **Discord Developer Portal:** nome do bot **Nin Codex** e avatar `NinWiki.Bot/assets/avatar.png`; o *Redirect* do OAuth só muda se o **domínio da API** mudar (`https://api…/auth/discord/callback`).
-- [ ] **Bot:** `SITE_URL` com o endereço novo e **reiniciar o bot** (o painel "Nin Codex status" e os botões usam esse endereço).
+- [ ] **Bot:** **nada a mudar** — o bot pega o endereço do site da API (`FRONTEND_ORIGIN`), então basta atualizar a **API** (e reiniciá-la); o bot passa a usar o endereço novo sozinho (na próxima checagem, em até alguns minutos, sem reiniciar). O `SITE_URL` do bot é só reserva: se ele ainda tiver o endereço antigo, **não** causa mais link velho.
 - [ ] **Quem estava logado no endereço antigo precisa entrar de novo** (o cookie não passa de um host para o outro).
 - [ ] Conferir `/version`, o login, uma imagem, o `sitemap.xml`/RSS (devem usar o endereço novo) e que o endereço antigo redireciona (308) para o novo.
 
@@ -867,7 +867,7 @@ sozinho (DB-IP Lite). Só rodando local (`POSTGRES_*` do `.env.example` servem s
 | `DEV_GUILD_ID` | vazio | servidor de testes: entra na lista acima (comandos na hora). Em produção pode ficar vazio se `ALLOWED_GUILD_IDS` estiver preenchido |
 | `LOG_CHANNEL_ID` | vazio | canal do log geral (só equipe!) |
 | `ERROR_CHANNEL_ID` | vazio | canal de erros e do painel de status (vazio = usa o de log) |
-| `SITE_URL` | vazio | site público: vigiado pelo bot **e** usado nos botões *Open* do `/search` |
+| `SITE_URL` | vazio | **só reserva**: o bot pega o endereço do site da **API** (`FRONTEND_ORIGIN` dela, `GET /bot/config`) e acompanha sozinho uma troca de domínio; este valor só vale se a API não responder. O site é vigiado pelo bot e o endereço é usado nos botões *Open* do `/search` e nos links |
 | `BACKUP_CHANNEL_ID` / `BACKUP_INTERVAL_MINUTES` / `BACKUP_KEEP` / `BACKUP_PART_MB` | vazio / `180` / `8` / `9` | backup automático no canal privado: de quantos em quantos minutos (mín. 30), quantos manter, tamanho de cada parte (ver *Backup automático*); canal vazio = sem backup |
 | `MEMBER_ROLES_SYNC` | `true` | lê os cargos dos leitores do site para a API preencher vila/rank do perfil. Exige ligar a **Server Members Intent** no Discord Developer Portal; sem ela o bot liga igual, só sem esta função. `false` desliga de propósito |
 | `MEMBER_LIST_SYNC` | `true` | manda também a **lista de membros** de cada servidor (nome, ID, cargos) para o painel `/admin/bot`; exige a mesma Server Members Intent. `false` desliga só a lista (os cargos dos leitores continuam) |
