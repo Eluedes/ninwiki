@@ -47,9 +47,9 @@ function Sky({ c, night, show }: { c: typeof COLORS.day | typeof COLORS.night; n
       {night
         ? <>
             {STARS.map((s, i) => <span key={i} className="sb-star absolute rounded-full bg-white" style={{ left: `${s.left}%`, top: `${s.top}%`, width: s.size, height: s.size, animationDelay: `${-s.delay}s` }} />)}
-            <div className="absolute rounded-full" style={{ right: '12%', top: '8%', width: 70, height: 70, background: 'radial-gradient(circle at 35% 35%, #ffffff, #dbe5f5 60%, #b9c8e0)', boxShadow: '0 0 70px 18px rgba(190,210,255,0.28)' }} />
+            <div className="absolute rounded-full" style={{ right: '3%', top: '8%', width: 70, height: 70, background: 'radial-gradient(circle at 35% 35%, #ffffff, #dbe5f5 60%, #b9c8e0)', boxShadow: '0 0 70px 18px rgba(190,210,255,0.28)' }} />
           </>
-        : <div className="sb-sun absolute rounded-full" style={{ right: '12%', top: '8%', width: 80, height: 80, background: 'radial-gradient(circle, #fff6c2, #ffd54a 65%)', boxShadow: '0 0 90px 36px rgba(255,225,110,0.5)' }} />}
+        : <div className="sb-sun absolute rounded-full" style={{ right: '3%', top: '8%', width: 80, height: 80, background: 'radial-gradient(circle, #fff6c2, #ffd54a 65%)', boxShadow: '0 0 90px 36px rgba(255,225,110,0.5)' }} />}
       {LAYERS.map(([seed, count, scale, top, h, secs], i) => (
         <div key={i} className="sb-cloud absolute left-0 right-0" style={{
           top: `${top}%`, height: h, backgroundRepeat: 'repeat-x', animationDuration: `${secs}s`,
