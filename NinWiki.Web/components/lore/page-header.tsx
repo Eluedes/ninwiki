@@ -22,7 +22,6 @@ export function PageHeader({
   accentColor,
   children,
   action,
-  bare,
 }: {
   title: string;
   subtitle?: string;
@@ -31,15 +30,13 @@ export function PageHeader({
   accentColor?: string;
   children?: ReactNode;
   action?: ReactNode;   // canto direito do titulo (ex.: botao Reportar)
-  bare?: boolean;       // sem o painel proprio (quando a pagina ja' tem um painel em volta)
 }) {
   // Azul-chakra como cor padrao quando a pagina nao especifica uma
   // cor de destaque propria (ex: paginas sem uma mastery/vila associada).
   const accent = accentColor ?? '#0ea5e9';
 
   return (
-    // painel solido: titulo e trilha nao ficam direto sobre o ceu/nuvens do fundo do site
-    <div className={bare ? 'mb-6' : 'mb-6 rounded-xl border border-border bg-background/75 p-4 backdrop-blur-md sm:p-5'}>
+    <div className="mb-6">
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="mb-3 flex items-center gap-1.5 text-xs text-ink-400">
           {breadcrumbs.map((bc, i) => (

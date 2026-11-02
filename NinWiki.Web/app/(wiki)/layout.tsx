@@ -24,7 +24,8 @@ export default function WikiLayout({
     <div className="flex min-h-screen flex-col">
       <PageHitBeacon />
       <Header />
-      <main className="flex-1">{children}</main>
+      {/* painel unico do conteudo de TODAS as paginas publicas: translucido com desfoque, para o texto nunca ficar solto sobre as nuvens do fundo */}
+      <main className="mx-auto w-full max-w-[1500px] flex-1 bg-background/75 backdrop-blur-md">{children}</main>
       <Footer />
     </div>
   );
